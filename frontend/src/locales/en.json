@@ -1,0 +1,70 @@
+{
+  "app": {
+    "title": "Scan2Text"
+  },
+  "demo": {
+    "badge": "DEMO"
+  },
+  "panels": {
+    "dropZone": "Drop Zone",
+    "queue": "Queue",
+    "preview": "Preview"
+  },
+  "status": {
+    "ready": "Ready"
+  },
+  "actions": {
+    "toggleTheme": "Toggle theme",
+    "toggleLanguage": "Toggle language"
+  },
+  "errors": {
+    "unsupportedFileType": "Unsupported file type. Allowed: PNG, JPG, JPEG, WEBP, PDF",
+    "fileTooLarge": "File exceeds 50MB limit",
+    "uploadFailed": "Upload failed",
+    "batchSkipped": "{{total}} files were skipped: {{unsupported}} unsupported type(s), {{tooLarge}} too large.",
+    "allInvalid": "No files were added. All selected files were unsupported or too large."
+  },
+  "dropzone": {
+    "hint": "PNG · JPG · WEBP · PDF — max 50MB per file"
+  },
+  "preview": {
+    "emptyState": "Select a completed job to preview the magic.",
+    "processing": "Processing document...",
+    "failed": "OCR Failed",
+    "pdfPlaceholder": "PDF Document",
+    "loading": "Processing your file...",
+    "error": "Processing failed. Please try again.",
+    "retry": "Retry",
+    "copyBtn": "Copy Markdown",
+    "openFolderBtn": "Open Folder"
+  },
+  "toast": {
+    "copySuccess": "Markdown copied to clipboard!",
+    "openFolderDemo": "📂 Demo Mode: In the real app, this opens your output folder!"
+  },
+  "queue": {
+    "empty": "No files in queue",
+    "remove": "Remove",
+    "retry": "Retry",
+    "status": {
+      "pending": "Pending",
+      "uploading": "Uploading",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed"
+    }
+  },
+  "bottomBar": {
+    "workerIdle": "Worker: Idle",
+    "ramUsage": "RAM: 1.8 GB",
+    "version": "v0.1.0-demo"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "processing": "Processing (Backend Required)",
+    "outputDir": "\ud83d\udd12 Output Directory",
+    "maxPdfPages": "\ud83d\udd12 Max PDF Pages",
+    "cpuThreads": "\ud83d\udd12 CPU Threads"
+  }
+}

@@ -1,0 +1,33 @@
+# --- Graphify Specific Outputs ---
+graphify-out/
+graphify-vault/
+
+# --- Project Cache & Configuration Folders ---
+.kilo/
+.obsidian/
+.pytest_cache/
+.scan2text/
+
+# --- Media, Deliverables & Storage Folders ---
+uploads/
+second-brain/
+models/
+standards/
+
+# --- Build Outputs & Dependencies ---
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc
+*.pyo
+
+# --- Environment & Tooling Noise ---
+.git/
+.env*
+*.log
+
+# --- Markdown Docs & Guidelines (Ignore to save tokens) ---
+CLAUDE.md
+AGENTS.md
+README.md
