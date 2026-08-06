@@ -1,21 +1,21 @@
 ## Phase Status
 
-- **Current Phase:** Phase 6 (Prototype & Demo Mode) — THUMBNAIL PATH FIXED
+- **Current Phase:** Phase 6 (Prototype & Demo Mode) — RECOVERY DONE
 
-- **Current Slice:** Slice 6.10 (Thumbnail Path Fix)
+- **Current Slice:** Slice 6.10b (Thumbnail Removal Recovery)
 
 - **Next Slice:** Slice 6.11 (Theme + Fonts + Icons Polish)
 
 
 ## Frontend Baseline
 
-- **Tests:** 420/420 passing (+2 new tests from Thumbnail Path Fix slice)
+- **Tests:** 410/410 passing
 
 - **Typecheck:** PASS
 
 - **Build:** PASS
 
-- **Visuals:** Demo Mode active. TopBar shows amber "DEMO" badge + Settings icon. Bottom bar ticker shows Worker/RAM/Version with vertical dividers. Side-by-side preview panel renders with 30%/70% split. Action header with Copy and Open Folder buttons visible on completed jobs. Settings Dialog with General section (Language/Theme selectors) and locked Processing section (Output Dir, Max PDF Pages, CPU Threads). Tailwind utilities now load correctly; full-width layout enabled via neutral #root rule. Markdown now styled with prose classes. DropZone centered vertically with file-type hint. Panel dividers added between main sections.
+- **Visuals:** Demo Mode active. TopBar shows amber "DEMO" badge + Settings icon. Bottom bar ticker shows Worker/RAM/Version with vertical dividers. Side-by-side preview panel renders with 30%/70% split. Action header with Copy and Open Folder buttons visible on completed jobs. Settings Dialog with General section (Language/Theme selectors) and locked Processing section (Output Dir, Max PDF Pages, CPU Threads). Tailwind utilities now load correctly; full-width layout enabled via neutral #root rule. Markdown now styled with prose classes. DropZone centered vertically with file-type hint. Panel dividers added between main sections. @tailwindcss/typography@0.5.16 declared in frontend/package.json devDependencies.
 
 
 ## Phase 6 Progress
@@ -35,3 +35,5 @@
 - [x] Slice 6.9: Visual polish — thumbnail wiring verified, panel dividers added, typography prose installed, DropZone centered with i18n hint.
 
 - [x] Slice 6.10: Thumbnail path fix — data-testid attributes added to img elements in PreviewPanel and QueuePanel for testability.
+
+- [x] Slice 6.10b: Recovery — fixed red test (removeJob cleanup > should call stopProgress on job removal) by mocking progressManager module in store test; @tailwindcss/typography declared; audit shows zero leftover thumbnail references.
