@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan2Text</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <!-- Top bar -->
+    <header class="topbar">
+        <h1 class="title">Scan2Text</h1>
+        <div class="top-actions">
+            <span id="update-badge" class="badge hidden"></span>
+            <button id="btn-settings" title="Settings">&#9881;</button>
+        </div>
+    </header>
+
+    <!-- Main layout -->
+    <main class="main-layout">
+        <!-- Left panel: drop zone + file queue -->
+        <section class="panel left-panel" id="drop-zone">
+            <div id="empty-state" class="empty-state">
+                <p>Drag &amp; drop images or PDFs here</p>
+            </div>
+            <ul id="file-list"></ul>
+            <button id="btn-process-all" disabled>Process All</button>
+        </section>
+
+        <!-- Right panel: status + output preview -->
+        <section class="panel right-panel">
+            <h2>Status</h2>
+            <div id="status-area">
+                <p>No files queued.</p>
+            </div>
+            <div id="output-preview" class="hidden">
+                <h3>Output Preview</h3>
+                <pre id="preview-content"></pre>
+                <button id="btn-open-output">Open Output Folder</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Settings modal (simple overlay) -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Settings</h2>
+            <form id="settings-form">
+                <label>
+                    Output Directory<br>
+                    <input type="text" id="set-output-dir" />
+                </label>
+                <label>
+                    Max PDF Pages<br>
+                    <input type="number" id="set-max-pages" min="1" />
+                </label>
+                <label>
+                    CPU Threads (0 = auto)<br>
+                    <input type="number" id="set-cpu-threads" min="0" />
+                </label>
+                <label>
+                    <input type="checkbox" id="set-check-updates" /> Check for updates on startup
+                </label>
+                <div class="modal-actions">
+                    <button type="submit">Save</button>
+                    <button type="button" id="btn-close-settings">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

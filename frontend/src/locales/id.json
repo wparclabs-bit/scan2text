@@ -1,0 +1,70 @@
+{
+  "app": {
+    "title": "Scan2Text"
+  },
+  "demo": {
+    "badge": "MODE DEMO"
+  },
+  "panels": {
+    "dropZone": "Zona Jatuh",
+    "queue": "Antrian",
+    "preview": "Pratinjau"
+  },
+  "status": {
+    "ready": "Siap"
+  },
+  "actions": {
+    "toggleTheme": "Ubah tema",
+    "toggleLanguage": "Ubah bahasa"
+  },
+  "errors": {
+    "unsupportedFileType": "Tipe file tidak didukung. Yang didukung: PNG, JPG, JPEG, WEBP, PDF",
+    "fileTooLarge": "Ukuran file melebihi batas 50MB",
+    "uploadFailed": "Gagal mengunggah",
+    "batchSkipped": "{{total}} file dilewati: {{unsupported}} tipe tidak didukung, {{tooLarge}} terlalu besar.",
+    "allInvalid": "Tidak ada file yang ditambahkan. Semua file yang dipilih tidak didukung atau terlalu besar."
+  },
+  "dropzone": {
+    "hint": "PNG · JPG · WEBP · PDF — maks 50MB per file"
+  },
+  "preview": {
+    "emptyState": "Pilih pekerjaan yang sudah selesai untuk melihat keajaibannya.",
+    "processing": "Memproses dokumen...",
+    "failed": "Gagal OCR",
+    "pdfPlaceholder": "Dokumen PDF",
+    "loading": "Memproses file Anda...",
+    "error": "Pemrosesan gagal. Silakan coba lagi.",
+    "retry": "Coba Lagi",
+    "copyBtn": "Salin Markdown",
+    "openFolderBtn": "Buka Folder"
+  },
+  "toast": {
+    "copySuccess": "Markdown disalin ke clipboard!",
+    "openFolderDemo": "📂 Mode Demo: Di aplikasi asli, ini akan membuka folder output!"
+  },
+  "queue": {
+    "empty": "Tidak ada file dalam antrian",
+    "remove": "Hapus",
+    "retry": "Ulangi",
+    "status": {
+      "pending": "Menunggu",
+      "uploading": "Mengunggah",
+      "processing": "Memproses",
+      "completed": "Selesai",
+      "failed": "Gagal"
+    }
+  },
+  "bottomBar": {
+    "workerIdle": "Worker: Idle",
+    "ramUsage": "RAM: 1.8 GB",
+    "version": "v0.1.0-demo"
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "general": "Umum",
+    "processing": "Pemrosesan (Butuh Backend)",
+    "outputDir": "\ud83d\udd12 Folder Output",
+    "maxPdfPages": "\ud83d\udd12 Maks Halaman PDF",
+    "cpuThreads": "\ud83d\udd12 Thread CPU"
+  }
+}
