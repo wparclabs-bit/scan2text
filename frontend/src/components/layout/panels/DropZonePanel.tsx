@@ -5,9 +5,11 @@ export default function DropZonePanel() {
   const { t } = useTranslation()
 
   return (
-    <div data-testid="panel-dropzone" className="flex flex-col items-center justify-center p-4 gap-4 min-h-full">
-      <FileDropZone />
-      <p data-testid="dropzone-hint" className="text-xs text-muted-foreground text-center">
+    <div data-testid="panel-dropzone" className="flex flex-col h-full">
+      <div className="flex-1 bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <FileDropZone />
+      </div>
+      <p data-testid="dropzone-hint" className="text-xs text-muted-foreground text-center mt-2">
         {t('dropzone.hint')}
       </p>
     </div>

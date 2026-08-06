@@ -46,7 +46,12 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        display: ["var(--font-display)", "system-ui", "sans-serif"],
+        sans: ["var(--font-body)", "system-ui", "sans-serif"],
+      },
     },
   },
+  darkMode: ['class'],
   plugins: [require('@tailwindcss/typography')],
 }

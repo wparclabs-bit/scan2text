@@ -15,7 +15,12 @@
   },
   "actions": {
     "toggleTheme": "Toggle theme",
-    "toggleLanguage": "Toggle language"
+    "toggleLanguage": "Toggle language",
+    "themeTooltipDark": "Switch to light mode",
+    "themeTooltipLight": "Switch to dark mode",
+    "langTooltipEn": "Switch to Indonesian",
+    "langTooltipId": "Switch to English",
+    "settingsTooltip": "Open settings"
   },
   "errors": {
     "unsupportedFileType": "Unsupported file type. Allowed: PNG, JPG, JPEG, WEBP, PDF",
@@ -44,7 +49,6 @@
   },
   "queue": {
     "empty": "No files in queue",
-    "remove": "Remove",
     "retry": "Retry",
     "status": {
       "pending": "Pending",

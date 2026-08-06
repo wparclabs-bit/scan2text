@@ -77,8 +77,8 @@ You are in PowerShell on Windows. You are NOT in bash/zsh/Linux.
 4.1 Layout
 TOP BAR: Scan2Text title | theme toggle | language toggle | settings gear | DEMO badge
 LEFT 20%: Drop Zone
-CENTER 35%: Queue (FIFO)
-RIGHT 45%: Preview (30% source | 70% Markdown) + Action Header when completed
+CENTER 20%: Queue (FIFO)
+RIGHT 60%: Preview (30% source | 70% Markdown) + Action Header when completed (CEO approved 2026-08-07)
 BOTTOM BAR: Worker status | RAM usage | version | (share button, slice 20.6)
 
 4.2 State Management

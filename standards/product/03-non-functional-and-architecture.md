@@ -1,27 +1,29 @@
 # Non-Functional Requirements & Architecture — Scan2Text MVP
-Version: 1.3
-Date: 2026-08-06
+
+Version: 1.4
+Date: 2026-08-07
 Status: Approved for Implementation
 
 ## Change Log
 
-| Version | Date       | Changes |
-|---------|------------|---------|
-| 1.0     | 2026-06-22 | Initial NFR and architecture |
-| 1.1     | 2026-06-22 | Minor clarifications |
-| 1.2     | 2026-06-22 | Updated output naming, removed in-app editing |
-| 1.3     | 2026-08-06 | Updated OCR model to GLM-OCR 0.9B. Replaced HTMX frontend with Vite + React + TypeScript + Tailwind + shadcn. Added Zustand, react-markdown, react-i18next to stack. Updated backend contract from /api/jobs to POST /process + GET /status/{task_id}. Updated JobStatus enum. Added Command Center layout reference. Updated runtime folder structure with new model filenames. Added frontend architecture section. |
-
----
+| Version | Date | Changes |
+| --- | --- | --- |
+| 1.0 | 2026-06-22 | Initial NFR and architecture |
+| 1.1 | 2026-06-22 | Minor clarifications |
+| 1.2 | 2026-06-22 | Updated output naming, removed in-app editing |
+| 1.3 | 2026-08-06 | Updated OCR model to GLM-OCR 0.9B. Replaced HTMX frontend with Vite + React + TypeScript + Tailwind + shadcn. Added Zustand, react-markdown, react-i18next to stack. Updated backend contract from /api/jobs to POST /process + GET /status/{task_id}. Updated JobStatus enum. Added Command Center layout reference. Updated runtime folder structure with new model filenames. Added frontend architecture section. |
+| 1.4 | 2026-08-07 | Beautify-phase deltas (CEO-approved): `ScanJob.imageUrl` removed (thumbnail feature removed from MVP, moved to Phase 2 compare-toggle candidate). Frontend styling decisions locked: layered zinc surfaces + purple accent (#aa3bff light / #c084fc dark), Quantico display font + readable swap-friendly body font, rounded-xl calm cards, icon-only top bar with tooltips, static zero-CPU radiant-lines background in center panel, panel ratios 20/20/60. NFR-03 extended: decorative UI must not consume CPU at idle. |
 
 ## 10. Non-Functional Requirements
 
 ### NFR-01: Offline-First
+
 - App must work fully offline after initial download.
 - No document processing may require internet.
 - Update check is optional and non-blocking.
 
 ### NFR-02: Privacy
+
 - Document content stays on the local machine.
 - No telemetry in MVP.
 - No analytics.
@@ -29,13 +31,16 @@ Status: Approved for Implementation
 - Logs must not contain extracted OCR text by default.
 
 ### NFR-03: Performance
+
 - Prioritize accuracy over speed.
 - Long-running operations must show progress.
 - UI must not freeze during processing.
 - Performance thresholds will be refined after real sample testing.
-- **CPU-only inference:** GLM-OCR 0.9B is lightweight enough for CPU-only machines. No GPU required.
+- CPU-only inference: GLM-OCR 0.9B is lightweight enough for CPU-only machines. No GPU required.
+- Zero-CPU idle decoration: decorative UI elements (e.g., radiant-lines background) must be static and consume no CPU at idle. No ambient canvas/JS animation loops. (CEO decision 2026-08-07.)
 
 ### NFR-04: Accuracy
+
 - Target: human-validated high accuracy.
 - Initial acceptance target: approximately 95% visible text extraction on approved test samples.
 - Accuracy is judged by human review.
@@ -43,30 +48,32 @@ Status: Approved for Implementation
 - Perfect layout reconstruction is not required.
 
 ### NFR-05: Reliability
+
 - One bad file should not crash the whole app.
 - One failed queue item should not stop remaining valid queue items unless fatal.
 - Unsupported files in a batch should be skipped and logged.
 - App must recover gracefully from missing settings by recreating defaults.
 
 ### NFR-06: Portability
+
 - App should be distributable as a folder/zip.
 - Initial full package may be approximately 1.5 GB due to model assets.
 - No complex installer required.
 
 ### NFR-07: Compatibility
-- Target MVP platform:
-  - Windows 10/11
-  - x86_64 CPU
-  - Minimum RAM: 8 GB
-  - Recommended RAM: 16 GB
-  - Disk space: at least 5 GB free for app, models, logs, and output
-- **Desktop-only for MVP.** Mobile/responsive layout deferred.
 
----
+Target MVP platform:
+- Windows 10/11
+- x86_64 CPU
+- Minimum RAM: 8 GB
+- Recommended RAM: 16 GB
+- Disk space: at least 5 GB free for app, models, logs, and output
+- Desktop-only for MVP. Mobile/responsive layout deferred.
 
 ## 11. Technical Architecture
 
 ### Architecture Style
+
 - Local-first modular monolith.
 - No cloud services.
 - No external database.
@@ -75,6 +82,7 @@ Status: Approved for Implementation
 - No hosted API.
 
 ### Runtime Approach
+
 Scan2Text is a portable desktop application with a local web-based UI.
 
 The executable:
@@ -85,23 +93,22 @@ The executable:
 This allows Python-based OCR processing while keeping the UI portable and future-friendly.
 
 ### Frontend-Backend Communication
-- **Transport:** HTTP Polling for task status (WebSockets deferred from Sprint 1 ADR-002).
-- **Upload:** `POST /process` with `multipart/form-data`.
-- **Status:** `GET /status/{task_id}` polled by frontend.
-- **Polling config:** 15 attempts × 2000ms = 30 seconds. After timeout, job marked as "background" and auto re-polled every 60 seconds (max 10 re-polls).
 
----
+- Transport: HTTP Polling for task status (WebSockets deferred from Sprint 1 ADR-002).
+- Upload: `POST /process` with `multipart/form-data`.
+- Status: `GET /status/{task_id}` polled by frontend.
+- Polling config: 15 attempts × 2000ms = 30 seconds. After timeout, job marked as "background" and auto re-polled every 60 seconds (max 10 re-polls).
 
 ## 12. Approved MVP Tech Stack
 
 | Component | Technology |
-|-----------|------------|
+| --- | --- |
 | Language (Backend) | Python 3.11+ |
 | Local backend | FastAPI |
 | Data contracts | Pydantic |
 | OCR runtime | llama-cpp-python |
 | OCR model | GLM-OCR 0.9B (`vlm.gguf`) |
-| Vision module | `mmproj.gguf` (paired with vlm.gguf) |
+| Vision module | `mmproj.gguf` (paired with `vlm.gguf`) |
 | PDF rendering | pypdfium2 or equivalent lightweight PDF rasterizer |
 | Frontend framework | Vite + React + TypeScript |
 | Frontend styling | Tailwind CSS + shadcn/ui |
@@ -114,13 +121,17 @@ This allows Python-based OCR processing while keeping the UI portable and future
 | Logs | Rotating local log files |
 
 ### Key Frontend Decisions
-- **No React Router** for MVP. Single-page Command Center dashboard with state-based panel switching.
-- **Dark mode default** with light mode toggle. Theme preference persisted to localStorage.
-- **Language preference** persisted to localStorage. Auto-detect browser language, fallback to English.
-- **Job state is memory-only** (Zustand). No localStorage/sessionStorage for job data.
-- **File validation** in DropZone: max 50MB per file, accepted types PNG/JPG/JPEG/WEBP/PDF.
 
----
+- No React Router for MVP. Single-page Command Center dashboard with state-based panel switching.
+- Dark mode default with light mode toggle. Theme preference persisted to localStorage.
+- Language preference persisted to localStorage. Auto-detect browser language, fallback to English.
+- Job state is memory-only (Zustand). No localStorage/sessionStorage for job data.
+- File validation in DropZone: max 50MB per file, accepted types PNG/JPG/JPEG/WEBP/PDF.
+- Panel ratios: 20/20/60 (CEO-approved 2026-08-07, superseding 20/35/45). Fixed, not resizable.
+- Styling: layered zinc surfaces + locked purple accent `#aa3bff` (light) / `#c084fc` (dark).
+- Typography: Quantico display font (title, headings, badges, metrics) + readable body font for paragraphs/UI text; body font swap-friendly via single CSS variable.
+- Components: rounded-xl calm cards for panels; icon-only top bar buttons with tooltips; shadcn primitives (Dialog, Tooltip, Spinner, Progress, Switch, Table).
+- Center panel decoration: static zero-CPU radiant-lines background (purple family, low opacity, behind content).
 
 ## 13. Runtime Folder Structure
 
@@ -140,9 +151,8 @@ Scan2Text/
 └── logs/
 └── app.log
 
-
-**Notes:**
-- `models/` contains local OCR model files (vlm.gguf + mmproj.gguf).
+Notes:
+- `models/` contains local OCR model files (`vlm.gguf` + `mmproj.gguf`).
 - `assets/ui/` contains the built React frontend (compiled from Vite).
 - `output/` contains saved Markdown files unless user chooses another output directory.
 - `settings/` contains user settings.
@@ -177,8 +187,6 @@ scan2text/
 └── 03-Sprints/
 
 
----
-
 ## 14. Local Application Contract
 
 Scan2Text uses an internal local contract between UI and backend.
@@ -186,29 +194,26 @@ This is not a public cloud API. It is an internal app API.
 
 ### File Processing
 
-POST /process
-
+**POST /process**
 - Accepts: `multipart/form-data` with file bytes.
 - Returns: `{ "task_id": "string" }`
 - Starts OCR processing in background.
 
-GET /status/{task_id}
-
+**GET /status/{task_id}**
 - Returns task status and result.
 - Status values: `pending`, `uploading`, `processing`, `completed`, `failed`, `background`.
 - On completion, includes `result_markdown` field.
 
 ### Health / Worker Status
 
-GET /health
-
+**GET /health**
 - Returns worker status (idle/busy), RAM usage, model loaded state.
 - Used by bottom bar status display.
 
 ### Settings
 
-GET /api/settings 
-PUT /api/settings
+**GET /api/settings**
+**PUT /api/settings**
 
 ### Future Endpoints (Not in MVP critical path)
 
@@ -216,9 +221,7 @@ POST /cancel/{task_id} # Cancel in-progress OCR (Slice 25)
 POST /api/output/open # Open output folder
 
 
-**Note:** The original PRD defined `/api/jobs` endpoints. These have been replaced by the simpler `POST /process` + `GET /status/{task_id}` contract established in Phase 4. The `/api/jobs` routes are NOT used in MVP.
-
----
+Note: The original PRD defined `/api/jobs` endpoints. These have been replaced by the simpler `POST /process` + `GET /status/{task_id}` contract established in Phase 4. The `/api/jobs` routes are NOT used in MVP.
 
 ## 15. Core Data Contracts
 
@@ -258,23 +261,25 @@ class OCRJob:
     output_path: str | None
     error_code: str | None
     error_message: str | None
-    
+
 ### ScanJob (Frontend Zustand Store)
-(typescript)
+
 interface ScanJob {
-    id: string;
-    fileName: string;
-    taskId: string | null;
-    status: JobStatus;
-    isBackground: boolean;
-    createdAt: number;
-    resultMarkdown: string | null;
-    error: string | null;
-    imageUrl: string | null;   // Object URL for image preview (memory-only)
+  id: string;
+  fileName: string;
+  taskId: string | null;
+  status: JobStatus;
+  isBackground: boolean;
+  createdAt: number;
+  resultMarkdown: string | null;
+  error: string | null;
 }
+
+Note: `imageUrl` (object URL for image preview) removed 2026-08-07. Thumbnail feature and side-by-side comparison moved to Phase 2 compare-toggle candidate. Queue rows show a file type icon instead.
 
 ### OCRResult
 
+python
 class OCRResult:
     job_id: str
     source_file: str
@@ -283,13 +288,18 @@ class OCRResult:
     completed_at: datetime
 
 ### ProgressEvent (for future WebSocket support)
-
+python
 class ProgressEvent:
-    job_id: str
-    status: str
-    percent: int | None
-    eta_seconds: int | None
-    message: str | None
+
+    job_id: str
+
+    status: str
+
+    percent: int | None
+
+    eta_seconds: int | None
+
+    message: str | None
 
 ### UpdateInfo
 
@@ -301,7 +311,7 @@ class UpdateInfo:
     model_version: str | None
 
 ## 16. Global Error Envelope
-
+json
 {
   "error": {
     "code": "MODEL_NOT_FOUND",
@@ -312,18 +322,7 @@ class UpdateInfo:
 
 ### MVP Error Codes
 
-|Code|Description|
-|---|---|
-|MODEL_NOT_FOUND|Model file missing|
-|MODEL_LOAD_FAILED|Model failed to load|
-|UNSUPPORTED_FILE|File type not supported|
-|FILE_TOO_LARGE|File exceeds 50MB limit|
-|PDF_TOO_MANY_PAGES|PDF exceeds max page limit|
-|OCR_FAILED|OCR processing failed|
-|OUTPUT_DIR_NOT_WRITABLE|Cannot write to output directory|
-|SETTINGS_INVALID|Settings validation failed|
-|UPDATE_CHECK_FAILED|Update check failed|
-|UNKNOWN_ERROR|Unclassified error|
+ ![[Pasted image 20260807053924.png]]
 
 Unsupported files in a batch should be treated as non-fatal where possible.
 
@@ -333,8 +332,6 @@ Unsupported files in a batch should be treated as non-fatal where possible.
 - Known backend error codes are mapped to translated messages.
 - Unknown backend errors are shown as-is (English).
 
----
-
 ## 17. Update Mechanism
 
 ### Update Source
@@ -342,7 +339,7 @@ Unsupported files in a batch should be treated as non-fatal where possible.
 Updates are announced through a GitHub-hosted `version.json`.
 
 Example:
-
+json
 {
   "version": "0.2.0",
   "date": "2026-07-01",
@@ -367,13 +364,11 @@ Example:
 
 MVP update process is manual. No self-updating executable is required.
 
----
-
 ## 18. Logging Requirements
 
 Logs are stored in: `logs/app.log`
 
-**Requirements:**
+Requirements:
 
 - Use rotating logs.
 - Keep logs small.
@@ -390,3 +385,10 @@ Logs are stored in: `logs/app.log`
     - update check result
 - Do not log extracted OCR text by default.
 - Do not log full document contents by default.
+
+**Delta summary:** `ScanJob.imageUrl` removed · styling decisions locked in Key Frontend Decisions · NFR-03 zero-CPU idle decoration rule · ratios 20/20/60 noted.
+
+
+
+
+

@@ -1,19 +1,33 @@
+/* HOW TO SWAP FONT:
+   1. Drop your .ttf/.otf file into src/assets/fonts/
+   2. Update the @font-face block below (src path + family name)
+   3. Update --font-display value if needed
+   Done — no other files require changes. */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Quantico';
+  src: url('/src/assets/fonts/Quantico-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
+  --bg: #ffffff;
+  --border: #e4e4e7;
   --code-bg: #f4f3ec;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    rgba(0, 0, 0, 0.08) 0 10px 15px -3px, rgba(0, 0, 0, 0.04) 0 4px 6px -2px;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -27,7 +41,7 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  -moz-osx-smoothing: grayscale;
 
   @media (max-width: 1024px) {
     font-size: 16px;
@@ -36,59 +50,61 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #08060d;
-  --card: #ffffff;
-  --card-foreground: #08060d;
+  --foreground: #09090b;
+  --card: #fafafa;
+  --card-foreground: #09090b;
   --popover: #ffffff;
-  --popover-foreground: #08060d;
+  --popover-foreground: #09090b;
   --primary: #aa3bff;
   --primary-foreground: #ffffff;
-  --secondary: #f4f3ec;
-  --secondary-foreground: #08060d;
-  --muted: #f4f3ec;
-  --muted-foreground: #6b6375;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #09090b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
   --accent: #aa3bff;
   --accent-foreground: #ffffff;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #e5e4e7;
-  --input: #e5e4e7;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
   --ring: #aa3bff;
-  --radius: 0.5rem;
+  --radius: 0.75rem;
+  --font-display: 'Quantico', system-ui, sans-serif;
+  --font-body: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
+    --text: #a1a1aa;
+    --text-h: #fafafa;
+    --bg: #09090b;
+    --border: #27272a;
+    --code-bg: #18181b;
     --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
+    --accent-bg: rgba(192, 132, 252, 0.12);
+    --accent-border: rgba(192, 132, 252, 0.4);
+    --social-bg: rgba(39, 39, 42, 0.5);
     --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+      rgba(0, 0, 0, 0.5) 0 10px 15px -3px, rgba(0, 0, 0, 0.3) 0 4px 6px -2px;
 
-    --background: #16171d;
-    --foreground: #f3f4f6;
-    --card: #16171d;
-    --card-foreground: #f3f4f6;
-    --popover: #16171d;
-    --popover-foreground: #f3f4f6;
+    --background: #09090b;
+    --foreground: #fafafa;
+    --card: #18181b;
+    --card-foreground: #fafafa;
+    --popover: #09090b;
+    --popover-foreground: #fafafa;
     --primary: #c084fc;
-    --primary-foreground: #08060d;
-    --secondary: #1f2028;
-    --secondary-foreground: #f3f4f6;
-    --muted: #1f2028;
-    --muted-foreground: #9ca3af;
+    --primary-foreground: #09090b;
+    --secondary: #18181b;
+    --secondary-foreground: #fafafa;
+    --muted: #18181b;
+    --muted-foreground: #a1a1aa;
     --accent: #c084fc;
-    --accent-foreground: #08060d;
+    --accent-foreground: #09090b;
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
-    --border: #2e303a;
-    --input: #2e303a;
+    --border: #27272a;
+    --input: #27272a;
     --ring: #c084fc;
   }
 
@@ -98,37 +114,39 @@
 }
 
 .dark {
-  --text: #9ca3af;
-  --text-h: #f3f4f6;
-  --bg: #16171d;
-  --border: #2e303a;
-  --code-bg: #1f2028;
+  --text: #a1a1aa;
+  --text-h: #fafafa;
+  --bg: #09090b;
+  --border: #27272a;
+  --code-bg: #18181b;
   --accent: #c084fc;
-  --accent-bg: rgba(192, 132, 252, 0.15);
-  --accent-border: rgba(192, 132, 252, 0.5);
-  --social-bg: rgba(47, 48, 58, 0.5);
+  --accent-bg: rgba(192, 132, 252, 0.12);
+  --accent-border: rgba(192, 132, 252, 0.4);
+  --social-bg: rgba(39, 39, 42, 0.5);
   --shadow:
-    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+    rgba(0, 0, 0, 0.5) 0 10px 15px -3px, rgba(0, 0, 0, 0.3) 0 4px 6px -2px;
 
-  --background: #16171d;
-  --foreground: #f3f4f6;
-  --card: #16171d;
-  --card-foreground: #f3f4f6;
-  --popover: #16171d;
-  --popover-foreground: #f3f4f6;
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #18181b;
+  --card-foreground: #fafafa;
+  --popover: #09090b;
+  --popover-foreground: #fafafa;
   --primary: #c084fc;
-  --primary-foreground: #08060d;
-  --secondary: #1f2028;
-  --secondary-foreground: #f3f4f6;
-  --muted: #1f2028;
-  --muted-foreground: #9ca3af;
+  --primary-foreground: #09090b;
+  --secondary: #18181b;
+  --secondary-foreground: #fafafa;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
   --accent: #c084fc;
-  --accent-foreground: #08060d;
+  --accent-foreground: #09090b;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #2e303a;
-  --input: #2e303a;
+  --border: #27272a;
+  --input: #27272a;
   --ring: #c084fc;
+  --font-display: 'Quantico', system-ui, sans-serif;
+  --font-body: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 #root {

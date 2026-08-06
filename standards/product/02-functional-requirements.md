@@ -1,18 +1,18 @@
 # Functional Requirements — Scan2Text MVP
-Version: 1.3
-Date: 2026-08-06
+
+Version: 1.4
+Date: 2026-08-07
 Status: Approved for Implementation
 
 ## Change Log
 
-| Version | Date       | Changes |
-|---------|------------|---------|
-| 1.0     | 2026-06-22 | Initial functional requirements |
-| 1.1     | 2026-06-22 | Minor clarifications |
-| 1.2     | 2026-06-22 | Removed in-app editing (FR-07), updated output naming |
-| 1.3     | 2026-08-06 | Integrated output naming addendum (05) into FR-08. Updated FR-02 to Command Center layout. Added WEBP to file types. Reduced max file size to 50MB. Added file validation with toast. Added fake progress, auto-select, background re-poll to FR-04. Added FR-13 (i18n) and FR-14 (Theme). Updated model to GLM-OCR 0.9B. |
-
----
+| Version | Date | Changes |
+| --- | --- | --- |
+| 1.0 | 2026-06-22 | Initial functional requirements |
+| 1.1 | 2026-06-22 | Minor clarifications |
+| 1.2 | 2026-06-22 | Removed in-app editing (FR-07), updated output naming |
+| 1.3 | 2026-08-06 | Integrated output naming addendum (05) into FR-08. Updated FR-02 to Command Center layout. Added WEBP to file types. Reduced max file size to 50MB. Added file validation with toast. Added fake progress, auto-select, background re-poll to FR-04. Added FR-13 (i18n) and FR-14 (Theme). Updated model to GLM-OCR 0.9B. |
+| 1.4 | 2026-08-07 | Beautify-phase UI deltas (CEO-approved): FR-02 panel ratios 20/35/45 → 20/20/60; right panel renders Markdown full-width (image thumbnail + PDF placeholder removed from MVP, moved to Phase 2 compare-toggle candidate); queue Remove button removed from MVP scope; queue status indicators refined (spinner while processing, green/red status dot on completed/failed, thin fake progress bar retained); FR-03 file types aligned to locked set PNG/JPG/JPEG/WEBP/PDF (TIFF/BMP removed); FR-14 final visual styling locked (layered zinc surfaces + purple accent, Quantico display font + readable body font, rounded-xl calm cards, icon-only top bar with tooltips, static zero-CPU radiant-lines background in center panel). |
 
 ## 9. Functional Requirements
 
@@ -35,8 +35,6 @@ On first launch, if no settings exist, the app must guide the user through minim
 - After setup, app opens main screen.
 - App must work without admin rights.
 
----
-
 ### FR-02: Main Application Layout (Command Center)
 
 **Description:**
@@ -45,45 +43,43 @@ The app uses a "Command Center" layout — a 3-panel dashboard with a bottom sta
 **Layout Structure:**
 
 | Panel | Width | Content |
-|-------|-------|---------|
-| Left Panel | 20% | Drop Zone (file upload area) |
-| Center Panel | 35% | Queue table (file name, status, progress bar) |
-| Right Panel | 45% | Live Preview (image thumbnail + rendered Markdown) |
+| --- | --- | --- |
+| Left Panel | 20% | Drop Zone (full-panel rounded drop card) |
+| Center Panel | 20% | Queue table (file type icon, file name, status, progress bar) |
+| Right Panel | 60% | Live Preview (rendered Markdown full-width, read-only) |
 | Bottom Bar | Full width | Worker status, RAM usage, version |
-| Top Bar | Full width | App title, theme toggle, language toggle, settings icon |
+| Top Bar | Full width | App title, theme toggle, language toggle, settings icon — icon-only buttons with tooltips |
 
 **Acceptance Criteria:**
-- Layout is a fixed 3-panel grid (20% / 35% / 45%) with bottom status bar.
+
+- Layout is a fixed 3-panel grid (20% / 20% / 60%) with bottom status bar. (Ratios CEO-approved 2026-08-07, superseding 20/35/45.)
 - Desktop-only for MVP. No responsive/mobile layout.
 - Panel widths are fixed (not resizable).
-- **Top Bar** contains:
+- Top Bar contains:
   - App title/logo on the left: "📝 Scan2Text"
-  - Theme toggle button (🌙/☀️) on the right
-  - Language toggle button (🌐 EN/ID) on the right
-  - Settings icon (⚙️) on the right
-- **Left Panel (Drop Zone):**
-  - Large, visually prominent drag-and-drop area.
+  - Theme toggle button (🌙/️) on the right — icon-only with tooltip
+  - Language toggle button (🌐 EN/ID) on the right — icon-only with tooltip
+  - Settings icon (⚙️) on the right — icon-only with tooltip
+- Left Panel (Drop Zone):
+  - Large, visually prominent drag-and-drop area filling the left panel as a rounded card.
   - Glowing/highlighted state when files are dragged over.
   - Click to browse files as fallback.
-- **Center Panel (Queue):**
-  - Real-time table showing: File Name, Status, Progress Bar.
+- Center Panel (Queue):
+  - Real-time table showing: File Type Icon, File Name, Status, Progress Bar.
   - Status values: Pending, Uploading, OCR Running, Done, Failed, Background.
+  - Status indicators: spinner while uploading/processing; small glossy green dot on completed; red dot on failed (each with translated tooltip). Thin fake progress bar retained during processing.
   - Progress bar uses fake progress animation (see FR-04).
   - FIFO order (files appear in the order they were dropped).
-  - Empty state: 📭 **"Nothing here yet. Drop something tasty!"**
-- **Right Panel (Live Preview):**
-  - Split into two sub-columns: Image thumbnail (30% width) + Rendered Markdown (70% width).
-  - Image thumbnail shown on the LEFT, Markdown on the RIGHT (side-by-side for easy comparison).
-  - For PDF files: show a PDF icon/placeholder instead of image thumbnail.
-  - For image files: show original image via object URL.
-  - Empty state: ✨ **"Select a completed job to preview the magic."**
+  - Empty state: 📭 "Nothing here yet. Drop something tasty!"
+- Right Panel (Live Preview):
+  - Rendered Markdown shown full-width, read-only.
+  - No image thumbnail column (removed 2026-08-07; side-by-side comparison moved to Phase 2 compare-toggle candidate).
+  - Empty state: ✨ "Select a completed job to preview the magic."
   - Auto-select: when a job completes, the right panel automatically shows its result.
-- **Bottom Bar:**
+- Bottom Bar:
   - Shows: Worker status (Idle/Busy), RAM usage, app version.
   - Subtle ticker style.
 - Dark mode is the DEFAULT theme. Light mode available via toggle.
-
----
 
 ### FR-03: File Input
 
@@ -95,15 +91,13 @@ Users must be able to add files by drag-and-drop or file picker. Files are valid
   - `.jpg`
   - `.jpeg`
   - `.png`
-  - `.tiff`
-  - `.bmp`
   - `.webp`
   - `.pdf`
 - Support drag-and-drop into left panel (Drop Zone).
 - Support file selection dialog as fallback (click to browse).
 - Support multiple files.
-- **File validation (before upload):**
-  - Max file size: **50MB per file**.
+- File validation (before upload):
+  - Max file size: 50MB per file.
   - Files exceeding 50MB are rejected with an error toast.
   - Unsupported file types are rejected with an error toast.
   - Error toasts use shadcn toast component.
@@ -113,15 +107,13 @@ Users must be able to add files by drag-and-drop or file picker. Files are valid
 - Skipped unsupported files must not stop processing of valid files.
 - If all dropped files are unsupported, show a non-blocking warning toast and log the event.
 
----
-
 ### FR-04: Processing Queue
 
 **Description:**
 When multiple files are added, valid files must be processed in order. The queue provides real-time visual feedback.
 
 **Acceptance Criteria:**
-- Valid files are processed **FIFO** (First In, First Out).
+- Valid files are processed FIFO (First In, First Out).
 - Queue maintains insertion order (no sorting).
 - Each file shows status:
   - `pending` — waiting to start
@@ -130,29 +122,31 @@ When multiple files are added, valid files must be processed in order. The queue
   - `completed` — OCR done, result available
   - `failed` — OCR failed
   - `background` — polling timed out, will auto re-poll
-- **Progress bar behavior (fake progress):**
+- Status indicators:
+  - Uploading/processing: spinner.
+  - Completed: small glossy green dot (subtle 3D feel) with translated tooltip.
+  - Failed: red dot with translated tooltip.
+- Progress bar behavior (fake progress):
   - Animates from 0% to 90% over 30 seconds (eased, starts fast, slows near 90%).
   - Jumps to 100% when job completes.
   - Turns red and stops when job fails.
   - Pauses at ~90% with subtle pulse when job goes to background.
-- **Auto-select:**
+- Auto-select:
   - When a job completes, the right panel automatically switches to show its result.
   - The completed job is highlighted in the queue.
   - User can still click other jobs to view them.
-- **Background processing:**
+- Background processing:
   - If polling exceeds 30 seconds (15 attempts × 2000ms), job status changes to `background`.
   - Background jobs are automatically re-polled every 60 seconds.
   - Maximum 10 re-polls (10 minutes total). After that, mark as timeout.
   - Background message: "Still processing in the background. Large files can take a few minutes. Check the Queue for completion."
-- **Queue actions:**
-  - Completed/Failed jobs: [✕] Remove button.
+- Queue actions:
+  - No Remove button in MVP (removed 2026-08-07; queue is memory-only and clears on restart; may revisit in Phase 2).
   - In-progress jobs: [Cancel] button (future slice, requires backend cancel endpoint).
 - User can click Process All (or files auto-process on drop).
 - If no valid files are present, process button is disabled or shows a helpful message.
 - If one file fails, remaining queue continues unless fatal app error occurs.
 - The UI must show which file is currently processing.
-
----
 
 ### FR-05: Model Loading
 
@@ -166,11 +160,9 @@ The OCR model must load only when needed.
 - If model file is missing, show actionable error.
 - If model file is corrupt or fails to load, show actionable error.
 - App must not require internet to load model after initial app/model download.
-- **Model:** GLM-OCR 0.9B (`vlm.gguf` + `mmproj.gguf`)
-- **Runner:** llama-cpp-python
-- **Hardware:** CPU-only (no GPU)
-
----
+- Model: GLM-OCR 0.9B (`vlm.gguf` + `mmproj.gguf`)
+- Runner: llama-cpp-python
+- Hardware: CPU-only (no GPU)
 
 ### FR-06: OCR Processing
 
@@ -186,21 +178,17 @@ The app extracts visible text from images and PDFs.
 - Multiple separate input files must produce multiple separate Markdown files.
 - Unsupported or invalid files in a batch are skipped and logged.
 - If OCR fails for one file, show error for that file and continue remaining valid files where possible.
-- **MVP guardrails:**
+- MVP guardrails:
   - Maximum PDF pages: 20 by default
-  - Maximum file size: **50MB** by default
+  - Maximum file size: 50MB by default
 - If guardrail is exceeded, mark file as failed or skipped and log the reason.
-- **PDF handling note:** VLM likely requires PDF pages converted to images before inference. Raw PDF bytes may not be directly supported. (Implementation detail to verify.)
-
----
+- PDF handling note: VLM likely requires PDF pages converted to images before inference. Raw PDF bytes may not be directly supported. (Implementation detail to verify.)
 
 ### FR-07: Removed
 
 Removed by CEO review.
 There is no in-app editing in MVP.
 Final output is Markdown. Users edit Markdown files later using their own tools.
-
----
 
 ### FR-08: Automatic Markdown Output
 
@@ -218,8 +206,7 @@ Each valid processed document automatically produces a Markdown file.
 
 **Output Naming Convention (from Addendum 05):**
 
-Format: {original_stem}_{HHmm}_{yyyyMMdd}.md
-
+Format: `{original_stem}_{HHmm}_{yyyyMMdd}.md`
 
 Where:
 - `original_stem` — the sanitized stem of the input filename (invalid Windows characters removed, spaces collapsed to underscores, reserved names handled).
@@ -229,10 +216,10 @@ Where:
 Examples:
 
 | Input file | Output file |
-|------------|-------------|
-| invoice.pdf | invoice_1738_20260804.md |
-| my scan.png | my_scan_1738_20260804.md |
-| report (copy).jpg | report_copy_1738_20260804.md |
+| --- | --- |
+| `invoice.pdf` | `invoice_1738_20260804.md` |
+| `my scan.png` | `my_scan_1738_20260804.md` |
+| `report (copy).jpg` | `report_copy_1738_20260804.md` |
 
 **Collision Rule:**
 If a file with the target name already exists in the output directory, append a numeric suffix starting at `_2`:
@@ -241,7 +228,7 @@ If a file with the target name already exists in the output directory, append a 
 3. If that exists, try `{stem}_{HHmm}_{yyyyMMdd}_3.md`
 4. Continue incrementing until an unused name is found.
 
-**Never overwrite an existing file. Never merge multiple inputs into one output file.**
+Never overwrite an existing file. Never merge multiple inputs into one output file.
 
 **Guardrails:**
 - One input file → one output file. Always.
@@ -264,13 +251,10 @@ If a file with the target name already exists in the output directory, append a 
 - Do not fabricate table structure if uncertain.
 - If structure is uncertain, plain text output is acceptable.
 
-
 **After processing:**
 - UI shows saved Markdown file path.
 - UI should allow opening the output folder.
 - If output directory is not writable, mark job as failed and show clear error.
-
----
 
 ### FR-09: Settings Menu
 
@@ -284,13 +268,14 @@ Users can change basic app settings.
   - Maximum PDF pages
   - CPU threads
   - Check for updates on startup
-  - **Language** (English / Indonesian)
-  - **Theme** (Dark / Light)
+  - Language (English / Indonesian)
+  - Theme (Dark / Light)
 - Settings persist to `settings/settings.json`.
 - Invalid settings must show validation error.
 - Changed output directory applies to future output files.
 - Settings screen must be simple and non-technical.
-- **Default settings:**
+- Default settings:
+
 ```json
 {
   "output_dir": "",
@@ -319,8 +304,6 @@ Users can change basic app settings.
 - User downloads update manually from GitHub release.
 - Update notification may show latest version and short notes.
 
----
-
 ### FR-11: Error Handling
 
 **Description:** Errors must be clear, logged, and must not unnecessarily block batch processing. Error messages are internationalized.
@@ -334,24 +317,20 @@ Users can change basic app settings.
 - Error messages must avoid raw stack traces.
 - Errors must be logged.
 - OCR text content must not be logged by default.
-- **Error messages are translated** via i18n:
+- Error messages are translated via i18n:
     - All frontend UI error strings use translation keys.
     - Known backend error codes are mapped to translated messages.
     - Unknown backend errors are shown as-is (English).
-- **Error toasts** use shadcn toast component for file validation errors (wrong type, too large).
-
-**Example error cases:**
-
-- Model not found
-- Model failed to load
-- Unsupported file type
-- File too large (exceeds 50MB)
-- PDF too many pages
-- OCR processing failed
-- Output directory not writable
-- Invalid settings
-
----
+- Error toasts use shadcn toast component for file validation errors (wrong type, too large).
+- Example error cases:
+    - Model not found
+    - Model failed to load
+    - Unsupported file type
+    - File too large (exceeds 50MB)
+    - PDF too many pages
+    - OCR processing failed
+    - Output directory not writable
+    - Invalid settings
 
 ### FR-12: Portable Runtime
 
@@ -366,31 +345,27 @@ Users can change basic app settings.
 - User may choose external output directory, but app remains portable.
 - App must not depend on machine-specific hardcoded paths.
 
----
-
 ### FR-13: Internationalization (i18n)
 
 **Description:** The app supports multiple languages. MVP ships with English and Indonesian.
 
 **Acceptance Criteria:**
 
-- **Library:** react-i18next
-- **Languages:** English (`en`), Indonesian (`id`)
-- **Default language:** Auto-detect browser/system language. Fallback to English if detection fails.
-- **Language toggle:** Located in top bar, next to theme toggle. Shows current language code (e.g., "EN" or "ID").
-- **Persistence:** Language preference saved to localStorage. Persists across app restarts.
-- **Translation scope:**
+- Library: react-i18next
+- Languages: English (`en`), Indonesian (`id`)
+- Default language: Auto-detect browser/system language. Fallback to English if detection fails.
+- Language toggle: Located in top bar, next to theme toggle. Shows current language code (e.g., "EN" or "ID").
+- Persistence: Language preference saved to localStorage. Persists across app restarts.
+- Translation scope:
     - All UI strings use translation keys (no hardcoded text).
     - All button labels, status messages, empty states, and error messages are translated.
     - Known backend error codes are mapped to translated messages.
     - Unknown backend errors shown as-is (English).
-- **Translation files:**
+- Translation files:
     - `en.json` — English translations
     - `id.json` — Indonesian translations
-    - Initial translations drafted by AI, reviewed and adjusted by CEO.
-- **Fun/casual tone:** Empty state messages and casual UI text should maintain a friendly, approachable tone in both languages.
-
----
+- Initial translations drafted by AI, reviewed and adjusted by CEO.
+- Fun/casual tone: Empty state messages and casual UI text should maintain a friendly, approachable tone in both languages.
 
 ### FR-14: Theme
 
@@ -398,12 +373,18 @@ Users can change basic app settings.
 
 **Acceptance Criteria:**
 
-- **Default theme:** Dark mode.
-- **Available themes:** Dark, Light.
-- **Theme toggle:** Located in top bar. Shows 🌙 icon in dark mode, ☀️ icon in light mode.
-- **Persistence:** Theme preference saved to localStorage. Persists across app restarts.
-- **Design language:** Minimalist, high-contrast, inspired by Linear/Vercel.
-- **Dark mode:** Dark backgrounds, light text, subtle borders.
-- **Light mode:** Light backgrounds, dark text, subtle borders.
+- Default theme: Dark mode.
+- Available themes: Dark, Light.
+- Theme toggle: Located in top bar. Shows 🌙 icon in dark mode, ☀️ icon in light mode. Icon-only with tooltip.
+- Persistence: Theme preference saved to localStorage. Persists across app restarts.
+- Design language: Minimalist, high-contrast, inspired by Linear/Vercel.
+    - Layered zinc surfaces with locked purple accent: `#aa3bff` (light) / `#c084fc` (dark).
+    - Quantico display font for title, headings, badges, metrics; readable body font for paragraphs and UI text (swap-friendly via single CSS variable).
+    - Rounded-xl calm cards for panels; icon-only top bar with tooltips.
+    - Static zero-CPU radiant-lines background in center panel.
+- Dark mode: Dark backgrounds, light text, subtle borders.
+- Light mode: Light backgrounds, dark text, subtle borders.
 - Theme change applies immediately without page reload.
 - All UI components must support both themes.
+
+**Delta summary:** ratios 20/20/60 · full-width Markdown · spinner + status dots · Remove button gone · TIFF/BMP dropped · styling locked in FR-14.

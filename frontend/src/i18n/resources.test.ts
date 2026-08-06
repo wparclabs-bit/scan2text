@@ -211,13 +211,11 @@ describe('translation resource structure', () => {
     expect(enKeys).toEqual(idKeys)
   })
 
-  it('en.json has queue.remove and queue.retry', () => {
-    expect(enResources.queue.remove).toBe('Remove')
+  it('en.json has queue.retry', () => {
     expect(enResources.queue.retry).toBe('Retry')
   })
 
-  it('id.json has queue.remove and queue.retry', () => {
-    expect(typeof idResources.queue.remove).toBe('string')
+  it('id.json has queue.retry', () => {
     expect(typeof idResources.queue.retry).toBe('string')
   })
 
