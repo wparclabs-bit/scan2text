@@ -7,7 +7,7 @@ interface MarkdownPreviewProps {
 
 export default function MarkdownPreview({ markdown }: MarkdownPreviewProps) {
   return (
-    <article data-testid="preview-markdown" className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground">
+    <article data-testid="preview-markdown" className="prose prose-sm prose-base dark:prose-invert max-w-none text-foreground prose-headings:font-display prose-a:text-primary hover:prose-a:text-primary/80">
       {markdown ? (
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
       ) : (

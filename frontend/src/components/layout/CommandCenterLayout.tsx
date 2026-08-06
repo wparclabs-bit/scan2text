@@ -6,13 +6,11 @@ import PreviewPanel from './panels/PreviewPanel'
 
 export default function CommandCenterLayout() {
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-background">
       <TopBar />
-      <main className="flex-1 h-full grid grid-cols-[20%_35%_45%] overflow-hidden">
+      <main className="flex-1 h-full grid grid-cols-[20%_20%_60%] overflow-hidden p-3 gap-3">
         <DropZonePanel />
-        <div className="border-r border-border">
-          <QueuePanel />
-        </div>
+        <QueuePanel />
         <PreviewPanel />
       </main>
       <BottomStatusBar />

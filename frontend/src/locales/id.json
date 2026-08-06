@@ -15,7 +15,12 @@
   },
   "actions": {
     "toggleTheme": "Ubah tema",
-    "toggleLanguage": "Ubah bahasa"
+    "toggleLanguage": "Ubah bahasa",
+    "themeTooltipDark": "Beralih ke mode terang",
+    "themeTooltipLight": "Beralih ke mode gelap",
+    "langTooltipEn": "Beralih ke Bahasa Indonesia",
+    "langTooltipId": "Beralih ke Bahasa Inggris",
+    "settingsTooltip": "Buka pengaturan"
   },
   "errors": {
     "unsupportedFileType": "Tipe file tidak didukung. Yang didukung: PNG, JPG, JPEG, WEBP, PDF",
@@ -44,7 +49,6 @@
   },
   "queue": {
     "empty": "Tidak ada file dalam antrian",
-    "remove": "Hapus",
     "retry": "Ulangi",
     "status": {
       "pending": "Menunggu",

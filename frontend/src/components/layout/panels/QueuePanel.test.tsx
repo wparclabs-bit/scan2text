@@ -12,7 +12,7 @@ vi.mock('@/lib/cleanupObjectURLs', () => ({
 
 const { useScan2TextStore } = await import('@/stores/scan2text.store')
 
-describe('QueuePanel remove and retry', () => {
+describe('QueuePanel status dots and retry', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -26,42 +26,52 @@ describe('QueuePanel remove and retry', () => {
     )
   }
 
-  it('remove button is visible on queue item', () => {
+  it('shows green status dot for completed jobs', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    expect(screen.getByTestId('queue-item-status-dot')).toBeInTheDocument()
+  })
+
+  it('shows red status dot for failed jobs', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'failed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    expect(screen.getByTestId('queue-item-status-dot')).toBeInTheDocument()
+  })
+
+  it('does not show status dot for pending jobs', () => {
     setupStore({
       'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'pending', createdAt: 1000 },
     })
     render(<QueuePanel />)
-    expect(screen.getByTestId('queue-item-remove')).toBeInTheDocument()
+    expect(screen.queryByTestId('queue-item-status-dot')).not.toBeInTheDocument()
   })
 
-  it('clicking remove deletes job from store', async () => {
-    let jobs = {
-      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'pending', createdAt: 1000 },
-    }
-    const removeJob = vi.fn()
-    ;(useScan2TextStore as unknown as ReturnType<typeof vi.fn>).mockImplementation((selector: (state: any) => any) => {
-      const state = { jobs, selectedJobId: null, removeJob }
-      return selector(state)
+  it('shows spinner and progress bar during processing', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'processing', createdAt: 1000, progress: 45 },
     })
     render(<QueuePanel />)
-    fireEvent.click(screen.getByTestId('queue-item-remove'))
-    expect(removeJob).toHaveBeenCalledWith('job-1')
+    expect(screen.getByTestId('queue-item-progress')).toBeInTheDocument()
   })
 
-  it('removing selected job clears selectedJobId', async () => {
-    let jobs = {
-      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000, markdownOutput: '# Done' },
-    }
-    let selectedJobId = 'job-1'
-    const removeJob = vi.fn()
-    const setSelectedJobId = vi.fn()
-    ;(useScan2TextStore as unknown as ReturnType<typeof vi.fn>).mockImplementation((selector: (state: any) => any) => {
-      const state = { jobs, selectedJobId, removeJob, setSelectedJobId }
-      return selector(state)
+  it('shows spinner and progress bar during uploading', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'uploading', createdAt: 1000, progress: 20 },
     })
     render(<QueuePanel />)
-    fireEvent.click(screen.getByTestId('queue-item-remove'))
-    expect(setSelectedJobId).toHaveBeenCalledWith(null)
+    expect(screen.getByTestId('queue-item-progress')).toBeInTheDocument()
+  })
+
+  it('does not show progress bar for completed jobs', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    expect(screen.queryByTestId('queue-item-progress')).not.toBeInTheDocument()
   })
 
   it('retry button is visible on failed jobs', () => {
