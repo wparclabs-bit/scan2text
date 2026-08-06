@@ -1,6 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { getTestStore } from './scan2text.store'
 
+const mockStopProgress = vi.hoisted(() => vi.fn())
+
+vi.mock('../lib/progressManager', async () => {
+  const actual = await vi.importActual<typeof import('../lib/progressManager')>('../lib/progressManager')
+  return {
+    ...actual,
+    stopProgress: (...args: unknown[]) => {
+      mockStopProgress(...args)
+      const fn = (actual as Record<string, unknown>).stopProgress as (...a: unknown[]) => void
+      fn?.(...args)
+    },
+  }
+})
+
 const mockUploadFile = vi.hoisted(() => vi.fn())
 const mockGetTaskStatus = vi.hoisted(() => vi.fn())
 const mockPollTaskStatus = vi.hoisted(() => vi.fn())
@@ -641,15 +655,8 @@ describe('scan2text store', () => {
   })
 
   describe('removeJob cleanup', () => {
-    let stopProgressSpy: ReturnType<typeof vi.fn>
-
     beforeEach(() => {
-      stopProgressSpy = vi.fn()
-      vi.stubGlobal('stopProgress', stopProgressSpy)
-    })
-
-    afterEach(() => {
-      vi.unstubAllGlobals()
+      mockStopProgress.mockClear()
     })
 
     it('should call stopProgress on job removal (async)', async () => {
@@ -659,7 +666,7 @@ describe('scan2text store', () => {
       store.getState().removeJob('job-1')
       // Give the async cleanup time to execute
       await new Promise(resolve => setTimeout(resolve, 0))
-      expect(stopProgressSpy).toHaveBeenCalledWith('job-1')
+      expect(mockStopProgress).toHaveBeenCalledWith('job-1')
     })
 
     it('should stop progress timer on remove', async () => {
