@@ -43,4 +43,18 @@ describe('DropZonePanel background image', () => {
     expect(header).toHaveClass('font-bold')
     expect(header).toHaveClass('text-[#1F150C]')
   })
+
+  it('dashed upload area has flex-1 class for fill-between-header-footer layout', () => {
+    render(<DropZonePanel />)
+    const dropzone = document.querySelector('[data-testid="dropzone"]') as HTMLElement | null
+    expect(dropzone).toBeInTheDocument()
+    expect(dropzone).toHaveClass('flex-1')
+  })
+
+  it('dashed upload area has w-full class', () => {
+    render(<DropZonePanel />)
+    const dropzone = document.querySelector('[data-testid="dropzone"]') as HTMLElement | null
+    expect(dropzone).toBeInTheDocument()
+    expect(dropzone).toHaveClass('w-full')
+  })
 })

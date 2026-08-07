@@ -285,6 +285,62 @@ describe('PreviewPanel', () => {
 
       expect(toast.info).toHaveBeenCalledWith('📂 Demo Mode: In the real app, this opens your output folder!')
     })
+
+    it('copy button is borderless with transparent background', () => {
+      setupStore('job-1', {
+        'job-1': {
+          id: 'job-1',
+          fileName: 'test.png',
+          fileType: 'image/png',
+          status: 'completed',
+          resultMarkdown: '# Test',
+        },
+      })
+      render(<PreviewPanel />)
+      const copyBtn = screen.getByTestId('preview-copy-btn') as HTMLElement
+      expect(copyBtn).toBeInTheDocument()
+      expect(copyBtn).toHaveClass('border-none')
+      expect(copyBtn).toHaveClass('bg-transparent')
+    })
+
+    it('open folder button is borderless with transparent background', () => {
+      setupStore('job-1', {
+        'job-1': {
+          id: 'job-1',
+          fileName: 'test.png',
+          fileType: 'image/png',
+          status: 'completed',
+          resultMarkdown: '# Test',
+        },
+      })
+      render(<PreviewPanel />)
+      const openBtn = screen.getByTestId('preview-open-folder-btn') as HTMLElement
+      expect(openBtn).toBeInTheDocument()
+      expect(openBtn).toHaveClass('border-none')
+      expect(openBtn).toHaveClass('bg-transparent')
+    })
+
+    it('both header buttons are real <button> elements with translated labels', () => {
+      setupStore('job-1', {
+        'job-1': {
+          id: 'job-1',
+          fileName: 'test.png',
+          fileType: 'image/png',
+          status: 'completed',
+          resultMarkdown: '# Test',
+        },
+      })
+      render(<PreviewPanel />)
+      const buttons = Array.from(document.querySelectorAll('button'))
+      const copyBtn = buttons.find((b) => b.getAttribute('data-testid') === 'preview-copy-btn')
+      const openBtn = buttons.find((b) => b.getAttribute('data-testid') === 'preview-open-folder-btn')
+      expect(copyBtn).toBeInTheDocument()
+      expect(copyBtn!.tagName).toBe('BUTTON')
+      expect(openBtn).toBeInTheDocument()
+      expect(openBtn!.tagName).toBe('BUTTON')
+      expect(copyBtn!.textContent).toContain('Copy Markdown')
+      expect(openBtn!.textContent).toContain('Open Folder')
+    })
   })
 
   describe('Regression — clicking completed job switches preview content', () => {

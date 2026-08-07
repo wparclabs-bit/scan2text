@@ -25,11 +25,11 @@ export default function DropZonePanel() {
             }}
           />
           <ScrollArea data-testid="dropzone-scroll-area" className="flex-1 relative z-10">
-            <div className="flex flex-col items-center justify-center gap-3 p-4">
-              <p className="text-base font-display font-bold text-[#1F150C] text-center">
+            <div className="flex flex-col gap-3 p-4 h-full">
+              <p className="text-base font-display font-bold text-[#1F150C] text-center shrink-0">
                 {t('dropzone.clickLabel')}
               </p>
-              <FileDropZone />
+              <FileDropZone className="flex-1 min-h-0 w-full" />
             </div>
           </ScrollArea>
           <p data-testid="dropzone-hint" className="text-xs text-muted-foreground text-center px-4 py-3 mt-auto relative z-10">

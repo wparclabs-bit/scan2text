@@ -42,12 +42,77 @@ describe('QueuePanel status dots and retry', () => {
     expect(screen.getByTestId('queue-item-status-dot')).toBeInTheDocument()
   })
 
-  it('does not show status dot for pending jobs', () => {
+  it('shows grey status dot for pending jobs', () => {
     setupStore({
       'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'pending', createdAt: 1000 },
     })
     render(<QueuePanel />)
-    expect(screen.queryByTestId('queue-item-status-dot')).not.toBeInTheDocument()
+    const dot = screen.getByTestId('queue-item-status-dot') as HTMLElement
+    expect(dot).toBeInTheDocument()
+    expect(dot.style.background).toBe('rgb(168, 162, 158)')
+  })
+
+  it('fixed status slot is always present with w-[14px] class', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const item = screen.getByTestId('queue-item') as HTMLElement
+    const slot = item.querySelector('[data-testid="queue-item-status-slot"]') as HTMLElement | null
+    expect(slot).toBeInTheDocument()
+    expect(slot).toHaveClass('w-[14px]')
+    expect(slot).toHaveClass('shrink-0')
+  })
+
+  it('processing row shows yellow spinner in status slot', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'processing', createdAt: 1000, progress: 45 },
+    })
+    render(<QueuePanel />)
+    const item = screen.getByTestId('queue-item') as HTMLElement
+    const spinners = Array.from(item.querySelectorAll('svg')).filter((svg) => svg.classList.contains('animate-spin'))
+    expect(spinners.length).toBeGreaterThanOrEqual(1)
+    expect(item.innerHTML).toContain('rgb(250, 204, 21)')
+  })
+
+  it('no visible text label in status slot for any status', () => {
+    ;(['pending', 'uploading', 'processing', 'completed', 'failed'] as const).forEach((status) => {
+      setupStore({
+        'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status, createdAt: 1000 },
+      })
+      const { unmount } = render(<QueuePanel />)
+      const item = screen.getByTestId('queue-item') as HTMLElement
+      const slot = item.querySelector('[data-testid="queue-item-status-slot"]') as HTMLElement | null
+      expect(slot).toBeInTheDocument()
+      expect(slot!.textContent?.trim()).toBe('')
+      unmount()
+    })
+  })
+
+  it('completed row green dot has glossy 3-stop radial gradient', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const dot = screen.getByTestId('queue-item-status-dot') as HTMLElement
+    expect(dot.style.background).toContain('radial-gradient')
+    expect(dot.style.background).toContain('rgb(134, 239, 172)')
+    expect(dot.style.background).toContain('rgb(22, 163, 74)')
+    expect(dot.style.background).toContain('rgb(20, 83, 45)')
+  })
+
+  it('failed row red dot has glossy 3-stop radial gradient', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'failed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const dots = Array.from(document.querySelectorAll('[data-testid="queue-item-status-dot"]')) as HTMLElement[]
+    const redDot = dots.find((d) => d.style.background?.includes('rgb(220, 38, 38)'))
+    expect(redDot).toBeInTheDocument()
+    expect(redDot!.style.background).toContain('radial-gradient')
+    expect(redDot!.style.background).toContain('rgb(252, 165, 165)')
+    expect(redDot!.style.background).toContain('rgb(220, 38, 38)')
+    expect(redDot!.style.background).toContain('rgb(127, 29, 29)')
   })
 
   it('shows spinner and progress bar during processing', () => {
