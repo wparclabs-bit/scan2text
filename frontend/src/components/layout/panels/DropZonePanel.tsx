@@ -32,7 +32,7 @@ export default function DropZonePanel() {
               <FileDropZone className="flex-1 min-h-0 w-full" />
             </div>
           </ScrollArea>
-          <p data-testid="dropzone-hint" className="text-xs text-muted-foreground text-center px-4 py-3 mt-auto relative z-10">
+          <p data-testid="dropzone-hint" className="text-xs font-bold text-[#1F150C] text-center px-4 py-3 mt-auto shrink-0 relative z-10">
             {t('dropzone.hint')}
           </p>
         </div>

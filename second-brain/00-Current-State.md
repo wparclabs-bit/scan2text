@@ -2,14 +2,14 @@
 
 - **Current Phase:** Phase 6 (Prototype & Demo Mode) — RECOVERY DONE
 
-- **Current Slice:** Slice 6.14f (Status Slot + BottomBar Pin + Preview Buttons + DropZone Fill)
+- **Current Slice:** Slice 6.14g (Forensics-First Live-Tree Fix)
 
 - **Next Slice:** Slice 20.6 (Share button)
 
 
 ## Frontend Baseline
 
-- **Tests:** 558/558 passing
+- **Tests:** 549/549 passing (33 files; deleted 9 ghost tests from orphaned DropZone.tsx + debug-drop.test.tsx)
 
 - **Typecheck:** PASS
 
@@ -44,6 +44,8 @@
 - [x] Slice 6.14e: Queue status restore + dropzone taste + card depth + bottombar centering (2026-08-07). QueuePanel: spinner bright yellow (#FACC15) inline style, glossy 3-stop radial-gradient green dot (#86EFAC→#16A34A→#14532D) and red dot (#FCA5A5→#DC2626→#7F1D1D) with translated tooltip, thin progress bar retained, viewport overflow-y auto+min-h-0. DropZonePanel: bg opacity 0.15 (was 0.25), backgroundSize single-value '100%' (not 'cover'), header font-bold text-[#1F150C]. depthStyles.ts: per-panel dark/light recipes — left white-highlight gradient + soft shadow, center warm overlay + strong shadow, right darkest overlay + deepest shadow; light mode white top-highlight 0.5-0.6 alpha + brown fade bottom. BottomStatusBar: h-[36px] flex items-center for vertical centering. Tests: 527 → 543 (+16).
 
 - [x] Slice 6.14f: Fixed status slot + bottombar pin + preview buttons + dropzone fill (2026-08-07). QueuePanel: fixed ~14px status slot always present after filename (grey dot pending #A8A29E/#78716C, yellow spinner processing/uploading #FACC15, green glossy completed, red glossy failed), no visible text labels in slot, tooltips retained, progress bar retained. BottomStatusBar: pinned with shrink-0, grid-cols-[1fr_auto_1fr] for centered telemetry, flex items-center for vertical centering. CommandCenterLayout: shell h-screen flex flex-col, main min-h-0. DropZonePanel: dashed area flex-1 min-h-0 w-full fills between header and hint. PreviewPanel: Copy/Open Folder buttons borderless transparent bg with caramel hover tint rgba(227,165,95,0.12). Tests: 543 → 558 (+15).
+
+- [x] Slice 6.14g: Forensics-first live-tree fix (2026-08-07). Proved via import-chain trace that QueuePanel.tsx and DropZonePanel.tsx are LIVE; DropZone.tsx and debug-drop.test.tsx are GHOST (not imported by app tree). Fixed DropZonePanel hint text: added font-bold + text-[#1F150C] + shrink-0. Deleted 3 ghost files (DropZone.tsx, DropZone.test.tsx, debug-drop.test.tsx). Tests: 558 → 549 (-9 ghost tests). Typecheck + build green.
 
 - [x] Slice 6.11: Calm theme — zinc layered surfaces (#09090b/#18181b/#27272a dark, #fafafa/#e4e4e7 light), Quantico @font-face with swap comment, font-display/font-body CSS vars + Tailwind fontFamily tokens, icon-only TopBar with shadcn Tooltip + i18n keys, rounded-xl card wrappers on DropZone/Queue/Preview panels, prose-base headings via prose-headings:font-display + purple prose-a links, BottomStatusBar font-display.
 
