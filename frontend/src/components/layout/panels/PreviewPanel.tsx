@@ -1,18 +1,23 @@
 import { useTranslation } from 'react-i18next'
 import { useScan2TextStore } from '@/stores/scan2text.store'
+import { usePreferenceStore } from '@/stores/preferencesStore'
 import MarkdownPreview from './MarkdownPreview'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
+import { getDepthStyle } from '@/lib/depthStyles'
 
 export default function PreviewPanel() {
   const { t } = useTranslation()
   const selectedJobId = useScan2TextStore((s) => s.selectedJobId)
   const jobs = useScan2TextStore((s) => s.jobs)
+  const theme = usePreferenceStore((s) => s.theme)
+  const depthStyle = getDepthStyle({ theme, panel: 'right' })
   const job = selectedJobId ? jobs[selectedJobId] : null
 
   if (!job) {
     return (
       <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
-        <div className="flex-1 surface-right depth-panel-right rounded-xl overflow-hidden flex flex-col min-w-0 box-border">
+        <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-w-0 box-border" style={depthStyle}>
           <p data-testid="preview-empty" className="text-sm text-muted-foreground text-center p-4">
             {t('preview.emptyState')}
           </p>
@@ -24,7 +29,7 @@ export default function PreviewPanel() {
   if (['pending', 'uploading', 'processing'].includes(job.status)) {
     return (
       <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
-        <div className="flex-1 surface-right depth-panel-right rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center p-4">
+        <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center p-4" style={depthStyle}>
           <p data-testid="preview-processing" className="text-sm text-muted-foreground animate-pulse text-center">
             {t('preview.processing')}
           </p>
@@ -36,7 +41,7 @@ export default function PreviewPanel() {
   if (job.status === 'failed') {
     return (
       <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
-        <div className="flex-1 surface-right depth-panel-right rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center gap-3 p-4">
+        <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center gap-3 p-4" style={depthStyle}>
           <p data-testid="preview-error" className="text-sm font-semibold text-destructive text-center">
             {t('preview.failed')}
           </p>
@@ -52,12 +57,13 @@ export default function PreviewPanel() {
 
   return (
     <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
-      <div className="flex-1 surface-right depth-panel-right rounded-xl flex flex-col min-w-0 box-border overflow-hidden">
+      <div className="flex-1 rounded-xl flex flex-col min-w-0 box-border overflow-hidden" style={depthStyle}>
         {/* Action Header - Only visible when job is completed */}
         {job.status === 'completed' && (
           <header
             data-testid="preview-action-header"
-            className="flex items-center justify-center gap-2 p-3 border-b border-border shrink-0 surface-action"
+            className="flex items-center justify-center gap-2 p-3 shrink-0"
+            style={{ backgroundColor: theme === 'dark' ? '#1F150C' : '#EFE9E3' }}
           >
             <button
               data-testid="preview-copy-btn"
@@ -93,9 +99,11 @@ export default function PreviewPanel() {
         )}
 
         {/* Markdown Preview - takes full width */}
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-          <MarkdownPreview markdown={job.resultMarkdown ?? job.markdownOutput ?? ''} />
-        </div>
+        <ScrollArea data-testid="preview-scroll-area" className="flex-1">
+          <div className="p-4">
+            <MarkdownPreview markdown={job.resultMarkdown ?? job.markdownOutput ?? ''} />
+          </div>
+        </ScrollArea>
       </div>
     </div>
   )

@@ -6,6 +6,7 @@ import { fileKind } from '@/lib/fileKind'
 import { useMemo, useState } from 'react'
 import { Spinner } from '@/components/ui/spinner'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { getDepthStyle } from '@/lib/depthStyles'
 import { FileImage, FileText } from 'lucide-react'
 
@@ -39,7 +40,9 @@ export default function QueuePanel() {
   return (
     <div data-testid="panel-queue" className="h-full">
       <div className="rounded-xl p-3 h-full flex flex-col gap-2 min-w-0 box-border overflow-hidden" style={depthStyle}>
-        {jobList.map((job) => {
+        <ScrollArea data-testid="queue-scroll-area" className="h-full">
+          <div className="min-h-0">
+            {jobList.map((job) => {
           const isSelected = selectedJobId === job.id
           const isRetryingThis = isRetrying === job.id
           const isActive = job.status === 'uploading' || job.status === 'processing'
@@ -153,7 +156,9 @@ export default function QueuePanel() {
               )}
             </div>
           )
-        })}
+            })}
+          </div>
+        </ScrollArea>
       </div>
     </div>
   )

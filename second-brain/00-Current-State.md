@@ -2,14 +2,14 @@
 
 - **Current Phase:** Phase 6 (Prototype & Demo Mode) — RECOVERY DONE
 
-- **Current Slice:** Slice 6.13b (Depth & Presence Pass)
+- **Current Slice:** Slice 6.14a (Literal Wordmark + Floating 34/60 Layout)
 
 - **Next Slice:** Slice 20.6 (Share button)
 
 
 ## Frontend Baseline
 
-- **Tests:** 472/472 passing
+- **Tests:** 521/521 passing
 
 - **Typecheck:** PASS
 
@@ -56,4 +56,8 @@
 - [x] Slice 6.13: Identity finale + Vite __dirname fix — TopBar identity chip with logo.png pictogram + live-text wordmark (scan + accent "2" + text) + DEMO badge; static SVG radiant rays in center panel only (zero CPU, pointer-events-none, aria-hidden); SettingsDialog locked demo mode Switch with 🔒 lock indicator; vite.config.ts + vite.test.config.ts __dirname → import.meta.dirname. New i18n keys: topbar.logoAlt, topbar.wordmarkScan/Two/Text, topbar.demoBadge, settings.demoModeSwitch, settings.locked. Tests: 442 → 459 (+17).
 
 - [x] Slice 6.13b: Depth & presence pass — TopBar separator line removed, header gets warm gradient + downward shadow; lockup chip redesigned as physical stamp tile (h-8 w-8 rounded-lg, warm gradient bg, inset highlight, outer shadow) replacing pill/border wrapper; wordmark gains tracking-wider; BottomBar separator line removed; all three panel cards gain depth utility classes (.depth-panel-left/center/right) with layered vertical gradient overlay (top-darker fade), inset top highlight, soft outer shadow; workspace container gets ambient warm radial glow (dark: 0.14 opacity accent, light: 0.04); DropZone dashed area stretched to w-full; ambient glow marker div added for testability. New CSS classes: .topbar-header, .chip-tile, .depth-panel-left, .depth-panel-center, .depth-panel-right, .workspace-container. Tests: 459 → 472 (+13).
+
+- [x] Slice 6.14a: Literal wordmark + floating 34/60 layout — Wordmark rendered as literal spans "scan"+"2"+"text" (no i18n indirection); color uses exact right-panel cream/ink token (#F2EBDD dark / #1F150C light). Layout rebuilt: workspace grid 34fr/60fr with 2% gutters and 2% padding; left column stacks dropzone (38% height, min-h 240px) + queue (flex-1); right column preview full-height. Overflow hygiene contract: grid wrappers min-w-0 without overflow-hidden; cards get overflow-hidden+min-w-0. Depth shadows tuned to gutters: 0 8px 20px -8px rgba(0,0,0,0.55) dark / rgba(31,21,12,0.22) light. Radiant rays move with queue card. Tests: 512 → 514 (+2).
+
+- [x] Slice 6.14b: ScrollAreas + file type icons — @radix-ui/react-scroll-area installed (new dep). shadcn-style ScrollArea component created at src/components/ui/scroll-area.tsx. Three regions wrapped: dropzone (data-testid="dropzone-scroll-area"), queue job list (data-testid="queue-scroll-area"), preview Markdown (data-testid="preview-scroll-area"). Queue + preview use h-full+min-h-0 chain for actual overflow scroll; dropzone present for future-proofing. Warm-styled thin scrollbars via CSS (caramel thumb dark #E3A55F / coffee light #92400E, 4px width, zero CPU idle). fileKind.ts already existed with 8 test cases covering all requirements. lucide-react FileImage/FileText glyphs already wired with data-testid="queue-icon-image" and "queue-icon-pdf". Regression test added: clicking completed job switches preview Markdown content. Tests: 514 → 521 (+7).
       

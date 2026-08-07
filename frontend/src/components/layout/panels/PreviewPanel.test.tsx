@@ -286,4 +286,34 @@ describe('PreviewPanel', () => {
       expect(toast.info).toHaveBeenCalledWith('📂 Demo Mode: In the real app, this opens your output folder!')
     })
   })
+
+  describe('Regression — clicking completed job switches preview content', () => {
+    it('switches Markdown preview content when selectedJobId changes to a different completed job', () => {
+      const jobs = {
+        'job-1': {
+          id: 'job-1',
+          fileName: 'first.png',
+          fileType: 'image/png',
+          status: 'completed',
+          resultMarkdown: '# First Document',
+        },
+        'job-2': {
+          id: 'job-2',
+          fileName: 'second.pdf',
+          fileType: 'application/pdf',
+          status: 'completed',
+          resultMarkdown: '# Second Document',
+        },
+      }
+      setupStore('job-1', jobs)
+      const { rerender } = render(<PreviewPanel />)
+      expect(screen.getByText('First Document')).toBeInTheDocument()
+      expect(screen.queryByText('Second Document')).not.toBeInTheDocument()
+
+      setupStore('job-2', jobs)
+      rerender(<PreviewPanel />)
+      expect(screen.getByText('Second Document')).toBeInTheDocument()
+      expect(screen.queryByText('First Document')).not.toBeInTheDocument()
+    })
+  })
 })

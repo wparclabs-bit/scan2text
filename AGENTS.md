@@ -203,7 +203,7 @@ Panels: src/components/layout/panels/DropZonePanel.tsx | QueuePanel.tsx | Previe
 Dropzone: src/components/dropzone/FileDropZone.tsx
 Store: src/stores/scan2text.store.ts
 Utils: src/lib/naming.ts
-UI primitives: src/components/ui/
+UI primitives: src/components/ui/ (button, card, dialog, input, label, spinner, tooltip, scroll-area)
 i18n: src/locales/en.json + src/locales/id.json
 Theme tokens: src/index.css + tailwind.config.js
 RULE: never guess paths. If a mapped file is missing, discover via Get-ChildItem. Never create a file at a guessed path.

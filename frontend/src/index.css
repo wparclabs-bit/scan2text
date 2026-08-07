@@ -255,9 +255,44 @@ body {
 }
 
 .dark .workspace-container {
-  background-image: radial-gradient(60% 50% at 50% 0%, hsl(var(--accent) / 0.14), transparent 70%);
+  background-image: radial-gradient(60% 50% at 50% 0%, hsl(var(--accent) / 0.16), transparent 70%);
 }
 
 .animate-shake {
   animation: shake 0.3s ease-in-out;
+}
+
+/* Warm-styled thin scrollbars — zero CPU at idle */
+.scrollbar {
+  display: flex;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.scrollbar[data-orientation='vertical'] {
+  flex-direction: column;
+  width: 4px;
+}
+
+.scrollbar[data-orientation='horizontal'] {
+  flex-direction: row;
+  height: 4px;
+}
+
+.thumb {
+  position: relative;
+  flex: 1;
+  background-color: transparent;
+  border-radius: 9999px;
+  transition: background-color 0.15s ease;
+  min-height: 24px;
+  min-width: 4px;
+}
+
+.dark .thumb:hover {
+  background-color: #E3A55F;
+}
+
+:not(.dark) .thumb:hover {
+  background-color: #92400E;
 }
