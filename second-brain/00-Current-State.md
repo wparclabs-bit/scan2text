@@ -4,7 +4,7 @@
 
 - **Current Slice:** Slice 6.15a (Manual & Vault Hygiene — ADR-004 + AGENTS.md rewrite, 2026-08-08)
 
-- **Next Slice:** Slice 6.15b (Author second-brain/02-QA/scan2text-phase6-manual-test.md)
+- **Next Slice:** CEO to RUN second-brain/02-QA/scan2text-phase6-manual-test.md (QA script authored in 6.15b)
 
 
 ## Frontend Baseline
