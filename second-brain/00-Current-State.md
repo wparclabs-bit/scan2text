@@ -2,14 +2,14 @@
 
 - **Current Phase:** Phase 6 (Prototype & Demo Mode) — RECOVERY DONE
 
-- **Current Slice:** Slice 6.14a (Literal Wordmark + Floating 34/60 Layout)
+- **Current Slice:** Slice 6.14d (Visual Hotfix — Brand Image + BottomBar + Viewport Lock)
 
 - **Next Slice:** Slice 20.6 (Share button)
 
 
 ## Frontend Baseline
 
-- **Tests:** 521/521 passing
+- **Tests:** 527/527 passing
 
 - **Typecheck:** PASS
 
@@ -38,6 +38,8 @@
 - [x] Slice 6.10: Thumbnail path fix — data-testid attributes added to img elements in PreviewPanel and QueuePanel for testability.
 
 - [x] Slice 6.10b: Recovery — fixed red test (removeJob cleanup > should call stopProgress on job removal) by mocking progressManager module in store test; @tailwindcss/typography declared; audit shows zero leftover thumbnail references.
+
+- [x] Slice 6.14d: Visual hotfix — TopBar brand image wordmark (text.png, alt="Scan2Text", h-34px), BottomBar rebuilt with centered telemetry + Share icon right, viewport lock via html/body overflow-hidden CSS, DropZone background image at 0.25 opacity, queue status dots + progress bars verified. Tests: 521 → 527 (+6).
 
 - [x] Slice 6.11: Calm theme — zinc layered surfaces (#09090b/#18181b/#27272a dark, #fafafa/#e4e4e7 light), Quantico @font-face with swap comment, font-display/font-body CSS vars + Tailwind fontFamily tokens, icon-only TopBar with shadcn Tooltip + i18n keys, rounded-xl card wrappers on DropZone/Queue/Preview panels, prose-base headings via prose-headings:font-display + purple prose-a links, BottomStatusBar font-display.
 
