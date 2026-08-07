@@ -248,3 +248,11 @@ RULE: never guess paths. If a mapped file is missing, discover via Get-ChildItem
 
 - Ancestor wrappers can silently defeat h-screen constraints; for kiosk-style desktop shells use fixed inset-0 so the viewport is the only sizing authority.
 - Content-sized containers make sibling panels grow with unrelated content (dropzone grew when jobs were added). minmax(0,fr) track sizing + min-h-0 everywhere prevents this.
+
+## Lessons Learned (Slice 6.14k)
+
+- fr grid tracks respect min-width:auto — always use minmax(0,fr) + min-w-0 on grid items or long filenames dictate layout and stretch columns.
+- Radix ScrollArea hides native scrollbars by design — mount <ScrollBar /> for visible affordance; wheel-only scrolling is a UX bug.
+- Radix scrollbar DOM uses data-orientation and data-state attributes, NOT data-radix-scroll-area-scrollbar. CSS selectors must target [data-radix-scroll-area-viewport] [data-orientation="vertical"].
+- jsdom does no layout math: Radix Presence component never mounts scrollbars without real overflow. Test scrollbar presence via source-level assertions, not DOM queries.
+- Light theme selector in this app is :not(.dark) — the app toggles .dark class on <html>, light is the default state.
