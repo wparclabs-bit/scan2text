@@ -237,3 +237,9 @@ RULE: never guess paths. If a mapped file is missing, discover via Get-ChildItem
 - Forensics-before-edit for twice-failed items: When a visual fix appears to fail repeatedly, run Phase A forensics FIRST — trace the import chain from App.tsx → Layout → Panel, grep for every matching component name, mark each LIVE vs GHOST, prove which file is actually served. Never edit source before proving the import tree.
 - Ghost deletion log: Orphaned components (DropZone.tsx not imported by app tree, only by its own test; debug-drop.test.tsx importing deleted ghost) cause TS build failures after deletion. Always grep for ALL consumers before deleting — including test files and debug scripts. Delete ghost component + ghost test + any debug harness in one atomic sweep.
 - Last-slice-didn't-touch-source pattern: git show --stat HEAD can reveal the previous slice only touched tests/docs, meaning source changes landed in an earlier slice. Check git log -5 and individual commit stats before assuming code is missing.
+
+## Lessons Learned (Slice 6.14h)
+
+- Radix ScrollArea viewport child is display:table; it defeats min-w-0 truncation and percentage heights. Neutralize via CSS override: `[data-radix-scroll-area-viewport] > div { display: block !important; min-width: 0 !important; height: auto !important; }`.
+- jsdom does no layout math: class-presence tests cannot catch layout bugs. CEO screenshot is the acceptance test for layout-critical UI.
+- Path discovery before edit: repo nests the Vite app under frontend/; i18n is frontend/src/locales/, not src/i18n/. "File not found" is a lookup task, never a stop reason.
