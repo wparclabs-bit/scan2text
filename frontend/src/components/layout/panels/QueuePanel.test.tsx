@@ -188,4 +188,14 @@ describe('QueuePanel status dots and retry', () => {
     const pdfIcon = document.querySelector('[data-testid="queue-item-pdf-icon"]')
     expect(pdfIcon).toBeInTheDocument()
   })
+
+  it('applies truncate class to filename element for long spaceless names', () => {
+    const longName = 'a'.repeat(60)
+    setupStore({
+      'job-1': { id: 'job-1', fileName: longName, fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const nameEl = screen.getByTestId('queue-item-name') as HTMLElement
+    expect(nameEl).toHaveClass('truncate')
+  })
 })

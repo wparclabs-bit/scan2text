@@ -1,6 +1,6 @@
 # Functional Requirements — Scan2Text MVP
 
-Version: 1.4
+Version: 1.5
 Date: 2026-08-07
 Status: Approved for Implementation
 
@@ -13,6 +13,7 @@ Status: Approved for Implementation
 | 1.2 | 2026-06-22 | Removed in-app editing (FR-07), updated output naming |
 | 1.3 | 2026-08-06 | Integrated output naming addendum (05) into FR-08. Updated FR-02 to Command Center layout. Added WEBP to file types. Reduced max file size to 50MB. Added file validation with toast. Added fake progress, auto-select, background re-poll to FR-04. Added FR-13 (i18n) and FR-14 (Theme). Updated model to GLM-OCR 0.9B. |
 | 1.4 | 2026-08-07 | Beautify-phase UI deltas (CEO-approved): FR-02 panel ratios 20/35/45 → 20/20/60; right panel renders Markdown full-width (image thumbnail + PDF placeholder removed from MVP, moved to Phase 2 compare-toggle candidate); queue Remove button removed from MVP scope; queue status indicators refined (spinner while processing, green/red status dot on completed/failed, thin fake progress bar retained); FR-03 file types aligned to locked set PNG/JPG/JPEG/WEBP/PDF (TIFF/BMP removed); FR-14 final visual styling locked (layered zinc surfaces + purple accent, Quantico display font + readable body font, rounded-xl calm cards, icon-only top bar with tooltips, static zero-CPU radiant-lines background in center panel). |
+| 1.5 | 2026-08-07 | Visual identity finalized (CEO-approved): coffee & paper palette replaces zinc+purple (DARK: bg #080502, left #E1DCC9 with ink text, center #412D15 with cream text, right #1F150C with cream text; LIGHT: bg #F9F8F6, left #EFE9E3, center #D9CFC7, right #C9B59C, all dark text; accent #E3A55F dark / #92400E light; purple retired; panel card borders removed; depth via vertical gradients + inset top highlight + soft shadows + warm glow). Top bar identity: logo pictogram chip + live-text "scan2text" wordmark (font-display, "2" in accent) + DEMO badge. Radiant-lines background recolored to warm cream/caramel. |
 
 ## 9. Functional Requirements
 
@@ -38,7 +39,7 @@ On first launch, if no settings exist, the app must guide the user through minim
 ### FR-02: Main Application Layout (Command Center)
 
 **Description:**
-The app uses a "Command Center" layout — a 3-panel dashboard with a bottom status bar. The design is minimalist, dark-mode ready, high-contrast (inspired by Linear/Vercel).
+The app uses a "Command Center" layout — a 3-panel dashboard with a bottom status bar. The design is minimalist, dark-mode ready, high-contrast, with the "coffee & paper" warm identity.
 
 **Layout Structure:**
 
@@ -48,7 +49,7 @@ The app uses a "Command Center" layout — a 3-panel dashboard with a bottom sta
 | Center Panel | 20% | Queue table (file type icon, file name, status, progress bar) |
 | Right Panel | 60% | Live Preview (rendered Markdown full-width, read-only) |
 | Bottom Bar | Full width | Worker status, RAM usage, version |
-| Top Bar | Full width | App title, theme toggle, language toggle, settings icon — icon-only buttons with tooltips |
+| Top Bar | Full width | Logo pictogram chip + live-text "scan2text" wordmark + DEMO badge; theme/language/settings icon-only buttons with tooltips |
 
 **Acceptance Criteria:**
 
@@ -56,8 +57,8 @@ The app uses a "Command Center" layout — a 3-panel dashboard with a bottom sta
 - Desktop-only for MVP. No responsive/mobile layout.
 - Panel widths are fixed (not resizable).
 - Top Bar contains:
-  - App title/logo on the left: "📝 Scan2Text"
-  - Theme toggle button (🌙/️) on the right — icon-only with tooltip
+  - Logo on the left: pictogram chip (`frontend\Images\logo.png`, rounded paper chip) + live-text "scan2text" wordmark (font-display, foreground color, "2" in accent color) + DEMO badge
+  - Theme toggle button (🌙/☀️) on the right — icon-only with tooltip
   - Language toggle button (🌐 EN/ID) on the right — icon-only with tooltip
   - Settings icon (⚙️) on the right — icon-only with tooltip
 - Left Panel (Drop Zone):
@@ -253,43 +254,10 @@ Never overwrite an existing file. Never merge multiple inputs into one output fi
 
 **After processing:**
 - UI shows saved Markdown file path.
-- UI should allow opening the output folder.
-- If output directory is not writable, mark job as failed and show clear error.
-
-### FR-09: Settings Menu
-
-**Description:**
-Users can change basic app settings.
-
-**Acceptance Criteria:**
-- Settings opens from gear icon (⚙️) in top-right of top bar.
-- Settings must include:
-  - Output directory
-  - Maximum PDF pages
-  - CPU threads
-  - Check for updates on startup
-  - Language (English / Indonesian)
-  - Theme (Dark / Light)
-- Settings persist to `settings/settings.json`.
-- Invalid settings must show validation error.
-- Changed output directory applies to future output files.
-- Settings screen must be simple and non-technical.
-- Default settings:
-
-```json
-{
-  "output_dir": "",
-  "max_pdf_pages": 20,
-  "cpu_threads": 0,
-  "check_updates_on_startup": true,
-  "language": "auto",
-  "theme": "dark"
-}
-```
 
 - `cpu_threads = 0` means automatic.
 - `language = "auto"` means auto-detect browser language, fallback to English.
-
+  
 ### FR-10: Update Check
 
 **Description:** The app checks for updates using GitHub-hosted `version.json`.
@@ -377,14 +345,13 @@ Users can change basic app settings.
 - Available themes: Dark, Light.
 - Theme toggle: Located in top bar. Shows 🌙 icon in dark mode, ☀️ icon in light mode. Icon-only with tooltip.
 - Persistence: Theme preference saved to localStorage. Persists across app restarts.
-- Design language: Minimalist, high-contrast, inspired by Linear/Vercel.
-    - Layered zinc surfaces with locked purple accent: `#aa3bff` (light) / `#c084fc` (dark).
+- Design language: "coffee & paper" warm identity — minimalist, high-contrast, paper-on-desk minimalism.
+    - DARK: background #080502; left card #E1DCC9 with ink text #1F150C; center card #412D15 with cream text #F2EBDD; right card #1F150C with cream text; accent #E3A55F (caramel).
+    - LIGHT: background #F9F8F6; left #EFE9E3; center #D9CFC7; right #C9B59C, all dark text; accent #92400E (coffee).
+    - Purple retired 2026-08-07. DEMO badge amber retained. Green/red status dots retained.
+    - No panel card borders; depth via vertical gradients + inset top highlight + soft shadows + warm glow.
     - Quantico display font for title, headings, badges, metrics; readable body font for paragraphs and UI text (swap-friendly via single CSS variable).
-    - Rounded-xl calm cards for panels; icon-only top bar with tooltips.
-    - Static zero-CPU radiant-lines background in center panel.
-- Dark mode: Dark backgrounds, light text, subtle borders.
-- Light mode: Light backgrounds, dark text, subtle borders.
+    - Icon-only top bar buttons with tooltips.
+    - Static zero-CPU radiant-lines background in center panel (warm cream/caramel, low opacity, behind content).
 - Theme change applies immediately without page reload.
 - All UI components must support both themes.
-
-**Delta summary:** ratios 20/20/60 · full-width Markdown · spinner + status dots · Remove button gone · TIFF/BMP dropped · styling locked in FR-14.
