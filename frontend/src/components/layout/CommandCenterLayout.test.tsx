@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import CommandCenterLayout from './CommandCenterLayout'
 
 describe('CommandCenterLayout grid overflow hygiene', () => {
@@ -11,5 +11,40 @@ describe('CommandCenterLayout grid overflow hygiene', () => {
       expect(child).toHaveClass('min-w-0')
       expect(child).toHaveClass('overflow-hidden')
     })
+  })
+})
+
+describe('CommandCenterLayout radiant rays', () => {
+  it('center panel contains decorative radiant rays element', () => {
+    render(<CommandCenterLayout />)
+    expect(screen.getByTestId('center-radiant-rays')).toBeInTheDocument()
+  })
+
+  it('radiant rays element is inside center panel only', () => {
+    render(<CommandCenterLayout />)
+    const rays = document.querySelectorAll('[data-testid="center-radiant-rays"]')
+    expect(rays).toHaveLength(1)
+  })
+
+  it('radiant rays has aria-hidden="true"', () => {
+    render(<CommandCenterLayout />)
+    expect(screen.getByTestId('center-radiant-rays')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('radiant rays has pointer-events-none', () => {
+    render(<CommandCenterLayout />)
+    expect(screen.getByTestId('center-radiant-rays')).toHaveClass('pointer-events-none')
+  })
+
+  it('radiant rays has data-state="static"', () => {
+    render(<CommandCenterLayout />)
+    expect(screen.getByTestId('center-radiant-rays')).toHaveAttribute('data-state', 'static')
+  })
+
+  it('radiant rays does not use animate classes', () => {
+    render(<CommandCenterLayout />)
+    const rays = screen.getByTestId('center-radiant-rays')
+    const classList = rays.className
+    expect(classList).not.toMatch(/\banimate-\w/)
   })
 })

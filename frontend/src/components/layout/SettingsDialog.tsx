@@ -4,6 +4,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
+function LockedSwitch() {
+  return (
+    <div
+      data-testid="settings-demo-mode-switch"
+      aria-disabled="true"
+      role="switch"
+      className="relative inline-flex h-6 w-11 items-center rounded-full bg-muted cursor-not-allowed opacity-60"
+    >
+      <span className="inline-block h-4 w-4 transform rounded-full bg-muted-foreground transition-transform" />
+    </div>
+  )
+}
+
 interface SettingsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -43,6 +56,19 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
               <option value="dark">Dark</option>
               <option value="light">Light</option>
             </select>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="demo-mode" className="flex items-center gap-2 cursor-default">
+              {t('settings.demoModeSwitch')}
+              <span
+                data-testid="settings-lock-indicator"
+                title={t('settings.locked')}
+                className="text-muted-foreground text-xs"
+              >
+                🔒 {t('settings.locked')}
+              </span>
+            </Label>
+            <LockedSwitch />
           </div>
         </div>
 

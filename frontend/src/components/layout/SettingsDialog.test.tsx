@@ -74,4 +74,26 @@ describe('SettingsDialog', () => {
     )
     expect(container.querySelector('[data-testid="settings-dialog"]')).not.toBeInTheDocument()
   })
+
+  it('renders a locked demo mode switch', () => {
+    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
+    expect(screen.getByTestId('settings-demo-mode-switch')).toBeInTheDocument()
+  })
+
+  it('demo mode switch is disabled', () => {
+    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
+    const sw = screen.getByTestId('settings-demo-mode-switch') as HTMLElement
+    expect(sw).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('renders lock emoji indicator with data-testid', () => {
+    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
+    expect(screen.getByTestId('settings-lock-indicator')).toBeInTheDocument()
+  })
+
+  it('lock indicator has accessible translated label', () => {
+    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
+    const lock = screen.getByTestId('settings-lock-indicator')
+    expect(lock).toHaveAttribute('title', 'Locked in demo mode')
+  })
 })

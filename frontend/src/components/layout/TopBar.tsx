@@ -4,6 +4,7 @@ import { IS_DEMO_MODE } from '../../lib/api'
 import { Settings, Moon, Sun, Globe } from 'lucide-react'
 import { useState } from 'react'
 import SettingsDialog from './SettingsDialog'
+import logoUrl from '../../../Images/logo.png'
 import {
   Tooltip,
   TooltipTrigger,
@@ -24,13 +25,24 @@ export default function TopBar() {
       <>
         <header data-testid="top-bar" className="flex items-center justify-between px-4 py-2 border-b bg-background">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold font-display">{t('app.title')}</h1>
+            <div
+              data-testid="topbar-logo-chip"
+              aria-label={t('topbar.logoAlt')}
+              className="flex items-center gap-2 rounded-md overflow-hidden bg-card border border-border"
+            >
+              <img src={logoUrl} alt="" className="w-6 h-6 object-contain" />
+              <span data-testid="topbar-wordmark" className="text-lg font-semibold font-display">
+                <span>{t('topbar.wordmarkScan')}</span>
+                <span data-testid="topbar-wordmark-accent" className="text-accent">{t('topbar.wordmarkTwo')}</span>
+                <span>{t('topbar.wordmarkText')}</span>
+              </span>
+            </div>
             {IS_DEMO_MODE && (
               <span
-                data-testid="demo-badge"
+                data-testid="topbar-demo-badge"
                 className="bg-amber-500/20 text-amber-500 border border-amber-500/50 px-2 py-0.5 rounded-full text-xs font-bold font-display"
               >
-                {t('demo.badge')}
+                {t('topbar.demoBadge')}
               </span>
             )}
           </div>
