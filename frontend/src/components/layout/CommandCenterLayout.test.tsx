@@ -18,6 +18,39 @@ describe('Viewport lock', () => {
   })
 })
 
+describe('Shell structure — flex-col pin', () => {
+  it('shell is h-screen flex flex-col', () => {
+    render(<CommandCenterLayout />)
+    const shell = document.querySelector('.h-screen.flex.flex-col') as HTMLElement | null
+    expect(shell).toBeInTheDocument()
+  })
+
+  it('main has min-h-0 for proper flex shrink', () => {
+    render(<CommandCenterLayout />)
+    const main = document.querySelector('main') as HTMLElement | null
+    expect(main).toBeInTheDocument()
+    expect(main).toHaveClass('min-h-0')
+  })
+
+  it('bottom bar has shrink-0 class', () => {
+    render(<CommandCenterLayout />)
+    const bar = screen.getByTestId('bottom-bar') as HTMLElement
+    expect(bar).toHaveClass('shrink-0')
+  })
+
+  it('bottom bar uses grid-cols-[1fr_auto_1fr] for centered telemetry', () => {
+    render(<CommandCenterLayout />)
+    const bar = screen.getByTestId('bottom-bar') as HTMLElement
+    expect(bar.innerHTML).toContain('grid-cols-')
+  })
+
+  it('bottom bar items are vertically centered with flex items-center', () => {
+    render(<CommandCenterLayout />)
+    const bar = screen.getByTestId('bottom-bar') as HTMLElement
+    expect(bar).toHaveClass('items-center')
+  })
+})
+
 describe('CommandCenterLayout grid overflow hygiene', () => {
   it('grid child wrappers carry min-w-0 but not overflow-hidden', () => {
     render(<CommandCenterLayout />)

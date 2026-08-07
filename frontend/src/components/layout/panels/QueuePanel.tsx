@@ -99,13 +99,17 @@ export default function QueuePanel() {
                   </div>
                 )}
               </div>
+              <div
+                data-testid="queue-item-status-slot"
+                className="w-[14px] shrink-0 flex items-center justify-center"
+              >
                 {job.status === 'completed' && (
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span
                           data-testid="queue-item-status-dot"
-                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          className="w-2.5 h-2.5 rounded-full shrink-0 block"
                           style={{ background: 'radial-gradient(circle at 30% 30%, #86EFAC, #16A34A 60%, #14532D)' }}
                         />
                       </TooltipTrigger>
@@ -121,7 +125,7 @@ export default function QueuePanel() {
                       <TooltipTrigger asChild>
                         <span
                           data-testid="queue-item-status-dot"
-                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          className="w-2.5 h-2.5 rounded-full shrink-0 block"
                           style={{ background: 'radial-gradient(circle at 30% 30%, #FCA5A5, #DC2626 60%, #7F1D1D)' }}
                         />
                       </TooltipTrigger>
@@ -131,14 +135,31 @@ export default function QueuePanel() {
                     </Tooltip>
                   </TooltipProvider>
                 )}
-              {(job.status === 'pending' || job.status === 'uploading' || job.status === 'processing') && (
-                <span
-                  data-testid="queue-item-status"
-                  className="text-xs text-muted-foreground capitalize shrink-0"
-                >
-                  {t(`queue.status.${job.status}`)}
-                </span>
-              )}
+                {(job.status === 'pending' || job.status === 'uploading' || job.status === 'processing') && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        {isActive ? (
+                          <Spinner
+                            data-testid="queue-item-status-dot"
+                            className="size-3.5"
+                            style={{ color: '#FACC15' }}
+                          />
+                        ) : (
+                          <span
+                            data-testid="queue-item-status-dot"
+                            className="w-2.5 h-2.5 rounded-full shrink-0 block"
+                            style={{ background: theme === 'dark' ? '#A8A29E' : '#78716C' }}
+                          />
+                        )}
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="translate-y-[-2px]">
+                        <p>{t(`queue.status.${job.status}`)}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
               {job.status === 'failed' && (
                 <button
                   data-testid="queue-item-retry"

@@ -25,33 +25,35 @@ export default function BottomStatusBar() {
   }
 
   return (
-    <footer data-testid="bottom-bar" className="px-4 py-1 text-sm text-muted-foreground font-display h-[36px] flex items-center">
-      <div className="flex items-center justify-between w-full">
+    <footer data-testid="bottom-bar" className="px-4 py-1 text-sm text-muted-foreground font-display h-[36px] flex items-center shrink-0">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center w-full">
         <div />
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-center gap-4">
           <span>{t('bottomBar.workerLabel', { status: workerStatus })}</span>
           <span className="h-px w-px bg-border" aria-hidden="true" />
           <span>{t('bottomBar.ramUsage')}</span>
           <span className="h-px w-px bg-border" aria-hidden="true" />
           <span>{VERSION}</span>
         </div>
-        <TooltipProvider delayDuration={200}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                data-testid="share-button"
-                onClick={handleShare}
-                aria-label={t('actions.shareTooltip')}
-                className="inline-flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <Share className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              <p>{t('actions.shareTooltip')}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="flex items-center justify-end">
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  data-testid="share-button"
+                  onClick={handleShare}
+                  aria-label={t('actions.shareTooltip')}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <Share className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>{t('actions.shareTooltip')}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
     </footer>
   )

@@ -8,7 +8,7 @@ export default function CommandCenterLayout() {
   return (
     <div className="h-screen flex flex-col bg-background">
       <TopBar />
-      <main className="flex-1 h-full grid grid-cols-[34fr_60fr] gap-[2%] p-[2%] workspace-container">
+      <main className="flex-1 min-h-0 h-full grid grid-cols-[34fr_60fr] gap-[2%] p-[2%] workspace-container">
         <div className="h-full min-w-0 flex flex-col gap-[2%]">
           <div className="h-[38%] min-h-[240px] min-w-0">
             <DropZonePanel />

@@ -6,9 +6,10 @@ import { useScan2TextStore } from '@/stores/scan2text.store'
 
 interface FileDropZoneProps {
   onFileAdd?: (fileName: string) => void
+  className?: string
 }
 
-export default function FileDropZone({ onFileAdd }: FileDropZoneProps) {
+export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps) {
   const [state, setState] = useState<'idle' | 'drag-over' | 'error'>('idle')
   const inputRef = useRef<HTMLInputElement>(null)
   const addJob = useScan2TextStore((s) => s.addJob)
@@ -103,7 +104,7 @@ export default function FileDropZone({ onFileAdd }: FileDropZoneProps) {
     <div
       data-testid="dropzone"
       data-state={state}
-      className={`w-full flex-1 flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+      className={`${className ?? 'w-full flex-1 flex flex-col items-center justify-center gap-2 p-4'} border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
         state === 'drag-over'
           ? 'border-primary bg-primary/10'
           : state === 'error'

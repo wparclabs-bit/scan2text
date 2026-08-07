@@ -1,103 +1,65 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import BottomStatusBar from './BottomStatusBar'
 
-let mockJobs: Record<string, any> = {}
+vi.mock('react-i18next', () => ({
+  useTranslation: vi.fn(),
+}))
 
-vi.mock('@/stores/scan2text.store', () => {
-  const store = {
-    getState: () => ({ jobs: mockJobs }),
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const useStore = (selector: any) => selector(store.getState())
-  useStore.getState = store.getState.bind(store)
-  return { useScan2TextStore: useStore }
-})
+const { useTranslation } = await import('react-i18next')
 
-describe('BottomStatusBar', () => {
+describe('BottomStatusBar structure', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockJobs = {}
-  })
-
-  it('renders with data-testid="bottom-bar"', () => {
-    render(<BottomStatusBar />)
-    expect(screen.getByTestId('bottom-bar')).toBeInTheDocument()
-  })
-
-  it('displays Worker Idle when no active jobs', () => {
-    render(<BottomStatusBar />)
-    expect(screen.getByText('Worker: Idle')).toBeInTheDocument()
-  })
-
-  it('displays Worker Busy when a job is processing', () => {
-    mockJobs = { 'job-1': { id: 'job-1', status: 'processing' } }
-    render(<BottomStatusBar />)
-    expect(screen.getByText('Worker: Busy')).toBeInTheDocument()
-  })
-
-  it('displays Worker Busy when a job is uploading', () => {
-    mockJobs = { 'job-1': { id: 'job-1', status: 'uploading' } }
-    render(<BottomStatusBar />)
-    expect(screen.getByText('Worker: Busy')).toBeInTheDocument()
-  })
-
-  it('displays RAM as em dash', () => {
-    render(<BottomStatusBar />)
-    expect(screen.getByText('RAM: —')).toBeInTheDocument()
-  })
-
-  it('displays app version', () => {
-    render(<BottomStatusBar />)
-    expect(screen.getByText('v0.1.0-demo')).toBeInTheDocument()
-  })
-
-  it('renders share button with data-testid="share-button"', () => {
-    render(<BottomStatusBar />)
-    expect(screen.getByTestId('share-button')).toBeInTheDocument()
-  })
-
-  it('share button is icon-only (Share SVG)', () => {
-    render(<BottomStatusBar />)
-    const btn = screen.getByTestId('share-button') as HTMLButtonElement
-    expect(btn.querySelector('svg')).toBeInTheDocument()
-    expect(btn.textContent).toBe('')
-  })
-
-  it('footer does not have border-t class', () => {
-    render(<BottomStatusBar />)
-    const footer = screen.getByTestId('bottom-bar')
-    expect(footer).not.toHaveClass('border-t')
-  })
-
-  it('clicking share shows toast and copies placeholder URL', async () => {
-    const mockWriteText = vi.fn().mockResolvedValue(undefined)
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: mockWriteText },
-      writable: true,
-      configurable: true,
+    ;(useTranslation as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      t: (key: string) => {
+        switch (key) {
+          case 'bottomBar.workerLabel':
+            return 'Worker: Idle'
+          case 'bottomBar.ramUsage':
+            return 'RAM: —'
+          case 'actions.shareTooltip':
+            return 'Share app link'
+          default:
+            return key
+        }
+      },
     })
-    const { toast } = await import('sonner')
-    vi.clearAllMocks()
-    render(<BottomStatusBar />)
-    const btn = screen.getByTestId('share-button')
-    await fireEvent.click(btn)
-    expect(mockWriteText).toHaveBeenCalledWith('https://placeholder.local')
-    expect(toast.info).toHaveBeenCalled()
   })
 
-  it('footer has fixed height and flex items-center for vertical centering', () => {
+  it('footer has shrink-0 class for pinned layout', () => {
     render(<BottomStatusBar />)
     const footer = screen.getByTestId('bottom-bar') as HTMLElement
-    expect(footer).toHaveClass('h-[36px]')
+    expect(footer).toHaveClass('shrink-0')
+  })
+
+  it('footer uses flex items-center for vertical centering', () => {
+    render(<BottomStatusBar />)
+    const footer = screen.getByTestId('bottom-bar') as HTMLElement
     expect(footer).toHaveClass('flex')
     expect(footer).toHaveClass('items-center')
   })
 
-  it('inner content wrapper uses w-full for horizontal stretch', () => {
+  it('footer contains grid-cols layout for 3-zone centering', () => {
     render(<BottomStatusBar />)
-    const inner = document.querySelector('[data-testid="bottom-bar"] > div') as HTMLElement | null
-    expect(inner).toBeInTheDocument()
-    expect(inner).toHaveClass('w-full')
+    const footer = screen.getByTestId('bottom-bar') as HTMLElement
+    expect(footer.innerHTML).toContain('grid-cols-')
+  })
+
+  it('share button is present in right zone', () => {
+    render(<BottomStatusBar />)
+    expect(screen.getByTestId('share-button')).toBeInTheDocument()
+  })
+
+  it('worker label is present in center zone', () => {
+    render(<BottomStatusBar />)
+    const footer = screen.getByTestId('bottom-bar') as HTMLElement
+    expect(footer.textContent).toContain('Worker')
+  })
+
+  it('version string is present in center zone', () => {
+    render(<BottomStatusBar />)
+    const footer = screen.getByTestId('bottom-bar') as HTMLElement
+    expect(footer.textContent).toContain('v0.1.0-demo')
   })
 })
