@@ -2,14 +2,14 @@
 
 - **Current Phase:** Phase 6 (Prototype & Demo Mode) — RECOVERY DONE
 
-- **Current Slice:** Slice 6.12f (Overflow Hygiene — min-w-0 + truncate)
+- **Current Slice:** Slice 6.13b (Depth & Presence Pass)
 
-- **Next Slice:** Slice 6.13 (Identity Slice)
+- **Next Slice:** Slice 20.6 (Share button)
 
 
 ## Frontend Baseline
 
-- **Tests:** 442/442 passing
+- **Tests:** 472/472 passing
 
 - **Typecheck:** PASS
 
@@ -52,4 +52,8 @@
 - [x] Slice 6.12e: Depth pass — dark background warmed to #080502. All three panel cards + action header: longhand background-color + background-image (vertical gradient, ~12% lighter top stop), box-shadow (dark: 0 12px 32px -12px rgba(0,0,0,0.7)+inset highlight; light: 0 12px 32px -14px rgba(31,21,12,0.28)+inset highlight), warm radial glow dark-only. Border-border removed from all three panel cards in both themes. Dashed drop-target border and bar hairlines retained. Palette-lock test extended with depth recipe checks + no-border-class assertions.
 
 - [x] Slice 6.12f: Overflow hygiene — CommandCenterLayout grid children get min-w-0 overflow-hidden so columns never expand past 20/20/60. QueuePanel filename element already had truncate+min-w-0 (verified). MarkdownPreview article gets min-w-0 break-words so long tokens inside Markdown can't push the right panel. Regression tests: CommandCenterLayout grid child class check + QueuePanel 60-char spaceless name truncate assertion.
+
+- [x] Slice 6.13: Identity finale + Vite __dirname fix — TopBar identity chip with logo.png pictogram + live-text wordmark (scan + accent "2" + text) + DEMO badge; static SVG radiant rays in center panel only (zero CPU, pointer-events-none, aria-hidden); SettingsDialog locked demo mode Switch with 🔒 lock indicator; vite.config.ts + vite.test.config.ts __dirname → import.meta.dirname. New i18n keys: topbar.logoAlt, topbar.wordmarkScan/Two/Text, topbar.demoBadge, settings.demoModeSwitch, settings.locked. Tests: 442 → 459 (+17).
+
+- [x] Slice 6.13b: Depth & presence pass — TopBar separator line removed, header gets warm gradient + downward shadow; lockup chip redesigned as physical stamp tile (h-8 w-8 rounded-lg, warm gradient bg, inset highlight, outer shadow) replacing pill/border wrapper; wordmark gains tracking-wider; BottomBar separator line removed; all three panel cards gain depth utility classes (.depth-panel-left/center/right) with layered vertical gradient overlay (top-darker fade), inset top highlight, soft outer shadow; workspace container gets ambient warm radial glow (dark: 0.14 opacity accent, light: 0.04); DropZone dashed area stretched to w-full; ambient glow marker div added for testability. New CSS classes: .topbar-header, .chip-tile, .depth-panel-left, .depth-panel-center, .depth-panel-right, .workspace-container. Tests: 459 → 472 (+13).
       

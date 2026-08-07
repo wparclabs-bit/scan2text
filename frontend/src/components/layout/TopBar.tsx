@@ -23,15 +23,15 @@ export default function TopBar() {
   return (
     <TooltipProvider delayDuration={200}>
       <>
-        <header data-testid="top-bar" className="flex items-center justify-between px-4 py-2 border-b bg-background">
-          <div className="flex items-center gap-2">
+        <header data-testid="top-bar" className="flex items-center justify-between px-4 py-2 bg-background topbar-header">
+          <div className="flex items-center gap-[10px]">
             <div
               data-testid="topbar-logo-chip"
               aria-label={t('topbar.logoAlt')}
-              className="flex items-center gap-2 rounded-md overflow-hidden bg-card border border-border"
+              className="chip-tile flex items-center"
             >
               <img src={logoUrl} alt="" className="w-6 h-6 object-contain" />
-              <span data-testid="topbar-wordmark" className="text-lg font-semibold font-display">
+              <span data-testid="topbar-wordmark" className="text-lg font-semibold font-display tracking-wider">
                 <span>{t('topbar.wordmarkScan')}</span>
                 <span data-testid="topbar-wordmark-accent" className="text-accent">{t('topbar.wordmarkTwo')}</span>
                 <span>{t('topbar.wordmarkText')}</span>

@@ -103,7 +103,7 @@ export default function FileDropZone({ onFileAdd }: FileDropZoneProps) {
     <div
       data-testid="dropzone"
       data-state={state}
-      className={`flex-1 flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+      className={`w-full flex-1 flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
         state === 'drag-over'
           ? 'border-primary bg-primary/10'
           : state === 'error'

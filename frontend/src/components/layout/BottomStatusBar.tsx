@@ -4,7 +4,7 @@ export default function BottomStatusBar() {
   const { t } = useTranslation()
 
   return (
-    <footer data-testid="bottom-bar" className="px-4 py-1 border-t text-sm text-muted-foreground font-display">
+    <footer data-testid="bottom-bar" className="px-4 py-1 text-sm text-muted-foreground font-display">
       <div className="flex items-center justify-between gap-4">
         <span>{t('bottomBar.workerIdle')}</span>
         <span className="h-px w-px bg-border" aria-hidden="true" />

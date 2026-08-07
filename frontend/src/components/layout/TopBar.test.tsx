@@ -88,4 +88,24 @@ describe('TopBar', () => {
     const logoChip = screen.getByTestId('topbar-logo-chip')
     expect(logoChip).toHaveAttribute('aria-label', 'Scan2Text logo')
   })
+
+  it('header does not have border-b class', () => {
+    render(<TopBar />)
+    const header = screen.getByTestId('top-bar')
+    expect(header).not.toHaveClass('border-b')
+  })
+
+  it('lockup chip does not have pill/border wrapper classes', () => {
+    render(<TopBar />)
+    const chip = screen.getByTestId('topbar-logo-chip')
+    expect(chip).not.toHaveClass('border')
+    expect(chip).not.toHaveClass('bg-card')
+    expect(chip).toHaveClass('chip-tile')
+  })
+
+  it('wordmark has tracking class', () => {
+    render(<TopBar />)
+    const wordmark = screen.getByTestId('topbar-wordmark')
+    expect(wordmark).toHaveClass('tracking-wider')
+  })
 })

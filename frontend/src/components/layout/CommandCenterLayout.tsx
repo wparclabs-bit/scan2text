@@ -8,11 +8,12 @@ export default function CommandCenterLayout() {
   return (
     <div className="h-screen flex flex-col bg-background">
       <TopBar />
-      <main className="flex-1 h-full grid grid-cols-[2fr_2fr_6fr] overflow-hidden p-3 gap-3">
+      <main className="flex-1 h-full grid grid-cols-[2fr_2fr_6fr] overflow-hidden p-3 gap-3 workspace-container">
         <div className="h-full min-w-0 overflow-hidden">
           <DropZonePanel />
         </div>
         <div className="relative h-full min-w-0 overflow-hidden" data-testid="center-panel">
+          <div data-testid="ambient-glow" aria-hidden="true" data-state="static" className="pointer-events-none absolute inset-0" />
           <div
             data-testid="center-radiant-rays"
             aria-hidden="true"

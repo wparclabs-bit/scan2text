@@ -12,7 +12,7 @@ export default function PreviewPanel() {
   if (!job) {
     return (
       <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
-        <div className="flex-1 surface-right rounded-xl overflow-hidden flex flex-col min-w-0 box-border">
+        <div className="flex-1 surface-right depth-panel-right rounded-xl overflow-hidden flex flex-col min-w-0 box-border">
           <p data-testid="preview-empty" className="text-sm text-muted-foreground text-center p-4">
             {t('preview.emptyState')}
           </p>
@@ -24,7 +24,7 @@ export default function PreviewPanel() {
   if (['pending', 'uploading', 'processing'].includes(job.status)) {
     return (
       <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
-        <div className="flex-1 surface-right rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center p-4">
+        <div className="flex-1 surface-right depth-panel-right rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center p-4">
           <p data-testid="preview-processing" className="text-sm text-muted-foreground animate-pulse text-center">
             {t('preview.processing')}
           </p>
@@ -36,7 +36,7 @@ export default function PreviewPanel() {
   if (job.status === 'failed') {
     return (
       <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
-        <div className="flex-1 surface-right rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center gap-3 p-4">
+        <div className="flex-1 surface-right depth-panel-right rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center gap-3 p-4">
           <p data-testid="preview-error" className="text-sm font-semibold text-destructive text-center">
             {t('preview.failed')}
           </p>
@@ -52,7 +52,7 @@ export default function PreviewPanel() {
 
   return (
     <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
-      <div className="flex-1 surface-right rounded-xl flex flex-col min-w-0 box-border overflow-hidden">
+      <div className="flex-1 surface-right depth-panel-right rounded-xl flex flex-col min-w-0 box-border overflow-hidden">
         {/* Action Header - Only visible when job is completed */}
         {job.status === 'completed' && (
           <header
