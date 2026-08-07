@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useScan2TextStore } from '@/stores/scan2text.store'
 import { usePreferenceStore } from '@/stores/preferencesStore'
 import MarkdownPreview from './MarkdownPreview'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
 import { getDepthStyle } from '@/lib/depthStyles'
 
@@ -103,6 +103,7 @@ export default function PreviewPanel() {
           <div className="p-4">
             <MarkdownPreview markdown={job.resultMarkdown ?? job.markdownOutput ?? ''} />
           </div>
+          <ScrollBar orientation="vertical" />
         </ScrollArea>
       </div>
     </div>

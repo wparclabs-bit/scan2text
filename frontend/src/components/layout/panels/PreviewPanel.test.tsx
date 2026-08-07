@@ -168,6 +168,27 @@ describe('PreviewPanel', () => {
     expect(panel).toHaveClass('w-full')
   })
 
+  it('preview ScrollArea mounts a visible ScrollBar component', () => {
+    setupStore('job-1', {
+      'job-1': {
+        id: 'job-1',
+        fileName: 'test.png',
+        fileType: 'image/png',
+        status: 'completed',
+        resultMarkdown: '# Hello\n\nSome longer content to ensure scrollability.',
+      },
+    })
+    render(<PreviewPanel />)
+    const scrollArea = screen.getByTestId('preview-scroll-area')
+    expect(scrollArea).toBeInTheDocument()
+    const source = require('fs').readFileSync(
+      require('path').join(__dirname, './PreviewPanel.tsx'),
+      'utf8',
+    )
+    expect(source).toContain('import { ScrollArea, ScrollBar }')
+    expect(source).toContain('<ScrollBar orientation="vertical" />')
+  })
+
   describe('Action Header (Copy & Open Folder)', () => {
     it('hides action header when job is processing', () => {
       setupStore('job-1', {

@@ -1,6 +1,6 @@
 # PRD: Scan2Text — MVP
 
-Version: 1.6
+Version: 1.7
 Date: 2026-08-07
 Status: Approved for Implementation
 Product Owner: CEO
@@ -14,20 +14,20 @@ Engineering Method: AI-Assisted Software Development (AIASD)
 | 1.0 | 2026-06-22 | Initial PRD |
 | 1.1 | 2026-06-22 | Clarifications |
 | 1.2 | 2026-06-22 | Clarified no merged output, removed in-app editing, unsupported files skipped |
-| 1.3 | 2026-08-06 | Integrated output naming convention, updated model to GLM-OCR 0.9B, added Phase 5 UI decisions: Command Center layout, i18n, dark mode, file validation 50MB max |
-| 1.4 | 2026-08-07 | Beautify-phase UI deltas: panel ratios 20/35/45 → 20/20/60, right panel renders Markdown full-width, queue Remove button removed from MVP, queue status indicators refined, accepted file types locked to PNG/JPG/JPEG/WEBP/PDF, final visual styling locked |
-| 1.5 | 2026-08-07 | Visual identity finalized: coffee & paper palette replaces zinc+purple, panel card borders removed, depth via vertical gradients + inset top highlight + soft shadows + warm glow, top bar identity updated, radiant-lines background recolored warm |
-| 1.6 | 2026-08-07 | Phase 6 Finale deltas (CEO-approved): layout 20/20/60 → 34/60 + 2% gutters; left work column contains Dropzone fixed ~38% + Queue flex; app shell viewport-locked (`h-screen`); Dropzone/Queue/Preview ScrollAreas with always-visible thin warm scrollbars; TopBar wordmark is literal brand text and i18n-exempt; BottomBar adds icon-only Share on left while worker/RAM/version is centered; Dropzone gets bold ink-black text + colored upload icon left + smile emoji right; depth is subtle gradient+shadow on all cards via theme-aware inline longhand styles; Queue card gets radiant rays; share uses placeholder `https://placeholder.local` |
+| 1.3 | 2026-08-06 | Integrated output naming convention, updated model to GLM-OCR 0.9B, added Phase 5 UI decisions (Command Center layout, i18n, dark mode, file validation 50MB max) |
+| 1.4 | 2026-08-07 | Beautify-phase UI deltas: panel ratios → 20/20/60; full-width Markdown preview; queue Remove button removed; status indicators refined; file types locked PNG/JPG/JPEG/WEBP/PDF |
+| 1.5 | 2026-08-07 | Visual identity finalized: coffee & paper palette; no panel borders; depth via gradients + inset highlight + soft shadows + warm glow; top bar logo chip + live-text wordmark + DEMO badge |
+| 1.6 | 2026-08-07 | Phase 6 Finale deltas: layout 20/20/60 → 34/60 + 2% gutters; left work column (Dropzone fixed ~38% + Queue flex); viewport-locked shell; Dropzone/Queue/Preview ScrollAreas with always-visible warm scrollbars; literal TopBar wordmark; BottomBar share-left + centered telemetry; Dropzone personality (bold ink text, upload icon left, smile emoji right); theme-aware inline longhand card depth; Queue radiant rays; share placeholder https://placeholder.local; queue row regression contract (icon + name + size + status + tooltip + fake progress) |
+| 1.7 | 2026-08-07 | Visual hotfix finale (CEO-approved): wordmark becomes CENTER brand image (text.png 153×34, alt="Scan2Text", static glow) — no literal text wordmark; logo chip + DEMO badge kept intact on left (DEMO removed after final product); TopBar height 34px, all items vertically centered; Share icon moved to BottomBar RIGHT; BottomBar left empty, center telemetry (Worker Idle/Busy from queue · RAM "—" until /health · version constant), pinned at any window size via fixed inset-0 shell; Dropzone: dashed area fills card, bg image bacground-left-top-panel.jpg at 15% opacity (single-value background-size, centered), header + footer bold ink #1F150C, footer adds "max 10 files per batch", Dropzone ScrollArea removed; 10-file batch cap enforced (first 10 + warning toast + logged); queue status slot fixed 14px, dot-only no text (grey pending / yellow spinner processing / glossy green completed / glossy red failed); depth = visible-subtle gradation on all cards; Preview header buttons borderless transparent with caramel hover; Radix ScrollArea tray neutralized via CSS override |
 
 ---
 
 ## 1. Product Name
 
 Display name: Scan2Text
-
 Internal package name: `scan2text`
-
 Executable name: `Scan2Text.exe`
+Brand wordmark: center TopBar image `frontend/Images/text.png` (153×34) with `alt="Scan2Text"` (v1.7; supersedes literal text wordmark)
 
 ---
 
@@ -43,7 +43,7 @@ Drop files → process locally → get Markdown files → edit outside Scan2Text
 
 Scan2Text does not try to become a full document editor. It converts documents into usable Markdown output.
 
-The v1.6 visual direction makes the app feel like a warm, stable scanning desk: viewport-locked, calm, coffee-and-paper themed, with visible affordances and no unnecessary page scrolling.
+Scan2Text is the first product of a planned local-first family (ASR agent and summary capability planned as separate phases/products; NOT in MVP scope).
 
 ---
 
@@ -99,7 +99,7 @@ Scan2Text provides:
 - One Markdown output file per input document.
 - Best-effort preservation of simple structure such as lists and tables.
 - Simple UX for non-technical users.
-- A warm, calm, desktop-first UI that stays visually stable and does not scroll like a web page.
+- A warm, calm, viewport-locked desktop surface that behaves like an appliance, not a web page.
 
 ---
 
@@ -108,21 +108,12 @@ Scan2Text provides:
 The MVP must prove that a user can:
 
 - launch Scan2Text portably,
-- drop one or more images/PDFs,
+- drop one or more images/PDFs (max 10 per batch),
 - process them locally,
 - receive one Markdown file per valid input file,
 - open/edit those Markdown files using external tools.
 
 The MVP is not a document editor.
-
-The v1.6 MVP UI objective is also to prove that the app shell is visually correct, viewport-locked, warm, and stable:
-
-- no page scroll,
-- visible wordmark,
-- visible scroll affordances,
-- correct card depth,
-- correct bottom bar composition,
-- restored queue row metadata and status indicators.
 
 ---
 
@@ -134,11 +125,12 @@ The v1.6 MVP UI objective is also to prove that the app shell is visually correc
 - Drag-and-drop file input
 - Image support: PNG, JPG/JPEG, WEBP
 - PDF support for simple scanned PDFs
-- Local OCR using GLM-OCR 0.9B model (`vlm.gguf` + `mmproj.gguf`)
+- Local OCR using GLM-OCR 0.9B model (vlm.gguf + mmproj.gguf)
 - Vision module/mmproj support
 - Model loading on demand
 - FIFO processing queue
 - Unsupported/error files skipped and logged in batch processing
+- Batch cap: max 10 files per drop (first 10 kept, extras skipped + warning toast + logged)
 - Automatic Markdown output
 - One Markdown file per valid input file
 - Best-effort preservation of simple structure such as tables/lists
@@ -148,38 +140,27 @@ The v1.6 MVP UI objective is also to prove that the app shell is visually correc
 - GitHub-based update check
 - Clear error handling
 - Local logging
-- Command Center UI: v1.6 viewport-locked shell with left work column, right Live Preview, and bottom status bar
-- Left work column containing Dropzone and Queue
-- Layout: 34/60 + 2% gutters, superseding 20/20/60
-- Dropzone fixed at approximately 38% of left work column space, with Queue flexing into the remaining space
-- ScrollAreas for Dropzone, Queue, and Preview
-- Always-visible thin warm scrollbars as affordances
-- Viewport-locked app shell using `h-screen` or equivalent
-- No browser/body page scroll in normal desktop use
-- TopBar literal brand wordmark: `Scan2Text`
-- Wordmark i18n-exempt
-- BottomBar with icon-only Share button on the left
-- BottomBar worker/RAM/version group centered
-- Share placeholder target: `https://placeholder.local`
-- Dropzone personality: bold ink-black text, colored upload icon on the left, smile emoji on the right
-- Card depth on all primary cards via theme-aware inline longhand styles
-- Subtle gradient + shadow depth recipe
-- Radiant rays on Queue card
+- Command Center UI v1.7: fixed inset-0 viewport-locked shell; TopBar (34px, center brand image); left work column (Dropzone + Queue); right Live Preview; pinned BottomBar
+- Layout: 34/60 main split + ~2% gutters; left column tracks minmax(0,38fr)/minmax(0,62fr); fractions decide, content never resizes panels
 - Dark mode default with light mode toggle
 - Internationalization (i18n): English + Indonesian, auto-detect browser language
 - File validation: Max 50MB per file, reject unsupported types with toast notification
+- Queue status slot: fixed 14px, dot-only (grey/yellow-spinner/green/red) with translated tooltips + thin fake progress bar
+- BottomBar: center telemetry (Worker Idle/Busy · RAM "—" until /health · version) + RIGHT icon-only Share (placeholder https://placeholder.local, click = soft toast)
+- Coffee & paper visual identity with visible-subtle gradation depth on all cards (theme-aware inline longhand styles)
+- Dropzone: dashed area fills card; bg image at 15% opacity; bold ink header + footer text
 
 ### Should-Have
 
 - Per-file progress indicator (fake progress: 0→90% over 30s, jump to 100% on completion)
 - ETA indicator
 - Read-only result preview
-- Open output folder button
+- Open output folder button + Copy Markdown button (borderless, panel-colored, caramel hover)
 - Update notification in title bar
 - Log rotation
 - Auto-select: Right panel automatically shows result when job completes
+- Backend GET /health to replace RAM "—" placeholder with real values (separate slice)
 - Queue cancel action for in-progress jobs (future; requires backend cancel endpoint)
-- Share button wired to placeholder target in preparation for the later share slice
 
 ### Won't-Have for MVP
 
@@ -196,13 +177,14 @@ The v1.6 MVP UI objective is also to prove that the app shell is visually correc
 - Telemetry
 - Paid licensing
 - GPU support (CPU-only locked)
-- Queue Remove button (removed 2026-08-07; queue is memory-only and clears on restart; may revisit in Phase 2)
+- Queue Remove button (Phase 2 candidate)
 - Side-by-side image thumbnail comparison (Phase 2 compare-toggle candidate)
+- Literal text wordmark in TopBar (superseded by center brand image, v1.7)
+- Dropzone ScrollArea/scrollbar (removed v1.7; nothing scrolls there; affordance scrollbars remain on Queue + Preview)
+- Share navigation to a live URL (placeholder + toast only until post-GitHub swap)
+- DEMO badge removal (kept until final product, then removed)
 - Hover-only or invisible scrollbars
-- Page-level scrolling of the main app shell
-- Flat primary cards without depth
-- Translating the literal brand wordmark
-- Production share URL or final share destination until post-GitHub swap
+- Flat cards without depth
 
 ---
 
@@ -213,9 +195,9 @@ The v1.6 MVP UI objective is also to prove that the app shell is visually correc
 1. User opens `Scan2Text.exe`.
 2. On first run, user chooses output location.
 3. App creates required folders and settings file if missing.
-4. User drags one or more images/PDFs into the Dropzone in the left work column.
-5. File validation checks file type (PNG/JPG/JPEG/WEBP/PDF) and size (max 50MB). Invalid files show an error toast and are not uploaded.
-6. User clicks Process All, or files auto-process on drop if that behavior is enabled.
+4. User drags one or more images/PDFs into the Dropzone (left work column).
+5. File validation: type (PNG/JPG/JPEG/WEBP/PDF), size (max 50MB), batch cap (max 10 files). Invalid files show error toast; extras beyond 10 are skipped with warning toast and logged.
+6. User clicks Process All (or files auto-process on drop).
 7. Unsupported or invalid files are skipped and logged.
 8. App loads OCR model if not already loaded.
 9. Valid files are processed in FIFO order.
@@ -225,120 +207,40 @@ The v1.6 MVP UI objective is also to prove that the app shell is visually correc
 
 ---
 
-## Command Center Layout (v1.6)
+## Command Center Layout (v1.7)
 
-The app uses a viewport-locked Command Center shell.
+The app shell is pinned to the viewport: `fixed inset-0 flex flex-col overflow-hidden`. The screen is the only sizing authority. No window/body scroll at any window width or height. BottomBar always visible.
 
-The shell contains:
+### TopBar (height 34px, all items vertically centered)
 
-- TopBar
-- Main content area
-- BottomBar
+- LEFT: logo pictogram chip (`frontend/Images/logo.png`) + DEMO badge, kept intact (DEMO removed after final product). No literal text wordmark.
+- CENTER: brand image `frontend/Images/text.png` at 153×34 with `alt="Scan2Text"`, static radial glow behind (CSS-only, zero CPU, "flying" but not too bright).
+- RIGHT: theme toggle, language toggle, settings — icon-only with translated tooltips.
 
-The app must fit inside one desktop viewport. The browser/body must not scroll. Only designated internal panels may scroll.
+### Main Content (34/60 + ~2% gutters)
 
-### Main Layout
+- Left work column (~34%): grid rows `minmax(0,38fr)` Dropzone + `minmax(0,62fr)` Queue.
+- Right preview column (~60%): Live Preview, rendered Markdown full-width, read-only, internal scroll.
 
-The main content area uses the v1.6 layout:
+### Dropzone (top-left)
 
-- Left work column: approximately 34% width
-- Right preview column: approximately 60% width
-- Gutter/spacing budget: approximately 2%
+- Dashed upload area fills the card between bold header text and bold footer hint (flex-1 min-h-0).
+- Background image `bacground-left-top-panel.jpg` (exact filename) at 15% opacity, single-value background-size 100%, centered, no-repeat, pointer-events none.
+- Header text and footer hint: bold, ink #1F150C, both themes.
+- Footer hint includes the 10-file rule: "PNG · JPG · WEBP · PDF — max 50MB per file · max 10 files per batch".
+- No ScrollArea in Dropzone (v1.7).
 
-This supersedes the previous 20/20/60 layout.
+### Queue (bottom-left)
 
-The left work column contains:
+- Internal scroll with always-visible warm scrollbar.
+- Radiant rays decoration (static, zero CPU).
+- Row: file type icon + name (truncate) + size + fixed 14px status slot (dot-only) + translated tooltip + thin fake progress bar while active + retry button on failed.
 
-- Dropzone card
-- Queue card
+### BottomBar (pinned, shrink-0)
 
-The right preview column contains:
-
-- Live Preview card
-
-Panel widths remain fixed and are not resizable.
-
-### Left Work Column
-
-The left work column is a single work column containing both Dropzone and Queue.
-
-Dropzone behavior:
-
-- The Dropzone card is fixed at approximately 38% of the left work column height.
-- The Dropzone must remain visually prominent.
-- The Dropzone must support drag-and-drop.
-- The Dropzone must support click-to-browse as a fallback.
-- The Dropzone must show a highlighted state when files are dragged over.
-- The Dropzone text must be bold ink-black.
-- The Dropzone must show a colored upload icon on the left.
-- The Dropzone must show a smile emoji on the right.
-
-Queue behavior:
-
-- The Queue card occupies the remaining left-column space using flex.
-- The Queue card must scroll internally when queue content overflows.
-- The Queue card must show file rows with file type icon, file name, status, and progress information.
-- The Queue card must receive the warm radiant-ray visual treatment.
-- The Queue card must not lose row metadata during visual polish work.
-
-### Right Preview Column
-
-The right preview column shows rendered Markdown full-width.
-
-- The preview is read-only.
-- The preview must scroll internally when content overflows.
-- The preview must not cause page-level scrolling.
-- When a completed job is selected, the preview shows the Markdown result.
-- Auto-select may show the latest completed result automatically.
-
-### Scroll Behavior
-
-The app uses internal ScrollAreas for:
-
-- Dropzone
-- Queue
-- Preview
-
-Scroll rules:
-
-- The main window/body must not scroll.
-- Queue and Preview are the primary content-scrolling regions.
-- Dropzone has a ScrollArea as part of the v1.6 visual affordance system.
-- Scrollbars must be always visible, thin, rounded, and warm.
-- Hover-only scrollbars are not allowed.
-- Scrollbars are affordances, not hidden decorations.
-
-### TopBar
-
-The TopBar must contain the literal brand wordmark:
-
-`Scan2Text`
-
-The wordmark is i18n-exempt.
-
-The TopBar may retain the logo pictogram chip and DEMO badge where they do not hide or replace the literal wordmark.
-
-The TopBar must also contain icon-only buttons with tooltips for:
-
-- theme toggle
-- language toggle
-- settings
-
-### BottomBar
-
-The BottomBar must remain visible at all times.
-
-The BottomBar composition is:
-
-- Left: icon-only Share button
-- Center: worker status, RAM usage, version
-- Right: no required content in v1.6
-
-The Share button uses the placeholder target:
-
-`https://placeholder.local`
-
-This placeholder will be swapped after the GitHub/sharing flow is available.
+- LEFT: empty.
+- CENTER: Worker Idle/Busy (derived from queue state) · RAM "—" (until GET /health) · version constant. Centered via grid 1fr auto 1fr, vertically centered.
+- RIGHT: icon-only Share button, placeholder https://placeholder.local, translated tooltip, click = soft toast (no navigation).
 
 ---
 
@@ -352,9 +254,9 @@ Every output Markdown file follows this pattern:
 
 Where:
 
-- `original_stem` — the sanitized stem of the input filename. Invalid Windows characters are removed, spaces are collapsed to underscores, and reserved names are handled.
-- `HHmm` — 24-hour clock time, zero-padded. Example: `0905`, `1738`.
-- `yyyyMMdd` — calendar date, zero-padded. Example: `20260804`.
+- `original_stem` — the sanitized stem of the input filename.
+- `HHmm` — 24-hour clock time, zero-padded.
+- `yyyyMMdd` — calendar date, zero-padded.
 
 ### Examples
 
@@ -366,266 +268,45 @@ Where:
 
 ### Collision Rule
 
-If a file with the target name already exists in the output directory, append a numeric suffix starting at `_2`:
-
-1. Try `{stem}_{HHmm}_{yyyyMMdd}.md`
-2. If that exists, try `{stem}_{HHmm}_{yyyyMMdd}_2.md`
-3. If that exists, try `{stem}_{HHmm}_{yyyyMMdd}_3.md`
-4. Continue incrementing until an unused name is found.
-
-Never overwrite an existing file. Never merge multiple inputs into one output file.
+- If target exists, append `_2`, `_3`, … until unused.
+- Never overwrite. Never merge inputs.
 
 ### Guardrails
 
 - One input file → one output file. Always.
-- The timestamp reflects the processing time, not the source file's modification time.
-- Privacy-safe: logs record only the filename and byte count, never content.
-- No new dependencies are required.
-
-### Implementation Notes
-
-- The timestamp is captured at write time using `datetime.now()`.
-- Collision resolution is a linear search. Practical collision counts are expected to be small, typically 0 or 1.
-- The `PathService.resolve_output_path()` method is the single point of naming logic. All callers go through this method.
+- Timestamp reflects processing time.
+- Privacy-safe logs (filename + byte count only).
+- No new dependencies.
 
 ---
 
 ## 10. Internationalization (i18n)
 
-### Approach
-
-- Library: react-i18next
-- Languages: English (`en`), Indonesian (`id`)
-- Default: Auto-detect browser language, fallback to English
-- Toggle: Top bar button next to theme toggle
-- Persistence: Language preference saved to localStorage
-
-### Scope
-
-- All UI strings are translation keys.
-- Known backend errors are mapped to translated messages.
-- Unknown errors show as-is in English.
-- Initial translations are drafted by AI and reviewed/adjusted by CEO.
-
-### Wordmark Exception
-
-The literal brand wordmark `Scan2Text` is i18n-exempt.
-
-It must not be translated, replaced by a localized phrase, or hidden behind an icon-only logo.
+- Library: react-i18next. Languages: en + id. Default: auto-detect, fallback English.
+- Toggle in TopBar; persisted to localStorage.
+- All UI strings are translation keys, including toasts (share coming soon, max files warning) and tooltips.
+- Brand exception: the center brand IMAGE with `alt="Scan2Text"` is i18n-exempt (v1.7; supersedes literal text wordmark exception).
 
 ---
 
 ## 11. Theme
 
-### Theme Behavior
-
-- Default: Dark mode
-- Toggle: Light mode available via top bar button
-- Persistence: Theme preference saved to localStorage
-- Theme change applies immediately without page reload
-- All UI components must support both themes
-
-### Design Language
-
-The design language is “coffee & paper.”
-
-The app should feel like a warm, calm paper desk.
-
-The identity is:
-
-- layered warm surfaces
-- no panel card borders
-- subtle depth
-- soft shadows
-- warm glow
-- paper-on-desk minimalism
-
-### Color Palette
-
-DARK:
-
-- background: `#080502`
-- left card: `#E1DCC9`
-- left text: ink `#1F150C`
-- center/queue warmth: `#412D15`
-- center text: cream `#F2EBDD`
-- right card: `#1F150C`
-- right text: cream
-- accent: `#E3A55F` caramel
-
-LIGHT:
-
-- background: `#F9F8F6`
-- left: `#EFE9E3`
-- center: `#D9CFC7`
-- right: `#C9B59C`
-- text: dark text
-- accent: `#92400E` coffee
-
-Purple is retired.
-
-DEMO badge amber is retained where the DEMO badge is shown.
-
-Green/red status dots are retained.
-
-### Depth
-
-All primary cards must have subtle depth.
-
-Primary cards are:
-
-- Dropzone card
-- Queue card
-- Preview card
-
-Depth must be created using:
-
-- subtle gradient
-- soft shadow
-- theme-aware styling
-- inline longhand styles
-
-Depth must not depend on a single utility class as the source of truth.
-
-Cards must not appear flat.
-
-The Queue card must include subtle radiant rays.
-
-The radiant rays must be static and zero-CPU at idle.
-
-### Dropzone Personality
-
-The Dropzone must feel friendly and clear.
-
-Required Dropzone visual traits:
-
-- bold ink-black text
-- colored upload icon on the left
-- smile emoji on the right
-
-The Dropzone must not appear faded or low-contrast.
-
-### Scrollbars
-
-Scrollbars are affordances.
-
-Required scrollbar traits:
-
-- always visible
-- thin
-- rounded
-- warm
-- theme-aware
-
-Dark theme:
-
-- caramel thumb
-- translucent track
-
-Light theme:
-
-- coffee thumb
-- soft track
-
-Hover-only scrollbars are not acceptable.
-
-### Typography
-
-- Display font: Quantico for titles, headings, badges, metrics, and brand-style display elements
-- Body font: readable swap-friendly body font
-- Body font remains open for final CEO taste selection
-- Body font should be controlled through a single CSS variable where practical
+- Default: Dark. Toggle: Light. Persisted to localStorage. Instant apply.
+- Coffee & paper palette (v1.5): DARK bg #080502; Dropzone #E1DCC9 ink #1F150C; Queue #412D15 cream #F2EBDD; Preview #1F150C cream; accent #E3A55F. LIGHT bg #F9F8F6; #EFE9E3 / #D9CFC7 / #C9B59C; accent #92400E. Purple retired. DEMO amber retained. Green/red dots retained.
+- Depth (v1.7): visible-subtle gradation on ALL cards via theme-aware inline longhand styles (gradient + inset top highlight + soft shadow + warm glow). No flat cards. No borders.
+- Scrollbars: always-visible, thin, rounded, warm on Queue + Preview only (caramel thumb/translucent track dark; coffee thumb light).
+- Typography: Quantico display + readable swap-friendly body font (single CSS variable; final choice open).
 
 ---
 
 ## 12. Technical Decisions (Locked)
 
-### Model & Inference
-
-- VLM Model: GLM-OCR 0.9B (`vlm.gguf` + `mmproj.gguf`)
-- Runner: llama-cpp-python
-- Hardware: CPU-only
-- GPU intentionally excluded for portability
-
-### PDF Handling
-
-- PDF handling likely requires PDF-to-image conversion before VLM inference.
-- Raw PDF bytes may not be directly supported by the VLM.
-- Implementation must verify the PDF-to-image pipeline.
-
-### Frontend
-
-- Framework: Vite + React + TypeScript + Tailwind + shadcn
-- State: Zustand, memory-only, no localStorage for job state
-- Markdown: react-markdown + remark-gfm
-- Router: None for MVP. Single-page Command Center dashboard.
-- Transport: HTTP polling for task status. WebSockets deferred.
-
-### App Shell
-
-- The app shell must be viewport-locked.
-- Use `h-screen` or equivalent full-viewport layout.
-- The browser/body must not scroll in normal desktop use.
-- Only internal panel regions may scroll.
-
-### Layout
-
-- Main layout: 34/60 + 2% gutters.
-- This supersedes 20/20/60.
-- Left work column contains Dropzone and Queue.
-- Dropzone is fixed at approximately 38% of the left work column height.
-- Queue flexes into the remaining left-column space.
-- Right preview column contains the Live Preview.
-- Panel widths are fixed and not resizable.
-
-### Scroll Areas
-
-- Dropzone, Queue, and Preview must use ScrollAreas.
-- Queue and Preview are the main internal scrolling regions.
-- Scrollbars must always be visible.
-- Scrollbars must be thin, rounded, and warm.
-- Scrollbars must not be hover-only.
-- Scrollbar affordance is part of the v1.6 visual contract.
-
-### Styling
-
-- Coffee & paper warm palette.
-- No panel card borders.
-- Depth via subtle gradient + shadow.
-- Card depth must be applied using theme-aware inline longhand styles.
-- All primary cards must have depth.
-- Queue card must have radiant rays.
-- Dropzone must use bold ink-black text.
-- Dropzone must include colored upload icon on the left.
-- Dropzone must include smile emoji on the right.
-- Hover-only or invisible scrollbars are not allowed.
-- Flat cards are not allowed.
-
-### TopBar
-
-- TopBar must show literal brand wordmark: `Scan2Text`.
-- The wordmark is i18n-exempt.
-- TopBar must include icon-only buttons with tooltips for theme, language, and settings.
-- The rendered TopBar must be the live TopBar in the actual App import chain.
-
-### BottomBar
-
-- BottomBar must include icon-only Share button on the left.
-- BottomBar must include worker status, RAM usage, and version centered.
-- Share target uses placeholder: `https://placeholder.local`.
-- Final share URL will be swapped after GitHub/sharing availability.
-
-### Queue Behavior
-
-- Progress: fake progress bar, 0→90% over 30 seconds, jump to 100% on completion.
-- Auto-select: right panel automatically shows result when job completes.
-- Background jobs: if polling exceeds 30 seconds, mark as background and auto re-poll every 60 seconds, max 10 re-polls.
-- Queue actions: cancel in-progress jobs is future. No Remove button in MVP.
-- Queue rows must retain file type icon, file name, size, status indicator, tooltip, and thin fake progress bar.
-
-### State & Persistence
-
-- Job state is memory-only.
-- Theme preference persists to localStorage.
-- Language preference persists to localStorage.
-- No job data, task IDs, file content, or file metadata may be persisted to localStorage/sessionStorage.
+- Model: GLM-OCR 0.9B (vlm.gguf + mmproj.gguf) via llama-cpp-python, CPU-only.
+- PDF: likely needs PDF-to-image before VLM (verify).
+- Frontend: Vite + React + TS + Tailwind + shadcn; Zustand memory-only; react-markdown + remark-gfm; no router; HTTP polling.
+- Shell: `fixed inset-0 flex flex-col overflow-hidden`; main `flex-1 min-h-0`; grid `grid-cols-[34fr_60fr] gap-[2%]`; left rows `minmax(0,38fr)/minmax(0,62fr)`. Fractions decide; content never resizes panels.
+- TopBar 34px; center brand image 153×34 alt="Scan2Text" + static glow.
+- BottomBar pinned; telemetry center; Share right (placeholder + toast).
+- Batch cap 10 files; 50MB per file; PNG/JPG/JPEG/WEBP/PDF only.
+- Radix ScrollArea tray neutralized via CSS override (`[data-radix-scroll-area-viewport] > div { display:block; min-width:0; height:auto }`).
+- Memory hygiene: every slice exits with green tests + commit + Phase-6 summary file + AGENTS.md lessons.

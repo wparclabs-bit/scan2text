@@ -306,3 +306,18 @@ html, body {
   min-width: 0 !important;
   height: auto !important;
 }
+
+/* Always-visible warm scrollbars (Radix) */
+[data-radix-scroll-area-viewport] [data-orientation="vertical"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  background: transparent !important;
+  width: 8px !important;
+}
+[data-radix-scroll-area-viewport] [data-orientation="vertical"] > [class*="rounded-full"] {
+  background: #E3A55F !important;
+  border-radius: 9999px !important;
+}
+:not(.dark) [data-radix-scroll-area-viewport] [data-orientation="vertical"] > [class*="rounded-full"] {
+  background: #92400E !important;
+}
