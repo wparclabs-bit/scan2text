@@ -214,3 +214,12 @@ RULE: never guess paths. If a mapped file is missing, discover via Get-ChildItem
 - Never hardcode D:\ paths in frontend code; Vite relative imports.
 - Every slice exits with: green tests + commit + Phase-6 summary file. No exceptions.
 - CEO taste overrides PRD: re-confirm layout deltas in writing before slicing.
+
+## Lessons Learned (Slice 6.14e)
+
+- Green-dot ghost cause: The live QueuePanel row component already had status dots but they used 2-stop gradients and `text-primary` spinner. A separate unused QueueRow component did NOT exist — the "ghost" was a perceived regression where depth/style changes made dots less visible. Always verify the ACTUAL live component before assuming a ghost.
+- Single-value background-size rule: Use `backgroundSize: '100%'` (single value) for decorative bg layers — never `'100% 100%'` or `'cover'` which distort aspect ratio. CEO spec requires single percentage.
+- Depth must be visible-subtle: Inline longhand boxShadow + backgroundImage on cards must produce perceptible depth without being garish. Dark: warm radial glow + inset highlight + soft outer shadow. Light: white top-highlight + brown fade + soft brown shadow. No flat cards. No purple.
+- jsdom hex→rgb conversion: Tests asserting inline hex colors on SVG/HTML elements must check rgb() computed values, not hex strings. Use `innerHTML.toContain('rgb(...)')` or assert className instead.
+- Spinner inline style on SVG: React passes inline style to SVG elements but jsdom may render it as rgb(). Check via `innerHTML` or `getAttribute('style')` with null guard.
+- Radix Tooltip portals content: TooltipContent renders in a DOM portal, not inside the triggering component's tree. Test tooltip markup via parent innerHTML or skip portal-dependent assertions.
