@@ -124,4 +124,22 @@ describe('palette lock — coffee-and-paper 2026-08-07', () => {
       expect(previewPanel).not.toContain('depth-panel-right')
     })
   })
+
+  describe('radix scroll-area neutralizer', () => {
+    it('index.css contains [data-radix-scroll-area-viewport] > div selector', () => {
+      expect(css).toContain('[data-radix-scroll-area-viewport] > div')
+    })
+
+    it('neutralizer sets display: block !important', () => {
+      expect(css).toContain('display: block !important')
+    })
+
+    it('neutralizer sets min-width: 0 !important', () => {
+      expect(css).toContain('min-width: 0 !important')
+    })
+
+    it('neutralizer sets height: auto !important', () => {
+      expect(css).toContain('height: auto !important')
+    })
+  })
 })

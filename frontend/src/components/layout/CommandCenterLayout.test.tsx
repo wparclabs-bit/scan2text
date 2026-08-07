@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react'
 import CommandCenterLayout from './CommandCenterLayout'
 
 describe('Viewport lock', () => {
-  it('root container uses h-screen for viewport-height layout', () => {
+  it('root container uses fixed inset-0 for viewport-height layout', () => {
     render(<CommandCenterLayout />)
-    const root = document.querySelector('.h-screen') as HTMLElement | null
+    const root = document.querySelector('.fixed.inset-0') as HTMLElement | null
     expect(root).toBeInTheDocument()
   })
 
@@ -19,9 +19,9 @@ describe('Viewport lock', () => {
 })
 
 describe('Shell structure — flex-col pin', () => {
-  it('shell is h-screen flex flex-col', () => {
+  it('shell is fixed inset-0 flex flex-col overflow-hidden', () => {
     render(<CommandCenterLayout />)
-    const shell = document.querySelector('.h-screen.flex.flex-col') as HTMLElement | null
+    const shell = document.querySelector('.fixed.inset-0.flex.flex-col.overflow-hidden') as HTMLElement | null
     expect(shell).toBeInTheDocument()
   })
 
@@ -52,12 +52,12 @@ describe('Shell structure — flex-col pin', () => {
 })
 
 describe('CommandCenterLayout grid overflow hygiene', () => {
-  it('grid child wrappers carry min-w-0 but not overflow-hidden', () => {
+  it('grid child wrappers carry min-h-0 but not overflow-hidden', () => {
     render(<CommandCenterLayout />)
     const children = Array.from(document.querySelectorAll('main > div'))
     expect(children).toHaveLength(2)
     children.forEach((child) => {
-      expect(child).toHaveClass('min-w-0')
+      expect(child).toHaveClass('min-h-0')
       expect(child).not.toHaveClass('overflow-hidden')
     })
   })
@@ -79,103 +79,34 @@ describe('CommandCenterLayout grid overflow hygiene', () => {
   })
 })
 
-describe('CommandCenterLayout radiant rays', () => {
-  it('center panel contains decorative radiant rays element', () => {
+describe('Left column structural constancy', () => {
+  it('left-column has grid-rows with minmax(0,38fr)', () => {
     render(<CommandCenterLayout />)
-    expect(screen.getByTestId('center-radiant-rays')).toBeInTheDocument()
+    const leftCol = screen.getByTestId('left-column') as HTMLElement
+    expect(leftCol).toHaveClass('grid-rows-[minmax(0,38fr)_minmax(0,62fr)]')
   })
 
-  it('radiant rays element is inside center panel only', () => {
+  it('both panel testids present in left column', () => {
     render(<CommandCenterLayout />)
-    const rays = document.querySelectorAll('[data-testid="center-radiant-rays"]')
-    expect(rays).toHaveLength(1)
+    const leftCol = screen.getByTestId('left-column') as HTMLElement
+    expect(leftCol.querySelector('[data-testid="panel-dropzone"]')).toBeInTheDocument()
+    expect(leftCol.querySelector('[data-testid="panel-queue"]')).toBeInTheDocument()
   })
 
-  it('radiant rays has aria-hidden="true"', () => {
+  it('preview-column is present', () => {
     render(<CommandCenterLayout />)
-    expect(screen.getByTestId('center-radiant-rays')).toHaveAttribute('aria-hidden', 'true')
-  })
-
-  it('radiant rays has pointer-events-none', () => {
-    render(<CommandCenterLayout />)
-    expect(screen.getByTestId('center-radiant-rays')).toHaveClass('pointer-events-none')
-  })
-
-  it('radiant rays has data-state="static"', () => {
-    render(<CommandCenterLayout />)
-    expect(screen.getByTestId('center-radiant-rays')).toHaveAttribute('data-state', 'static')
-  })
-
-  it('radiant rays does not use animate classes', () => {
-    render(<CommandCenterLayout />)
-    const rays = screen.getByTestId('center-radiant-rays')
-    const classList = rays.className
-    expect(classList).not.toMatch(/\banimate-\w/)
+    expect(screen.getByTestId('preview-column')).toBeInTheDocument()
   })
 })
 
-describe('CommandCenterLayout ambient glow', () => {
-  it('ambient glow marker is present at workspace level', () => {
+describe('App shell data-testid', () => {
+  it('app-shell element exists', () => {
     render(<CommandCenterLayout />)
-    expect(screen.getByTestId('ambient-glow')).toBeInTheDocument()
+    expect(screen.getByTestId('app-shell')).toBeInTheDocument()
   })
 
-  it('ambient glow marker has aria-hidden="true"', () => {
+  it('main-content element exists', () => {
     render(<CommandCenterLayout />)
-    expect(screen.getByTestId('ambient-glow')).toHaveAttribute('aria-hidden', 'true')
-  })
-
-  it('ambient glow marker has pointer-events-none', () => {
-    render(<CommandCenterLayout />)
-    expect(screen.getByTestId('ambient-glow')).toHaveClass('pointer-events-none')
-  })
-
-  it('ambient glow marker has data-state="static"', () => {
-    render(<CommandCenterLayout />)
-    expect(screen.getByTestId('ambient-glow')).toHaveAttribute('data-state', 'static')
-  })
-
-  it('ambient glow marker does not use animate classes', () => {
-    render(<CommandCenterLayout />)
-    const glow = screen.getByTestId('ambient-glow')
-    const classList = glow.className
-    expect(classList).not.toMatch(/\banimate-\w/)
-  })
-
-  it('radiant lines remain only inside center panel', () => {
-    render(<CommandCenterLayout />)
-    const rays = document.querySelectorAll('[data-testid="center-radiant-rays"]')
-    expect(rays).toHaveLength(1)
-  })
-})
-
-describe('Card depth inline styles', () => {
-  it('dropzone card exposes inline backgroundImage with gradient', () => {
-    render(<CommandCenterLayout />)
-    const card = document.querySelector('[data-testid="panel-dropzone"] > div') as HTMLElement | null
-    expect(card).toBeInTheDocument()
-    expect(card?.style.backgroundImage).toContain('linear-gradient')
-  })
-
-  it('queue card exposes inline backgroundImage with gradient', () => {
-    render(<CommandCenterLayout />)
-    const card = document.querySelector('[data-testid="panel-queue"] > div') as HTMLElement | null
-    expect(card).toBeInTheDocument()
-    expect(card?.style.backgroundImage).toContain('linear-gradient')
-  })
-
-  it('preview card exposes inline backgroundImage with gradient', () => {
-    render(<CommandCenterLayout />)
-    const card = document.querySelector('[data-testid="panel-preview"] > div') as HTMLElement | null
-    expect(card).toBeInTheDocument()
-    expect(card?.style.backgroundImage).toContain('linear-gradient')
-  })
-
-  it('all three cards expose inline boxShadow', () => {
-    render(<CommandCenterLayout />)
-    ;(['panel-dropzone', 'panel-queue', 'panel-preview'] as const).forEach((id) => {
-      const card = document.querySelector(`[data-testid="${id}"] > div`) as HTMLElement | null
-      expect(card?.style.boxShadow).toBeTruthy()
-    })
+    expect(screen.getByTestId('main-content')).toBeInTheDocument()
   })
 })
