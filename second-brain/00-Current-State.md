@@ -1,19 +1,19 @@
 ## Phase Status
 
-- **Current Phase:** Phase 6 (Prototype & Demo Mode) — RECOVERY DONE
+- **Current Phase:** Phase 6 (Prototype & Demo Mode) — CLOSURE
 
-- **Current Slice:** Slice 6.14k (True 34/60 Widths + Always-Visible Warm Scrollbars)
+- **Current Slice:** Slice 6.15a (Manual & Vault Hygiene — ADR-004 + AGENTS.md rewrite, 2026-08-08)
 
-- **Next Slice:** Slice 20.6 (Share button)
+- **Next Slice:** Slice 6.15b (Author second-brain/02-QA/scan2text-phase6-manual-test.md)
 
 
 ## Frontend Baseline
 
-- **Tests:** 548/548 passing (33 files; +4 new: grid track widths, min-w-0 columns, queue scrollbar presence, preview scrollbar presence)
+- **Tests:** 552/552 passing (33 files; no delta this slice — doc-only)
 
 - **Typecheck:** PASS
 
-- **Build:** PASS
+- **Build:** PASS (zero source delta this slice)
 
 - **Visuals:** Demo Mode active. TopBar shows amber "DEMO" badge + Settings icon. Bottom bar ticker shows Worker/RAM/Version with vertical dividers. Side-by-side preview panel renders with 30%/70% split. Action header with Copy and Open Folder buttons visible on completed jobs. Settings Dialog with General section (Language/Theme selectors) and locked Processing section (Output Dir, Max PDF Pages, CPU Threads). Tailwind utilities now load correctly; full-width layout enabled via neutral #root rule. Markdown now styled with prose classes. DropZone centered vertically with file-type hint. Panel dividers added between main sections. @tailwindcss/typography@0.5.16 declared in frontend/package.json devDependencies.
   2026-08-07: repo rehomed to scan2text, Projects-level git retired to .git-backup"
@@ -52,6 +52,8 @@
 - [x] Slice 6.14j: Absolute viewport lock — fixed inset-0 shell (2026-08-07). CommandCenterLayout root changed from h-screen flex flex-col to fixed inset-0 flex flex-col overflow-hidden so the viewport is the only sizing authority. Main uses flex-1 min-h-0 min-w-0 grid grid-cols-[34fr_60fr]. Left column uses min-h-0 grid grid-rows-[minmax(0,38fr)_minmax(0,62fr)] gap-3 so content can never stretch panels. Removed decorative radiant rays and ambient glow from layout component. Added data-testid="app-shell", "main-content", "left-column", "preview-column". palette-lock.test.ts: 4 new tests for [data-radix-scroll-area-viewport] > div neutralizer. Tests: 551 → 544 (-7 removed, +8 added). Typecheck + build green.
 
 - [x] Slice 6.14k: True 34/60 widths + always-visible warm scrollbars (2026-08-07). Grid tracks changed to minmax(0,34fr)_minmax(0,60fr) + min-w-0 on both columns to prevent long filenames from stretching left panel. QueuePanel: removed inner overflow-y-auto div wrapper, added <ScrollBar orientation="vertical" />. PreviewPanel: added <ScrollBar orientation="vertical" />. CSS: appended always-visible warm scrollbar styles targeting [data-radix-scroll-area-viewport] [data-orientation="vertical"] — caramel thumb #E3A55F dark, coffee #92400E light via :not(.dark) selector. Tests: 544 → 548 (+4). Typecheck + build green.
+
+- [x] Slice 6.14z: Panel root min-w-0 — overlap killed (2026-08-08). DropZonePanel, QueuePanel (both states), PreviewPanel (all 4 states) outermost divs now carry min-w-0 w-full to prevent grid item min-content overflow painting over sibling panels. Capping tracks alone (6.14k) was insufficient; every grid item in the truncation chain needs min-w-0. Tests: 548 → 552 (+4). Typecheck + build green.
 
 - [x] Slice 6.11: Calm theme — zinc layered surfaces (#09090b/#18181b/#27272a dark, #fafafa/#e4e4e7 light), Quantico @font-face with swap comment, font-display/font-body CSS vars + Tailwind fontFamily tokens, icon-only TopBar with shadcn Tooltip + i18n keys, rounded-xl card wrappers on DropZone/Queue/Preview panels, prose-base headings via prose-headings:font-display + purple prose-a links, BottomStatusBar font-display.
 
