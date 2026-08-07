@@ -110,7 +110,7 @@ BOTTOM BAR: Worker status | RAM usage | version | (share button, slice 20.6)
 - Dark mode = ".dark" class on <html> toggled by the preferences store. Do NOT use @media (prefers-color-scheme) for theme variables.
 - NEVER reintroduce Vite template boilerplate (#root width:1126px, giant h1/h2 sizes, #social rules, code styling).
 - Tailwind Preflight strips heading/list styles: rendered Markdown MUST use @tailwindcss/typography prose classes (added in slice 6.9).
-- CEO locked palette 2026-08-07: "paper and coffee" warm identity. Purple retired. Dark: background #000000; surface-left #E1DCC9 fg #1F150C; surface-center #412D15 fg #F2EBDD; surface-right #1F150C fg #F2EBDD; border #3B2A18; accent #E3A55F. Light: background #F9F8F6; surface-left #EFE9E3; surface-center #D9CFC7; surface-right #C9B59C; all foregrounds #1F150C; border #1F150C; accent #92400E. See second-brain hex table for full reference.
+- CEO locked palette 2026-08-07: "paper and coffee" warm identity. Purple retired. Dark: background #080502; surface-left #EDE8D8→#E1DCC9 fg #1F150C; surface-center #4D3619→#412D15 fg #F2EBDD; surface-right #2A1C10→#1F150C fg #F2EBDD; border #3B2A18; accent #E3A55F. Light: background #F9F8F6; surface-left #F7F2EC→#EFE9E3; surface-center #E2D9D0→#D9CFC7; surface-right #D2BFA8→#C9B59C; all foregrounds #1F150C; border #1F150C; accent #92400E. Depth: dark shadow 0 12px 32px -12px rgba(0,0,0,0.7)+inset highlight; light shadow 0 12px 32px -14px rgba(31,21,12,0.28)+inset highlight; warm radial glow dark-only. See second-brain hex table for full reference.
 
 4.9 Key Patterns
 - No React Router. Single-page state navigation.
@@ -172,7 +172,7 @@ Phase 6 slices:
 8. Fake chrome: static RAM/Worker (no timers).
 9. Naming {stem}_{HHmm}_{yyyyMMdd}.md + collision suffix.
 10. Settings: shadcn Dialog; disabled future inputs get lock emoji.
-11. COFFEE-AND-PAPER PALETTE (CEO locked 2026-08-07): Dark bg #000000, surface-left #E1DCC9/fg #1F150C, surface-center #412D15/fg #F2EBDD, surface-right #1F150C/fg #F2EBDD, border #3B2A18, accent #E3A55F. Light bg #F9F8F6, surface-left #EFE9E3, surface-center #D9CFC7, surface-right #C9B59C, all fg #1F150C, border #1F150C, accent #92400E. Purple retired everywhere.
+11. COFFEE-AND-PAPER PALETTE (CEO locked 2026-08-07): Dark bg #080502, surface-left #EDE8D8→#E1DCC9/fg #1F150C, surface-center #4D3619→#412D15/fg #F2EBDD, surface-right #2A1C10→#1F150C/fg #F2EBDD, border #3B2A18, accent #E3A55F. Light bg #F9F8F6, surface-left #F7F2EC→#EFE9E3, surface-center #E2D9D0→#D9CFC7, surface-right #D2BFA8→#C9B59C, all fg #1F150C, border #1F150C, accent #92400E. Depth: dark shadow 0 12px 32px -12px rgba(0,0,0,0.7)+inset highlight; light shadow 0 12px 32px -14px rgba(31,21,12,0.28)+inset highlight; warm radial glow dark-only. Purple retired everywhere.
 12. Share button: bottom bar right next to version; popup with shortened download link + Copy button; placeholder URL for now (GitHub + free shortener created after app completion); shares APP link only, NEVER document content (NFR-02).
 13. Visual polish slice (6.9) runs BEFORE share button slice (20.6).
 

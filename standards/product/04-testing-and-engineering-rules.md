@@ -1,6 +1,6 @@
 # Testing Strategy & Engineering Rules — Scan2Text MVP
 
-Version: 1.4
+Version: 1.5
 Date: 2026-08-07
 Status: Approved for Implementation
 
@@ -12,7 +12,8 @@ Status: Approved for Implementation
 | 1.1 | 2026-06-22 | Minor clarifications |
 | 1.2 | 2026-06-22 | Removed in-app editing from scope, updated open items |
 | 1.3 | 2026-08-06 | Updated tests for Command Center UI, Zustand store, react-i18next, react-markdown, file validation (50MB), fake progress, auto-select, background re-poll. Added new AIASD rules: memory-only job state, preferences persistence, i18n, CPU-only, desktop-only. Updated Definition of Done. Resolved open items (model names, preview). Added new open items (PDF-to-image, VLM smoke test, worker/cancel endpoints, translation review). Updated Future Phases. |
-| 1.4 | 2026-08-07 | Beautify-phase deltas (CEO-approved): Rule 12 panel ratios 20/35/45 → 20/20/60. Manual/E2E + Definition of Done updated for full-width Markdown right panel (thumbnail + PDF placeholder removed), queue Remove button removed, status indicators refined (spinner while processing, green/red status dots). Final visual styling resolved (layered zinc + locked purple accent, Quantico display + readable body font, rounded-xl cards, icon-only top bar with tooltips, static zero-CPU radiant-lines background in center panel). Removed MVP features moved to Phase 2 candidates. |
+| 1.4 | 2026-08-07 | Beautify-phase deltas (CEO-approved): Rule 12 panel ratios 20/35/45 → 20/20/60. Manual/E2E + Definition of Done updated for full-width Markdown right panel (thumbnail + PDF placeholder removed), queue Remove button removed, status indicators refined (spinner while processing, green/red status dots). Accepted file types aligned to PNG/JPG/JPEG/WEBP/PDF. Removed MVP features moved to Phase 2 candidates. |
+| 1.5 | 2026-08-07 | Visual identity finalized (CEO-approved): coffee & paper palette replaces zinc+purple (DARK bg #080502; left #E1DCC9 with ink text; center #412D15; right #1F150C with cream text; LIGHT bg #F9F8F6; left #EFE9E3; center #D9CFC7; right #C9B59C; accent #E3A55F dark / #92400E light; purple retired; panel card borders removed; depth via vertical gradients + top highlight + soft shadows + warm glow). Top bar identity = logo pictogram chip + live-text "scan2text" wordmark (font-display, "2" in accent) + DEMO badge. |
 
 ## 19. Testing Strategy
 
@@ -87,6 +88,7 @@ Run against real model (GLM-OCR 0.9B) and real samples:
 - restart app → settings persist, language/theme persist
 - verify bottom bar shows worker status + RAM usage
 - verify icon-only top bar buttons show translated tooltips
+- verify logo pictogram chip + live-text wordmark render in both themes
 - verify static radiant-lines background renders in center panel (zero CPU at idle)
 
 ### OCR Accuracy Validation
@@ -194,8 +196,8 @@ Mobile/responsive is deferred to Phase 2.
 The MVP is done when:
 - `Scan2Text.exe` launches on Windows 10/11 without admin rights.
 - First-run setup creates required folders and settings.
-- Command Center layout renders correctly (3-panel + bottom bar, dark mode default).
-- Calm visual styling applied: layered zinc surfaces, locked purple accent, rounded-xl cards, Quantico display font, icon-only top bar with tooltips.
+- Command Center layout renders correctly (3-panel + bottom bar, dark mode default, ratios 20/20/60).
+- Coffee & paper visual identity applied: layered warm surfaces, no panel card borders, depth via vertical gradients + top highlight + soft shadows, Quantico display font, logo pictogram chip + live-text wordmark + DEMO badge in top bar.
 - Theme toggle works and persists to localStorage.
 - Language toggle works (EN/ID) and persists to localStorage.
 - User can drag and drop supported files.
@@ -227,13 +229,18 @@ The MVP is done when:
 
 - ✅ Exact model file names → `vlm.gguf` (GLM-OCR 0.9B language model)
 - ✅ Exact mmproj file name → `mmproj.gguf` (vision projector)
-- ✅ Whether read-only preview included → YES (v1.3: 30% image / 70% Markdown; superseded by v1.4)
+- ✅ Whether read-only preview included → YES (superseded by v1.4 layout)
 
 ### Resolved in v1.4
 
-- ✅ Read-only preview layout → full-width rendered Markdown in right panel (thumbnail split removed 2026-08-07; Phase 2 compare-toggle candidate)
+- ✅ Read-only preview layout → full-width rendered Markdown in right panel (thumbnail split removed; Phase 2 compare-toggle candidate)
 - ✅ Panel ratios → 20/20/60 (CEO-approved 2026-08-07, superseding 20/35/45)
-- ✅ Final visual styling → layered zinc surfaces + locked purple accent (#aa3bff light / #c084fc dark); Quantico display font + readable body font; rounded-xl calm cards; icon-only top bar with tooltips; static zero-CPU radiant-lines background in center panel
+- ✅ Queue Remove button → removed from MVP scope (Phase 2 candidate)
+
+### Resolved in v1.5
+
+- ✅ Final visual styling → coffee & paper palette (DARK bg #080502; left #E1DCC9 / center #412D15 / right #1F150C; LIGHT bg #F9F8F6; left #EFE9E3 / center #D9CFC7 / right #C9B59C; accent #E3A55F dark / #92400E light; purple retired; no panel borders; depth recipe)
+- ✅ Logo identity → pictogram chip + live-text "scan2text" wordmark, one image both themes
 
 ### Still Open
 
@@ -280,10 +287,10 @@ These items will be finalized during implementation/testing:
 This PRD is the source of truth for the Scan2Text MVP.
 
 Sources of truth:
-- Product scope: `01-product-and-scope.md` (v1.4)
-- Functional requirements: `02-functional-requirements.md` (v1.4)
-- Architecture: `03-non-functional-and-architecture.md` (v1.4)
-- Testing & engineering rules: this document (v1.4)
+- Product scope: `01-product-and-scope.md` (v1.5)
+- Functional requirements: `02-functional-requirements.md` (v1.5)
+- Architecture: `03-non-functional-and-architecture.md` (v1.5)
+- Testing & engineering rules: this document (v1.5)
 - UI layout: Command Center (3-panel + bottom bar), ratios 20/20/60 (CEO-approved 2026-08-07)
 - Agent memory: `AGENTS.md` + `second-brain/00-Current-State.md`
 - Phase 5 plan: `second-brain/01-Agent-Memory/Phase-5/phase-5-command-center-plan.md`
