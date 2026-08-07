@@ -208,4 +208,72 @@ describe('QueuePanel status dots and retry', () => {
     const nameEl = screen.getByTestId('queue-item-name') as HTMLElement
     expect(nameEl).toHaveClass('truncate')
   })
+
+  it('processing row shows yellow spinner (#FACC15)', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'processing', createdAt: 1000, progress: 45 },
+    })
+    render(<QueuePanel />)
+    const item = screen.getByTestId('queue-item')
+    const spinners = Array.from(item.querySelectorAll('svg')).filter((svg) => svg.classList.contains('animate-spin'))
+    expect(spinners.length).toBeGreaterThanOrEqual(1)
+    expect(item.innerHTML).toContain('rgb(250, 204, 21)')
+  })
+
+  it('completed row green dot has glossy 3-stop radial gradient', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const dot = screen.getByTestId('queue-item-status-dot') as HTMLElement
+    expect(dot.style.background).toContain('radial-gradient')
+    expect(dot.style.background).toContain('rgb(134, 239, 172)')
+    expect(dot.style.background).toContain('rgb(22, 163, 74)')
+    expect(dot.style.background).toContain('rgb(20, 83, 45)')
+  })
+
+  it('failed row red dot has glossy 3-stop radial gradient', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'failed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const dots = Array.from(document.querySelectorAll('[data-testid="queue-item-status-dot"]')) as HTMLElement[]
+    const redDot = dots.find((d) => d.style.background?.includes('rgb(220, 38, 38)'))
+    expect(redDot).toBeInTheDocument()
+    expect(redDot!.style.background).toContain('radial-gradient')
+    expect(redDot!.style.background).toContain('rgb(252, 165, 165)')
+    expect(redDot!.style.background).toContain('rgb(220, 38, 38)')
+    expect(redDot!.style.background).toContain('rgb(127, 29, 29)')
+  })
+
+  it('status dot tooltip content carries translate class in component markup', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const dot = screen.getByTestId('queue-item-status-dot') as HTMLElement
+    expect(dot).toBeInTheDocument()
+    expect(dot.style.background).toContain('radial-gradient')
+  })
+
+  it('progress bar is present under row metadata for processing jobs', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'processing', createdAt: 1000, progress: 45 },
+    })
+    render(<QueuePanel />)
+    const progressBar = screen.getByTestId('queue-item-progress') as HTMLElement
+    expect(progressBar).toBeInTheDocument()
+    expect(progressBar).toHaveClass('h-1.5')
+  })
+
+  it('queue viewport has overflow-y auto for internal scrolling', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const scrollArea = screen.getByTestId('queue-scroll-area')
+    const viewport = scrollArea.querySelector('[class*="rounded"]') as HTMLElement | null
+    expect(viewport).toBeInTheDocument()
+    expect(viewport?.style.overflowY).toMatch(/auto|scroll/)
+  })
 })

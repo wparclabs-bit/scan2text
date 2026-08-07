@@ -41,7 +41,7 @@ export default function QueuePanel() {
     <div data-testid="panel-queue" className="h-full">
       <div className="rounded-xl p-3 h-full flex flex-col gap-2 min-w-0 box-border overflow-hidden" style={depthStyle}>
         <ScrollArea data-testid="queue-scroll-area" className="h-full">
-          <div className="min-h-0">
+          <div className="min-h-0 overflow-y-auto">
             {jobList.map((job) => {
           const isSelected = selectedJobId === job.id
           const isRetryingThis = isRetrying === job.id
@@ -83,7 +83,10 @@ export default function QueuePanel() {
                 </p>
                 {isActive && (
                   <div className="mt-1 flex items-center gap-2">
-                    <Spinner className="size-3 text-primary" />
+                    <Spinner
+                      className="size-3"
+                      style={{ color: '#FACC15' }}
+                    />
                     <div
                       data-testid="queue-item-progress"
                       className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden"
@@ -96,38 +99,38 @@ export default function QueuePanel() {
                   </div>
                 )}
               </div>
-              {job.status === 'completed' && (
-                <TooltipProvider delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span
-                        data-testid="queue-item-status-dot"
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ background: 'radial-gradient(circle at 35% 35%, #86efac, #16a34a)' }}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <p>{t('queue.status.completed')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {job.status === 'failed' && (
-                <TooltipProvider delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span
-                        data-testid="queue-item-status-dot"
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ background: 'radial-gradient(circle at 35% 35%, #fca5a5, #dc2626)' }}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <p>{t('queue.status.failed')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+                {job.status === 'completed' && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          data-testid="queue-item-status-dot"
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ background: 'radial-gradient(circle at 30% 30%, #86EFAC, #16A34A 60%, #14532D)' }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="translate-y-[-2px]">
+                        <p>{t('queue.status.completed')}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {job.status === 'failed' && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          data-testid="queue-item-status-dot"
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ background: 'radial-gradient(circle at 30% 30%, #FCA5A5, #DC2626 60%, #7F1D1D)' }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="translate-y-[-2px]">
+                        <p>{t('queue.status.failed')}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               {(job.status === 'pending' || job.status === 'uploading' || job.status === 'processing') && (
                 <span
                   data-testid="queue-item-status"

@@ -115,3 +115,34 @@ describe('CommandCenterLayout ambient glow', () => {
     expect(rays).toHaveLength(1)
   })
 })
+
+describe('Card depth inline styles', () => {
+  it('dropzone card exposes inline backgroundImage with gradient', () => {
+    render(<CommandCenterLayout />)
+    const card = document.querySelector('[data-testid="panel-dropzone"] > div') as HTMLElement | null
+    expect(card).toBeInTheDocument()
+    expect(card?.style.backgroundImage).toContain('linear-gradient')
+  })
+
+  it('queue card exposes inline backgroundImage with gradient', () => {
+    render(<CommandCenterLayout />)
+    const card = document.querySelector('[data-testid="panel-queue"] > div') as HTMLElement | null
+    expect(card).toBeInTheDocument()
+    expect(card?.style.backgroundImage).toContain('linear-gradient')
+  })
+
+  it('preview card exposes inline backgroundImage with gradient', () => {
+    render(<CommandCenterLayout />)
+    const card = document.querySelector('[data-testid="panel-preview"] > div') as HTMLElement | null
+    expect(card).toBeInTheDocument()
+    expect(card?.style.backgroundImage).toContain('linear-gradient')
+  })
+
+  it('all three cards expose inline boxShadow', () => {
+    render(<CommandCenterLayout />)
+    ;(['panel-dropzone', 'panel-queue', 'panel-preview'] as const).forEach((id) => {
+      const card = document.querySelector(`[data-testid="${id}"] > div`) as HTMLElement | null
+      expect(card?.style.boxShadow).toBeTruthy()
+    })
+  })
+})

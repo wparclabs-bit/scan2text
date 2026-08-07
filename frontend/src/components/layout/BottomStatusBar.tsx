@@ -25,8 +25,8 @@ export default function BottomStatusBar() {
   }
 
   return (
-    <footer data-testid="bottom-bar" className="px-4 py-1 text-sm text-muted-foreground font-display">
-      <div className="flex items-center justify-between h-full">
+    <footer data-testid="bottom-bar" className="px-4 py-1 text-sm text-muted-foreground font-display h-[36px] flex items-center">
+      <div className="flex items-center justify-between w-full">
         <div />
         <div className="flex items-center gap-4">
           <span>{t('bottomBar.workerLabel', { status: workerStatus })}</span>

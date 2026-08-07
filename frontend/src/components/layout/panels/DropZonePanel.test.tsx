@@ -7,12 +7,12 @@ vi.mock('@/stores/preferencesStore', () => ({
 }))
 
 describe('DropZonePanel background image', () => {
-  it('renders panel-dropzone with background image at 0.25 opacity', () => {
+  it('renders panel-dropzone with background image at 0.15 opacity', () => {
     render(<DropZonePanel />)
     const bgLayer = document.querySelector('[data-testid="panel-dropzone"] > div > [aria-hidden]') as HTMLElement | null
     expect(bgLayer).toBeInTheDocument()
     expect(bgLayer?.style.backgroundImage).toContain('bacground-left-top-panel.jpg')
-    expect(bgLayer?.style.opacity).toBe('0.25')
+    expect(bgLayer?.style.opacity).toBe('0.15')
   })
 
   it('background image layer has pointer-events-none', () => {
@@ -22,8 +22,25 @@ describe('DropZonePanel background image', () => {
     expect(bgLayer).toHaveClass('pointer-events-none')
   })
 
+  it('background image uses single-value background-size (not 2-value)', () => {
+    render(<DropZonePanel />)
+    const bgLayer = document.querySelector('[data-testid="panel-dropzone"] > div > [aria-hidden]') as HTMLElement | null
+    expect(bgLayer).toBeInTheDocument()
+    expect(bgLayer?.style.backgroundSize).toBe('100%')
+    expect(bgLayer?.style.backgroundSize).not.toMatch(/\s/)
+  })
+
   it('dropzone hint remains readable above background', () => {
     render(<DropZonePanel />)
     expect(screen.getByTestId('dropzone-hint')).toBeInTheDocument()
+  })
+
+  it('header text is bold with ink color #1F150C', () => {
+    render(<DropZonePanel />)
+    const scrollArea = screen.getByTestId('dropzone-scroll-area')
+    const header = scrollArea.querySelector('p') as HTMLElement | null
+    expect(header).toBeInTheDocument()
+    expect(header).toHaveClass('font-bold')
+    expect(header).toHaveClass('text-[#1F150C]')
   })
 })
