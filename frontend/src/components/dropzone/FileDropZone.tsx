@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { validateFilesBatch } from '@/lib/fileValidation'
+import { validateFilesBatch, type SkippedFile } from '@/lib/fileValidation'
 import { useScan2TextStore } from '@/stores/scan2text.store'
 
 interface FileDropZoneProps {
@@ -34,8 +34,21 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
     async (files: File[]) => {
       const { validFiles, skippedFiles } = validateFilesBatch(files)
 
-      if (validFiles.length > 0) {
-        for (const file of validFiles) {
+      const MAX_BATCH = 10
+      let extraSkipped: SkippedFile[] = []
+      if (validFiles.length > MAX_BATCH) {
+        extraSkipped = validFiles.slice(MAX_BATCH).map((f) => ({ fileName: f.name, size: f.size, reason: 'unsupported' as const }))
+        const extraNames = validFiles.slice(MAX_BATCH).map((f) => f.name)
+        extraNames.forEach((name) => {
+          console.log(`[scan2text] batch cap: skipped ${name}`)
+        })
+        toast.warning(t('dropzone.maxFilesWarning'))
+      }
+
+      const finalValidFiles = validFiles.slice(0, MAX_BATCH)
+
+      if (finalValidFiles.length > 0) {
+        for (const file of finalValidFiles) {
           const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
           addJob({ id: jobId, fileName: file.name, fileSize: file.size })
@@ -49,17 +62,18 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
         }
       }
 
-      if (skippedFiles.length > 0 && validFiles.length > 0) {
-        const unsupportedCount = skippedFiles.filter((f) => f.reason === 'unsupported').length
-        const tooLargeCount = skippedFiles.filter((f) => f.reason === 'tooLarge').length
+      const allSkipped = [...skippedFiles, ...extraSkipped]
+      if (allSkipped.length > 0 && finalValidFiles.length > 0) {
+        const unsupportedCount = allSkipped.filter((f) => f.reason === 'unsupported').length
+        const tooLargeCount = allSkipped.filter((f) => f.reason === 'tooLarge').length
         toast.warning(
           t('errors.batchSkipped', {
-            total: skippedFiles.length,
+            total: allSkipped.length,
             unsupported: unsupportedCount,
             tooLarge: tooLargeCount,
           }),
         )
-      } else if (skippedFiles.length > 0 && validFiles.length === 0) {
+      } else if (allSkipped.length > 0 && finalValidFiles.length === 0) {
         toast.warning(t('errors.allInvalid'))
       }
 
