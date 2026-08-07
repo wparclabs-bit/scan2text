@@ -364,6 +364,24 @@ describe('QueuePanel status dots and retry', () => {
     expect(overflowDivs.length).toBe(0)
   })
 
+  it('panel root has min-w-0 and w-full in empty state', () => {
+    setupStore({})
+    render(<QueuePanel />)
+    const panel = screen.getByTestId('panel-queue') as HTMLElement
+    expect(panel).toHaveClass('min-w-0')
+    expect(panel).toHaveClass('w-full')
+  })
+
+  it('panel root has min-w-0 and w-full in list state', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const panel = screen.getByTestId('panel-queue') as HTMLElement
+    expect(panel).toHaveClass('min-w-0')
+    expect(panel).toHaveClass('w-full')
+  })
+
   it('status slot has fixed w-[14px] class and is present for every status', () => {
     ;(['pending', 'uploading', 'processing', 'completed', 'failed'] as const).forEach((status) => {
       setupStore({

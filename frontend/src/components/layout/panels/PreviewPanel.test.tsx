@@ -168,6 +168,27 @@ describe('PreviewPanel', () => {
     expect(panel).toHaveClass('w-full')
   })
 
+  it('panel root has min-w-0 to prevent grid item overflow in all states', () => {
+    ;([null, 'processing', 'failed', 'completed'] as const).forEach((status) => {
+      const jobs = status === null ? {} : {
+        'job-1': {
+          id: 'job-1',
+          fileName: 'test.png',
+          fileType: 'image/png',
+          status,
+          markdownOutput: status === 'completed' ? '# Result' : '',
+          error: status === 'failed' ? 'OCR error' : undefined,
+        },
+      }
+      setupStore(status === null ? null : 'job-1', jobs)
+      const { unmount } = render(<PreviewPanel />)
+      const panels = document.querySelectorAll('[data-testid="panel-preview"]')
+      const panel = panels[panels.length - 1] as HTMLElement
+      expect(panel).toHaveClass('min-w-0')
+      unmount()
+    })
+  })
+
   it('preview ScrollArea mounts a visible ScrollBar component', () => {
     setupStore('job-1', {
       'job-1': {

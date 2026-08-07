@@ -64,4 +64,11 @@ describe('DropZonePanel background image', () => {
     expect(dropzone).toHaveClass('flex-1')
     expect(dropzone).toHaveClass('min-h-0')
   })
+
+  it('panel root has min-w-0 and w-full to prevent grid item overflow', () => {
+    render(<DropZonePanel />)
+    const panel = screen.getByTestId('panel-dropzone') as HTMLElement
+    expect(panel).toHaveClass('min-w-0')
+    expect(panel).toHaveClass('w-full')
+  })
 })

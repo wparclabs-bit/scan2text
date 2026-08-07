@@ -27,7 +27,7 @@ export default function QueuePanel() {
 
   if (jobList.length === 0) {
     return (
-      <div data-testid="panel-queue" className="h-full">
+      <div data-testid="panel-queue" className="h-full min-w-0 w-full">
         <div className="rounded-xl p-4 h-full flex items-center min-w-0 box-border overflow-hidden" style={depthStyle}>
           <p data-testid="queue-empty" className="text-sm text-muted-foreground">
             {t('queue.empty')}
@@ -38,7 +38,7 @@ export default function QueuePanel() {
   }
 
   return (
-    <div data-testid="panel-queue" className="h-full">
+    <div data-testid="panel-queue" className="h-full min-w-0 w-full">
       <div className="rounded-xl p-3 h-full flex flex-col gap-2 min-w-0 box-border overflow-hidden" style={depthStyle}>
         <ScrollArea data-testid="queue-scroll-area" className="h-full">
           {jobList.map((job) => {
