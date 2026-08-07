@@ -331,15 +331,37 @@ describe('QueuePanel status dots and retry', () => {
     expect(progressBar).toHaveClass('h-1.5')
   })
 
-  it('queue viewport has overflow-y auto for internal scrolling', () => {
+  it('queue ScrollArea mounts a visible ScrollBar component', () => {
+    const jobs: Record<string, any> = {}
+    for (let i = 0; i < 12; i++) {
+      jobs[`job-${i}`] = {
+        id: `job-${i}`,
+        fileName: `file-${i}.png`,
+        fileSize: 500 + i * 10,
+        status: 'completed' as const,
+        createdAt: 1000 + i,
+      }
+    }
+    setupStore(jobs)
+    render(<QueuePanel />)
+    const scrollArea = screen.getByTestId('queue-scroll-area')
+    expect(scrollArea.querySelectorAll('[data-testid="queue-item"]').length).toBe(12)
+    const source = require('fs').readFileSync(
+      require('path').join(__dirname, './QueuePanel.tsx'),
+      'utf8',
+    )
+    expect(source).toContain('import { ScrollArea, ScrollBar }')
+    expect(source).toContain('<ScrollBar orientation="vertical" />')
+  })
+
+  it('queue ScrollArea has no inner div with overflow-y-auto class', () => {
     setupStore({
       'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
     })
     render(<QueuePanel />)
     const scrollArea = screen.getByTestId('queue-scroll-area')
-    const viewport = scrollArea.querySelector('[class*="rounded"]') as HTMLElement | null
-    expect(viewport).toBeInTheDocument()
-    expect(viewport?.style.overflowY).toMatch(/auto|scroll/)
+    const overflowDivs = Array.from(scrollArea.querySelectorAll('[class*="overflow-y"]'))
+    expect(overflowDivs.length).toBe(0)
   })
 
   it('status slot has fixed w-[14px] class and is present for every status', () => {

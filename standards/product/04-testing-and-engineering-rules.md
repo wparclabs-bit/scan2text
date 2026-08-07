@@ -1,6 +1,6 @@
 # Testing Strategy & Engineering Rules — Scan2Text MVP
 
-Version: 1.6
+Version: 1.7
 Date: 2026-08-07
 Status: Approved for Implementation
 
@@ -11,10 +11,11 @@ Status: Approved for Implementation
 | 1.0 | 2026-06-22 | Initial testing strategy and engineering rules |
 | 1.1 | 2026-06-22 | Minor clarifications |
 | 1.2 | 2026-06-22 | Removed in-app editing from scope, updated open items |
-| 1.3 | 2026-08-06 | Updated tests for Command Center UI, Zustand store, react-i18next, react-markdown, file validation, fake progress, auto-select, background re-poll. Added AIASD rules for memory-only job state, preferences persistence, i18n, CPU-only, desktop-only. Updated Definition of Done and open items. |
-| 1.4 | 2026-08-07 | Beautify-phase deltas: panel ratios 20/35/45 → 20/20/60; full-width Markdown preview; queue Remove button removed; queue status indicators refined; accepted file types locked to PNG/JPG/JPEG/WEBP/PDF. |
-| 1.5 | 2026-08-07 | Visual identity finalized: coffee & paper palette, no panel borders, depth via gradients/highlight/shadow/glow, top bar logo chip + live-text wordmark + DEMO badge. |
-| 1.6 | 2026-08-07 | Phase 6 Finale deltas, CEO-approved: layout updated from 20/20/60 to 34/60 + 2% gutters; left work column contains Dropzone fixed ~38% + Queue flex; app shell viewport-locked using `h-screen`; Dropzone/Queue/Preview ScrollAreas require always-visible thin warm scrollbars; TopBar wordmark becomes literal brand text `Scan2Text` and is i18n-exempt; BottomBar adds icon-only Share button on left while worker/RAM/version is centered; Dropzone gains bold ink-black text + colored upload icon left + smile emoji right; card depth must be theme-aware inline longhand gradient+shadow on all primary cards; Queue card gains radiant rays; share uses placeholder `https://placeholder.local`; FR-04 queue row regression requires file type icon, name, size, status indicator, translated tooltip, and thin fake progress bar; manual QA script artifact in `second-brain/02-QA/` is required and must be run before Phase 6 completion. |
+| 1.3 | 2026-08-06 | Command Center tests, Zustand/i18n/markdown tests, file validation, fake progress, auto-select, background re-poll; AIASD rules 13-18; DoD + open items updated |
+| 1.4 | 2026-08-07 | Beautify deltas: 20/20/60, full-width preview, Remove button removed, status indicators refined, file types locked |
+| 1.5 | 2026-08-07 | Coffee & paper identity; top bar logo chip + live-text wordmark + DEMO badge |
+| 1.6 | 2026-08-07 | Phase 6 Finale: 34/60 + gutters; left work column; viewport lock; warm always-visible scrollbars; literal wordmark; BottomBar share + centered telemetry; Dropzone personality; inline longhand depth; Queue radiant rays; share placeholder; queue row regression contract; manual QA script artifact required |
+| 1.7 | 2026-08-07 | Hotfix finale: fixed inset-0 absolute viewport lock (fractions decide); TopBar 34px center brand image alt="Scan2Text" + static glow (no literal wordmark); Share RIGHT; BottomBar pinned with RAM "—" placeholder; Dropzone fill + bg 15% + bold ink texts + 10-file cap enforced; Dropzone ScrollArea removed; dot-only status slot (grey/yellow/green/red); visible-subtle gradation; borderless preview buttons; Radix tray CSS override; memory-hygiene exit checklist + one-prompt-per-slice rule; forensics-before-edit rule |
 
 ---
 
@@ -30,732 +31,152 @@ Testing must follow AIASD-friendly behavior testing.
 
 ### Unit Tests
 
-Test small pure logic:
-
-- output file naming, including timestamp and collision resolution
+- output file naming (timestamp + collision resolution)
 - file-name sanitization
 - settings validation
 - version comparison
-- error mapping from backend code to translated UI message
-- guardrail checks:
-  - 50MB file size limit
-  - 20-page PDF limit
-- file type validation:
-  - PNG
-  - JPG
-  - JPEG
-  - WEBP
-  - PDF
+- error mapping (backend code → translated UI message)
+- guardrail checks (50MB size, 20-page PDF limit, 10-file batch cap)
+- file type validation (PNG/JPG/JPEG/WEBP/PDF)
 - i18n key resolution
-- fake progress easing function:
-  - 0% to 90% over 30 seconds
-  - jump to 100% on completion
-- file-size formatting for queue row display, where a formatter is used
+- fake progress easing function (0→90% over 30s)
+- file-size formatting for queue rows
 
 ### Integration Tests
 
-Test API/service/store behavior without requiring the real 1.5 GB model.
+Backend (fake OCR engine):
 
-Use a fake OCR engine.
+- add valid file to queue; process; one Markdown per valid input; never merge
+- skip unsupported file in batch + log; continue valid files
+- reject oversized PDF (>20 pages) and file (>50MB)
+- handle missing output folder; settings persistence
+- POST /process returns task_id; GET /status/{task_id} progression; GET /health worker + RAM
 
-Backend tests:
+Frontend:
 
-- add valid file to queue
-- process job with fake OCR engine
-- produce one Markdown file per valid input file
-- do not merge multiple input files into one Markdown file
-- skip unsupported file in batch and log it
-- continue processing valid files after skipped file
-- reject oversized PDF greater than 20 pages
-- reject oversized file greater than 50MB
-- handle missing output folder
-- verify settings persistence
-- `GET /status/{task_id}` returns correct status progression
-- `POST /process` returns `task_id`
-- `GET /health` returns worker state, RAM usage, and version/model metadata where implemented
+- Zustand store: addJob, updateJob, startUpload, pollJob; FIFO order; auto-select; background re-poll (60s × 10)
+- fake progress transitions; file validation toasts
+- 10-file cap: dropping 12 valid files creates exactly 10 jobs + warning toast + logged skips
+- queue status slot per status: grey dot (pending), yellow spinner (uploading/processing), glossy green (completed), glossy red (failed); dot-only, no visible text; translated tooltips; thin fake progress bar while active; retry on failed
+- react-markdown + remark-gfm rendering; i18n EN/ID; theme + language persistence
 
-Frontend tests:
+Frontend v1.7 visual-contract (real <App /> render):
 
-- Zustand store:
-  - addJob
-  - updateJob
-  - startUpload
-  - pollJob
-- FIFO queue order using `jobOrder[]`
-- auto-select behavior on job completion
-- background re-poll logic:
-  - every 60 seconds
-  - maximum 10 re-polls
-- fake progress animation state transitions
-- file validation:
-  - type validation
-  - 50MB validation
-  - toast error rendering
-- queue row regression contract:
-  - file type icon renders
-  - file name renders
-  - file size renders
-  - status indicator renders
-  - translated tooltip or accessible equivalent renders
-  - thin fake progress bar renders
-- queue status indicators:
-  - spinner while uploading/processing
-  - glossy green dot on completed
-  - red dot on failed
-- tooltip rendering on icon-only TopBar buttons
-- react-markdown + remark-gfm rendering
-- i18n key resolution:
-  - English
-  - Indonesian
-- theme toggle:
-  - dark to light
-  - light to dark
-  - localStorage persistence
-- language toggle:
-  - English to Indonesian
-  - Indonesian to English
-  - localStorage persistence
-
-Frontend v1.6 visual-contract tests:
-
-- Real App render must show the literal TopBar wordmark:
-  - `Scan2Text`
-- The visible TopBar must be the live TopBar in the actual App import chain.
-- The wordmark assertion must occur in a real App render, not in a detached component test only.
-- App shell must be viewport-locked:
-  - `h-screen` or equivalent full-viewport layout is present
-  - body/window scroll is not expected in normal desktop rendering
-- Main layout must expose the v1.6 structure:
-  - TopBar
-  - left work column
-  - right preview column
-  - BottomBar
-- Left work column must contain:
-  - Dropzone card
-  - Queue card
-- Dropzone must expose the v1.6 personality contract:
-  - bold ink-black text
-  - colored upload icon on the left
-  - smile emoji on the right
-- All primary cards must expose depth styles:
-  - Dropzone card
-  - Queue card
-  - Preview card
-- Card depth must be applied through inline styles in jsdom where practical.
-- Queue card must expose the radiant-ray visual hook or class.
-- ScrollAreas must exist for:
-  - Dropzone
-  - Queue
-  - Preview
-- ScrollArea test hooks must exist:
-  - `data-testid="scrollarea-dropzone"`
-  - `data-testid="scrollarea-queue"`
-  - `data-testid="scrollarea-preview"`
-- Always-visible warm scrollbar affordance must be asserted by class, data attribute, or equivalent stable hook.
-- BottomBar must expose:
-  - icon-only Share button on the left
-  - worker/RAM/version group centered
-- Share button must use or prepare the placeholder target:
-  - `https://placeholder.local`
+- brand image with alt="Scan2Text" present in live TopBar + logo chip left
+- TopBar 34px; items vertically centered
+- shell has fixed inset-0 + flex-col + overflow-hidden; main flex-1 min-h-0; left column grid-rows minmax(0,38fr)/minmax(0,62fr)
+- BottomBar: shrink-0; grid 1fr auto 1fr; center telemetry (Worker/RAM/version); Share icon-only RIGHT; no text label
+- Dropzone: dashed area flex-1 min-h-0; NO ScrollArea; bg layer opacity 0.15 + single-value background-size; header + hint bold ink
+- Preview header: two real <button> elements, borderless, transparent bg, translated labels
+- index.css contains the Radix tray override selector
+- structural constancy: render with 0 jobs vs 10 jobs — same panel structure
 
 ### Manual/E2E Tests
 
-Run against real model, GLM-OCR 0.9B, and real samples:
+Run against real model and real samples:
 
-- launch app
-- verify app shell is viewport-locked
-- verify no page-level scroll appears in normal desktop use
-- verify BottomBar remains visible without scrolling
-- verify TopBar shows literal brand wordmark `Scan2Text`
-- verify main layout reads as 34/60 + 2% gutter spacing
-- verify left work column contains Dropzone and Queue
-- verify Dropzone is fixed at approximately 38% of left-column space
-- verify Queue flexes into the remaining left-column space
-- verify Dropzone text is bold ink-black
-- verify Dropzone has colored upload icon on the left
-- verify Dropzone has smile emoji on the right
-- verify Dropzone, Queue, and Preview have always-visible warm scrollbars or scrollbar rails
-- verify scrollbars do not require hover to become visible
-- verify all primary cards have visible depth
-- verify Queue card has subtle radiant rays
-- verify BottomBar has icon-only Share button on the left
-- verify worker/RAM/version group is centered in BottomBar
-- verify Share button uses placeholder behavior/target until final share integration
-- drop image → verify fake progress + Markdown result in right panel
-- drop PDF → verify rendered Markdown result in right panel and file type icon in queue row
-- drop mixed batch with unsupported file → verify unsupported skipped + valid processed
-- drop oversized file greater than 50MB → verify error toast
-- drag-and-drop and file picker both work
-- auto-select shows completed result automatically
-- queue row shows:
-  - file type icon
-  - file name
-  - file size
-  - status indicator
-  - tooltip
-  - thin fake progress bar
-- queue shows spinner while processing
-- queue shows glossy green dot on completed
-- queue shows red dot on failed
-- switch language → all UI strings update, except literal brand wordmark
-- switch theme → dark/light mode toggles correctly
-- restart app → settings persist, language/theme persist
-- verify icon-only TopBar buttons show translated tooltips
-- verify static Queue radiant rays render without idle CPU drain
+- launch app; first-run setup; drag-and-drop + picker
+- drop image / PDF → fake progress + Markdown in right panel; auto-select
+- mixed batch with unsupported → skipped + logged; oversized → toast
+- drop 11 files → first 10 processed + warning toast; dropzone size unchanged
+- wide window (2560px) + short window → BottomBar always visible; no page scroll
+- queue: names truncate with ellipsis; status dots visible at row right; warm always-visible scrollbar on queue + preview
+- TopBar: brand image + glow; logo chip + DEMO; icon-only tooltips translated
+- language + theme toggles persist; restart persistence
+- bottom bar telemetry centered; Share right with toast on click
 
-### Manual QA Script Artifact
+### QA Manual Test Script Artifact
 
-Added in v1.6.
-
-A manual QA script must exist in:
-
-`second-brain/02-QA/`
-
-Recommended file name:
-
-`scan2text-phase6-manual-test.md`
-
-The QA script must include:
-
-- baseline verification:
-  - automated test command, such as `npm run test`
-  - recent commit verification, such as top three commits from `git log --oneline`
-  - AGENTS.md file map verification
-- visual verification:
-  - viewport lock
-  - TopBar wordmark
-  - 34/60 layout
-  - Dropzone fixed region
-  - Queue flex region
-  - always-visible scrollbars
-  - card depth
-  - Queue radiant rays
-  - Dropzone personality
-  - BottomBar composition
-- queue verification:
-  - file type icon
-  - file name
-  - file size
-  - status indicator
-  - tooltip
-  - thin fake progress bar
-  - spinner state
-  - completed green dot state
-  - failed red dot state
-- share verification:
-  - icon-only Share button on left
-  - placeholder target `https://placeholder.local`
-- result recording:
-  - pass/fail notes
-  - date
-  - tester
-  - commit or baseline reference
-
-The QA script must be run before Phase 6 is marked complete.
+- Must exist at `second-brain/02-QA/scan2text-phase6-manual-test.md`.
+- Must include: baseline verification (npm run test count, git log top 3, AGENTS.md map), all visual/scroll/queue/share checks above, result recording (pass/fail, date, commit).
+- Must be RUN before Phase 6 is marked complete.
 
 ### OCR Accuracy Validation
 
-Initial human validation:
-
-- CEO provides 3 representative sample files.
-- Human reviews extracted Markdown in the Command Center right panel.
-- Target is approximately 95% visible text extraction.
-- Simple table/list preservation is reviewed manually.
-- Perfect layout fidelity is not required.
+- CEO provides 3 representative samples; human review in right panel; ~95% visible text target; best-effort lists/tables.
 
 ---
 
 ## 20. AI-Assisted Development Rules
 
-All coding agents or AI tools working on this project must follow these rules.
+Rules 1-11: unchanged (local-first only; modular monolith; contract-first; OCR adapter isolation; no merged output; no in-app editing MVP; unsupported non-blocking; no hardcoded paths; safe file handling; clear errors with i18n; privacy-safe logs).
 
-### Rule 1: Local-first only
+### Rule 12: Follow the Command Center v1.7 shell
 
-Do not introduce cloud services, hosted APIs, external databases, authentication providers, or telemetry.
+- Shell: fixed inset-0 flex-col overflow-hidden; TopBar 34px (logo chip + DEMO left, center brand image alt="Scan2Text" + static glow, icon-only buttons right); main grid-cols-[34fr_60fr] gap-[2%]; left rows minmax(0,38fr)/minmax(0,62fr); BottomBar pinned (center telemetry, Share RIGHT).
+- Fractions decide; content never resizes panels. No deviation without CEO approval.
 
-### Rule 2: Modular monolith
+Rules 13-18: unchanged (tests required; memory-only job state; persist only preferences; i18n for all UI strings with brand-image exception; CPU-only; desktop-only).
 
-Keep modules separated:
+### Rule 19: Forensics before edit
 
-- UI, including React components and Zustand stores
-- local API routes
-- application services
-- OCR engine adapter
-- file/storage services
-- settings service
-- update service
-
-Do not tightly couple UI to OCR internals.
-
-### Rule 3: Contract-first
-
-Define Pydantic models before implementing routes or services.
-
-Do not invent inconsistent shapes for jobs, settings, errors, or OCR results.
-
-### Rule 4: OCR engine isolation
-
-The OCR model must be behind an adapter/interface.
-
-Automated tests must be able to use a fake OCR engine.
-
-### Rule 5: No merged output
-
-Each valid input file produces its own Markdown file.
-
-Do not merge multiple input files into one Markdown file.
-
-A multi-page PDF may produce one Markdown file because it is one source document.
-
-### Rule 6: No in-app editing in MVP
-
-MVP does not include an in-app editor.
-
-Final output is Markdown. Editing happens outside Scan2Text.
-
-In-app Markdown editing is planned as a future feature.
-
-### Rule 7: Unsupported files are non-blocking in batch
-
-Unsupported files should be skipped and logged.
-
-They should not stop valid files from processing.
-
-### Rule 8: No hardcoded paths
-
-All paths must be resolved through a path/service layer.
-
-Do not hardcode machine-specific paths.
-
-### Rule 9: Safe file handling
-
-Never overwrite user files silently.
-
-Use atomic writes where practical.
-
-Validate output directory writability before saving.
-
-### Rule 10: Clear errors with i18n
-
-All exceptions must map to known error codes.
-
-Do not expose raw stack traces to users.
-
-All user-facing error messages must use i18n translation keys.
-
-Known backend errors must map to translated messages.
-
-### Rule 11: Privacy-safe logs
-
-Do not log OCR text or document content by default.
-
-### Rule 12: Follow the v1.6 Command Center shell
-
-Do not add unnecessary screens, settings, or features beyond this PRD.
-
-UI layout must follow the approved v1.6 Command Center shell:
-
-- TopBar
-- main content area
-- BottomBar
-
-Main layout must follow:
-
-- 34/60 main split
-- approximately 2% gutter/spacing budget
-- left work column containing Dropzone and Queue
-- Dropzone fixed at approximately 38% of left-column space
-- Queue flexing into remaining space
-- right preview column containing Live Preview
-
-The app shell must be viewport-locked.
-
-Do not deviate from the locked v1.6 layout without CEO approval.
-
-### Rule 13: Tests are required
-
-New behavior requires tests.
-
-Bug fixes require regression tests where practical.
-
-### Rule 14: Memory-only job state
-
-Job state in the frontend must be memory-only.
-
-Use Zustand without persistence middleware for job state.
-
-Do not store job state, task IDs, or file data in localStorage/sessionStorage.
-
-### Rule 15: Persist only user preferences
-
-Only theme preference and language preference may be persisted to localStorage.
-
-All other state must be memory-only or backend-truth.
-
-### Rule 16: i18n for all UI strings, with one brand exception
-
-No hardcoded UI text in React components except the literal brand wordmark.
-
-All UI strings must use react-i18next translation keys.
-
-New UI strings must be added to both:
-
-- `en.json`
-- `id.json`
-
-The literal brand wordmark `Scan2Text` is i18n-exempt.
-
-### Rule 17: CPU-only inference
-
-Do not add GPU-specific code paths or dependencies.
-
-All OCR inference must work on CPU.
-
-The model, `vlm.gguf` + `mmproj.gguf`, runs via `llama-cpp-python` with CPU-friendly parameters.
-
-### Rule 18: Desktop-only for MVP
-
-Do not add responsive/mobile layout code.
-
-The Command Center layout is desktop-only.
-
-Mobile/responsive is deferred to a later phase.
-
-### Rule 19: Trace live imports before editing UI
-
-Before editing any visible UI component, trace the live import chain from the actual App entry.
-
-Do not edit a ghost, duplicate, or unused component file and assume it controls the visible UI.
-
-The TopBar that renders in the real App tree is the source of truth for the visible wordmark.
+Trace the live import chain (App.tsx → Layout → Panel) before editing any visible UI. Never edit ghost components. Delete ghosts + their tests in one atomic sweep.
 
 ### Rule 20: Preserve the viewport lock
 
-The app shell must remain viewport-locked.
-
-Do not reintroduce page-level scrolling.
-
-Only designated internal ScrollAreas may scroll.
-
-The BottomBar must remain visible without scrolling.
+fixed inset-0 shell; no page scroll; only Queue + Preview scroll internally; BottomBar always visible.
 
 ### Rule 21: Scrollbars are affordances
 
-Scrollbars must be always visible where required.
+Always visible, thin, rounded, warm on Queue + Preview. No hover-only scrollbars.
 
-Do not use hover-only scrollbars.
+### Rule 22: Card depth via inline longhand styles
 
-Do not hide scrollbars for aesthetic minimalism.
+Visible-subtle gradation on all cards; theme-aware; no flat cards; no purple.
 
-Scrollbars must remain thin, rounded, warm, and theme-aware.
+### Rule 23: Rebuild slices protect existing UI
 
-### Rule 22: Card depth uses inline longhand styles in v1.6
+Re-assert ALL pre-existing row/panel elements, not only new ones. Visual polish must not delete metadata or affordances.
 
-For the v1.6 visual-correctness work, card depth must be applied through theme-aware inline styles.
+### Rule 24: Memory hygiene exit checklist
 
-Depth must use explicit longhand style properties.
+Every slice exits with: green tests + commit + `second-brain/01-Agent-Memory/Phase-6/slice-*.md` summary + AGENTS.md lessons. Kilo receives ONE complete self-contained prompt per slice (no patch fragments).
 
-Utility classes may support layout and spacing, but the source of truth for card depth must be inline style.
+### Rule 25: Share placeholder only
 
-All primary cards must have depth:
-
-- Dropzone card
-- Queue card
-- Preview card
-
-Flat cards are not allowed.
-
-### Rule 23: Rebuild slices must protect existing UI contracts
-
-When rebuilding or polishing a slice, re-assert all pre-existing row and panel elements, not only the new visual elements.
-
-For queue rows, this includes:
-
-- file type icon
-- file name
-- file size
-- status indicator
-- tooltip
-- thin fake progress bar
-
-Visual polish must not silently remove metadata or affordances.
-
-### Rule 24: QA script artifact is required
-
-Phase completion requires a manual QA script artifact in:
-
-`second-brain/02-QA/`
-
-The QA script must be run before the phase is marked complete.
-
-The result should be recorded in the QA artifact, commit message, or PR notes.
-
-### Rule 25: Share placeholder only until approved swap
-
-The MVP Share button uses the placeholder target:
-
-`https://placeholder.local`
-
-Do not replace it with a production share URL until the post-GitHub share target is approved.
+`https://placeholder.local` until post-GitHub swap is CEO-approved. Click = toast, no navigation.
 
 ---
 
 ## 21. Definition of Done
 
-The MVP is done when:
+The MVP is done when (v1.7):
 
-- `Scan2Text.exe` launches on Windows 10/11 without admin rights.
-- First-run setup creates required folders and settings.
-- The v1.6 Command Center shell renders correctly:
-  - TopBar
-  - main content area
-  - BottomBar
-- The app shell is viewport-locked using `h-screen` or equivalent.
-- The browser/body does not scroll in normal desktop use.
-- The BottomBar remains visible without scrolling.
-- The main layout reads as 34/60 + 2% gutter spacing.
-- The left work column contains Dropzone and Queue.
-- The Dropzone occupies a fixed region of approximately 38% of the left-column space.
-- The Queue flexes into the remaining left-column space.
-- The right preview column shows rendered Markdown full-width and read-only.
-- Dark mode is the default theme.
-- Coffee & paper visual identity is applied:
-  - warm layered surfaces
-  - no primary panel card borders
-  - subtle depth
-  - soft shadows
-  - warm glow
-- All primary cards have visible depth:
-  - Dropzone card
-  - Queue card
-  - Preview card
-- Card depth is implemented through theme-aware inline longhand styles.
-- Queue card shows subtle radiant rays.
-- Dropzone shows bold ink-black text.
-- Dropzone shows colored upload icon on the left.
-- Dropzone shows smile emoji on the right.
-- ScrollAreas exist for Dropzone, Queue, and Preview.
-- Scrollbars or scrollbar rails are always visible.
-- Scrollbars are thin, rounded, and warm.
-- Hover-only scrollbars are not present.
-- TopBar shows literal brand wordmark:
-  - `Scan2Text`
-- The wordmark is visible in the live TopBar rendered by the actual App import chain.
-- A real App render test asserts the wordmark text.
-- TopBar icon-only buttons show translated tooltips.
-- Theme toggle works and persists to localStorage.
-- Language toggle works for EN/ID and persists to localStorage.
-- All UI strings are translated except the literal brand wordmark.
-- User can drag and drop supported files.
-- File validation rejects files greater than 50MB with error toast.
-- File validation rejects unsupported types with error toast.
-- Unsupported files in a batch are skipped and logged.
-- Single image OCR works offline.
-- Simple PDF OCR works offline.
-- Multi-file queue processes in FIFO order.
-- Queue row shows:
-  - file type icon
-  - file name
-  - file size
-  - status indicator
-  - translated tooltip or accessible equivalent
-  - thin fake progress bar
-- Queue status indicators render correctly:
-  - spinner while uploading/processing
-  - glossy green dot on completed
-  - red dot on failed
-- Fake progress bar animates:
-  - 0% to 90% over 30 seconds
-  - jump to 100% on completion
-- Auto-select shows result when job completes.
-- Background jobs re-poll every 60 seconds, maximum 10 times, after 30-second polling timeout.
-- Model loading shows progress.
-- Each valid input file produces one Markdown file.
-- Multiple input files are not merged into one Markdown file.
-- Markdown output preserves simple structure on a best-effort basis.
-- Output naming is collision-safe.
-- Settings persist after restart.
-- Update check is non-blocking and works when online.
-- Errors are clear, logged, and translated.
-- BottomBar shows:
-  - icon-only Share button on the left
-  - worker status, RAM usage, and version centered
-- Share button uses placeholder target:
-  - `https://placeholder.local`
-- Automated tests pass without requiring the real large model.
-- Manual test with 3 CEO-provided samples is accepted by human review.
-- Manual QA script exists in `second-brain/02-QA/`.
-- Manual QA script has been run and results recorded.
-- PRD v1.6 files 01–04 are approved and committed.
+- Portable launch without admin rights; first-run setup works.
+- Command Center v1.7 shell renders: fixed inset-0; TopBar 34px with center brand image + logo chip + DEMO; 34/60 main; left 38fr/62fr; BottomBar pinned at any window size.
+- Coffee & paper identity with visible-subtle gradation on all cards; Queue radiant rays; no flat cards.
+- Dropzone: dashed fill, bg 15%, bold ink header + footer with 10-file rule; 10-file cap enforced with warning toast.
+- Queue: dot-only status slot (grey/yellow/green/red) with translated tooltips; fake progress; retry; warm always-visible scrollbar; truncation with ellipsis.
+- Preview: borderless Copy Markdown / Open Folder buttons; full-width read-only Markdown; auto-select.
+- i18n EN/ID complete except brand image alt; theme + language persist.
+- OCR offline for image + simple PDF; one Markdown per input; collision-safe naming.
+- Errors clear, logged, translated; unsupported non-blocking.
+- Share RIGHT with placeholder + toast.
+- Automated tests green without the real model; QA manual script exists AND has been run; CEO screenshot acceptance for layout-critical UI.
+- PRD v1.7 files 01-04 committed as source of truth.
 
 ---
 
 ## 22. Open Items
 
-### Resolved in v1.3
+Resolved in v1.6/v1.7: layout 34/60 + gutters; left work column internal split; viewport lock (fixed inset-0); wordmark form (center brand image alt); BottomBar composition + Share RIGHT; Dropzone bg/fill/bold texts; status slot dot-only; depth visible-subtle; queue row regression; Radix tray neutralized; ghost components deleted.
 
-- Exact model file names:
-  - `vlm.gguf` for GLM-OCR 0.9B language model
-- Exact mmproj file name:
-  - `mmproj.gguf` for vision projector
-- Read-only preview included:
-  - yes
-
-### Resolved in v1.4
-
-- Read-only preview layout:
-  - full-width rendered Markdown in right panel
-- Panel ratios:
-  - 20/20/60 at that time
-- Queue Remove button:
-  - removed from MVP scope
-
-### Resolved in v1.5
-
-- Final visual styling:
-  - coffee & paper palette
-- Logo identity at that time:
-  - pictogram chip + live-text wordmark
-
-### Resolved in v1.6
-
-- Main layout:
-  - 34/60 + 2% gutters
-  - supersedes 20/20/60
-- Left work column:
-  - Dropzone fixed ~38%
-  - Queue flex
-- App shell:
-  - viewport-locked using `h-screen`
-- Scroll affordances:
-  - always-visible thin warm scrollbars for Dropzone, Queue, and Preview
-- TopBar wordmark:
-  - literal brand text `Scan2Text`
-  - i18n-exempt
-- BottomBar:
-  - icon-only Share button on left
-  - worker/RAM/version centered
-- Share target:
-  - placeholder `https://placeholder.local`
-- Dropzone personality:
-  - bold ink-black text
-  - colored upload icon left
-  - smile emoji right
-- Card depth:
-  - subtle gradient + shadow on all primary cards
-  - theme-aware inline longhand styles
-- Queue decoration:
-  - radiant rays on Queue card
-- Queue row contract:
-  - file type icon
-  - file name
-  - file size
-  - status indicator
-  - translated tooltip
-  - thin fake progress bar
-
-### Still Open
-
-These items will be finalized during implementation/testing:
-
-- Three CEO-provided sample files for OCR validation.
-- Final performance thresholds after benchmark.
-- Final body font choice.
-- Executable icon, scheduled for Phase 7.
-- Production share URL swap after GitHub/sharing availability.
-- Whether update helper script is needed in a later version.
-- macOS packaging in Phase 2.
-- Mobile strategy in a later phase.
-- Verify PDF-to-image conversion pipeline for GLM-OCR.
-- VLM smoke test with real `vlm.gguf` + `mmproj.gguf` via `llama-cpp-python`.
-- Backend `GET /health` finalization if not already complete.
-- Backend `POST /cancel/{task_id}` endpoint for queue cancel action.
-- Review and adjust Indonesian translations drafted by AI.
+Still open: 6.14j verification (wide window + 11 files acceptance); QA manual script run; backend GET /health (RAM "—" until then); real share URL post-GitHub; exe icon (Phase 7); final body font; CEO sample files; performance thresholds; PDF-to-image verification; VLM smoke test; ID translation review; POST /cancel endpoint.
 
 ---
 
 ## 23. Future Phases
 
-### Phase 7
-
-- Phase 7 grills and planning.
-- Executable icon.
-- Production share target replacement if approved.
-- Continued visual polish and stability hardening.
-
-### Phase 2
-
-- macOS support
-- mobile/responsive layout
-- in-app Markdown editing
-- editable Markdown with save-to-disk
-- copy-to-clipboard button for Markdown results
-- real PDF thumbnails via `pdf.js` rendering
-- side-by-side image thumbnail compare toggle
-- Queue Remove button
-- performance optimization for VLM inference
-- update helper
-- better PDF handling
-
-### Phase 3
-
-- Micro-SaaS version
-- cloud API integration
-- Tauri/Rust or web app distribution
-- account and billing features if needed
-- re-evaluate WebSocket transport for real-time progress
-- queue cancel backend logic, including interrupting `llama-cpp-python` mid-run
+- Phase 7: exe icon; GET /health real telemetry; share swap post-GitHub; QA hardening; ASR agent brainstorm follow-up (separate product); summary model as in-app feature candidate.
+- Phase 2: macOS; mobile; in-app editing; compare-toggle; thumbnails; Remove button; perf tuning; update helper.
+- Phase 3: micro-SaaS; cloud API; Tauri/web; accounts; WebSockets; cancel backend.
 
 ---
 
 ## 24. Engineering Note
 
-This PRD is the source of truth for the Scan2Text MVP.
+Sources of truth: 01-product-and-scope.md v1.7; 02-functional-requirements.md v1.7; 03-non-functional-and-architecture.md v1.7; this document v1.7.
 
-Sources of truth:
+Agent memory: AGENTS.md + second-brain/00-Current-State.md + second-brain/01-Agent-Memory/Phase-6 slice files + second-brain/02-QA scripts.
 
-- Product scope:
-  - `01-product-and-scope.md`, v1.6
-- Functional requirements:
-  - `02-functional-requirements.md`, v1.6
-- Architecture:
-  - `03-non-functional-and-architecture.md`, v1.6
-- Testing & engineering rules:
-  - this document, v1.6
-
-UI layout source of truth:
-
-- v1.6 Command Center shell
-- TopBar
-- main content area
-- BottomBar
-- 34/60 main split
-- approximately 2% gutter/spacing budget
-- left work column containing Dropzone and Queue
-- Dropzone fixed at approximately 38% of left-column space
-- Queue flexing into remaining space
-- right preview column containing Live Preview
-
-Agent memory:
-
-- `AGENTS.md`
-- `second-brain/00-Current-State.md`
-
-QA artifact:
-
-- `second-brain/02-QA/scan2text-phase6-manual-test.md`, or equivalent phase QA script
-
-Lessons to add to `AGENTS.md`:
-
-- Depth via inline styles only for v1.6 card depth work.
-- Trace live imports before editing UI.
-- Preserve the viewport lock.
-- QA script artifact exists and must be run.
-- Rebuild slices must re-assert all pre-existing row and panel elements, not just new ones.
-- Scrollbars are affordances and must always be visible.
-
-Any major technical change requires an ADR.
-
-Any product scope change requires CEO approval.
-
-Any AI-generated implementation must conform to this PRD, the local-first guardrails, and the AIASD rules above.
+Layout-critical UI acceptance = CEO screenshot (jsdom does no layout math). Any major technical change requires an ADR; any scope change requires CEO approval.

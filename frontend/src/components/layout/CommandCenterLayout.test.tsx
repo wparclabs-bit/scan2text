@@ -32,6 +32,20 @@ describe('Shell structure — flex-col pin', () => {
     expect(main).toHaveClass('min-h-0')
   })
 
+  it('main uses minmax(0,34fr)_minmax(0,60fr) grid tracks', () => {
+    render(<CommandCenterLayout />)
+    const main = document.querySelector('main') as HTMLElement | null
+    expect(main).toHaveClass('grid-cols-[minmax(0,34fr)_minmax(0,60fr)]')
+  })
+
+  it('left-column and preview-column carry min-w-0', () => {
+    render(<CommandCenterLayout />)
+    const leftCol = screen.getByTestId('left-column') as HTMLElement
+    const previewCol = screen.getByTestId('preview-column') as HTMLElement
+    expect(leftCol).toHaveClass('min-w-0')
+    expect(previewCol).toHaveClass('min-w-0')
+  })
+
   it('bottom bar has shrink-0 class', () => {
     render(<CommandCenterLayout />)
     const bar = screen.getByTestId('bottom-bar') as HTMLElement

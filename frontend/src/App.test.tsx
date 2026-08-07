@@ -88,7 +88,7 @@ describe('Command Center layout', () => {
       render(<App />)
       const main = document.querySelector('main') as HTMLElement | null
       expect(main).toBeInTheDocument()
-      expect(main?.className).toContain('grid-cols-[34fr_60fr]')
+      expect(main?.className).toContain('grid-cols-[minmax(0,34fr)_minmax(0,60fr)]')
     })
 
     it('renders brand image alt text', () => {
