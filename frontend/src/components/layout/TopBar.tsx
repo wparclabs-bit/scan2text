@@ -32,9 +32,9 @@ export default function TopBar() {
             >
               <img src={logoUrl} alt="" className="w-6 h-6 object-contain" />
               <span data-testid="topbar-wordmark" className="text-lg font-semibold font-display tracking-wider">
-                <span>{t('topbar.wordmarkScan')}</span>
-                <span data-testid="topbar-wordmark-accent" className="text-accent">{t('topbar.wordmarkTwo')}</span>
-                <span>{t('topbar.wordmarkText')}</span>
+                <span style={{ color: theme === 'dark' ? '#F2EBDD' : '#1F150C' }}>scan</span>
+                <span data-testid="topbar-wordmark-accent" className="text-accent">2</span>
+                <span style={{ color: theme === 'dark' ? '#F2EBDD' : '#1F150C' }}>text</span>
               </span>
             </div>
             {IS_DEMO_MODE && (
