@@ -223,3 +223,17 @@ RULE: never guess paths. If a mapped file is missing, discover via Get-ChildItem
 - jsdom hex→rgb conversion: Tests asserting inline hex colors on SVG/HTML elements must check rgb() computed values, not hex strings. Use `innerHTML.toContain('rgb(...)')` or assert className instead.
 - Spinner inline style on SVG: React passes inline style to SVG elements but jsdom may render it as rgb(). Check via `innerHTML` or `getAttribute('style')` with null guard.
 - Radix Tooltip portals content: TooltipContent renders in a DOM portal, not inside the triggering component's tree. Test tooltip markup via parent innerHTML or skip portal-dependent assertions.
+
+## Lessons Learned (Slice 6.14f)
+
+- Fixed status slot pattern: Reserve a dedicated `<div>` with fixed width class (`w-[14px] shrink-0`) as the status slot container. Render dot/spinner INSIDE it per status. Never mix slot markup with the flex-1 metadata column — this prevents layout shift when status changes.
+- BottomBar pin recipe: Shell must be `h-screen flex flex-col`; TopBar is implicitly shrink-0; main gets `flex-1 min-h-0`; BottomBar explicitly `shrink-0`. Center telemetry with `grid grid-cols-[1fr_auto_1fr] items-center` so all three zones (empty / centered / right) are truly balanced at any window size.
+- Ghost-row archaeology: When tracing a visual regression, follow the import chain from App.tsx → Layout → Panel → Row component. The "ghost" component was a perceived issue — the actual live row already had dots but with different gradient stops. Always inspect the ACTUAL rendered component, not assumptions.
+- jsdom flexGrow limitation: `window.getComputedStyle(el).flexGrow` returns `'0'` in jsdom even when `flex-1` class is present. Assert className (`toHaveClass('flex-1')`) instead of computed style for flex properties.
+- jsdom offsetWidth limitation: `offsetWidth`/`offsetHeight` return 0 for elements in jsdom unless they have explicit dimensions or are in a measured container. Assert Tailwind width classes (`w-[14px]`) instead of pixel measurements.
+
+## Lessons Learned (Slice 6.14g)
+
+- Forensics-before-edit for twice-failed items: When a visual fix appears to fail repeatedly, run Phase A forensics FIRST — trace the import chain from App.tsx → Layout → Panel, grep for every matching component name, mark each LIVE vs GHOST, prove which file is actually served. Never edit source before proving the import tree.
+- Ghost deletion log: Orphaned components (DropZone.tsx not imported by app tree, only by its own test; debug-drop.test.tsx importing deleted ghost) cause TS build failures after deletion. Always grep for ALL consumers before deleting — including test files and debug scripts. Delete ghost component + ghost test + any debug harness in one atomic sweep.
+- Last-slice-didn't-touch-source pattern: git show --stat HEAD can reveal the previous slice only touched tests/docs, meaning source changes landed in an earlier slice. Check git log -5 and individual commit stats before assuming code is missing.
