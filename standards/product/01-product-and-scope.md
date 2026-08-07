@@ -1,6 +1,6 @@
 # PRD: Scan2Text — MVP
 
-Version: 1.4
+Version: 1.5
 Date: 2026-08-07
 Status: Approved for Implementation
 Product Owner: CEO
@@ -15,7 +15,8 @@ Engineering Method: AI-Assisted Software Development (AIASD)
 | 1.1 | 2026-06-22 | Clarifications |
 | 1.2 | 2026-06-22 | Clarified no merged output, removed in-app editing, unsupported files skipped |
 | 1.3 | 2026-08-06 | Integrated output naming convention (from addendum 05), updated model to GLM-OCR 0.9B, added Phase 5 UI decisions (Command Center layout, i18n, dark mode, file validation 50MB max) |
-| 1.4 | 2026-08-07 | Beautify-phase UI deltas (CEO-approved): panel ratios 20/35/45 → 20/20/60. Right panel renders Markdown full-width (image thumbnail + PDF placeholder removed from MVP, moved to Phase 2 compare-toggle candidate). Queue Remove button removed from MVP scope (queue is memory-only, clears on restart). Queue status indicators refined: spinner while processing, green/red status dot on completed/failed, thin fake progress bar retained. Accepted file types aligned to locked set PNG/JPG/JPEG/WEBP/PDF (TIFF/BMP removed). Final visual styling locked: layered zinc surfaces + purple accent (#aa3bff light / #c084fc dark), Quantico display font + readable body font, rounded-xl calm cards, icon-only top bar with tooltips, static zero-CPU radiant-lines background in center panel. |
+| 1.4 | 2026-08-07 | Beautify-phase UI deltas (CEO-approved): panel ratios 20/35/45 → 20/20/60. Right panel renders Markdown full-width (image thumbnail + PDF placeholder removed from MVP, moved to Phase 2 compare-toggle candidate). Queue Remove button removed from MVP scope (queue is memory-only, clears on restart). Queue status indicators refined: spinner while processing, green/red status dot on completed/failed, thin fake progress bar retained. Accepted file types aligned to locked set PNG/JPG/JPEG/WEBP/PDF (TIFF/BMP removed). Final visual styling locked: layered zinc surfaces + purple accent, Quantico display font + readable body font, rounded-xl calm cards, icon-only top bar with tooltips, static zero-CPU radiant-lines background in center panel. |
+| 1.5 | 2026-08-07 | Visual identity finalized (CEO-approved): coffee & paper palette replaces zinc+purple (DARK: bg #080502, left #E1DCC9 with ink text, center #412D15 with cream text, right #1F150C with cream text; LIGHT: bg #F9F8F6, left #EFE9E3, center #D9CFC7, right #C9B59C, all dark text; accent #E3A55F dark / #92400E light; purple retired; panel card borders removed; depth via vertical gradients + inset top highlight + soft shadows + warm glow). Top bar identity: logo pictogram chip + live-text "scan2text" wordmark (font-display, "2" in accent) + DEMO badge. Radiant-lines background recolored to warm cream/caramel. |
 
 ## 1. Product Name
 
@@ -163,7 +164,7 @@ The MVP is not a document editor.
 - Center Panel (20% width): Queue table showing file type icon, file name, status, progress bar
 - Right Panel (60% width): When a completed job is selected, shows rendered Markdown full-width (read-only)
 - Bottom Bar: Worker status (Idle/Busy), RAM usage, version number
-- Top Bar: App title, theme toggle (🌙/☀️), language toggle (🌐 EN/ID), settings icon — icon-only buttons with tooltips
+- Top Bar: logo pictogram chip + live-text "scan2text" wordmark (font-display, "2" in accent color) + DEMO badge; icon-only buttons with tooltips (🌙/️ theme, 🌐 EN/ID language, ⚙️ settings)
 
 Note: panel ratios 20/20/60 CEO-approved 2026-08-07, superseding 20/35/45. Panel widths remain fixed (not resizable).
 
@@ -171,7 +172,7 @@ Note: panel ratios 20/20/60 CEO-approved 2026-08-07, superseding 20/35/45. Panel
 
 ### Format
 
-Every output Markdown file follows this pattern: {original_stem}{HHmm}{yyyyMMdd}.md
+Every output Markdown file follows this pattern: {original_stem}_{HHmm}_{yyyyMMdd}.md
 
 Where:
 - `original_stem` — the sanitized stem of the input filename (invalid Windows characters removed, spaces collapsed to underscores, reserved names handled).
@@ -231,7 +232,10 @@ Never overwrite an existing file. Never merge multiple inputs into one output fi
 - Default: Dark mode
 - Toggle: Light mode available via top bar button
 - Persistence: Theme preference saved to localStorage
-- Design language: minimalist layered zinc surfaces with locked purple accent, inspired by Linear/Vercel
+- Design language: "coffee & paper" warm identity — layered warm surfaces with no panel card borders; depth via vertical gradients + inset top highlight + soft shadows + warm glow; paper-on-desk minimalism.
+  - DARK: background #080502; left card #E1DCC9 (ink text #1F150C); center card #412D15 (cream text #F2EBDD); right card #1F150C (cream text); accent #E3A55F (caramel).
+  - LIGHT: background #F9F8F6; left #EFE9E3; center #D9CFC7; right #C9B59C (all dark text); accent #92400E (coffee).
+  - Purple retired 2026-08-07. DEMO badge amber retained. Green/red status dots retained.
 
 ## 12. Technical Decisions (Locked)
 
@@ -249,7 +253,7 @@ Never overwrite an existing file. Never merge multiple inputs into one output fi
 - Markdown: react-markdown + remark-gfm (GitHub Flavored Markdown)
 - Router: None for MVP (single-page Command Center dashboard)
 - Transport: HTTP Polling for task status (WebSockets deferred from Sprint 1)
-- Styling: layered zinc surfaces + locked purple accent (#aa3bff light / #c084fc dark); Quantico display font + readable body font (swap-friendly); rounded-xl calm cards; icon-only top bar with tooltips; static zero-CPU radiant-lines background in center panel
+- Styling: coffee & paper warm palette (hex values in §11); no panel card borders; depth via vertical gradients + inset top highlight + soft shadows + warm glow; Quantico display font + readable swap-friendly body font; top bar = logo pictogram chip + live-text wordmark + DEMO badge; icon-only buttons with tooltips; static zero-CPU radiant-lines background in center panel (warm cream/caramel, low opacity, behind content)
 
 ### Queue Behavior
 

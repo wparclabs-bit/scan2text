@@ -1,6 +1,6 @@
 # Non-Functional Requirements & Architecture — Scan2Text MVP
 
-Version: 1.4
+Version: 1.5
 Date: 2026-08-07
 Status: Approved for Implementation
 
@@ -12,7 +12,8 @@ Status: Approved for Implementation
 | 1.1 | 2026-06-22 | Minor clarifications |
 | 1.2 | 2026-06-22 | Updated output naming, removed in-app editing |
 | 1.3 | 2026-08-06 | Updated OCR model to GLM-OCR 0.9B. Replaced HTMX frontend with Vite + React + TypeScript + Tailwind + shadcn. Added Zustand, react-markdown, react-i18next to stack. Updated backend contract from /api/jobs to POST /process + GET /status/{task_id}. Updated JobStatus enum. Added Command Center layout reference. Updated runtime folder structure with new model filenames. Added frontend architecture section. |
-| 1.4 | 2026-08-07 | Beautify-phase deltas (CEO-approved): `ScanJob.imageUrl` removed (thumbnail feature removed from MVP, moved to Phase 2 compare-toggle candidate). Frontend styling decisions locked: layered zinc surfaces + purple accent (#aa3bff light / #c084fc dark), Quantico display font + readable swap-friendly body font, rounded-xl calm cards, icon-only top bar with tooltips, static zero-CPU radiant-lines background in center panel, panel ratios 20/20/60. NFR-03 extended: decorative UI must not consume CPU at idle. |
+| 1.4 | 2026-08-07 | Beautify-phase deltas (CEO-approved): `ScanJob.imageUrl` removed (thumbnail feature removed from MVP, moved to Phase 2 compare-toggle candidate). Frontend styling decisions locked: layered zinc surfaces + purple accent, Quantico display font + readable swap-friendly body font, rounded-xl calm cards, icon-only top bar with tooltips, static zero-CPU radiant-lines background in center panel, panel ratios 20/20/60. NFR-03 extended: decorative UI must not consume CPU at idle. |
+| 1.5 | 2026-08-07 | Visual identity finalized (CEO-approved): coffee & paper palette replaces zinc+purple (DARK: bg #080502, left #E1DCC9 with ink text, center #412D15 with cream text, right #1F150C with cream text; LIGHT: bg #F9F8F6, left #EFE9E3, center #D9CFC7, right #C9B59C, all dark text; accent #E3A55F dark / #92400E light; purple retired; panel card borders removed; depth via vertical gradients + inset top highlight + soft shadows + warm glow). Top bar identity: logo pictogram chip + live-text "scan2text" wordmark (font-display, "2" in accent) + DEMO badge. Radiant-lines background recolored to warm cream/caramel. Restored MVP Error Codes table (was an Obsidian image embed). |
 
 ## 10. Non-Functional Requirements
 
@@ -128,10 +129,12 @@ This allows Python-based OCR processing while keeping the UI portable and future
 - Job state is memory-only (Zustand). No localStorage/sessionStorage for job data.
 - File validation in DropZone: max 50MB per file, accepted types PNG/JPG/JPEG/WEBP/PDF.
 - Panel ratios: 20/20/60 (CEO-approved 2026-08-07, superseding 20/35/45). Fixed, not resizable.
-- Styling: layered zinc surfaces + locked purple accent `#aa3bff` (light) / `#c084fc` (dark).
+- Styling: coffee & paper warm palette — DARK bg #080502; left #E1DCC9 (ink text #1F150C); center #412D15 (cream text #F2EBDD); right #1F150C (cream text); LIGHT bg #F9F8F6; left #EFE9E3; center #D9CFC7; right #C9B59C (all dark text); accent #E3A55F (dark) / #92400E (light). Purple retired 2026-08-07.
+- Depth: no panel card borders; vertical gradients + inset top highlight + soft shadows + warm glow.
 - Typography: Quantico display font (title, headings, badges, metrics) + readable body font for paragraphs/UI text; body font swap-friendly via single CSS variable.
-- Components: rounded-xl calm cards for panels; icon-only top bar buttons with tooltips; shadcn primitives (Dialog, Tooltip, Spinner, Progress, Switch, Table).
-- Center panel decoration: static zero-CPU radiant-lines background (purple family, low opacity, behind content).
+- Identity: top bar = logo pictogram chip (`frontend\Images\logo.png`, one image both themes) + live-text "scan2text" wordmark (font-display, "2" in accent) + DEMO badge; icon-only top bar buttons with tooltips.
+- Components: shadcn primitives (Dialog, Tooltip, Spinner, Progress, Switch).
+- Center panel decoration: static zero-CPU radiant-lines background (warm cream/caramel, low opacity, behind content).
 
 ## 13. Runtime Folder Structure
 
@@ -150,6 +153,7 @@ Scan2Text/
 │ └── settings.json
 └── logs/
 └── app.log
+
 
 Notes:
 - `models/` contains local OCR model files (`vlm.gguf` + `mmproj.gguf`).
@@ -240,7 +244,7 @@ class AppSettings:
 ```
 
 ### JobStatus
-
+python
 class JobStatus:
     PENDING = "pending"
     UPLOADING = "uploading"
@@ -250,7 +254,7 @@ class JobStatus:
     BACKGROUND = "background"
 
 ### OCRJob (Backend)
-
+python
 class OCRJob:
     id: str                  # UUID
     file_name: str
@@ -263,7 +267,7 @@ class OCRJob:
     error_message: str | None
 
 ### ScanJob (Frontend Zustand Store)
-
+typescript
 interface ScanJob {
   id: string;
   fileName: string;
@@ -278,7 +282,6 @@ interface ScanJob {
 Note: `imageUrl` (object URL for image preview) removed 2026-08-07. Thumbnail feature and side-by-side comparison moved to Phase 2 compare-toggle candidate. Queue rows show a file type icon instead.
 
 ### OCRResult
-
 python
 class OCRResult:
     job_id: str
@@ -290,19 +293,14 @@ class OCRResult:
 ### ProgressEvent (for future WebSocket support)
 python
 class ProgressEvent:
-
-    job_id: str
-
-    status: str
-
-    percent: int | None
-
-    eta_seconds: int | None
-
-    message: str | None
+    job_id: str
+    status: str
+    percent: int | None
+    eta_seconds: int | None
+    message: str | None
 
 ### UpdateInfo
-
+python
 class UpdateInfo:
     current_version: str
     latest_version: str
@@ -319,11 +317,7 @@ json
     "details": {}
   }
 }
-
-### MVP Error Codes
-
- ![[Pasted image 20260807053924.png]]
-
+![[Pasted image 20260807115221.png]]
 Unsupported files in a batch should be treated as non-fatal where possible.
 
 ### Frontend Error Mapping (i18n)
@@ -339,6 +333,7 @@ Unsupported files in a batch should be treated as non-fatal where possible.
 Updates are announced through a GitHub-hosted `version.json`.
 
 Example:
+
 json
 {
   "version": "0.2.0",
@@ -350,7 +345,6 @@ json
     "Fixed output naming collision"
   ]
 }
-
 ### Update Flow
 
 1. App launches.
@@ -385,9 +379,6 @@ Requirements:
     - update check result
 - Do not log extracted OCR text by default.
 - Do not log full document contents by default.
-
-**Delta summary:** `ScanJob.imageUrl` removed · styling decisions locked in Key Frontend Decisions · NFR-03 zero-CPU idle decoration rule · ratios 20/20/60 noted.
-
 
 
 

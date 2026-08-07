@@ -9,13 +9,13 @@ export default function CommandCenterLayout() {
     <div className="h-screen flex flex-col bg-background">
       <TopBar />
       <main className="flex-1 h-full grid grid-cols-[2fr_2fr_6fr] overflow-hidden p-3 gap-3">
-        <div className="h-full">
+        <div className="h-full min-w-0 overflow-hidden">
           <DropZonePanel />
         </div>
-        <div className="h-full">
+        <div className="h-full min-w-0 overflow-hidden">
           <QueuePanel />
         </div>
-        <div className="h-full">
+        <div className="h-full min-w-0 overflow-hidden">
           <PreviewPanel />
         </div>
       </main>
