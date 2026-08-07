@@ -8,16 +8,34 @@ interface DepthStyleArgs {
 export function getDepthStyle({ theme, panel }: DepthStyleArgs): React.CSSProperties {
   const isDark = theme === 'dark'
 
-  const overlays: Record<DepthPanel, { color: string; shadow: string }> = {
+  const recipes: Record<DepthPanel, { bg: string; shadow: string }> = {
     left: isDark
-      ? { color: 'rgba(31,21,12,0.12)', shadow: '0 8px 20px -8px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)' }
-      : { color: 'rgba(31,21,12,0.07)', shadow: '0 8px 20px -8px rgba(31,21,12,0.22), inset 0 1px 0 rgba(255,255,255,0.65)' },
+      ? {
+          bg: 'linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 40%, rgba(31,21,12,0.10))',
+          shadow: 'inset 0 1px 0 rgba(255,255,255,0.4), 0 8px 20px rgba(0,0,0,0.35)',
+        }
+      : {
+          bg: 'linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0) 40%, rgba(31,21,12,0.10))',
+          shadow: 'inset 0 1px 0 rgba(255,255,255,0.6), 0 8px 20px rgba(31,21,12,0.22)',
+        },
     center: isDark
-      ? { color: 'rgba(0,0,0,0.22)', shadow: '0 8px 20px -8px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)' }
-      : { color: 'rgba(31,21,12,0.07)', shadow: '0 8px 20px -8px rgba(31,21,12,0.22), inset 0 1px 0 rgba(255,255,255,0.65)' },
+      ? {
+          bg: 'linear-gradient(180deg, rgba(227,165,95,0.18), rgba(0,0,0,0.25))',
+          shadow: 'inset 0 1px 0 rgba(242,235,221,0.12), 0 10px 24px rgba(0,0,0,0.45)',
+        }
+      : {
+          bg: 'linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0) 40%, rgba(31,21,12,0.12))',
+          shadow: 'inset 0 1px 0 rgba(255,255,255,0.6), 0 10px 24px rgba(31,21,12,0.25)',
+        },
     right: isDark
-      ? { color: 'rgba(0,0,0,0.28)', shadow: '0 8px 20px -8px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)' }
-      : { color: 'rgba(31,21,12,0.07)', shadow: '0 8px 20px -8px rgba(31,21,12,0.22), inset 0 1px 0 rgba(255,255,255,0.65)' },
+      ? {
+          bg: 'linear-gradient(180deg, rgba(227,165,95,0.10), rgba(0,0,0,0.30))',
+          shadow: 'inset 0 1px 0 rgba(242,235,221,0.08), 0 10px 24px rgba(0,0,0,0.5)',
+        }
+      : {
+          bg: 'linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0) 40%, rgba(31,21,12,0.15))',
+          shadow: 'inset 0 1px 0 rgba(255,255,255,0.6), 0 10px 24px rgba(31,21,12,0.28)',
+        },
   }
 
   const baseColors: Record<DepthPanel, { light: string; dark: string }> = {
@@ -26,19 +44,12 @@ export function getDepthStyle({ theme, panel }: DepthStyleArgs): React.CSSProper
     right: { light: '#C9B59C', dark: '#1F150C' },
   }
 
-  const topStops: Record<DepthPanel, { light: string; dark: string }> = {
-    left: { light: '#F7F2EC', dark: '#EDE8D8' },
-    center: { light: '#E2D9D0', dark: '#4D3619' },
-    right: { light: '#D2BFA8', dark: '#2A1C10' },
-  }
-
-  const overlay = overlays[panel]
+  const recipe = recipes[panel]
   const baseColor = isDark ? baseColors[panel].dark : baseColors[panel].light
-  const topStop = isDark ? topStops[panel].dark : topStops[panel].light
 
   return {
     backgroundColor: baseColor,
-    backgroundImage: `linear-gradient(to bottom, ${topStop} 0%, ${baseColor} 100%), linear-gradient(to bottom, ${overlay.color}, transparent 45%)`,
-    boxShadow: overlay.shadow,
+    backgroundImage: recipe.bg,
+    boxShadow: recipe.shadow,
   }
 }

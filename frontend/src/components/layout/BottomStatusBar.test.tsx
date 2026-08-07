@@ -85,4 +85,19 @@ describe('BottomStatusBar', () => {
     expect(mockWriteText).toHaveBeenCalledWith('https://placeholder.local')
     expect(toast.info).toHaveBeenCalled()
   })
+
+  it('footer has fixed height and flex items-center for vertical centering', () => {
+    render(<BottomStatusBar />)
+    const footer = screen.getByTestId('bottom-bar') as HTMLElement
+    expect(footer).toHaveClass('h-[36px]')
+    expect(footer).toHaveClass('flex')
+    expect(footer).toHaveClass('items-center')
+  })
+
+  it('inner content wrapper uses w-full for horizontal stretch', () => {
+    render(<BottomStatusBar />)
+    const inner = document.querySelector('[data-testid="bottom-bar"] > div') as HTMLElement | null
+    expect(inner).toBeInTheDocument()
+    expect(inner).toHaveClass('w-full')
+  })
 })

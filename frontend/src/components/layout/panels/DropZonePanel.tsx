@@ -18,15 +18,15 @@ export default function DropZonePanel() {
             className="absolute inset-0 pointer-events-none"
             style={{
               backgroundImage: `url(${dropzoneBgUrl})`,
-              backgroundSize: 'cover',
+              backgroundSize: '100%',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
-              opacity: 0.25,
+              opacity: 0.15,
             }}
           />
           <ScrollArea data-testid="dropzone-scroll-area" className="flex-1 relative z-10">
             <div className="flex flex-col items-center justify-center gap-3 p-4">
-              <p className="text-base font-display font-semibold text-foreground text-center">
+              <p className="text-base font-display font-bold text-[#1F150C] text-center">
                 {t('dropzone.clickLabel')}
               </p>
               <FileDropZone />
