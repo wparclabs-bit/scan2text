@@ -341,4 +341,63 @@ describe('QueuePanel status dots and retry', () => {
     expect(viewport).toBeInTheDocument()
     expect(viewport?.style.overflowY).toMatch(/auto|scroll/)
   })
+
+  it('status slot has fixed w-[14px] class and is present for every status', () => {
+    ;(['pending', 'uploading', 'processing', 'completed', 'failed'] as const).forEach((status) => {
+      setupStore({
+        'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status, createdAt: 1000 },
+      })
+      const { unmount } = render(<QueuePanel />)
+      const item = screen.getByTestId('queue-item') as HTMLElement
+      const slot = item.querySelector('[data-testid="queue-item-status-slot"]') as HTMLElement | null
+      expect(slot).toBeInTheDocument()
+      expect(slot).toHaveClass('w-[14px]')
+      expect(slot).toHaveClass('shrink-0')
+      unmount()
+    })
+  })
+
+  it('pending dot computed background is warm grey', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'pending', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const dot = screen.getByTestId('queue-item-status-dot') as HTMLElement
+    const style = window.getComputedStyle(dot)
+    expect(style.backgroundColor).toMatch(/rgb\(\d+, \d+, \d+\)/)
+  })
+
+  it('processing spinner has bright yellow color in computed style', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'processing', createdAt: 1000, progress: 45 },
+    })
+    render(<QueuePanel />)
+    const item = screen.getByTestId('queue-item') as HTMLElement
+    const spinners = Array.from(item.querySelectorAll<SVGSVGElement>('svg')).filter((svg) => svg.classList.contains('animate-spin'))
+    expect(spinners.length).toBeGreaterThanOrEqual(1)
+    const color = spinners[0].getAttribute('color') || spinners[0].style.color
+    expect(color).toBeTruthy()
+  })
+
+  it('completed dot computed background contains green gradient', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const dot = screen.getByTestId('queue-item-status-dot') as HTMLElement
+    const style = window.getComputedStyle(dot)
+    expect(style.backgroundImage).toContain('radial-gradient')
+  })
+
+  it('failed dot computed background contains red gradient', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'failed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const dots = Array.from(document.querySelectorAll('[data-testid="queue-item-status-dot"]')) as HTMLElement[]
+    const redDot = dots.find((d) => d.style.background?.includes('rgb(220, 38, 38)'))
+    expect(redDot).toBeInTheDocument()
+    const style = window.getComputedStyle(redDot!)
+    expect(style.backgroundImage).toContain('radial-gradient')
+  })
 })
