@@ -21,7 +21,7 @@ export default function QueuePanel() {
   if (jobList.length === 0) {
     return (
       <div data-testid="panel-queue" className="h-full">
-        <div className="surface-center rounded-xl p-4 h-full flex items-center min-w-0 box-border">
+        <div className="surface-center depth-panel-center rounded-xl p-4 h-full flex items-center min-w-0 box-border">
           <p data-testid="queue-empty" className="text-sm text-muted-foreground">
             {t('queue.empty')}
           </p>
@@ -32,7 +32,7 @@ export default function QueuePanel() {
 
   return (
     <div data-testid="panel-queue" className="h-full">
-      <div className="surface-center rounded-xl p-3 h-full flex flex-col gap-2 min-w-0 box-border">
+      <div className="surface-center depth-panel-center rounded-xl p-3 h-full flex flex-col gap-2 min-w-0 box-border">
         {jobList.map((job) => {
           const isSelected = selectedJobId === job.id
           const isRetryingThis = isRetrying === job.id

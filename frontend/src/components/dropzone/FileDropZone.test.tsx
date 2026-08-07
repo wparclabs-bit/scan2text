@@ -174,6 +174,12 @@ describe('FileDropZone', () => {
     expect(paragraphs.length).toBe(0)
   })
 
+  it('dashed drop area has w-full class', () => {
+    const { container } = render(<FileDropZone />)
+    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    expect(dropzone).toHaveClass('w-full')
+  })
+
   describe('multi-file behavior', () => {
     it('should add multiple valid files to queue in FIFO order', async () => {
       render(<FileDropZone />)

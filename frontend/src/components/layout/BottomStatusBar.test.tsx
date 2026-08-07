@@ -30,4 +30,10 @@ describe('BottomStatusBar', () => {
     // 3 content spans + 2 divider spans = 5 total
     expect(spans.length).toBe(5)
   })
+
+  it('footer does not have border-t class', () => {
+    render(<BottomStatusBar />)
+    const footer = screen.getByTestId('bottom-bar')
+    expect(footer).not.toHaveClass('border-t')
+  })
 })

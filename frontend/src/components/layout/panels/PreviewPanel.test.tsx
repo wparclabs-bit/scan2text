@@ -115,6 +115,14 @@ describe('PreviewPanel', () => {
     expect(card).toHaveClass('flex-1')
   })
 
+  it('empty state card carries depth-panel-right class', () => {
+    setupStore(null, {})
+    render(<PreviewPanel />)
+    const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
+    const card = panel?.querySelector('.depth-panel-right') as HTMLElement | null
+    expect(card).toBeInTheDocument()
+  })
+
   it('processing state card uses flex-1 and surface-right for full-height layout', () => {
     setupStore('job-1', {
       'job-1': {

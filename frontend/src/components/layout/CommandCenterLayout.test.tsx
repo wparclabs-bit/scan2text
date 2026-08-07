@@ -48,3 +48,38 @@ describe('CommandCenterLayout radiant rays', () => {
     expect(classList).not.toMatch(/\banimate-\w/)
   })
 })
+
+describe('CommandCenterLayout ambient glow', () => {
+  it('ambient glow marker is present at workspace level', () => {
+    render(<CommandCenterLayout />)
+    expect(screen.getByTestId('ambient-glow')).toBeInTheDocument()
+  })
+
+  it('ambient glow marker has aria-hidden="true"', () => {
+    render(<CommandCenterLayout />)
+    expect(screen.getByTestId('ambient-glow')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('ambient glow marker has pointer-events-none', () => {
+    render(<CommandCenterLayout />)
+    expect(screen.getByTestId('ambient-glow')).toHaveClass('pointer-events-none')
+  })
+
+  it('ambient glow marker has data-state="static"', () => {
+    render(<CommandCenterLayout />)
+    expect(screen.getByTestId('ambient-glow')).toHaveAttribute('data-state', 'static')
+  })
+
+  it('ambient glow marker does not use animate classes', () => {
+    render(<CommandCenterLayout />)
+    const glow = screen.getByTestId('ambient-glow')
+    const classList = glow.className
+    expect(classList).not.toMatch(/\banimate-\w/)
+  })
+
+  it('radiant lines remain only inside center panel', () => {
+    render(<CommandCenterLayout />)
+    const rays = document.querySelectorAll('[data-testid="center-radiant-rays"]')
+    expect(rays).toHaveLength(1)
+  })
+})

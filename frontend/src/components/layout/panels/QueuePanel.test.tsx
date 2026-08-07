@@ -137,6 +137,15 @@ describe('QueuePanel status dots and retry', () => {
     expect(card).toHaveClass('box-border')
   })
 
+  it('card wrapper carries depth-panel-center class', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const card = document.querySelector('.depth-panel-center') as HTMLElement | null
+    expect(card).toBeInTheDocument()
+  })
+
   it('renders PDF icon placeholder for all queue items without img elements', () => {
     setupStore({
       'job-1': {
