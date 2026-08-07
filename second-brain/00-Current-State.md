@@ -2,14 +2,14 @@
 
 - **Current Phase:** Phase 6 (Prototype & Demo Mode) — RECOVERY DONE
 
-- **Current Slice:** Slice 6.14d (Visual Hotfix — Brand Image + BottomBar + Viewport Lock)
+- **Current Slice:** Slice 6.14e (Queue Status Restore + Dropzone Taste + Card Depth + BottomBar Centering)
 
 - **Next Slice:** Slice 20.6 (Share button)
 
 
 ## Frontend Baseline
 
-- **Tests:** 527/527 passing
+- **Tests:** 543/543 passing
 
 - **Typecheck:** PASS
 
@@ -40,6 +40,8 @@
 - [x] Slice 6.10b: Recovery — fixed red test (removeJob cleanup > should call stopProgress on job removal) by mocking progressManager module in store test; @tailwindcss/typography declared; audit shows zero leftover thumbnail references.
 
 - [x] Slice 6.14d: Visual hotfix — TopBar brand image wordmark (text.png, alt="Scan2Text", h-34px), BottomBar rebuilt with centered telemetry + Share icon right, viewport lock via html/body overflow-hidden CSS, DropZone background image at 0.25 opacity, queue status dots + progress bars verified. Tests: 521 → 527 (+6).
+
+- [x] Slice 6.14e: Queue status restore + dropzone taste + card depth + bottombar centering (2026-08-07). QueuePanel: spinner bright yellow (#FACC15) inline style, glossy 3-stop radial-gradient green dot (#86EFAC→#16A34A→#14532D) and red dot (#FCA5A5→#DC2626→#7F1D1D) with translated tooltip, thin progress bar retained, viewport overflow-y auto+min-h-0. DropZonePanel: bg opacity 0.15 (was 0.25), backgroundSize single-value '100%' (not 'cover'), header font-bold text-[#1F150C]. depthStyles.ts: per-panel dark/light recipes — left white-highlight gradient + soft shadow, center warm overlay + strong shadow, right darkest overlay + deepest shadow; light mode white top-highlight 0.5-0.6 alpha + brown fade bottom. BottomStatusBar: h-[36px] flex items-center for vertical centering. Tests: 527 → 543 (+16).
 
 - [x] Slice 6.11: Calm theme — zinc layered surfaces (#09090b/#18181b/#27272a dark, #fafafa/#e4e4e7 light), Quantico @font-face with swap comment, font-display/font-body CSS vars + Tailwind fontFamily tokens, icon-only TopBar with shadcn Tooltip + i18n keys, rounded-xl card wrappers on DropZone/Queue/Preview panels, prose-base headings via prose-headings:font-display + purple prose-a links, BottomStatusBar font-display.
 
