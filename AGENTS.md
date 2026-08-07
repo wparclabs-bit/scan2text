@@ -243,3 +243,8 @@ RULE: never guess paths. If a mapped file is missing, discover via Get-ChildItem
 - Radix ScrollArea viewport child is display:table; it defeats min-w-0 truncation and percentage heights. Neutralize via CSS override: `[data-radix-scroll-area-viewport] > div { display: block !important; min-width: 0 !important; height: auto !important; }`.
 - jsdom does no layout math: class-presence tests cannot catch layout bugs. CEO screenshot is the acceptance test for layout-critical UI.
 - Path discovery before edit: repo nests the Vite app under frontend/; i18n is frontend/src/locales/, not src/i18n/. "File not found" is a lookup task, never a stop reason.
+
+## Lessons Learned (Slice 6.14j)
+
+- Ancestor wrappers can silently defeat h-screen constraints; for kiosk-style desktop shells use fixed inset-0 so the viewport is the only sizing authority.
+- Content-sized containers make sibling panels grow with unrelated content (dropzone grew when jobs were added). minmax(0,fr) track sizing + min-h-0 everywhere prevents this.
