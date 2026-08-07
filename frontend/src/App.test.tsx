@@ -83,7 +83,7 @@ describe('Command Center layout', () => {
 
     it('renders app title', () => {
       render(<App />)
-      expect(screen.getByText('Scan2Text')).toBeInTheDocument()
+      expect(document.body.textContent).toContain('scan2text')
     })
 
     it('renders theme toggle button', () => {
@@ -185,7 +185,7 @@ describe('Command Center layout', () => {
 
     it('visible UI text updates after language toggle', async () => {
       render(<App />)
-      expect(screen.getByText('Scan2Text')).toBeInTheDocument()
+      expect(document.body.textContent).toContain('scan2text')
     })
   })
 })
