@@ -105,25 +105,18 @@ describe('PreviewPanel', () => {
     expect(emptyState).toBeInTheDocument()
   })
 
-  it('empty state card uses flex-1 and surface-right for full-height layout', () => {
+  it('empty state card uses flex-1 with inline depth style for full-height layout', () => {
     setupStore(null, {})
     render(<PreviewPanel />)
     const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
     expect(panel).toHaveClass('h-full')
-    const card = panel?.querySelector('.surface-right') as HTMLElement | null
+    const card = panel?.querySelector('[data-testid="preview-empty"]')?.parentElement as HTMLElement | null
     expect(card).toBeInTheDocument()
     expect(card).toHaveClass('flex-1')
+    expect(card?.style.backgroundImage).toContain('linear-gradient')
   })
 
-  it('empty state card carries depth-panel-right class', () => {
-    setupStore(null, {})
-    render(<PreviewPanel />)
-    const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
-    const card = panel?.querySelector('.depth-panel-right') as HTMLElement | null
-    expect(card).toBeInTheDocument()
-  })
-
-  it('processing state card uses flex-1 and surface-right for full-height layout', () => {
+  it('processing state card uses flex-1 with inline depth style for full-height layout', () => {
     setupStore('job-1', {
       'job-1': {
         id: 'job-1',
@@ -136,12 +129,12 @@ describe('PreviewPanel', () => {
     render(<PreviewPanel />)
     const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
     expect(panel).toHaveClass('h-full')
-    const card = panel?.querySelector('.surface-right') as HTMLElement | null
+    const card = panel?.querySelector('[data-testid="preview-processing"]')?.parentElement as HTMLElement | null
     expect(card).toBeInTheDocument()
     expect(card).toHaveClass('flex-1')
   })
 
-  it('failed state card uses flex-1 and surface-right for full-height layout', () => {
+  it('failed state card uses flex-1 with inline depth style for full-height layout', () => {
     setupStore('job-1', {
       'job-1': {
         id: 'job-1',
@@ -155,7 +148,7 @@ describe('PreviewPanel', () => {
     render(<PreviewPanel />)
     const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
     expect(panel).toHaveClass('h-full')
-    const card = panel?.querySelector('.surface-right') as HTMLElement | null
+    const card = panel?.querySelector('[data-testid="preview-error"]')?.parentElement as HTMLElement | null
     expect(card).toBeInTheDocument()
     expect(card).toHaveClass('flex-1')
   })

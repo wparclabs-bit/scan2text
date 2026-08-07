@@ -108,4 +108,16 @@ describe('TopBar', () => {
     const wordmark = screen.getByTestId('topbar-wordmark')
     expect(wordmark).toHaveClass('tracking-wider')
   })
+
+  it('wordmark literal text content is scan2text', () => {
+    render(<TopBar />)
+    const wordmark = screen.getByTestId('topbar-wordmark')
+    expect(wordmark.textContent).toBe('scan2text')
+  })
+
+  it('accent span carries accent class', () => {
+    render(<TopBar />)
+    const accent = screen.getByTestId('topbar-wordmark-accent')
+    expect(accent).toHaveClass('text-accent')
+  })
 })

@@ -3,14 +3,30 @@ import { render, screen } from '@testing-library/react'
 import CommandCenterLayout from './CommandCenterLayout'
 
 describe('CommandCenterLayout grid overflow hygiene', () => {
-  it('each grid child wrapper carries min-w-0 and overflow-hidden', () => {
+  it('grid child wrappers carry min-w-0 but not overflow-hidden', () => {
     render(<CommandCenterLayout />)
     const children = Array.from(document.querySelectorAll('main > div'))
-    expect(children).toHaveLength(3)
+    expect(children).toHaveLength(2)
     children.forEach((child) => {
       expect(child).toHaveClass('min-w-0')
-      expect(child).toHaveClass('overflow-hidden')
+      expect(child).not.toHaveClass('overflow-hidden')
     })
+  })
+
+  it('panel cards carry overflow-hidden and min-w-0', () => {
+    render(<CommandCenterLayout />)
+    const dropzoneCard = document.querySelector('[data-testid="panel-dropzone"] > div') as HTMLElement | null
+    const queueCard = document.querySelector('[data-testid="panel-queue"] > div') as HTMLElement | null
+    const previewCard = document.querySelector('[data-testid="panel-preview"] > div') as HTMLElement | null
+    expect(dropzoneCard).toBeInTheDocument()
+    expect(dropzoneCard).toHaveClass('overflow-hidden')
+    expect(dropzoneCard).toHaveClass('min-w-0')
+    expect(queueCard).toBeInTheDocument()
+    expect(queueCard).toHaveClass('overflow-hidden')
+    expect(queueCard).toHaveClass('min-w-0')
+    expect(previewCard).toBeInTheDocument()
+    expect(previewCard).toHaveClass('overflow-hidden')
+    expect(previewCard).toHaveClass('min-w-0')
   })
 })
 

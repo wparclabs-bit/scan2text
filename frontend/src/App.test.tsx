@@ -28,6 +28,10 @@ vi.mock('./stores/scan2text.store', () => ({
   useScan2TextStore: vi.fn(() => () => ([])),
 }))
 
+vi.mock('./lib/demoOrchestrator', () => ({
+  startDemoOrchestrator: vi.fn(),
+}))
+
 describe('Command Center layout', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -78,7 +82,7 @@ describe('Command Center layout', () => {
       render(<App />)
       const main = document.querySelector('main') as HTMLElement | null
       expect(main).toBeInTheDocument()
-      expect(main?.className).toContain('grid-cols-[2fr_2fr_6fr]')
+      expect(main?.className).toContain('grid-cols-[34fr_60fr]')
     })
 
     it('renders app title', () => {
