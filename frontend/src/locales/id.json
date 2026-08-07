@@ -36,9 +36,10 @@
     "allInvalid": "Tidak ada file yang ditambahkan. Semua file yang dipilih tidak didukung atau terlalu besar."
   },
   "dropzone": {
-    "hint": "PNG · JPG · WEBP · PDF — maks 50MB per file",
+    "hint": "PNG · JPG · WEBP · PDF — maks 50MB per file · maks 10 file per batch",
     "clickLabel": "Klik atau seret file ke sini",
-    "dropLabel": "Lepaskan file di sini"
+    "dropLabel": "Lepaskan file di sini",
+    "maxFilesWarning": "Maksimal 10 file per batch — file tambahan dilewati."
   },
   "preview": {
     "emptyState": "Pilih pekerjaan yang sudah selesai untuk melihat keajaibannya.",

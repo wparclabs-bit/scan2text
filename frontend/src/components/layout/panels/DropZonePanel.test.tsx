@@ -37,8 +37,7 @@ describe('DropZonePanel background image', () => {
 
   it('header text is bold with ink color #1F150C', () => {
     render(<DropZonePanel />)
-    const scrollArea = screen.getByTestId('dropzone-scroll-area')
-    const header = scrollArea.querySelector('p') as HTMLElement | null
+    const header = screen.getByTestId('dropzone-header') as HTMLElement | null
     expect(header).toBeInTheDocument()
     expect(header).toHaveClass('font-bold')
     expect(header).toHaveClass('text-[#1F150C]')

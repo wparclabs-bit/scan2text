@@ -23,6 +23,12 @@ void i18next
           panels: { dropZone: 'Drop Zone', queue: 'Queue', preview: 'Preview' },
           status: { ready: 'Ready' },
           actions: { toggleTheme: 'Toggle theme', toggleLanguage: 'Toggle language', shareTooltip: 'Share app link' },
+          dropzone: {
+            hint: 'PNG · JPG · WEBP · PDF — max 50MB per file · max 10 files per batch',
+            clickLabel: 'Click or drag files here',
+            dropLabel: 'Drop files here',
+            maxFilesWarning: 'Max 10 files per batch — extra files were skipped.',
+          },
           errors: {
             unsupportedFileType: 'Unsupported file type. Allowed: PNG, JPG, JPEG, WEBP, PDF',
             fileTooLarge: 'File exceeds 50MB limit',
@@ -76,6 +82,12 @@ void i18next
           panels: { dropZone: 'Zona Jatuh', queue: 'Antrian', preview: 'Pratinjau' },
           status: { ready: 'Siap' },
           actions: { toggleTheme: 'Ubah tema', toggleLanguage: 'Ubah bahasa', shareTooltip: 'Bagikan tautan aplikasi' },
+          dropzone: {
+            hint: 'PNG · JPG · WEBP · PDF — maks 50MB per file · maks 10 file per batch',
+            clickLabel: 'Klik atau seret file ke sini',
+            dropLabel: 'Lepaskan file di sini',
+            maxFilesWarning: 'Maksimal 10 file per batch — file tambahan dilewati.',
+          },
           errors: {
             unsupportedFileType: 'Tipe file tidak didukung. Yang didukung: PNG, JPG, JPEG, WEBP, PDF',
             fileTooLarge: 'Ukuran file melebihi batas 50MB',

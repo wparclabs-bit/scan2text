@@ -111,10 +111,15 @@ describe('ScrollAreas', () => {
     })
   })
 
-  describe('DropZonePanel scroll area', () => {
-    it('renders dropzone-scroll-area with data-testid', () => {
+  describe('DropZonePanel', () => {
+    it('renders dropzone-header with data-testid', () => {
       render(<DropZonePanel />)
-      expect(screen.getByTestId('dropzone-scroll-area')).toBeInTheDocument()
+      expect(screen.getByTestId('dropzone-header')).toBeInTheDocument()
+    })
+
+    it('renders dropzone-hint with data-testid', () => {
+      render(<DropZonePanel />)
+      expect(screen.getByTestId('dropzone-hint')).toBeInTheDocument()
     })
   })
 })

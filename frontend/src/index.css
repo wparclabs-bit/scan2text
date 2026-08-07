@@ -298,3 +298,11 @@ html, body {
 :not(.dark) .thumb:hover {
   background-color: #92400E;
 }
+
+/* Radix ScrollArea wraps children in a display:table div that defeats
+   min-w-0 truncation and percentage heights. Neutralize it. */
+[data-radix-scroll-area-viewport] > div {
+  display: block !important;
+  min-width: 0 !important;
+  height: auto !important;
+}

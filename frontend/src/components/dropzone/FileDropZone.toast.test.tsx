@@ -154,4 +154,17 @@ describe('FileDropZone toast errors', () => {
       expect(mockOnFileAdd).not.toHaveBeenCalled()
     })
   })
+
+  it('should fire max-files warning toast and create exactly 10 jobs when 12 valid files are dropped', async () => {
+    render(<FileDropZone />)
+    const dropzone = document.querySelector('[data-testid="dropzone"]')!
+    const files = Array.from({ length: 12 }, (_, i) => new File(['x'], `file-${i}.png`, { type: 'image/png' }))
+
+    fireEvent.drop(dropzone, { dataTransfer: { files } })
+
+    await vi.waitFor(() => {
+      expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('Max 10 files per batch'))
+      expect(mockAddJob).toHaveBeenCalledTimes(10)
+    })
+  })
 })
