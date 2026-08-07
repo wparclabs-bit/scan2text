@@ -110,7 +110,7 @@ BOTTOM BAR: Worker status | RAM usage | version | (share button, slice 20.6)
 - Dark mode = ".dark" class on <html> toggled by the preferences store. Do NOT use @media (prefers-color-scheme) for theme variables.
 - NEVER reintroduce Vite template boilerplate (#root width:1126px, giant h1/h2 sizes, #social rules, code styling).
 - Tailwind Preflight strips heading/list styles: rendered Markdown MUST use @tailwindcss/typography prose classes (added in slice 6.9).
-- KEEP the purple theme: --primary/--accent/--ring = #aa3bff (light) / #c084fc (dark).
+- CEO locked palette 2026-08-07: "paper and coffee" warm identity. Purple retired. Dark: background #000000; surface-left #E1DCC9 fg #1F150C; surface-center #412D15 fg #F2EBDD; surface-right #1F150C fg #F2EBDD; border #3B2A18; accent #E3A55F. Light: background #F9F8F6; surface-left #EFE9E3; surface-center #D9CFC7; surface-right #C9B59C; all foregrounds #1F150C; border #1F150C; accent #92400E. See second-brain hex table for full reference.
 
 4.9 Key Patterns
 - No React Router. Single-page state navigation.
@@ -172,7 +172,7 @@ Phase 6 slices:
 8. Fake chrome: static RAM/Worker (no timers).
 9. Naming {stem}_{HHmm}_{yyyyMMdd}.md + collision suffix.
 10. Settings: shadcn Dialog; disabled future inputs get lock emoji.
-11. KEEP PURPLE THEME (#aa3bff light / #c084fc dark).
+11. COFFEE-AND-PAPER PALETTE (CEO locked 2026-08-07): Dark bg #000000, surface-left #E1DCC9/fg #1F150C, surface-center #412D15/fg #F2EBDD, surface-right #1F150C/fg #F2EBDD, border #3B2A18, accent #E3A55F. Light bg #F9F8F6, surface-left #EFE9E3, surface-center #D9CFC7, surface-right #C9B59C, all fg #1F150C, border #1F150C, accent #92400E. Purple retired everywhere.
 12. Share button: bottom bar right next to version; popup with shortened download link + Copy button; placeholder URL for now (GitHub + free shortener created after app completion); shares APP link only, NEVER document content (NFR-02).
 13. Visual polish slice (6.9) runs BEFORE share button slice (20.6).
 
@@ -196,3 +196,14 @@ This file holds all stable rules. Individual slice prompts should ONLY contain:
 1. SLICE name  2. BASELINE  3. GOAL  4. NON-GOALS  5. TASKS  6. VERIFICATION  7. OBSIDIAN UPDATE  8. FINAL OUTPUT format.
 Still include a 1-line CONTEXT reminder + the PowerShell constraints block in slice prompts.
 NEVER use nested triple backticks when handing prompts or files to the CEO (copy breaks).
+
+Frontend File Map (verified 2026-08-07)
+Layout: src/components/layout/CommandCenterLayout.tsx | TopBar.tsx | BottomStatusBar.tsx | SettingsDialog.tsx
+Panels: src/components/layout/panels/DropZonePanel.tsx | QueuePanel.tsx | PreviewPanel.tsx | MarkdownPreview.tsx
+Dropzone: src/components/dropzone/FileDropZone.tsx
+Store: src/stores/scan2text.store.ts
+Utils: src/lib/naming.ts
+UI primitives: src/components/ui/
+i18n: src/locales/en.json + src/locales/id.json
+Theme tokens: src/index.css + tailwind.config.js
+RULE: never guess paths. If a mapped file is missing, discover via Get-ChildItem. Never create a file at a guessed path.

@@ -74,6 +74,13 @@ describe('Command Center layout', () => {
       expect(screen.getByTestId('panel-preview')).toBeInTheDocument()
     })
 
+    it('layout container uses fr-based grid columns for symmetric margins', () => {
+      render(<App />)
+      const main = document.querySelector('main') as HTMLElement | null
+      expect(main).toBeInTheDocument()
+      expect(main?.className).toContain('grid-cols-[2fr_2fr_6fr]')
+    })
+
     it('renders app title', () => {
       render(<App />)
       expect(screen.getByText('Scan2Text')).toBeInTheDocument()

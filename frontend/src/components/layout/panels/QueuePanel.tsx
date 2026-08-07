@@ -20,8 +20,8 @@ export default function QueuePanel() {
 
   if (jobList.length === 0) {
     return (
-      <div data-testid="panel-queue" className="p-4 h-full">
-        <div className="bg-card border border-border rounded-xl p-4 shadow-sm h-full flex items-center">
+      <div data-testid="panel-queue" className="h-full">
+        <div className="surface-center border border-border rounded-xl p-4 shadow-sm h-full flex items-center min-w-0 box-border">
           <p data-testid="queue-empty" className="text-sm text-muted-foreground">
             {t('queue.empty')}
           </p>
@@ -31,8 +31,8 @@ export default function QueuePanel() {
   }
 
   return (
-    <div data-testid="panel-queue" className="p-4 h-full">
-      <div className="bg-card border border-border rounded-xl p-3 shadow-sm h-full flex flex-col gap-2">
+    <div data-testid="panel-queue" className="h-full">
+      <div className="surface-center border border-border rounded-xl p-3 shadow-sm h-full flex flex-col gap-2 min-w-0 box-border">
         {jobList.map((job) => {
           const isSelected = selectedJobId === job.id
           const isRetryingThis = isRetrying === job.id

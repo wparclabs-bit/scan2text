@@ -167,6 +167,13 @@ describe('FileDropZone', () => {
     expect(dropzone).toHaveAttribute('tabindex', '0')
   })
 
+  it('should not contain text paragraphs inside the dropzone area (icon-only)', () => {
+    const { container } = render(<FileDropZone />)
+    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const paragraphs = dropzone.querySelectorAll('p')
+    expect(paragraphs.length).toBe(0)
+  })
+
   describe('multi-file behavior', () => {
     it('should add multiple valid files to queue in FIFO order', async () => {
       render(<FileDropZone />)

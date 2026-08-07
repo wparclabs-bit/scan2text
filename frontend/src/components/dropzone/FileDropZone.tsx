@@ -128,9 +128,9 @@ export default function FileDropZone({ onFileAdd }: FileDropZoneProps) {
         accept=".png,.jpg,.jpeg,.webp,.pdf,image/png,image/jpeg,image/webp,application/pdf"
         multiple
       />
-      <p className="text-sm text-muted-foreground">
-        {state === 'drag-over' ? 'Drop files here' : 'Click or drag files here'}
-      </p>
+      <svg className="w-8 h-8 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16V4m0 0L8 8m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+      </svg>
       {state === 'error' && (
         <p className="text-xs text-destructive">{t('errors.unsupportedFileType')}</p>
       )}

@@ -132,6 +132,19 @@ describe('preferences store', () => {
       store.getState().toggleTheme()
       expect(store.getState().theme).toBe('dark')
     })
+
+    it('regression: toggling to light removes .dark class so :root light values apply', () => {
+      store.getState().setTheme('dark')
+      expect(document.documentElement.className).toContain('dark')
+
+      store.getState().toggleTheme()
+      expect(document.documentElement.className).not.toContain('dark')
+      expect(store.getState().theme).toBe('light')
+
+      store.getState().setTheme('dark')
+      expect(document.documentElement.className).toContain('dark')
+      expect(store.getState().theme).toBe('dark')
+    })
   })
 
   describe('setLanguage', () => {

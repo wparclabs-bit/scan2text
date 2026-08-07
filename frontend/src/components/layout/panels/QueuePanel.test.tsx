@@ -124,6 +124,19 @@ describe('QueuePanel status dots and retry', () => {
     expect(btn).toBeDisabled()
   })
 
+  it('card wrapper uses h-full flex-col min-w-0 box-border for uniform alignment', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
+    })
+    render(<QueuePanel />)
+    const card = document.querySelector('.surface-center') as HTMLElement | null
+    expect(card).toBeInTheDocument()
+    expect(card).toHaveClass('h-full')
+    expect(card).toHaveClass('flex-col')
+    expect(card).toHaveClass('min-w-0')
+    expect(card).toHaveClass('box-border')
+  })
+
   it('renders PDF icon placeholder for all queue items without img elements', () => {
     setupStore({
       'job-1': {
