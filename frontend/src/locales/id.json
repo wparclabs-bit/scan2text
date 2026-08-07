@@ -4,9 +4,7 @@
   },
   "topbar": {
     "logoAlt": "Logo Scan2Text",
-    "wordmarkScan": "scan",
-    "wordmarkTwo": "2",
-    "wordmarkText": "text",
+    "brandAlt": "Scan2Text",
     "demoBadge": "DEMO"
   },
   "demo": {
@@ -27,7 +25,8 @@
     "themeTooltipLight": "Beralih ke mode gelap",
     "langTooltipEn": "Beralih ke Bahasa Indonesia",
     "langTooltipId": "Beralih ke Bahasa Inggris",
-    "settingsTooltip": "Buka pengaturan"
+    "settingsTooltip": "Buka pengaturan",
+    "shareTooltip": "Bagikan tautan aplikasi"
   },
   "errors": {
     "unsupportedFileType": "Tipe file tidak didukung. Yang didukung: PNG, JPG, JPEG, WEBP, PDF",
@@ -54,7 +53,8 @@
   },
   "toast": {
     "copySuccess": "Markdown disalin ke clipboard!",
-    "openFolderDemo": "📂 Mode Demo: Di aplikasi asli, ini akan membuka folder output!"
+    "openFolderDemo": "📂 Mode Demo: Di aplikasi asli, ini akan membuka folder output!",
+    "shareComingSoon": "Berbagi segera hadir."
   },
   "queue": {
     "empty": "Tidak ada file dalam antrian",
@@ -68,8 +68,8 @@
     }
   },
   "bottomBar": {
-    "workerIdle": "Worker: Idle",
-    "ramUsage": "RAM: 1.8 GB",
+    "workerLabel": "Worker: {{status}}",
+    "ramUsage": "RAM: —",
     "version": "v0.1.0-demo"
   },
   "settings": {

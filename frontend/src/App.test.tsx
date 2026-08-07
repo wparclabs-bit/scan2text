@@ -24,9 +24,15 @@ vi.mock('./stores/preferencesStore', () => {
   return { usePreferenceStore: useStore }
 })
 
-vi.mock('./stores/scan2text.store', () => ({
-  useScan2TextStore: vi.fn(() => () => ([])),
-}))
+vi.mock('./stores/scan2text.store', () => {
+  const store = {
+    getState: () => ({ jobs: {} }),
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const useStore = (selector: any) => selector(store.getState())
+  useStore.getState = store.getState.bind(store)
+  return { useScan2TextStore: useStore }
+})
 
 vi.mock('./lib/demoOrchestrator', () => ({
   startDemoOrchestrator: vi.fn(),
@@ -59,7 +65,7 @@ describe('Command Center layout', () => {
       render(<App />)
       expect(screen.getByTestId('bottom-bar')).toBeInTheDocument()
       expect(screen.getByText('Worker: Idle')).toBeInTheDocument()
-      expect(screen.getByText('RAM: 1.8 GB')).toBeInTheDocument()
+      expect(screen.getByText('RAM: —')).toBeInTheDocument()
       expect(screen.getByText('v0.1.0-demo')).toBeInTheDocument()
     })
 
@@ -85,9 +91,9 @@ describe('Command Center layout', () => {
       expect(main?.className).toContain('grid-cols-[34fr_60fr]')
     })
 
-    it('renders app title', () => {
+    it('renders brand image alt text', () => {
       render(<App />)
-      expect(document.body.textContent).toContain('scan2text')
+      expect(screen.getByAltText('Scan2Text')).toBeInTheDocument()
     })
 
     it('renders theme toggle button', () => {
@@ -189,7 +195,7 @@ describe('Command Center layout', () => {
 
     it('visible UI text updates after language toggle', async () => {
       render(<App />)
-      expect(document.body.textContent).toContain('scan2text')
+      expect(screen.getByAltText('Scan2Text')).toBeInTheDocument()
     })
   })
 })
