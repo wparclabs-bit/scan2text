@@ -207,3 +207,10 @@ UI primitives: src/components/ui/ (button, card, dialog, input, label, spinner, 
 i18n: src/locales/en.json + src/locales/id.json
 Theme tokens: src/index.css + tailwind.config.js
 RULE: never guess paths. If a mapped file is missing, discover via Get-ChildItem. Never create a file at a guessed path.
+
+## Lessons Learned (Slice 6.14d)
+
+- Brand wordmark is an IMAGE with alt="Scan2Text"; tests assert alt, not literal text.
+- Never hardcode D:\ paths in frontend code; Vite relative imports.
+- Every slice exits with: green tests + commit + Phase-6 summary file. No exceptions.
+- CEO taste overrides PRD: re-confirm layout deltas in writing before slicing.
