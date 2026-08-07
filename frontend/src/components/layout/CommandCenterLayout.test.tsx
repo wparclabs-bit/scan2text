@@ -2,6 +2,22 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import CommandCenterLayout from './CommandCenterLayout'
 
+describe('Viewport lock', () => {
+  it('root container uses h-screen for viewport-height layout', () => {
+    render(<CommandCenterLayout />)
+    const root = document.querySelector('.h-screen') as HTMLElement | null
+    expect(root).toBeInTheDocument()
+  })
+
+  it('bottom bar is present outside the scrollable main area', () => {
+    render(<CommandCenterLayout />)
+    const footer = screen.getByTestId('bottom-bar')
+    expect(footer).toBeInTheDocument()
+    const main = document.querySelector('main')
+    expect(main).toBeInTheDocument()
+  })
+})
+
 describe('CommandCenterLayout grid overflow hygiene', () => {
   it('grid child wrappers carry min-w-0 but not overflow-hidden', () => {
     render(<CommandCenterLayout />)

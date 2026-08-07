@@ -5,6 +5,7 @@ import { Settings, Moon, Sun, Globe } from 'lucide-react'
 import { useState } from 'react'
 import SettingsDialog from './SettingsDialog'
 import logoUrl from '../../../Images/logo.png'
+import brandImageUrl from '../../../Images/text.png'
 import {
   Tooltip,
   TooltipTrigger,
@@ -23,7 +24,7 @@ export default function TopBar() {
   return (
     <TooltipProvider delayDuration={200}>
       <>
-        <header data-testid="top-bar" className="flex items-center justify-between px-4 py-2 bg-background topbar-header">
+        <header data-testid="top-bar" className="flex items-center justify-between px-4 h-[34px] bg-background topbar-header">
           <div className="flex items-center gap-[10px]">
             <div
               data-testid="topbar-logo-chip"
@@ -31,11 +32,6 @@ export default function TopBar() {
               className="chip-tile flex items-center"
             >
               <img src={logoUrl} alt="" className="w-6 h-6 object-contain" />
-              <span data-testid="topbar-wordmark" className="text-lg font-semibold font-display tracking-wider">
-                <span style={{ color: theme === 'dark' ? '#F2EBDD' : '#1F150C' }}>scan</span>
-                <span data-testid="topbar-wordmark-accent" className="text-accent">2</span>
-                <span style={{ color: theme === 'dark' ? '#F2EBDD' : '#1F150C' }}>text</span>
-              </span>
             </div>
             {IS_DEMO_MODE && (
               <span
@@ -45,6 +41,13 @@ export default function TopBar() {
                 {t('topbar.demoBadge')}
               </span>
             )}
+          </div>
+          <div className="flex items-center justify-center absolute inset-x-0 pointer-events-none">
+            <img
+              src={brandImageUrl}
+              alt={t('topbar.brandAlt')}
+              className="h-[34px] w-auto opacity-90"
+            />
           </div>
           <div className="flex gap-1">
             <Tooltip>

@@ -4,9 +4,7 @@
   },
   "topbar": {
     "logoAlt": "Scan2Text logo",
-    "wordmarkScan": "scan",
-    "wordmarkTwo": "2",
-    "wordmarkText": "text",
+    "brandAlt": "Scan2Text",
     "demoBadge": "DEMO"
   },
   "demo": {
@@ -27,7 +25,8 @@
     "themeTooltipLight": "Switch to dark mode",
     "langTooltipEn": "Switch to Indonesian",
     "langTooltipId": "Switch to English",
-    "settingsTooltip": "Open settings"
+    "settingsTooltip": "Open settings",
+    "shareTooltip": "Share app link"
   },
   "errors": {
     "unsupportedFileType": "Unsupported file type. Allowed: PNG, JPG, JPEG, WEBP, PDF",
@@ -54,7 +53,8 @@
   },
   "toast": {
     "copySuccess": "Markdown copied to clipboard!",
-    "openFolderDemo": "📂 Demo Mode: In the real app, this opens your output folder!"
+    "openFolderDemo": "📂 Demo Mode: In the real app, this opens your output folder!",
+    "shareComingSoon": "Sharing coming soon."
   },
   "queue": {
     "empty": "No files in queue",
@@ -68,8 +68,8 @@
     }
   },
   "bottomBar": {
-    "workerIdle": "Worker: Idle",
-    "ramUsage": "RAM: 1.8 GB",
+    "workerLabel": "Worker: {{status}}",
+    "ramUsage": "RAM: —",
     "version": "v0.1.0-demo"
   },
   "settings": {

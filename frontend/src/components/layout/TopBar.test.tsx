@@ -62,14 +62,12 @@ describe('TopBar', () => {
     expect(img?.src).toContain('logo.png')
   })
 
-  it('renders live-text wordmark with data-testid="topbar-wordmark"', () => {
+  it('renders brand image with alt="Scan2Text"', () => {
     render(<TopBar />)
-    expect(screen.getByTestId('topbar-wordmark')).toBeInTheDocument()
-  })
-
-  it('wordmark accent digit "2" has data-testid="topbar-wordmark-accent"', () => {
-    render(<TopBar />)
-    expect(screen.getByTestId('topbar-wordmark-accent')).toBeInTheDocument()
+    const brandImg = screen.getByAltText('Scan2Text')
+    expect(brandImg).toBeInTheDocument()
+    expect(brandImg).toHaveAttribute('src')
+    expect((brandImg as HTMLImageElement).src).toContain('text.png')
   })
 
   it('DEMO badge exists with data-testid="topbar-demo-badge"', () => {
@@ -77,16 +75,16 @@ describe('TopBar', () => {
     expect(screen.getByTestId('topbar-demo-badge')).toBeInTheDocument()
   })
 
-  it('wordmark uses display font styling', () => {
-    render(<TopBar />)
-    const wordmark = screen.getByTestId('topbar-wordmark')
-    expect(wordmark).toHaveClass('font-display')
-  })
-
   it('logo has accessible aria-label', () => {
     render(<TopBar />)
     const logoChip = screen.getByTestId('topbar-logo-chip')
     expect(logoChip).toHaveAttribute('aria-label', 'Scan2Text logo')
+  })
+
+  it('header has h-[34px] height class', () => {
+    render(<TopBar />)
+    const header = screen.getByTestId('top-bar')
+    expect(header).toHaveClass('h-[34px]')
   })
 
   it('header does not have border-b class', () => {
@@ -103,21 +101,9 @@ describe('TopBar', () => {
     expect(chip).toHaveClass('chip-tile')
   })
 
-  it('wordmark has tracking class', () => {
+  it('does not render wordmark span elements', () => {
     render(<TopBar />)
-    const wordmark = screen.getByTestId('topbar-wordmark')
-    expect(wordmark).toHaveClass('tracking-wider')
-  })
-
-  it('wordmark literal text content is scan2text', () => {
-    render(<TopBar />)
-    const wordmark = screen.getByTestId('topbar-wordmark')
-    expect(wordmark.textContent).toBe('scan2text')
-  })
-
-  it('accent span carries accent class', () => {
-    render(<TopBar />)
-    const accent = screen.getByTestId('topbar-wordmark-accent')
-    expect(accent).toHaveClass('text-accent')
+    expect(screen.queryByTestId('topbar-wordmark')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('topbar-wordmark-accent')).not.toBeInTheDocument()
   })
 })

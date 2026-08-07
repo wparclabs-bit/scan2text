@@ -91,4 +91,37 @@ describe('palette lock — coffee-and-paper 2026-08-07', () => {
       expect(previewPanel).not.toContain('border border-border')
     })
   })
+
+  describe('depth panels use inline styles', () => {
+    const dropzonePanel = readFileSync(resolve(__dirname, '../components/layout/panels/DropZonePanel.tsx'), 'utf-8')
+    const queuePanel = readFileSync(resolve(__dirname, '../components/layout/panels/QueuePanel.tsx'), 'utf-8')
+    const previewPanel = readFileSync(resolve(__dirname, '../components/layout/panels/PreviewPanel.tsx'), 'utf-8')
+
+    it('DropZonePanel imports getDepthStyle', () => {
+      expect(dropzonePanel).toContain("from '@/lib/depthStyles'")
+    })
+
+    it('QueuePanel imports getDepthStyle', () => {
+      expect(queuePanel).toContain("from '@/lib/depthStyles'")
+    })
+
+    it('PreviewPanel imports getDepthStyle', () => {
+      expect(previewPanel).toContain("from '@/lib/depthStyles'")
+    })
+
+    it('DropZonePanel applies style prop instead of depth-panel-left class', () => {
+      expect(dropzonePanel).toContain('style={depthStyle}')
+      expect(dropzonePanel).not.toContain('depth-panel-left')
+    })
+
+    it('QueuePanel applies style prop instead of depth-panel-center class', () => {
+      expect(queuePanel).toContain('style={depthStyle}')
+      expect(queuePanel).not.toContain('depth-panel-center')
+    })
+
+    it('PreviewPanel applies style prop instead of depth-panel-right class', () => {
+      expect(previewPanel).toContain('style={depthStyle}')
+      expect(previewPanel).not.toContain('depth-panel-right')
+    })
+  })
 })

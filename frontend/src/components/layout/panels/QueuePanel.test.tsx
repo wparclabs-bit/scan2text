@@ -129,7 +129,7 @@ describe('QueuePanel status dots and retry', () => {
       'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
     })
     render(<QueuePanel />)
-    const card = document.querySelector('.surface-center') as HTMLElement | null
+    const card = document.querySelector('[data-testid="panel-queue"] > div') as HTMLElement | null
     expect(card).toBeInTheDocument()
     expect(card).toHaveClass('h-full')
     expect(card).toHaveClass('flex-col')
@@ -137,16 +137,17 @@ describe('QueuePanel status dots and retry', () => {
     expect(card).toHaveClass('box-border')
   })
 
-  it('card wrapper carries depth-panel-center class', () => {
+  it('card wrapper carries inline depth style with gradient overlay', () => {
     setupStore({
       'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'completed', createdAt: 1000 },
     })
     render(<QueuePanel />)
-    const card = document.querySelector('.depth-panel-center') as HTMLElement | null
+    const card = document.querySelector('[data-testid="panel-queue"] > div') as HTMLElement | null
     expect(card).toBeInTheDocument()
+    expect(card?.style.backgroundImage).toContain('linear-gradient')
   })
 
-  it('renders PDF icon placeholder for all queue items without img elements', () => {
+  it('renders image icon for PNG queue items', () => {
     setupStore({
       'job-1': {
         id: 'job-1',
@@ -159,8 +160,8 @@ describe('QueuePanel status dots and retry', () => {
       },
     })
     render(<QueuePanel />)
-    const pdfIcon = document.querySelector('[data-testid="queue-item-pdf-icon"]')
-    expect(pdfIcon).toBeInTheDocument()
+    const imgIcon = document.querySelector('[data-testid="queue-icon-image"]')
+    expect(imgIcon).toBeInTheDocument()
   })
 
   it('renders row without thumbnail when job has blob URL', () => {
@@ -180,7 +181,7 @@ describe('QueuePanel status dots and retry', () => {
     expect(screen.queryByTestId('queue-item-thumbnail')).not.toBeInTheDocument()
   })
 
-  it('renders PDF icon placeholder for PDF jobs without img elements', () => {
+  it('renders PDF icon for PDF queue items', () => {
     setupStore({
       'job-1': {
         id: 'job-1',
@@ -194,7 +195,7 @@ describe('QueuePanel status dots and retry', () => {
       },
     })
     render(<QueuePanel />)
-    const pdfIcon = document.querySelector('[data-testid="queue-item-pdf-icon"]')
+    const pdfIcon = document.querySelector('[data-testid="queue-icon-pdf"]')
     expect(pdfIcon).toBeInTheDocument()
   })
 

@@ -22,7 +22,7 @@ void i18next
           app: { title: 'Scan2Text' },
           panels: { dropZone: 'Drop Zone', queue: 'Queue', preview: 'Preview' },
           status: { ready: 'Ready' },
-          actions: { toggleTheme: 'Toggle theme', toggleLanguage: 'Toggle language' },
+          actions: { toggleTheme: 'Toggle theme', toggleLanguage: 'Toggle language', shareTooltip: 'Share app link' },
           errors: {
             unsupportedFileType: 'Unsupported file type. Allowed: PNG, JPG, JPEG, WEBP, PDF',
             fileTooLarge: 'File exceeds 50MB limit',
@@ -49,8 +49,8 @@ void i18next
             },
           },
           bottomBar: {
-            workerIdle: 'Worker: Idle',
-            ramUsage: 'RAM: 1.8 GB',
+            workerLabel: 'Worker: {{status}}',
+            ramUsage: 'RAM: —',
             version: 'v0.1.0-demo',
           },
           settings: {
@@ -65,9 +65,7 @@ void i18next
           },
           topbar: {
             logoAlt: 'Scan2Text logo',
-            wordmarkScan: 'scan',
-            wordmarkTwo: '2',
-            wordmarkText: 'text',
+            brandAlt: 'Scan2Text',
             demoBadge: 'DEMO',
           },
         },
@@ -77,7 +75,7 @@ void i18next
           app: { title: 'Scan2Text' },
           panels: { dropZone: 'Zona Jatuh', queue: 'Antrian', preview: 'Pratinjau' },
           status: { ready: 'Siap' },
-          actions: { toggleTheme: 'Ubah tema', toggleLanguage: 'Ubah bahasa' },
+          actions: { toggleTheme: 'Ubah tema', toggleLanguage: 'Ubah bahasa', shareTooltip: 'Bagikan tautan aplikasi' },
           errors: {
             unsupportedFileType: 'Tipe file tidak didukung. Yang didukung: PNG, JPG, JPEG, WEBP, PDF',
             fileTooLarge: 'Ukuran file melebihi batas 50MB',
@@ -104,8 +102,8 @@ void i18next
             },
           },
           bottomBar: {
-            workerIdle: 'Worker: Idle',
-            ramUsage: 'RAM: 1.8 GB',
+            workerLabel: 'Worker: {{status}}',
+            ramUsage: 'RAM: —',
             version: 'v0.1.0-demo',
           },
           settings: {
@@ -120,9 +118,7 @@ void i18next
           },
           topbar: {
             logoAlt: 'Logo Scan2Text',
-            wordmarkScan: 'scan',
-            wordmarkTwo: '2',
-            wordmarkText: 'text',
+            brandAlt: 'Scan2Text',
             demoBadge: 'DEMO',
           },
         },
