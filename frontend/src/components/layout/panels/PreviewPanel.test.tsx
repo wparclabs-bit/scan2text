@@ -105,6 +105,53 @@ describe('PreviewPanel', () => {
     expect(emptyState).toBeInTheDocument()
   })
 
+  it('empty state card uses flex-1 and surface-right for full-height layout', () => {
+    setupStore(null, {})
+    render(<PreviewPanel />)
+    const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
+    expect(panel).toHaveClass('h-full')
+    const card = panel?.querySelector('.surface-right') as HTMLElement | null
+    expect(card).toBeInTheDocument()
+    expect(card).toHaveClass('flex-1')
+  })
+
+  it('processing state card uses flex-1 and surface-right for full-height layout', () => {
+    setupStore('job-1', {
+      'job-1': {
+        id: 'job-1',
+        fileName: 'test.png',
+        fileType: 'image/png',
+        status: 'processing',
+        markdownOutput: '',
+      },
+    })
+    render(<PreviewPanel />)
+    const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
+    expect(panel).toHaveClass('h-full')
+    const card = panel?.querySelector('.surface-right') as HTMLElement | null
+    expect(card).toBeInTheDocument()
+    expect(card).toHaveClass('flex-1')
+  })
+
+  it('failed state card uses flex-1 and surface-right for full-height layout', () => {
+    setupStore('job-1', {
+      'job-1': {
+        id: 'job-1',
+        fileName: 'test.png',
+        fileType: 'image/png',
+        status: 'failed',
+        markdownOutput: '',
+        error: 'OCR error',
+      },
+    })
+    render(<PreviewPanel />)
+    const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
+    expect(panel).toHaveClass('h-full')
+    const card = panel?.querySelector('.surface-right') as HTMLElement | null
+    expect(card).toBeInTheDocument()
+    expect(card).toHaveClass('flex-1')
+  })
+
   it('renders Markdown container with full-width class for completed jobs', () => {
     setupStore('job-1', {
       'job-1': {

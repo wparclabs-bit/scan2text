@@ -30,7 +30,9 @@
     "allInvalid": "No files were added. All selected files were unsupported or too large."
   },
   "dropzone": {
-    "hint": "PNG · JPG · WEBP · PDF — max 50MB per file"
+    "hint": "PNG · JPG · WEBP · PDF — max 50MB per file",
+    "clickLabel": "Click or drag files here",
+    "dropLabel": "Drop files here"
   },
   "preview": {
     "emptyState": "Select a completed job to preview the magic.",

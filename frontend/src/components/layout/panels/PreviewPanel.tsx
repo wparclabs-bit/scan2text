@@ -11,9 +11,9 @@ export default function PreviewPanel() {
 
   if (!job) {
     return (
-      <div data-testid="panel-preview" className="h-full flex items-center justify-center p-4">
-        <div className="bg-card border border-border rounded-xl p-4 shadow-sm max-w-md w-full">
-          <p data-testid="preview-empty" className="text-sm text-muted-foreground text-center">
+      <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
+        <div className="flex-1 surface-right border border-border rounded-xl shadow-sm overflow-hidden flex flex-col min-w-0 box-border">
+          <p data-testid="preview-empty" className="text-sm text-muted-foreground text-center p-4">
             {t('preview.emptyState')}
           </p>
         </div>
@@ -23,8 +23,8 @@ export default function PreviewPanel() {
 
   if (['pending', 'uploading', 'processing'].includes(job.status)) {
     return (
-      <div data-testid="panel-preview" className="h-full flex items-center justify-center p-4">
-        <div className="bg-card border border-border rounded-xl p-4 shadow-sm max-w-md w-full">
+      <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
+        <div className="flex-1 surface-right border border-border rounded-xl shadow-sm overflow-hidden flex flex-col min-w-0 box-border items-center justify-center p-4">
           <p data-testid="preview-processing" className="text-sm text-muted-foreground animate-pulse text-center">
             {t('preview.processing')}
           </p>
@@ -35,8 +35,8 @@ export default function PreviewPanel() {
 
   if (job.status === 'failed') {
     return (
-      <div data-testid="panel-preview" className="h-full flex flex-col items-center justify-center p-4 gap-3">
-        <div className="bg-card border border-border rounded-xl p-4 shadow-sm max-w-md w-full flex flex-col items-center gap-3">
+      <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
+        <div className="flex-1 surface-right border border-border rounded-xl shadow-sm overflow-hidden flex flex-col min-w-0 box-border items-center justify-center gap-3 p-4">
           <p data-testid="preview-error" className="text-sm font-semibold text-destructive text-center">
             {t('preview.failed')}
           </p>
@@ -51,13 +51,13 @@ export default function PreviewPanel() {
   }
 
   return (
-    <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden p-4">
-      <div className="bg-card border border-border rounded-xl shadow-sm flex flex-col flex-1 overflow-hidden">
+    <div data-testid="panel-preview" className="h-full w-full flex flex-col overflow-hidden">
+      <div className="flex-1 surface-right border border-border rounded-xl shadow-sm flex flex-col min-w-0 box-border overflow-hidden">
         {/* Action Header - Only visible when job is completed */}
         {job.status === 'completed' && (
           <header
             data-testid="preview-action-header"
-            className="flex items-center justify-center gap-2 p-3 border-b border-border shrink-0"
+            className="flex items-center justify-center gap-2 p-3 border-b border-border shrink-0 surface-action"
           >
             <button
               data-testid="preview-copy-btn"
