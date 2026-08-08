@@ -33,3 +33,4 @@ uploads/
 .scan2text/
 graphify-out/
 src/graphify-out/
+.kilo/

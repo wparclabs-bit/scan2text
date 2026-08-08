@@ -3,7 +3,7 @@
 
 Date: 2026-08-08
 Phase: Phase 6 COMPLETE
-Baseline commit: d2b4f4f
+Baseline commit: 75bc720
 Tests: 565 frontend tests green
 PRD: v1.8 source of truth in second-brain/04-Product/
 Next: Phase 7 real backend. First slice: GET /health telemetry (Option A). ASR parked.

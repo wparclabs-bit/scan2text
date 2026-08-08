@@ -1,6 +1,6 @@
 # Non-Functional Requirements & Architecture — Scan2Text MVP
 
-Version: 1.8
+Version: 1.9
 Date: 2026-08-08
 Status: Approved for Implementation
 Format: clean non-table (CEO instruction)
@@ -16,6 +16,7 @@ Format: clean non-table (CEO instruction)
 - 1.6 — 2026-08-07 — Phase 6 Finale: 34/60 + 2% gutters; left work column (Dropzone ~38% + Queue flex); viewport-locked shell; always-visible warm scrollbars; literal wordmark; BottomBar share + centered telemetry; Dropzone personality; inline longhand depth; Queue radiant rays; share placeholder; queue row regression contract.
 - 1.7 — 2026-08-07 — Hotfix finale (CEO-approved): shell = fixed inset-0 absolute viewport lock (fractions decide, content never resizes panels); TopBar 34px with CENTER brand image text.png 153×34 alt="Scan2Text" + static glow; left = logo chip + DEMO intact, no literal text wordmark; Share moved to BottomBar RIGHT (click = soft toast, no navigation); BottomBar left empty, center telemetry (Worker Idle/Busy · RAM "—" until GET /health · version), pinned at any window size; Dropzone: dashed area fills card, bg image bacground-left-top-panel.jpg 15% opacity single-value size centered, header + footer bold ink #1F150C, footer adds "max 10 files per batch", Dropzone ScrollArea removed; 10-file batch cap enforced; queue fixed 14px dot-only status slot (grey / yellow spinner / glossy green / glossy red) with translated tooltips; depth = visible-subtle gradation; Preview header buttons borderless transparent with caramel hover; Radix ScrollArea tray neutralized via CSS override.
 - 1.8 — 2026-08-08 — Phase 6 closure: 1vh TopBar gutter; pathological short-window accepted edge; fake progress deferred to v2/v3; vault map per ADR-004; Phase 6 COMPLETE.
+- 1.9 — 2026-08-08 — ADR-005 consolidation: backend source of truth = src/scan2text; §13 repo tree updated; §14 canonical health = /api/health.
 
 ---
 
@@ -162,14 +163,13 @@ Scan2Text/
 
 ```text
 scan2text/
-├── backend/
-│   ├── app/
-│   │   ├── main.py           # FastAPI app entry
-│   │   ├── routes/           # API endpoints
-│   │   ├── services/         # Business logic
-│   │   ├── ocr/              # OCR engine adapter
-│   │   └── models/           # Pydantic data contracts
-│   └── tests/
+    ├── src/scan2text/            # Python backend, src layout (ADR-005)
+    │   ├── api/                  # FastAPI OCR pipeline: POST /process, GET /status/{task_id}
+    │   ├── routes/               # GET /api/health, GET/PUT /api/settings
+    │   ├── adapters/             # OCREngine ABC + FakeOCR + LlamaCPP real engine
+    │   ├── services/             # file/output/path/pdf/queue/settings/logging/update
+    │   └── models/               # Pydantic data contracts
+    ├── tests/                    # backend pytest suite (pytest.ini pythonpath=src)
 ├── frontend/
 │   ├── src/
 │   │   ├── components/       # layout/, layout/panels/, ui/, dropzone/
@@ -198,7 +198,7 @@ Internal local contract (not a public API).
 
 - POST /process — multipart file bytes → { "task_id" }; starts background OCR.
 - GET /status/{task_id} — status (pending/uploading/processing/completed/failed/background) + result_markdown on completion.
-- GET /health — worker idle/busy, RAM usage, model loaded state (used by BottomBar; until built, UI shows RAM "—").
+- GET /api/health — worker idle/busy, RAM usage, model loaded state (used by BottomBar; until built, UI shows RAM "—").
 - GET /api/settings / PUT /api/settings.
 - Future (not MVP-critical): POST /cancel/{task_id}; POST /api/output/open.
 - Share placeholder note (v1.7): MVP Share is frontend-only; target constant https://placeholder.local; no backend endpoint; swapped post-GitHub.
