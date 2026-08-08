@@ -27,3 +27,9 @@ __pycache__/
 
 # Local test material — never commit real documents
 samples/
+
+# Privacy / runtime artifacts — never commit
+uploads/
+.scan2text/
+graphify-out/
+src/graphify-out/
