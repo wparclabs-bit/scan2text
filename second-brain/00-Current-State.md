@@ -6,6 +6,8 @@
 
 - **Next Slice:** CEO re-run of failed QA checks from manual test script, then Phase 6 COMPLETE marker.
 
+- **2026-08-08 (6.16c):** queue empty-state copy finalized by CEO ID review; per-locale icons inside strings — CEO decision (i18n owns full message including icon); EN → " Nothing here yet. Drop something tasty!" (leading space retained), ID → "🙈 Masih belum ada file tuh! Coba upload di atas!". No separate icon element in QueuePanel (confirmed via forensics). Tests: 564 → 565 (+1).
+
 
 ## Frontend Baseline
 

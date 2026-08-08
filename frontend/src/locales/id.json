@@ -59,7 +59,7 @@
   },
   "queue": {
     "empty": "Tidak ada file dalam antrian",
-    "emptyFriendly": "Belum ada apa-apa di sini. Jatuhkan sesuatu yang enak!",
+    "emptyFriendly": "🙈 Masih belum ada file tuh! Coba upload di atas!",
     "retry": "Ulangi",
     "status": {
       "pending": "Menunggu",

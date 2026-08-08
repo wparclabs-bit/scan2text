@@ -59,7 +59,7 @@
   },
   "queue": {
     "empty": "No files in queue",
-    "emptyFriendly": "Nothing here yet. Drop something tasty!",
+    "emptyFriendly": " Nothing here yet. Drop something tasty!",
     "retry": "Retry",
     "status": {
       "pending": "Pending",
