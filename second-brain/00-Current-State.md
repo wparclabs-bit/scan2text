@@ -13,6 +13,8 @@
 
 - **PRD v1.7 files 01-04:** COMMITTED at 68efa36 (2026-08-08) as source of truth milestone.
 
+- **2026-08-08:** fake progress bar removed by CEO decision (v2/v3 candidate); toast copy trimmed; empty states centered. Tests: 552 → 554 (+2).
+
 - **Typecheck:** PASS
 
 - **Build:** PASS (zero source delta this slice)

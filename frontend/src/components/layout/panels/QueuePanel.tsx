@@ -28,9 +28,9 @@ export default function QueuePanel() {
   if (jobList.length === 0) {
     return (
       <div data-testid="panel-queue" className="h-full min-w-0 w-full">
-        <div className="rounded-xl p-4 h-full flex items-center min-w-0 box-border overflow-hidden" style={depthStyle}>
-          <p data-testid="queue-empty" className="text-sm text-muted-foreground">
-            {t('queue.empty')}
+        <div className="rounded-xl p-4 h-full flex flex-col items-center justify-center text-center min-w-0 box-border overflow-hidden" style={depthStyle}>
+          <p data-testid="queue-empty" className="text-sm text-muted-foreground text-center">
+            {t('queue.emptyFriendly')}
           </p>
         </div>
       </div>
@@ -80,23 +80,6 @@ export default function QueuePanel() {
                 <p data-testid="queue-item-size" className="text-xs text-muted-foreground">
                   {formatBytes(job.fileSize)}
                 </p>
-                {isActive && (
-                  <div className="mt-1 flex items-center gap-2">
-                    <Spinner
-                      className="size-3"
-                      style={{ color: '#FACC15' }}
-                    />
-                    <div
-                      data-testid="queue-item-progress"
-                      className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden"
-                    >
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${job.progress ?? 0}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
               <div
                 data-testid="queue-item-status-slot"
