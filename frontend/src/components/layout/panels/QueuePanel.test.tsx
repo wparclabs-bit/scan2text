@@ -347,13 +347,23 @@ describe('QueuePanel status dots and retry', () => {
     setupStore({})
     render(<QueuePanel />)
     const emptyEl = screen.getByTestId('queue-empty') as HTMLElement
-    expect(emptyEl.textContent).toBe('Nothing here yet. Drop something tasty!')
+    expect(emptyEl.textContent).toBe(' Nothing here yet. Drop something tasty!')
     const card = emptyEl.parentElement as HTMLElement | null
     expect(card).toBeInTheDocument()
     expect(card).toHaveClass('flex')
     expect(card).toHaveClass('items-center')
     expect(card).toHaveClass('justify-center')
     expect(card).toHaveClass('text-center')
+  })
+
+  it('queue empty state renders Indonesian copy with monkey emoji when language is id', async () => {
+    const i18next = await import('i18next')
+    await i18next.default.changeLanguage('id')
+    setupStore({})
+    render(<QueuePanel />)
+    const emptyEl = screen.getByTestId('queue-empty') as HTMLElement
+    expect(emptyEl.textContent).toBe('🙈 Masih belum ada file tuh! Coba upload di atas!')
+    await i18next.default.changeLanguage('en')
   })
 
   it('queue ScrollArea mounts a visible ScrollBar component', () => {

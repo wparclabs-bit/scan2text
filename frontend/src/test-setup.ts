@@ -44,7 +44,7 @@ void i18next
           },
           queue: {
             empty: 'No files in queue',
-            emptyFriendly: 'Nothing here yet. Drop something tasty!',
+            emptyFriendly: ' Nothing here yet. Drop something tasty!',
             remove: 'Remove',
             retry: 'Retry',
             status: {
@@ -104,7 +104,7 @@ void i18next
           },
           queue: {
             empty: 'Tidak ada file dalam antrian',
-            emptyFriendly: 'Belum ada apa-apa di sini. Jatuhkan sesuatu yang enak!',
+            emptyFriendly: '🙈 Masih belum ada file tuh! Coba upload di atas!',
             remove: 'Hapus',
             retry: 'Ulangi',
             status: {
