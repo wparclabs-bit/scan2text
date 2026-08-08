@@ -43,11 +43,11 @@ describe('FileDropZone', () => {
     expect(dropzone).toHaveAttribute('data-state', 'idle')
   })
 
-  it('should set data-state="drag-over" on drag over', () => {
+  it('should set data-state="drag" on drag enter', () => {
     const { container } = render(<FileDropZone />)
     const dropzone = container.querySelector('[data-testid="dropzone"]')!
-    fireEvent.dragOver(dropzone, { dataTransfer: { files: [new File(['x'], 'test.png')] } })
-    expect(dropzone).toHaveAttribute('data-state', 'drag-over')
+    fireEvent.dragEnter(dropzone, { dataTransfer: { files: [new File(['x'], 'test.png')] } })
+    expect(dropzone).toHaveAttribute('data-state', 'drag')
   })
 
   it('should reset to idle on drag leave', () => {
@@ -56,6 +56,42 @@ describe('FileDropZone', () => {
     fireEvent.dragOver(dropzone, { dataTransfer: { files: [new File(['x'], 'test.png')] } })
     fireEvent.dragLeave(dropzone)
     expect(dropzone).toHaveAttribute('data-state', 'idle')
+  })
+
+  it('dragEnter sets data-state="drag" with warm highlight class', () => {
+    const { container } = render(<FileDropZone />)
+    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    fireEvent.dragEnter(dropzone, { dataTransfer: { files: [new File(['x'], 'test.png')] } })
+    expect(dropzone).toHaveAttribute('data-state', 'drag')
+    expect(dropzone).toHaveClass('ring-2')
+    expect(dropzone).toHaveClass('border-accent')
+  })
+
+  it('drag counter: double enter then double leave clears state', () => {
+    const { container } = render(<FileDropZone />)
+    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    fireEvent.dragEnter(dropzone)
+    expect(dropzone).toHaveAttribute('data-state', 'drag')
+    fireEvent.dragEnter(dropzone)
+    expect(dropzone).toHaveAttribute('data-state', 'drag')
+    fireEvent.dragLeave(dropzone)
+    expect(dropzone).toHaveAttribute('data-state', 'drag')
+    fireEvent.dragLeave(dropzone)
+    expect(dropzone).toHaveAttribute('data-state', 'idle')
+  })
+
+  it('dragOver prevents default and stop propagation', () => {
+    const { container } = render(<FileDropZone />)
+    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const pd = vi.fn()
+    const ss = vi.fn()
+    const event = new MouseEvent('dragover', { bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'preventDefault', { value: pd })
+    Object.defineProperty(event, 'stopPropagation', { value: ss })
+    Object.defineProperty(event, 'dataTransfer', { value: { files: [] } })
+    dropzone.dispatchEvent(event)
+    expect(pd).toHaveBeenCalled()
+    expect(ss).toHaveBeenCalled()
   })
 
   it('should open file picker when clicked', () => {

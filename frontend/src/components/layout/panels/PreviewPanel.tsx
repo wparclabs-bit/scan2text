@@ -16,7 +16,7 @@ export default function PreviewPanel() {
 
   if (!job) {
     return (
-      <div data-testid="panel-preview" className="h-full w-full flex flex-col min-w-0 overflow-hidden">
+      <div data-testid="panel-preview" className="h-full w-full flex flex-col min-h-0 min-w-0 overflow-hidden">
         <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center text-center" style={depthStyle}>
           <p data-testid="preview-empty" className="text-sm text-muted-foreground p-4">
             {t('preview.emptyState')}
@@ -28,7 +28,7 @@ export default function PreviewPanel() {
 
   if (['pending', 'uploading', 'processing'].includes(job.status)) {
     return (
-      <div data-testid="panel-preview" className="h-full w-full flex flex-col min-w-0 overflow-hidden">
+      <div data-testid="panel-preview" className="h-full w-full flex flex-col min-h-0 min-w-0 overflow-hidden">
         <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center p-4" style={depthStyle}>
           <p data-testid="preview-processing" className="text-sm text-muted-foreground animate-pulse text-center">
             {t('preview.processing')}
@@ -40,7 +40,7 @@ export default function PreviewPanel() {
 
   if (job.status === 'failed') {
     return (
-      <div data-testid="panel-preview" className="h-full w-full flex flex-col min-w-0 overflow-hidden">
+      <div data-testid="panel-preview" className="h-full w-full flex flex-col min-h-0 min-w-0 overflow-hidden">
         <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center gap-3 p-4" style={depthStyle}>
           <p data-testid="preview-error" className="text-sm font-semibold text-destructive text-center">
             {t('preview.failed')}
@@ -56,7 +56,7 @@ export default function PreviewPanel() {
   }
 
   return (
-    <div data-testid="panel-preview" className="h-full w-full flex flex-col min-w-0 overflow-hidden">
+    <div data-testid="panel-preview" className="h-full w-full flex flex-col min-h-0 min-w-0 overflow-hidden">
       <div className="flex-1 rounded-xl flex flex-col min-w-0 box-border overflow-hidden" style={depthStyle}>
         {/* Action Header - Only visible when job is completed */}
         {job.status === 'completed' && (

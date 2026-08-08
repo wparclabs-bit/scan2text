@@ -36,7 +36,7 @@ ENVIRONMENT: You are in PowerShell on Windows, NOT bash. NEVER use tail/head/gre
 ## 4. Locked Architecture — Command Center v1.7
 Shell: fixed inset-0 flex flex-col overflow-hidden. The viewport is the only sizing authority; no window/body scroll; BottomBar always visible.
 TopBar (34px, items vertically centered): LEFT logo chip + DEMO badge (no literal wordmark); CENTER brand image text.png 153x34 alt="Scan2Text" + static CSS radial glow; RIGHT icon-only theme/language/settings with translated tooltips.
-Main: flex-1 min-h-0, grid grid-cols-[minmax(0,34fr)_minmax(0,60fr)] gap-[2%]. Left column grid-rows minmax(0,38fr) Dropzone / minmax(0,62fr) Queue. Right = Preview (full-width read-only Markdown, internal scroll). min-w-0 on columns AND panel roots. Fractions decide; content never resizes panels.
+Main: flex-1 min-h-0 mt-[1vh] min-w-0, grid grid-cols-[minmax(0,34fr)_minmax(0,60fr)] gap-[2%]. Left column grid-rows minmax(0,38fr) Dropzone / minmax(0,62fr) Queue. Right = Preview (full-width read-only Markdown, internal scroll). min-w-0 on columns AND panel roots. 1vh vertical gutter between TopBar and main (CEO delta 2026-08-08). Fractions decide; content never resizes panels.
 BottomBar (pinned shrink-0): grid 1fr auto 1fr; LEFT empty; CENTER Worker Idle/Busy · RAM "—" (until GET /health) · version; RIGHT icon-only Share (placeholder https://placeholder.local, click = soft toast, no navigation).
 Dropzone: dashed area flex-1 min-h-0 fills card; bg bacground-left-top-panel.jpg at 15% opacity, background-size single value 100%, centered, no-repeat, pointer-events none; bold ink #1F150C header + footer ("max 10 files per batch"); NO ScrollArea.
 Queue: internal scroll, always-visible warm scrollbar; radiant rays static zero-CPU; row = icon + truncated name + size + fixed 14px dot-only status slot (grey pending / #FACC15 spinner / glossy green / glossy red) + translated tooltip + retry on failed. NO fake progress bar (CEO decision 2026-08-08; revisit v2/v3 on user feedback); single status indicator in right 14px slot.
@@ -108,6 +108,7 @@ Layout/shrink:
 - min-width:auto bites at EVERY grid/flex level -> minmax(0,fr) + min-w-0 on tracks, columns, AND panel roots. Capping tracks alone is not enough.
 - Content-sized containers make sibling panels grow with unrelated content -> minmax(0,fr) + min-h-0 everywhere.
 - For kiosk shells use fixed inset-0 so the viewport is the only sizing authority; ancestor wrappers can silently defeat h-screen.
+- min-height:auto is the vertical twin of min-width:auto: flex/grid children need min-h-0 on the VERTICAL shrink chain (main, columns, panel roots); fixed min-heights defeat the viewport lock at short windows. Panel roots using h-full without min-h-0 collapse at very short window heights.
 Radix:
 - ScrollArea viewport child is display:table -> neutralize with the CSS override in section 4.
 - Radix hides native scrollbars by design -> mount <ScrollBar /> for visible affordance; wheel-only scrolling is a UX bug.

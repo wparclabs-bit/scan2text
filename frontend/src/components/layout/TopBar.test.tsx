@@ -106,4 +106,18 @@ describe('TopBar', () => {
     expect(screen.queryByTestId('topbar-wordmark')).not.toBeInTheDocument()
     expect(screen.queryByTestId('topbar-wordmark-accent')).not.toBeInTheDocument()
   })
+
+  it('brand glow element exists with data-testid="brand-glow"', () => {
+    render(<TopBar />)
+    const glow = screen.getByTestId('brand-glow')
+    expect(glow).toBeInTheDocument()
+  })
+
+  it('brand glow has static radial-gradient style in dark theme', () => {
+    render(<TopBar />)
+    const glow = screen.getByTestId('brand-glow') as HTMLElement
+    const style = glow.getAttribute('style') ?? ''
+    expect(style).toContain('radial-gradient')
+    expect(style).toContain('rgba')
+  })
 })

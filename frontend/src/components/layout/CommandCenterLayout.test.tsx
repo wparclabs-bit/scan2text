@@ -52,6 +52,41 @@ describe('Shell structure — flex-col pin', () => {
     expect(bar).toHaveClass('shrink-0')
   })
 
+  it('left column has min-h-0', () => {
+    render(<CommandCenterLayout />)
+    const leftCol = screen.getByTestId('left-column') as HTMLElement
+    expect(leftCol).toHaveClass('min-h-0')
+  })
+
+  it('panel-dropzone root has min-h-0', () => {
+    render(<CommandCenterLayout />)
+    const panel = screen.getByTestId('panel-dropzone') as HTMLElement
+    expect(panel).toHaveClass('min-h-0')
+  })
+
+  it('panel-queue root has min-h-0', () => {
+    render(<CommandCenterLayout />)
+    const panel = screen.getByTestId('panel-queue') as HTMLElement
+    expect(panel).toHaveClass('min-h-0')
+  })
+
+  it('panel-preview root has min-h-0', () => {
+    render(<CommandCenterLayout />)
+    const panel = screen.getByTestId('panel-preview') as HTMLElement
+    expect(panel).toHaveClass('min-h-0')
+  })
+
+  it('main carries 1vh top gutter (mt-[1vh] or marginTop)', () => {
+    render(<CommandCenterLayout />)
+    const main = document.querySelector('main') as HTMLElement | null
+    expect(main).toBeInTheDocument()
+    const className = main?.className ?? ''
+    const style = main?.style ?? {}
+    const hasGutterClass = className.includes('mt-[1vh]')
+    const hasGutterStyle = (style as any).marginTop === '1vh'
+    expect(hasGutterClass || hasGutterStyle).toBe(true)
+  })
+
   it('bottom bar uses grid-cols-[1fr_auto_1fr] for centered telemetry', () => {
     render(<CommandCenterLayout />)
     const bar = screen.getByTestId('bottom-bar') as HTMLElement
