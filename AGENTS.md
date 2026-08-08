@@ -62,7 +62,7 @@ Every slice: read THIS file + second-brain/00-Current-State.md ONLY; read ADRs/d
 Vault map (canonical):
   second-brain/00-Current-State.md
   second-brain/00-Inbox/
-  second-brain/01-Agent-Memory/   (Phase-2 ... Phase-6 slice summaries)
+  second-brain/01-Agent-Memory/   (Phase-2 ... Phase-7 slice summaries)
   second-brain/02-QA/             (manual test scripts; Phase 6 closure)
   second-brain/03-Architecture/   (architecture docs + ADRs/ subfolder)
   second-brain/04-Product/        (PRD v1.7 files 01-04)
@@ -127,3 +127,8 @@ Misc:
 - Path discovery before edit: app under frontend/; i18n frontend/src/locales/. "File not found" is a lookup task, never a stop reason.
 - Every slice exits: green tests + commit + Phase-6 summary + AGENTS.md lessons.
 (6.16a-c): absence tests keep removed features removed (docs drift, tests remember); drag-over highlight needs enter/leave counter + onDragOver preventDefault (boolean flickers on child traversal); per-locale icon inside translation string = i18n owns the whole message (CEO decision 2026-08-08).
+
+
+## Phase 7 Lessons
+- Lock the project interpreter with py -3.12; system default Python may be too new for native wheels.
+- Backend binds 127.0.0.1 only; local-first means localhost-first.
