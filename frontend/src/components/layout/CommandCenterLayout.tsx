@@ -12,7 +12,7 @@ export default function CommandCenterLayout() {
       </div>
       <main
         data-testid="main-content"
-        className="flex-1 min-h-0 min-w-0 w-full grid grid-cols-[minmax(0,34fr)_minmax(0,60fr)] gap-[2%] px-4 pb-3"
+        className="flex-1 min-h-0 min-w-0 w-full mt-[1vh] grid grid-cols-[minmax(0,34fr)_minmax(0,60fr)] gap-[2%] px-4 pb-3"
       >
         <div data-testid="left-column" className="min-h-0 min-w-0 grid grid-rows-[minmax(0,38fr)_minmax(0,62fr)] gap-3">
           <DropZonePanel />

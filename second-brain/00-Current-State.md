@@ -2,18 +2,19 @@
 
 - **Current Phase:** Phase 6 (Prototype & Demo Mode) — CLOSURE
 
-- **Current Slice:** Slice 6.15a (Manual & Vault Hygiene — ADR-004 + AGENTS.md rewrite, 2026-08-08)
+- **Current Slice:** Slice 6.16b (Shell Vertical Shrink Chain + Drag-Over Highlight + Glow + 1vh Gutter, 2026-08-08)
 
-- **Next Slice:** CEO to RUN second-brain/02-QA/scan2text-phase6-manual-test.md (QA script authored in 6.15b), then Phase 6 COMPLETE marker.
+- **Next Slice:** CEO re-run of failed QA checks from manual test script, then Phase 6 COMPLETE marker.
 
 
 ## Frontend Baseline
 
-- **Tests:** 552/552 passing (33 files; baseline carried from d58a273, no test run in 6.15c — doc-only)
+- **Tests:** 564/564 passing (33 files; +10 from 6.16b: drag counter semantics, shell chain min-h-0, brand glow)
 
 - **PRD v1.7 files 01-04:** COMMITTED at 68efa36 (2026-08-08) as source of truth milestone.
 
 - **2026-08-08:** fake progress bar removed by CEO decision (v2/v3 candidate); toast copy trimmed; empty states centered. Tests: 552 → 554 (+2).
+- **2026-08-08 (6.16b):** vertical shrink chain fixed (panel roots min-h-0); drag-over highlight with counter semantics + warm accent colors; brand glow radial gradient added to TopBar; 1vh gutter between TopBar and main. Tests: 554 → 564 (+10).
 
 - **Typecheck:** PASS
 

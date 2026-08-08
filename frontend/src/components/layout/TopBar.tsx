@@ -43,10 +43,21 @@ export default function TopBar() {
             )}
           </div>
           <div className="flex items-center justify-center absolute inset-x-0 pointer-events-none">
+            <div
+              data-testid="brand-glow"
+              className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{
+                height: '48px',
+                background: theme === 'dark'
+                  ? 'radial-gradient(ellipse 60% 120% at center, rgba(227,165,95,0.28) 0%, rgba(227,165,95,0.08) 50%, transparent 72%)'
+                  : 'radial-gradient(ellipse 60% 120% at center, rgba(146,64,14,0.18) 0%, rgba(146,64,14,0.06) 50%, transparent 72%)',
+              }}
+              aria-hidden="true"
+            />
             <img
               src={brandImageUrl}
               alt={t('topbar.brandAlt')}
-              className="h-[34px] w-auto opacity-90"
+              className="h-[34px] w-auto opacity-90 relative z-10"
             />
           </div>
           <div className="flex gap-1">

@@ -10,7 +10,8 @@ interface FileDropZoneProps {
 }
 
 export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps) {
-  const [state, setState] = useState<'idle' | 'drag-over' | 'error'>('idle')
+  const [dragCount, setDragCount] = useState(0)
+  const isDragOver = dragCount > 0
   const inputRef = useRef<HTMLInputElement>(null)
   const addJob = useScan2TextStore((s) => s.addJob)
   const startUpload = useScan2TextStore((s) => s.startUpload)
@@ -77,7 +78,7 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
         toast.warning(t('errors.allInvalid'))
       }
 
-      setState('idle')
+      setDragCount(0)
     },
     [addJob, startUpload, onFileAdd, t],
   )
@@ -95,39 +96,41 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault()
       e.stopPropagation()
-      setState('idle')
+      setDragCount(0)
       const files = Array.from(e.dataTransfer.files)
       if (files.length > 0) processFiles(files)
     },
     [processFiles],
   )
 
+  const handleDragEnter = useCallback(() => {
+    setDragCount((c) => c + 1)
+  }, [])
+
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    setState('drag-over')
   }, [])
 
   const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    setState('idle')
+    setDragCount((c) => Math.max(0, c - 1))
   }, [])
 
   return (
     <div
       data-testid="dropzone"
-      data-state={state}
+      data-state={isDragOver ? 'drag' : 'idle'}
       className={`${className ?? 'w-full flex-1 flex flex-col items-center justify-center gap-2 p-4'} border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-        state === 'drag-over'
-          ? 'border-primary bg-primary/10'
-          : state === 'error'
-            ? 'border-destructive bg-destructive/10 animate-shake'
-            : 'border-muted-foreground/30 hover:border-primary/50'
+        isDragOver
+          ? 'ring-2 ring-accent/60 border-accent bg-[rgba(227,165,95,0.08)]'
+          : 'border-muted-foreground/30 hover:border-primary/50'
       }`}
       onClick={triggerPicker}
       onKeyDown={handleKeyDown}
       onDrop={handleDrop}
+      onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       role="button"
@@ -146,9 +149,7 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
       <svg className="w-8 h-8 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16V4m0 0L8 8m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
       </svg>
-      {state === 'error' && (
-        <p className="text-xs text-destructive">{t('errors.unsupportedFileType')}</p>
-      )}
+
     </div>
   )
 }
