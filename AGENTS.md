@@ -70,8 +70,7 @@ Vault map (canonical):
 If an actual folder name differs, discover via Get-ChildItem before writing; never guess.
 
 ## 7. Current phase & status
-Phases 1-5 COMPLETE. Phase 6: closure. Latest slice 6.14z (min-w-0 on panel roots; overlap dead). PRD v1.7 files 01-04 written. NEXT: 6.15 QA manual script -> Phase 6 COMPLETE marker -> commit PRD v1.7 -> Phase 7.
-For baseline, run npm run test and git log --oneline top 3; record in 00-Current-State.md.
+Phases 1-6 COMPLETE (Phase 6 closed 2026-08-08 @ 272addf, 565 tests). Phase 7 NEXT: kickoff grill + ASR brainstorm; seed backlog in second-brain/01-Agent-Memory/Phase-6/PHASE-6-COMPLETE.md.
 
 ## 8. CEO locked decisions (do NOT override)
 - Local-first, offline, CPU-only; Markdown-output-first; NOT a document editor.
@@ -127,3 +126,4 @@ Misc:
 - Depth must be visible-subtle, not garish.
 - Path discovery before edit: app under frontend/; i18n frontend/src/locales/. "File not found" is a lookup task, never a stop reason.
 - Every slice exits: green tests + commit + Phase-6 summary + AGENTS.md lessons.
+(6.16a-c): absence tests keep removed features removed (docs drift, tests remember); drag-over highlight needs enter/leave counter + onDragOver preventDefault (boolean flickers on child traversal); per-locale icon inside translation string = i18n owns the whole message (CEO decision 2026-08-08).
