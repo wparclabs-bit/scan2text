@@ -1,21 +1,22 @@
 # Testing Strategy & Engineering Rules — Scan2Text MVP
 
-Version: 1.7
-Date: 2026-08-07
+Version: 1.8
+Date: 2026-08-08
 Status: Approved for Implementation
 
 ## Change Log
 
-| Version | Date | Changes |
-| --- | --- | --- |
-| 1.0 | 2026-06-22 | Initial testing strategy and engineering rules |
-| 1.1 | 2026-06-22 | Minor clarifications |
-| 1.2 | 2026-06-22 | Removed in-app editing from scope, updated open items |
-| 1.3 | 2026-08-06 | Command Center tests, Zustand/i18n/markdown tests, file validation, fake progress, auto-select, background re-poll; AIASD rules 13-18; DoD + open items updated |
-| 1.4 | 2026-08-07 | Beautify deltas: 20/20/60, full-width preview, Remove button removed, status indicators refined, file types locked |
-| 1.5 | 2026-08-07 | Coffee & paper identity; top bar logo chip + live-text wordmark + DEMO badge |
-| 1.6 | 2026-08-07 | Phase 6 Finale: 34/60 + gutters; left work column; viewport lock; warm always-visible scrollbars; literal wordmark; BottomBar share + centered telemetry; Dropzone personality; inline longhand depth; Queue radiant rays; share placeholder; queue row regression contract; manual QA script artifact required |
-| 1.7 | 2026-08-07 | Hotfix finale: fixed inset-0 absolute viewport lock (fractions decide); TopBar 34px center brand image alt="Scan2Text" + static glow (no literal wordmark); Share RIGHT; BottomBar pinned with RAM "—" placeholder; Dropzone fill + bg 15% + bold ink texts + 10-file cap enforced; Dropzone ScrollArea removed; dot-only status slot (grey/yellow/green/red); visible-subtle gradation; borderless preview buttons; Radix tray CSS override; memory-hygiene exit checklist + one-prompt-per-slice rule; forensics-before-edit rule |
+| Version | Date       | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2026-06-22 | Initial testing strategy and engineering rules                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 1.1     | 2026-06-22 | Minor clarifications                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 1.2     | 2026-06-22 | Removed in-app editing from scope, updated open items                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 1.3     | 2026-08-06 | Command Center tests, Zustand/i18n/markdown tests, file validation, fake progress, auto-select, background re-poll; AIASD rules 13-18; DoD + open items updated                                                                                                                                                                                                                                                                                                                                                                     |
+| 1.4     | 2026-08-07 | Beautify deltas: 20/20/60, full-width preview, Remove button removed, status indicators refined, file types locked                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 1.5     | 2026-08-07 | Coffee & paper identity; top bar logo chip + live-text wordmark + DEMO badge                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 1.6     | 2026-08-07 | Phase 6 Finale: 34/60 + gutters; left work column; viewport lock; warm always-visible scrollbars; literal wordmark; BottomBar share + centered telemetry; Dropzone personality; inline longhand depth; Queue radiant rays; share placeholder; queue row regression contract; manual QA script artifact required                                                                                                                                                                                                                     |
+| 1.7     | 2026-08-07 | Hotfix finale: fixed inset-0 absolute viewport lock (fractions decide); TopBar 34px center brand image alt="Scan2Text" + static glow (no literal wordmark); Share RIGHT; BottomBar pinned with RAM "—" placeholder; Dropzone fill + bg 15% + bold ink texts + 10-file cap enforced; Dropzone ScrollArea removed; dot-only status slot (grey/yellow/green/red); visible-subtle gradation; borderless preview buttons; Radix tray CSS override; memory-hygiene exit checklist + one-prompt-per-slice rule; forensics-before-edit rule |
+| 1.8     | 2026-08-08 | Phase 6 closure: fake progress deferred v2/v3 + absence test; QA script executed (first run 37/48 → re-run all green); open items updated; Phase 7 backlog extended (dropzone icon centered+bold; ADR-002 supersession)                                                                                                                                                                                                                                                                                                             |
 
 ---
 
@@ -51,6 +52,7 @@ Backend (fake OCR engine):
 - reject oversized PDF (>20 pages) and file (>50MB)
 - handle missing output folder; settings persistence
 - POST /process returns task_id; GET /status/{task_id} progression; GET /health worker + RAM
+- queue status slot per status: grey dot (pending), yellow spinner (uploading/processing), glossy green (completed), glossy red (failed); dot-only, no visible text; translated tooltips; retry on failed; absence test asserts NO fake progress bar (deferred v2/v3, v1.8)
 
 Frontend:
 
@@ -84,12 +86,16 @@ Run against real model and real samples:
 - TopBar: brand image + glow; logo chip + DEMO; icon-only tooltips translated
 - language + theme toggles persist; restart persistence
 - bottom bar telemetry centered; Share right with toast on click
+- drop image / PDF → status spinner + Markdown in right panel; auto-select
 
 ### QA Manual Test Script Artifact
 
 - Must exist at `second-brain/02-QA/scan2text-phase6-manual-test.md`.
 - Must include: baseline verification (npm run test count, git log top 3, AGENTS.md map), all visual/scroll/queue/share checks above, result recording (pass/fail, date, commit).
 - Must be RUN before Phase 6 is marked complete.
+
+### QA Artifact
+- Executed 2026-08-08: first run 37/48 → fix slices 6.16a/b/c → re-run ALL green (Phase 6 gate passed).
 
 ### OCR Accuracy Validation
 
@@ -146,7 +152,7 @@ The MVP is done when (v1.7):
 - Command Center v1.7 shell renders: fixed inset-0; TopBar 34px with center brand image + logo chip + DEMO; 34/60 main; left 38fr/62fr; BottomBar pinned at any window size.
 - Coffee & paper identity with visible-subtle gradation on all cards; Queue radiant rays; no flat cards.
 - Dropzone: dashed fill, bg 15%, bold ink header + footer with 10-file rule; 10-file cap enforced with warning toast.
-- Queue: dot-only status slot (grey/yellow/green/red) with translated tooltips; fake progress; retry; warm always-visible scrollbar; truncation with ellipsis.
+- Queue: dot-only status slot (grey/yellow/green/red) with translated tooltips; retry; warm always-visible scrollbar; truncation with ellipsis (fake progress deferred v2/v3, v1.8).
 - Preview: borderless Copy Markdown / Open Folder buttons; full-width read-only Markdown; auto-select.
 - i18n EN/ID complete except brand image alt; theme + language persist.
 - OCR offline for image + simple PDF; one Markdown per input; collision-safe naming.
@@ -159,15 +165,16 @@ The MVP is done when (v1.7):
 
 ## 22. Open Items
 
-Resolved in v1.6/v1.7: layout 34/60 + gutters; left work column internal split; viewport lock (fixed inset-0); wordmark form (center brand image alt); BottomBar composition + Share RIGHT; Dropzone bg/fill/bold texts; status slot dot-only; depth visible-subtle; queue row regression; Radix tray neutralized; ghost components deleted.
+- Resolved in v1.6/v1.7: layout 34/60 + gutters; left work column internal split; viewport lock (fixed inset-0); wordmark form (center brand image alt); BottomBar composition + Share RIGHT; Dropzone bg/fill/bold texts; status slot dot-only; depth visible-subtle; queue row regression; Radix tray neutralized; ghost components deleted; QA manual script authored + run (re-run all green); 6.14j verified in QA re-run; fake progress resolved (deferred v2/v3)
 
-Still open: 6.14j verification (wide window + 11 files acceptance); QA manual script run; backend GET /health (RAM "—" until then); real share URL post-GitHub; exe icon (Phase 7); final body font; CEO sample files; performance thresholds; PDF-to-image verification; VLM smoke test; ID translation review; POST /cancel endpoint.
+- Still open: 6.14j verification (wide window + 11 files acceptance); 
+- QA manual script run; backend GET /health (RAM "—" until then); real share URL post-GitHub; exe icon (Phase 7); final body font; CEO sample files; performance thresholds; PDF-to-image verification; VLM smoke test; ID translation review; POST /cancel endpoint. backend GET /health (RAM "—" until then); real share URL post-GitHub; exe icon (Phase 7); final body font; CEO sample files; performance thresholds; PDF-to-image verification; VLM smoke test; remaining ID translation review; POST /cancel endpoint; dropzone upload icon centered+bold (Phase 7, CEO 2026-08-08); ADR-002 supersession re HTTP polling (new ADR, Phase 7).
 
 ---
 
 ## 23. Future Phases
 
-- Phase 7: exe icon; GET /health real telemetry; share swap post-GitHub; QA hardening; ASR agent brainstorm follow-up (separate product); summary model as in-app feature candidate.
+- Phase 7: exe icon; GET /health real telemetry; share swap post-GitHub; QA hardening; dropzone icon centered+bold; ADR-002 supersession; ASR agent brainstorm follow-up (separate product); summary model as in-app feature candidate.
 - Phase 2: macOS; mobile; in-app editing; compare-toggle; thumbnails; Remove button; perf tuning; update helper.
 - Phase 3: micro-SaaS; cloud API; Tauri/web; accounts; WebSockets; cancel backend.
 
@@ -175,7 +182,7 @@ Still open: 6.14j verification (wide window + 11 files acceptance); QA manual sc
 
 ## 24. Engineering Note
 
-Sources of truth: 01-product-and-scope.md v1.7; 02-functional-requirements.md v1.7; 03-non-functional-and-architecture.md v1.7; this document v1.7.
+Sources of truth: 01-product-and-scope.md v1.8; 02-functional-requirements.md v1.8; 03-non-functional-and-architecture.md v1.8; this document v1.8.
 
 Agent memory: AGENTS.md + second-brain/00-Current-State.md + second-brain/01-Agent-Memory/Phase-6 slice files + second-brain/02-QA scripts.
 

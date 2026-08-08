@@ -1,7 +1,7 @@
 # Non-Functional Requirements & Architecture — Scan2Text MVP
 
-Version: 1.7
-Date: 2026-08-07
+Version: 1.8
+Date: 2026-08-08
 Status: Approved for Implementation
 Format: clean non-table (CEO instruction)
 
@@ -15,6 +15,7 @@ Format: clean non-table (CEO instruction)
 - 1.5 — 2026-08-07 — Coffee & paper palette; no panel borders; depth recipe; top bar logo chip + live-text wordmark + DEMO badge; radiant-lines recolored warm.
 - 1.6 — 2026-08-07 — Phase 6 Finale: 34/60 + 2% gutters; left work column (Dropzone ~38% + Queue flex); viewport-locked shell; always-visible warm scrollbars; literal wordmark; BottomBar share + centered telemetry; Dropzone personality; inline longhand depth; Queue radiant rays; share placeholder; queue row regression contract.
 - 1.7 — 2026-08-07 — Hotfix finale (CEO-approved): shell = fixed inset-0 absolute viewport lock (fractions decide, content never resizes panels); TopBar 34px with CENTER brand image text.png 153×34 alt="Scan2Text" + static glow; left = logo chip + DEMO intact, no literal text wordmark; Share moved to BottomBar RIGHT (click = soft toast, no navigation); BottomBar left empty, center telemetry (Worker Idle/Busy · RAM "—" until GET /health · version), pinned at any window size; Dropzone: dashed area fills card, bg image bacground-left-top-panel.jpg 15% opacity single-value size centered, header + footer bold ink #1F150C, footer adds "max 10 files per batch", Dropzone ScrollArea removed; 10-file batch cap enforced; queue fixed 14px dot-only status slot (grey / yellow spinner / glossy green / glossy red) with translated tooltips; depth = visible-subtle gradation; Preview header buttons borderless transparent with caramel hover; Radix ScrollArea tray neutralized via CSS override.
+- 1.8 — 2026-08-08 — Phase 6 closure: 1vh TopBar gutter; pathological short-window accepted edge; fake progress deferred to v2/v3; vault map per ADR-004; Phase 6 COMPLETE.
 
 ---
 
@@ -76,6 +77,8 @@ Format: clean non-table (CEO instruction)
 - All primary cards carry visible-subtle depth via theme-aware inline longhand styles; no flat cards.
 - Dropzone high-contrast: bold ink header + footer over 15% bg image.
 - Brand image with alt="Scan2Text" visible in live TopBar.
+- 1vh vertical gutter between TopBar and main (v1.8, CEO delta).
+- Pathological short-window heights are a CEO-accepted edge (v1.8); normal short windows fully supported.
 
 ---
 
@@ -97,7 +100,7 @@ Portable desktop app with local web UI: the executable starts a local FastAPI ba
 
 ### Frontend Shell Architecture (v1.7)
 
-- Shell: fixed inset-0 flex flex-col overflow-hidden; TopBar shrink-0 (34px); main flex-1 min-h-0; BottomBar shrink-0.
+- Shell: fixed inset-0 flex flex-col overflow-hidden; TopBar shrink-0 (34px); main flex-1 min-h-0; BottomBar shrink-0. 1vh vertical gutter between TopBar and main (v1.8).
 - Main grid: grid-cols-[34fr_60fr] gap-[2%]; left column grid-rows minmax(0,38fr)/minmax(0,62fr); all panels min-h-0.
 - TopBar: left logo chip + DEMO badge; center brand image text.png 153×34 alt="Scan2Text" + static radial glow (CSS-only); right icon-only theme/language/settings with translated tooltips; all vertically centered.
 - BottomBar: grid 1fr auto 1fr; center Worker Idle/Busy (queue-derived) · RAM "—" (until GET /health) · version constant; right icon-only Share (placeholder https://placeholder.local, toast on click).
@@ -105,6 +108,10 @@ Portable desktop app with local web UI: the executable starts a local FastAPI ba
 - Queue + Preview: ScrollArea with always-visible warm scrollbars.
 - Radix ScrollArea tray neutralized globally via CSS override: [data-radix-scroll-area-viewport] > div { display:block; min-width:0; height:auto } — this is what makes truncation and internal scroll work inside Radix viewports.
 - The rendered TopBar must be the live TopBar in the App import chain; ghost components are deleted on sight.
+
+### Frontend Shell Architecture (v1.8)
+- Layout: 34/60 + 2% gutters; left rows 38fr/62fr; fixed, not resizable; fixed inset-0 shell; 1vh TopBar gutter (v1.8).
+
 
 ---
 
@@ -118,13 +125,13 @@ Portable desktop app with local web UI: the executable starts a local FastAPI ba
 
 - Vite + React + TypeScript; Tailwind CSS + shadcn/ui; Zustand (memory-only job state); react-markdown + remark-gfm; react-i18next (en + id); pywebview; PyInstaller or equivalent.
 
-### Key Frontend Decisions (v1.7)
+### Key Frontend Decisions (v1.8)
 
 - No React Router; single-page Command Center.
 - Dark default + light toggle; theme + language persisted to localStorage; auto-detect browser language, fallback English.
 - Job state memory-only; no localStorage/sessionStorage for job data.
 - Validation: PNG/JPG/JPEG/WEBP/PDF; 50MB per file; batch cap 10 files (first 10 kept, extras skipped + warning toast + logged).
-- Layout: 34/60 + 2% gutters; left rows 38fr/62fr; fixed, not resizable; fixed inset-0 shell.
+- Layout: 34/60 + 2% gutters; left rows 38fr/62fr; fixed, not resizable; fixed inset-0 shell; 1vh TopBar gutter (v1.8).
 - Palette — DARK: bg #080502; Dropzone #E1DCC9 (ink #1F150C); Queue #412D15 (cream #F2EBDD); Preview #1F150C (cream); accent #E3A55F. LIGHT: bg #F9F8F6; #EFE9E3 / #D9CFC7 / #C9B59C; accent #92400E. Purple retired; DEMO amber retained; green/red dots retained.
 - Depth: no borders; visible-subtle gradation via theme-aware inline longhand styles (gradient + inset top highlight + soft shadow + warm glow). Queue card radiant rays (static, zero CPU).
 - Identity: logo chip + DEMO left; center brand image alt="Scan2Text" + static glow; icon-only buttons with translated tooltips.
@@ -178,7 +185,9 @@ scan2text/
     ├── 00-Inbox/
     ├── 01-Agent-Memory/      # Phase-2 … Phase-6 slice summaries
     ├── 02-QA/                # manual test scripts (Phase 6 closure)
-    └── 03-Sprints/
+    └── 03-Architecture/      # Architecture docs/ADR
+    └── 04-Product/           # PRD Files (source of truth)
+    └── 05-Sprints/           # Sprint Summaries 
 ```
 
 ---

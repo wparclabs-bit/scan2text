@@ -1,3 +1,14 @@
+<!-- PHASE-6-CLOSED-STATE-2026-08-08 -->
+# Scan2Text Current State — Phase 6 Closed
+
+Date: 2026-08-08
+Phase: Phase 6 COMPLETE
+Baseline commit: d2b4f4f
+Tests: 565 frontend tests green
+PRD: v1.8 source of truth in second-brain/04-Product/
+Next: Phase 7 real backend. First slice: GET /health telemetry (Option A). ASR parked.
+
+---
 ## Phase Status
 
 - **Current Phase:** Phase 6 (Prototype & Demo Mode) — COMPLETE (closed 2026-08-08 @ 272addf, 565 tests)

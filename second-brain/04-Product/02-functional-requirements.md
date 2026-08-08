@@ -2,10 +2,8 @@
 
   
 
-Version: 1.7
-
-Date: 2026-08-07
-
+Version: 1.8
+Date: 2026-08-08
 Status: Approved for Implementation
 
   
@@ -33,12 +31,10 @@ Status: Approved for Implementation
 | 1.6 | 2026-08-07 | Phase 6 Finale: layout → 34/60 + 2% gutters; left work column (Dropzone ~38% + Queue flex); viewport-locked shell; always-visible warm scrollbars; literal TopBar wordmark; BottomBar share + centered telemetry; Dropzone personality; inline longhand card depth; Queue radiant rays; share placeholder; queue row regression contract |
 
 | 1.7 | 2026-08-07 | Hotfix finale (CEO-approved): shell = fixed inset-0 (absolute viewport lock; fractions decide, content never resizes panels); TopBar 34px with CENTER brand image text.png 153×34 alt="Scan2Text" + static glow, left = logo chip + DEMO intact (no literal text wordmark), all items vertically centered; Share moved to BottomBar RIGHT (click = soft toast, no navigation); BottomBar left empty, center telemetry (Worker Idle/Busy · RAM "—" until /health · version), pinned at any window size; Dropzone: dashed area fills card, bg image 15% opacity single-value size centered, header + footer bold ink, footer adds "max 10 files per batch", Dropzone ScrollArea removed; 10-file batch cap enforced; queue fixed 14px dot-only status slot (grey/yellow-spinner/green/red) with translated tooltips; depth = visible-subtle gradation; Preview header buttons borderless transparent with caramel hover; Radix ScrollArea tray neutralized via CSS override |
+| 1.8 | 2026-08-08 | Phase 6 closure deltas: fake progress bar deferred to v2/v3 (CEO 2026-08-08); 1vh TopBar gutter; pathological short-window accepted edge; queue empty-state final copy with per-locale icons; QA gate passed — Phase 6 COMPLETE |
 
-  
 
 ---
-
-  
 
 ## 9. Functional Requirements
 
@@ -46,51 +42,23 @@ Status: Approved for Implementation
 
 ### FR-01: First-Run Setup
 
-  
-
 Description:
-
-  
-
-On first launch, if no settings exist, the app must guide the user through minimal setup.
-
-  
+- On first launch, if no settings exist, the app must guide the user through minimal setup.
 
 Acceptance Criteria:
-
-  
-
 - If `settings/settings.json` does not exist, show first-run setup screen.
-
 - Ask user to choose default output directory.
-
 - Default suggestion may be portable `output/` or `Documents/Scan2Text`.
-
 - Create required folders if missing: `output/`, `settings/`, `logs/`.
-
 - Create `settings/settings.json` with default values.
-
 - After setup, app opens main screen.
-
 - App must work without admin rights.
 
-  
-
 ---
-
-  
-
 ### FR-02: Main Application Layout (Command Center v1.7)
 
-  
-
 Description:
-
-  
-
 The app uses a viewport-locked Command Center shell pinned to the screen: `fixed inset-0 flex flex-col overflow-hidden`. The screen is the only sizing authority: no window/body scroll at any window width or height; panels are sized by fractions (`fr` tracks), never by content.
-
-  
 
 Layout Structure:
 
@@ -113,223 +81,102 @@ Layout Structure:
   
 
 Acceptance Criteria:
-
-  
-
-- Shell is `fixed inset-0 flex flex-col overflow-hidden`; BottomBar visible at any window size.
-
 - Main uses `flex-1 min-h-0` and fraction tracks; left column rows `minmax(0,38fr)/minmax(0,62fr)`. Content can never stretch a panel (dropzone size constant regardless of job count).
-
 - Desktop-only for MVP. Panel widths fixed, not resizable.
-
-  
+- Shell is fixed inset-0 flex flex-col overflow-hidden; BottomBar visible at any window size. A 1vh vertical gutter separates TopBar and main (v1.8). Pathological short windows (< ~200px height) are a CEO-accepted edge (v1.8); normal short windows fully supported.
 
 Top Bar requirements:
-
-  
-
 - Height exactly 34px; logo, brand image, and buttons vertically centered.
-
 - LEFT: logo pictogram chip (`frontend/Images/logo.png`) + DEMO badge kept intact (DEMO removed after final product). No literal text wordmark on the left.
-
 - CENTER: brand image `frontend/Images/text.png` at 153×34 with `alt="Scan2Text"` and a static radial glow behind (CSS-only, zero CPU, subtle).
-
 - RIGHT: theme toggle, language toggle, settings — icon-only with translated tooltips.
 
-  
-
 Dropzone (top-left) requirements:
-
-  
-
 - Dashed upload area fills the card between header and footer (flex-1 min-h-0).
-
 - Background image `bacground-left-top-panel.jpg` (exact filename) at 15% opacity, single-value `background-size: 100%`, centered, no-repeat, pointer-events none.
-
 - Header text and footer hint: bold, ink #1F150C, both themes.
-
 - Footer hint: "PNG · JPG · WEBP · PDF — max 50MB per file · max 10 files per batch" (translated).
-
 - No ScrollArea in Dropzone (v1.7; nothing scrolls there).
-
 - Glowing/highlighted state when files are dragged over; click to browse fallback.
 
-  
-
 Queue (bottom-left) requirements:
-
-  
-
 - Internal scroll with always-visible warm scrollbar (thin, rounded; caramel thumb/translucent track dark; coffee thumb light).
-
 - Radiant rays decoration (static, zero CPU).
-
-- Row contract: file type icon + file name (truncate with ellipsis) + file size + fixed 14px status slot (dot-only) + translated tooltip + thin fake progress bar while active + retry button on failed.
-
-- Empty state: 📭 "Nothing here yet. Drop something tasty!"
-
-  
+- Row contract: file type icon + file name (truncate with ellipsis) + file size + fixed 14px status slot (dot-only) + translated tooltip + retry button on failed. Fake progress bar DEFERRED to v2/v3 (v1.8 CEO decision).
+- Empty state (centered; per-locale icon inside string, v1.8): EN "📭 Nothing here yet. Drop something tasty!" / ID "🙈 Masih belum ada file tuh! Coba upload di atas!"
 
 Right Preview Column requirements:
-
-  
-
 - Rendered Markdown full-width, read-only; internal scroll.
-
 - Header actions: Copy Markdown + Open Folder as real borderless buttons (transparent bg = panel color, no border, caramel hover tint, focus-visible ring, icon + translated label).
-
 - Empty state: ✨ "Select a completed job to preview the magic."
-
 - Auto-select: when a job completes, the right panel automatically shows its result.
 
-  
-
 Bottom Bar requirements:
-
-  
-
 - Pinned (shrink-0), always visible; vertically centered content; center group via grid 1fr auto 1fr.
-
 - CENTER: Worker Idle/Busy (derived from queue state) · RAM "—" (until backend GET /health) · version constant.
-
 - RIGHT: icon-only Share button, translated tooltip, no text label.
-
 - LEFT: empty.
 
-  
-
 Theme requirements:
-
-  
-
 - Dark mode DEFAULT; light mode via toggle; persisted; instant apply.
 
-  
-
 ---
-
-  
-
 ### FR-03: File Input
-
-  
 
 Description:
 
-  
-
 Users add files by drag-and-drop or file picker. Files are validated before upload. Batches are capped at 10 files.
 
-  
-
 Acceptance Criteria:
-
-  
-
 - Accept file types: `.jpg`, `.jpeg`, `.png`, `.webp`, `.pdf`.
-
 - Drag-and-drop into Dropzone; click-to-browse fallback; multiple files supported.
-
 - Validation before upload:
-
   - Max 50MB per file → error toast, not added to queue.
-
   - Unsupported type → error toast, not added to queue.
-
   - Batch cap: max 10 files per drop → first 10 kept, extras skipped with warning toast ("Max 10 files per batch — extra files were skipped." / ID equivalent) and logged.
-
 - Error/warning toasts use shadcn toast component.
-
 - Unsupported files in a batch are skipped, logged, and do not stop valid files.
-
 - If all dropped files are unsupported, show non-blocking warning toast and log.
 
   
 
 ---
-
-  
-
 ### FR-04: Processing Queue
 
-  
-
 Description:
-
-  
 
 Valid files process in FIFO order with real-time visual feedback via the fixed status slot.
 
-  
-
 Acceptance Criteria:
-
-  
-
 - FIFO order; queue maintains insertion order.
-
 - Status values: `pending`, `uploading`, `processing`, `completed`, `failed`, `background`.
-
 - Fixed 14px status slot after the file name, ALWAYS rendered, dot-only, no visible text:
-
   - pending: warm grey dot (#A8A29E dark / #78716C light)
-
   - uploading/processing: bright yellow spinner (#FACC15)
-
   - completed: glossy green dot (radial-gradient(circle at 30% 30%, #86EFAC, #16A34A 60%, #14532D))
-
   - failed: glossy red dot (radial-gradient(circle at 30% 30%, #FCA5A5, #DC2626 60%, #7F1D1D))
-
 - Translated tooltip per status (title/aria equivalent).
-
-- Thin fake progress bar under row metadata while uploading/processing:
-
-  - 0% → 90% over 30s (eased), jump to 100% on completion, red + stop on failed, pause ~90% with subtle pulse on background.
-
+- Fake progress bar: DEFERRED to v2/v3 (v1.8, CEO decision 2026-08-08). MVP affordance = single status indicator in the right 14px slot; revisit on user feedback.
 - File names truncate with ellipsis; status slot stays visible at row right (Radix tray neutralized via CSS override).
-
 - Auto-select: completed job shown in right panel and highlighted in queue; user can click other jobs.
-
 - Background: polling > 30s → `background`; re-poll every 60s, max 10; then timeout.
-
 - Queue actions: no Remove button in MVP; Cancel future; retry button on failed rows.
-
 - If one file fails, remaining queue continues unless fatal.
-
 - UI shows which file is currently processing.
 
-  
-
 ---
-
-  
-
 ### FR-05: Model Loading
-
-  
 
 Description:
 
-  
-
 The OCR model loads only when needed.
 
-  
-
 Acceptance Criteria:
-
-  
-
 - Model loads when processing starts and model not loaded.
-
 - Loading state with progress indicator.
-
 - Model remains loaded for subsequent jobs where practical.
-
 - Missing/corrupt model → actionable error.
-
 - No internet required after initial download.
-
 - Model: GLM-OCR 0.9B (`vlm.gguf` + `mmproj.gguf`); runner llama-cpp-python; CPU-only.
 
   
