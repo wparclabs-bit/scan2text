@@ -70,7 +70,7 @@ Vault map (canonical):
 If an actual folder name differs, discover via Get-ChildItem before writing; never guess.
 
 ## 7. Current phase & status
-Phases 1-6 COMPLETE (Phase 6 closed 2026-08-08 @ 272addf, 565 tests). Phase 7 NEXT: kickoff grill + ASR brainstorm; seed backlog in second-brain/01-Agent-Memory/Phase-6/PHASE-6-COMPLETE.md.
+Phases 1-6 COMPLETE (Phase 6 closed 2026-08-08 @ d2b4f4f, 565 tests). Phase 7 NEXT: real backend kickoff; first target GET /health telemetry; ASR parked until Scan2Text ships.
 
 ## 8. CEO locked decisions (do NOT override)
 - Local-first, offline, CPU-only; Markdown-output-first; NOT a document editor.
