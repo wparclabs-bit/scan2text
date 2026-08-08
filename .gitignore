@@ -18,3 +18,12 @@ venv/
 Thumbs.db
 .env
 .env.local
+# Python
+backend/.venv/
+
+__pycache__/
+*.pyc
+
+
+# Local test material — never commit real documents
+samples/
