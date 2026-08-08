@@ -33,7 +33,7 @@
     "fileTooLarge": "File exceeds 50MB limit",
     "uploadFailed": "Upload failed",
     "batchSkipped": "{{total}} files were skipped: {{unsupported}} unsupported type(s), {{tooLarge}} too large.",
-    "allInvalid": "No files were added. All selected files were unsupported or too large."
+    "allInvalid": "All selected files are unsupported or too large."
   },
   "dropzone": {
     "hint": "PNG · JPG · WEBP · PDF — max 50MB per file · max 10 files per batch",
@@ -59,6 +59,7 @@
   },
   "queue": {
     "empty": "No files in queue",
+    "emptyFriendly": "Nothing here yet. Drop something tasty!",
     "retry": "Retry",
     "status": {
       "pending": "Pending",

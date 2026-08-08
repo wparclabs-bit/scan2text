@@ -33,7 +33,7 @@
     "fileTooLarge": "Ukuran file melebihi batas 50MB",
     "uploadFailed": "Gagal mengunggah",
     "batchSkipped": "{{total}} file dilewati: {{unsupported}} tipe tidak didukung, {{tooLarge}} terlalu besar.",
-    "allInvalid": "Tidak ada file yang ditambahkan. Semua file yang dipilih tidak didukung atau terlalu besar."
+    "allInvalid": "Semua file yang dipilih tidak didukung atau terlalu besar."
   },
   "dropzone": {
     "hint": "PNG · JPG · WEBP · PDF — maks 50MB per file · maks 10 file per batch",
@@ -59,6 +59,7 @@
   },
   "queue": {
     "empty": "Tidak ada file dalam antrian",
+    "emptyFriendly": "Belum ada apa-apa di sini. Jatuhkan sesuatu yang enak!",
     "retry": "Ulangi",
     "status": {
       "pending": "Menunggu",

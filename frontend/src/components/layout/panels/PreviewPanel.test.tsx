@@ -105,6 +105,18 @@ describe('PreviewPanel', () => {
     expect(emptyState).toBeInTheDocument()
   })
 
+  it('empty state card uses flex centering classes for centered layout', () => {
+    setupStore(null, {})
+    render(<PreviewPanel />)
+    const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
+    const card = panel?.querySelector('[data-testid="preview-empty"]')?.parentElement as HTMLElement | null
+    expect(card).toBeInTheDocument()
+    expect(card).toHaveClass('flex')
+    expect(card).toHaveClass('items-center')
+    expect(card).toHaveClass('justify-center')
+    expect(card).toHaveClass('text-center')
+  })
+
   it('empty state card uses flex-1 with inline depth style for full-height layout', () => {
     setupStore(null, {})
     render(<PreviewPanel />)

@@ -17,8 +17,8 @@ export default function PreviewPanel() {
   if (!job) {
     return (
       <div data-testid="panel-preview" className="h-full w-full flex flex-col min-w-0 overflow-hidden">
-        <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-w-0 box-border" style={depthStyle}>
-          <p data-testid="preview-empty" className="text-sm text-muted-foreground text-center p-4">
+        <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-w-0 box-border items-center justify-center text-center" style={depthStyle}>
+          <p data-testid="preview-empty" className="text-sm text-muted-foreground p-4">
             {t('preview.emptyState')}
           </p>
         </div>

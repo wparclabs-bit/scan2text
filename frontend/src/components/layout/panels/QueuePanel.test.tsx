@@ -115,20 +115,42 @@ describe('QueuePanel status dots and retry', () => {
     expect(redDot!.style.background).toContain('rgb(127, 29, 29)')
   })
 
-  it('shows spinner and progress bar during processing', () => {
+  it('processing row renders exactly ONE spinner inside the status slot only', () => {
     setupStore({
       'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'processing', createdAt: 1000, progress: 45 },
     })
     render(<QueuePanel />)
-    expect(screen.getByTestId('queue-item-progress')).toBeInTheDocument()
+    const item = screen.getByTestId('queue-item') as HTMLElement
+    // Exactly one spinner SVG in the entire row
+    const spinners = Array.from(item.querySelectorAll<SVGSVGElement>('svg')).filter((svg) => svg.classList.contains('animate-spin'))
+    expect(spinners.length).toBe(1)
+    // The spinner lives inside the status slot
+    const slot = item.querySelector('[data-testid="queue-item-status-slot"]') as HTMLElement | null
+    expect(slot).toBeInTheDocument()
+    expect(slot!.querySelector('[data-testid="queue-item-status-dot"]')).toBeInTheDocument()
+    // NO spinner or progress element under name/size
+    expect(item.querySelector('[data-testid="queue-item-progress"]')).not.toBeInTheDocument()
+    const infoDiv = item.querySelector('[data-testid="queue-item-name"]')?.parentElement
+    expect(infoDiv?.querySelector('svg')).not.toBeInTheDocument()
   })
 
-  it('shows spinner and progress bar during uploading', () => {
+  it('uploading row renders exactly ONE spinner inside the status slot only', () => {
     setupStore({
       'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'uploading', createdAt: 1000, progress: 20 },
     })
     render(<QueuePanel />)
-    expect(screen.getByTestId('queue-item-progress')).toBeInTheDocument()
+    const item = screen.getByTestId('queue-item') as HTMLElement
+    const spinners = Array.from(item.querySelectorAll<SVGSVGElement>('svg')).filter((svg) => svg.classList.contains('animate-spin'))
+    expect(spinners.length).toBe(1)
+    expect(item.querySelector('[data-testid="queue-item-progress"]')).not.toBeInTheDocument()
+  })
+
+  it('processing row has NO progress bar element anywhere in the row', () => {
+    setupStore({
+      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'processing', createdAt: 1000, progress: 45 },
+    })
+    render(<QueuePanel />)
+    expect(screen.queryByTestId('queue-item-progress')).not.toBeInTheDocument()
   })
 
   it('does not show progress bar for completed jobs', () => {
@@ -321,14 +343,17 @@ describe('QueuePanel status dots and retry', () => {
     expect(dot.style.background).toContain('radial-gradient')
   })
 
-  it('progress bar is present under row metadata for processing jobs', () => {
-    setupStore({
-      'job-1': { id: 'job-1', fileName: 'test.png', fileSize: 500, status: 'processing', createdAt: 1000, progress: 45 },
-    })
+  it('queue empty state renders friendly translated string inside a centered container', () => {
+    setupStore({})
     render(<QueuePanel />)
-    const progressBar = screen.getByTestId('queue-item-progress') as HTMLElement
-    expect(progressBar).toBeInTheDocument()
-    expect(progressBar).toHaveClass('h-1.5')
+    const emptyEl = screen.getByTestId('queue-empty') as HTMLElement
+    expect(emptyEl.textContent).toBe('Nothing here yet. Drop something tasty!')
+    const card = emptyEl.parentElement as HTMLElement | null
+    expect(card).toBeInTheDocument()
+    expect(card).toHaveClass('flex')
+    expect(card).toHaveClass('items-center')
+    expect(card).toHaveClass('justify-center')
+    expect(card).toHaveClass('text-center')
   })
 
   it('queue ScrollArea mounts a visible ScrollBar component', () => {

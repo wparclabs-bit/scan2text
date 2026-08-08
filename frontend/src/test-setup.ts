@@ -34,7 +34,7 @@ void i18next
             fileTooLarge: 'File exceeds 50MB limit',
             uploadFailed: 'Upload failed',
             batchSkipped: '{{total}} files were skipped: {{unsupported}} unsupported type(s), {{tooLarge}} too large.',
-            allInvalid: 'No files were added. All selected files were unsupported or too large.',
+            allInvalid: 'All selected files are unsupported or too large.',
           },
           preview: {
             empty: 'Select a job to preview',
@@ -44,6 +44,7 @@ void i18next
           },
           queue: {
             empty: 'No files in queue',
+            emptyFriendly: 'Nothing here yet. Drop something tasty!',
             remove: 'Remove',
             retry: 'Retry',
             status: {
@@ -93,7 +94,7 @@ void i18next
             fileTooLarge: 'Ukuran file melebihi batas 50MB',
             uploadFailed: 'Gagal mengunggah',
             batchSkipped: '{{total}} file dilewati: {{unsupported}} tipe tidak didukung, {{tooLarge}} terlalu besar.',
-            allInvalid: 'Tidak ada file yang ditambahkan. Semua file yang dipilih tidak didukung atau terlalu besar.',
+            allInvalid: 'Semua file yang dipilih tidak didukung atau terlalu besar.',
           },
           preview: {
             empty: 'Pilih pekerjaan untuk pratinjau',
@@ -103,6 +104,7 @@ void i18next
           },
           queue: {
             empty: 'Tidak ada file dalam antrian',
+            emptyFriendly: 'Belum ada apa-apa di sini. Jatuhkan sesuatu yang enak!',
             remove: 'Hapus',
             retry: 'Ulangi',
             status: {

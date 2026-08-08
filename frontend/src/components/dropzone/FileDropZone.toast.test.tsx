@@ -90,7 +90,8 @@ describe('FileDropZone toast errors', () => {
     fireEvent.drop(dropzone, { dataTransfer: { files: [txtFile, exeFile] } })
 
     await vi.waitFor(() => {
-      expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('No files were added'))
+      expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('All selected files are unsupported or too large.'))
+      expect(toast.warning).not.toHaveBeenCalledWith(expect.stringContaining('No files were added'))
     })
     expect(mockAddJob).not.toHaveBeenCalled()
   })
