@@ -4,12 +4,14 @@
 
 - **Current Slice:** Slice 6.15a (Manual & Vault Hygiene — ADR-004 + AGENTS.md rewrite, 2026-08-08)
 
-- **Next Slice:** CEO to RUN second-brain/02-QA/scan2text-phase6-manual-test.md (QA script authored in 6.15b)
+- **Next Slice:** CEO to RUN second-brain/02-QA/scan2text-phase6-manual-test.md (QA script authored in 6.15b), then Phase 6 COMPLETE marker.
 
 
 ## Frontend Baseline
 
-- **Tests:** 552/552 passing (33 files; no delta this slice — doc-only)
+- **Tests:** 552/552 passing (33 files; baseline carried from d58a273, no test run in 6.15c — doc-only)
+
+- **PRD v1.7 files 01-04:** COMMITTED at 68efa36 (2026-08-08) as source of truth milestone.
 
 - **Typecheck:** PASS
 
