@@ -2,7 +2,8 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
-models/
+*.egg-info/
+/models/
 *.gguf
 output/
 logs/
