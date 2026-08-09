@@ -34,8 +34,8 @@ OCR_FAILED = "OCR_FAILED"
 PDF_TOO_MANY_PAGES = "PDF_TOO_MANY_PAGES"
 
 # Cap the longest image edge so CPU vision-encoding stays fast and fits n_ctx.
-_MAX_IMAGE_EDGE = 1280
-_PDF_RENDER_SCALE = 1.5
+_MAX_IMAGE_EDGE = 2048
+_PDF_RENDER_SCALE = 2.0
 
 _PRIORITY_ATTR = {
     "below_normal": "BELOW_NORMAL_PRIORITY_CLASS",
