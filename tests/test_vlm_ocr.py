@@ -225,3 +225,25 @@ def test_tile_image_keeps_portrait_single():
 
     tall = Image.new("RGB", (1000, 1400), "white")
     assert len(_tile_image(tall)) == 1
+
+
+def test_worker_is_daemon_so_parent_can_exit():
+    from unittest.mock import MagicMock, patch
+
+    from scan2text.models.settings import AppSettings
+
+    with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSS, \
+         patch("scan2text.adapters.vlm_ocr.Process") as MockProc, \
+         patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil:
+        mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
+        mock_svc = MagicMock()
+        mock_svc.load.return_value = AppSettings()
+        MockSS.return_value = mock_svc
+        mock_proc = MagicMock()
+        MockProc.return_value = mock_proc
+
+        from scan2text.adapters.vlm_ocr import VlmOcrAdapter
+
+        VlmOcrAdapter()
+        assert mock_proc.daemon is True
+        mock_proc.start.assert_called_once()
