@@ -167,3 +167,31 @@ class TestVlmOcrTimeoutHandling:
         # Worker must NOT be terminated — it is persistent
         mock_process_instance.terminate.assert_not_called()
         mock_process_instance.join.assert_not_called()
+
+
+def test_ocr_pdf_uses_rendered_pages():
+    from unittest.mock import MagicMock, patch
+
+    from scan2text.models.settings import AppSettings
+
+    with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSS, \
+         patch("scan2text.adapters.vlm_ocr.Process") as MockProc, \
+         patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil:
+        mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
+        mock_svc = MagicMock()
+        mock_svc.load.return_value = AppSettings()
+        MockSS.return_value = mock_svc
+        MockProc.return_value = MagicMock()
+
+        from scan2text.adapters.vlm_ocr import VlmOcrAdapter
+
+        adapter = VlmOcrAdapter()
+        adapter._render_pdf = lambda p: [b"png1", b"png2"]
+        adapter._input_queue = MagicMock()
+        adapter._output_queue = MagicMock()
+        adapter._output_queue.get.return_value = "# md"
+
+        result = adapter.ocr("whatever.pdf")
+        assert result == "# md"
+        sent = adapter._input_queue.put.call_args[0][0]
+        assert sent["images"] == [b"png1", b"png2"]
