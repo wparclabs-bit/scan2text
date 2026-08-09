@@ -1,21 +1,24 @@
-<!-- PHASE-6-CLOSED-STATE-2026-08-08 -->
-# Scan2Text Current State — Phase 6 Closed
+<!-- PHASE-7-IN-PROGRESS-STATE-2026-08-09 -->
+# Scan2Text Current State — Phase 7 In Progress
 
-Date: 2026-08-08
-Phase: Phase 6 COMPLETE
-Baseline commit: 75bc720
-Tests: 565 frontend tests green
+Date: 2026-08-09
+Phase: Phase 7 (Real Backend) IN PROGRESS
+Baseline commit: ec9443d (Phase 6 closed)
+Backend tests: 112 green (102 baseline + 10 new from 7.2b)
+Frontend tests: 565 green (unchanged; 7.2b is backend-only)
 PRD: v1.8 source of truth in second-brain/04-Product/
-Next: Phase 7 real backend. First slice: GET /health telemetry (Option A). ASR parked.
+Next: Phase 7 continued — POST /process, GET /status/{task_id}, polling contract.
 
 ---
 ## Phase Status
 
-- **Current Phase:** Phase 6 (Prototype & Demo Mode) — COMPLETE (closed 2026-08-08 @ 272addf, 565 tests)
+- **Current Phase:** Phase 7 (Real Backend) — IN PROGRESS
 
-- **Current Slice:** N/A — Phase 6 closure complete.
+- **Current Slice:** 7.2b — Settings engine knobs + PathService model resolution from app root.
 
-- **Next Phase:** Phase 7 kickoff (CEO-initiated grill + ASR/Hear2Text brainstorm). Seed backlog lives in second-brain/01-Agent-Memory/Phase-6/PHASE-6-COMPLETE.md.
+- **Next Phase:** Phase 7 continued — POST /process endpoint, GET /status/{task_id}, polling contract.
+
+- **2026-08-09 (7.2b):** AppSettings extended with engine knobs (language, theme, model_path, mmproj_path, n_ctx, n_threads, ocr_timeout_seconds, worker_priority). PathService gains app_root param + property; models_dir and assets_dir now resolve from app_root (not base_dir); resolve_model_path() added; ensure_runtime_dirs drops assets_dir. Test: 102 → 112 (+10). Backend-only slice; frontend untouched.
 
 - **2026-08-08 (6.16c):** queue empty-state copy finalized by CEO ID review; per-locale icons inside strings — CEO decision (i18n owns full message including icon); EN → " Nothing here yet. Drop something tasty!" (leading space retained), ID → "🙈 Masih belum ada file tuh! Coba upload di atas!". No separate icon element in QueuePanel (confirmed via forensics). Tests: 564 → 565 (+1).
 
