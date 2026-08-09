@@ -29,11 +29,18 @@ class PathService:
         ]
     )
 
-    def __init__(self, base_dir: str | None = None) -> None:
+    def __init__(self, base_dir: str | None = None, app_root: str | None = None) -> None:
         if base_dir is not None:
             self._base_dir = Path(base_dir).resolve()
         else:
             self._base_dir = self._resolve_base_dir()
+
+        if app_root is not None:
+            self._app_root = Path(app_root).resolve()
+        elif base_dir is not None:
+            self._app_root = self._base_dir
+        else:
+            self._app_root = self._resolve_app_root()
 
     @staticmethod
     def _resolve_base_dir() -> Path:
@@ -47,11 +54,24 @@ class PathService:
 
         return Path.cwd() / ".scan2text"
 
+    @staticmethod
+    def _resolve_app_root() -> Path:
+        env_home = os.environ.get("SCAN2TEXT_HOME")
+        if env_home:
+            return Path(env_home).resolve()
+        if getattr(sys, "frozen", False):
+            return Path(sys.executable).parent
+        return Path.cwd()
+
     # --- Properties --------------------------------------------------------
 
     @property
     def base_dir(self) -> Path:
         return self._base_dir
+
+    @property
+    def app_root(self) -> Path:
+        return self._app_root
 
     @property
     def settings_path(self) -> Path:
@@ -71,11 +91,18 @@ class PathService:
 
     @property
     def models_dir(self) -> Path:
-        return self.base_dir / "models"
+        return self.app_root / "models"
+
+    def resolve_model_path(self, relative: str) -> Path:
+        """Resolve a model path relative to the app/install root (Rule 8)."""
+        p = Path(relative)
+        if p.is_absolute():
+            return p
+        return self.app_root / relative
 
     @property
     def assets_dir(self) -> Path:
-        return self.base_dir / "assets"
+        return self.app_root / "assets"
 
     # --- Directory creation ------------------------------------------------
 
@@ -86,7 +113,6 @@ class PathService:
             self.output_dir,
             self.logs_dir,
             self.models_dir,
-            self.assets_dir,
         ):
             d.mkdir(parents=True, exist_ok=True)
 
@@ -97,7 +123,7 @@ class PathService:
         """Convert a filename stem to Windows-safe form.
 
         Removes or replaces invalid Windows filename characters:
-          < > : " / \\ | ? *
+          < > : " / \ | ? *
         and control characters. Rejects Windows reserved names.
         """
         import re

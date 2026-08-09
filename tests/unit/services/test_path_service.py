@@ -40,8 +40,10 @@ class TestPathServiceDirectories:
     def test_ensure_runtime_dirs_creates_expected(self, tmp_path):
         svc = PathService(base_dir=str(tmp_path))
         svc.ensure_runtime_dirs()
-        for sub in ("settings", "output", "logs", "models", "assets"):
+        for sub in ("settings", "output", "logs", "models"):
             assert (tmp_path / sub).is_dir()
+        # assets_dir lives under app_root, not base_dir; not auto-created here
+        assert not (tmp_path / "assets").is_dir()
 
     def test_settings_path(self, tmp_path):
         svc = PathService(base_dir=str(tmp_path))
