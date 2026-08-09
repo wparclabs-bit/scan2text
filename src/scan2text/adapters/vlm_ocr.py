@@ -1,8 +1,8 @@
 """VLM OCR adapter — GLM-OCR 0.9B via llama-cpp-python (CPU-only, offline).
 
 Spawns one persistent low-priority worker process that keeps the model and
-vision projector (mmproj) loaded. Parents send image bytes (or rendered PDF
-pages) over a queue; the worker returns Markdown strings.
+vision projector (mmproj) loaded. Parents send downscaled PNG bytes (or
+rendered PDF pages) over a queue; the worker returns Markdown strings.
 """
 
 from __future__ import annotations
@@ -30,13 +30,33 @@ _VLM_PROMPT = (
 )
 OCR_TIMEOUT = "OCR_TIMEOUT"
 MODEL_NOT_FOUND = "MODEL_NOT_FOUND"
+OCR_FAILED = "OCR_FAILED"
 PDF_TOO_MANY_PAGES = "PDF_TOO_MANY_PAGES"
+
+# Cap the longest image edge so CPU vision-encoding stays fast and fits n_ctx.
+_MAX_IMAGE_EDGE = 1280
+_PDF_RENDER_SCALE = 1.5
 
 _PRIORITY_ATTR = {
     "below_normal": "BELOW_NORMAL_PRIORITY_CLASS",
     "normal": "NORMAL_PRIORITY_CLASS",
     "idle": "IDLE_PRIORITY_CLASS",
 }
+
+
+def _shrink_to_png(image_bytes: bytes) -> bytes:
+    """Downscale an image to <= _MAX_IMAGE_EDGE and re-encode as PNG."""
+    from PIL import Image
+
+    img = Image.open(BytesIO(image_bytes)).convert("RGB")
+    w, h = img.size
+    longest = max(w, h)
+    if longest > _MAX_IMAGE_EDGE:
+        factor = _MAX_IMAGE_EDGE / longest
+        img = img.resize((max(1, int(w * factor)), max(1, int(h * factor))), Image.LANCZOS)
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
 
 
 def _vlm_worker(
@@ -50,6 +70,7 @@ def _vlm_worker(
     """Persistent worker: load model + vision projector once, serve OCR tasks.
 
     Must stay at module level for Windows multiprocessing spawn.
+    A failing task is reported as an error dict; the worker keeps living (NFR-05).
     """
     from llama_cpp import Llama
     from llama_cpp.llama_chat_format import MTMDChatHandler
@@ -77,29 +98,36 @@ def _vlm_worker(
         task = input_queue.get()
         if task.get("action") != "ocr":
             continue
-        texts: List[str] = []
-        for raw in task["images"]:
-            b64 = base64.b64encode(raw).decode("ascii")
-            output = llm.create_chat_completion(
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": _VLM_PROMPT},
-                            {
-                                "type": "image_url",
-                                "image_url": {"url": f"data:image/png;base64,{b64}"},
-                            },
-                        ],
-                    }
-                ],
-                max_tokens=task.get("max_tokens", 4096),
-            )
-            texts.append(output["choices"][0]["message"]["content"])
-        if len(texts) == 1:
-            output_queue.put(texts[0])
-        else:
-            output_queue.put("\n\n---\n\n".join(texts))
+        try:
+            texts: List[str] = []
+            for raw in task["images"]:
+                b64 = base64.b64encode(raw).decode("ascii")
+                output = llm.create_chat_completion(
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": _VLM_PROMPT},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {"url": f"data:image/png;base64,{b64}"},
+                                },
+                            ],
+                        }
+                    ],
+                    max_tokens=task.get("max_tokens", 2048),
+                )
+                texts.append(output["choices"][0]["message"]["content"])
+            if len(texts) == 1:
+                output_queue.put(texts[0])
+            else:
+                output_queue.put("\n\n---\n\n".join(texts))
+        except Exception as exc:
+            logger.error("OCR task failed: %s", exc)
+            output_queue.put({
+                "error": OCR_FAILED,
+                "message": f"OCR failed: {exc}",
+            })
 
 
 class VlmOcrAdapter:
@@ -146,9 +174,9 @@ class VlmOcrAdapter:
             if isinstance(images, dict):
                 return images
         else:
-            images = [path.read_bytes()]
+            images = [_shrink_to_png(path.read_bytes())]
 
-        self._input_queue.put({"action": "ocr", "images": images, "max_tokens": 4096})
+        self._input_queue.put({"action": "ocr", "images": images, "max_tokens": 2048})
         try:
             return self._output_queue.get(timeout=self._timeout)
         except queue.Empty:
@@ -164,7 +192,7 @@ class VlmOcrAdapter:
             }
 
     def _render_pdf(self, path: Path) -> List[bytes] | dict[str, Any]:
-        """Render PDF pages to PNG bytes (FR-06: pixels, not raw PDF bytes)."""
+        """Render PDF pages to downscaled PNG bytes (FR-06: pixels, not raw PDF)."""
         import pypdfium2 as pdfium
 
         pdf = pdfium.PdfDocument(str(path))
@@ -176,9 +204,9 @@ class VlmOcrAdapter:
             }
         pages: List[bytes] = []
         for index in range(page_count):
-            bitmap = pdf[index].render(scale=2.0)
+            bitmap = pdf[index].render(scale=_PDF_RENDER_SCALE)
             pil_image = bitmap.to_pil()
             buf = BytesIO()
             pil_image.save(buf, format="PNG")
-            pages.append(buf.getvalue())
+            pages.append(_shrink_to_png(buf.getvalue()))
         return pages

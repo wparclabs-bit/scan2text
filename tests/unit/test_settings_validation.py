@@ -41,15 +41,15 @@ class TestEngineSettingsDefaults:
         assert s.theme == "dark"
         assert s.model_path == ""
         assert s.mmproj_path == ""
-        assert s.n_ctx == 4096
+        assert s.n_ctx == 8192
         assert s.n_threads == 0
-        assert s.ocr_timeout_seconds == 180
+        assert s.ocr_timeout_seconds == 600
         assert s.worker_priority == "below_normal"
 
     def test_backward_compat_old_dict(self):
         old = {"output_dir": "x", "max_pdf_pages": 5, "cpu_threads": 2, "check_updates_on_startup": False}
         s = AppSettings(**old)
-        assert s.n_ctx == 4096
+        assert s.n_ctx == 8192
 
 
 class TestPathServiceModelResolution:

@@ -15,7 +15,7 @@ class AppSettings(BaseModel):
     # Engine (JSON-only advanced knobs, ADR-005; no UI in MVP)
     model_path: str = ""
     mmproj_path: str = ""
-    n_ctx: int = Field(default=4096, ge=256)
+    n_ctx: int = Field(default=8192, ge=256)
     n_threads: int = Field(default=0, ge=0)
-    ocr_timeout_seconds: int = Field(default=180, ge=10)
+    ocr_timeout_seconds: int = Field(default=600, ge=10)
     worker_priority: str = "below_normal"
