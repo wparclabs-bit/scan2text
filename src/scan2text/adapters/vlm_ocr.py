@@ -185,6 +185,7 @@ class VlmOcrAdapter:
                 self._output_queue,
             ),
         )
+        self._worker_process.daemon = True
         self._worker_process.start()
         prio_attr = _PRIORITY_ATTR.get(settings.worker_priority, "BELOW_NORMAL_PRIORITY_CLASS")
         psutil.Process(self._worker_process.pid).nice(getattr(psutil, prio_attr))
