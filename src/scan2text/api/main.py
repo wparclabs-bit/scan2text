@@ -81,6 +81,7 @@ async def _save_uploaded_file(file: UploadFile) -> Path:
 
 async def _run_processing(task_id: str, queue: QueueService, paths: List[Path]) -> None:
     """Background coroutine that processes files and broadcasts progress."""
+    app.state.worker_busy = True
     task = _task_store[task_id]
     total = len(paths)
     task["status"] = "processing"
@@ -114,6 +115,7 @@ async def _run_processing(task_id: str, queue: QueueService, paths: List[Path]) 
             "processed": processed,
             "total": summary.total_inputs,
         })
+        app.state.worker_busy = False
     except Exception as exc:
         logger.error("Batch processing failed: %s", exc)
         task["status"] = "failed"
@@ -123,6 +125,7 @@ async def _run_processing(task_id: str, queue: QueueService, paths: List[Path]) 
             "processed": task["processed"],
             "total": total,
         })
+        app.state.worker_busy = False
 
 
 @app.post("/process", status_code=202)
