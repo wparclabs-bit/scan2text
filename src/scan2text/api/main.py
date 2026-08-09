@@ -14,6 +14,8 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from scan2text.api.websocket_manager import ConnectionManager
+from scan2text.routes import health as health_routes
+from scan2text.routes import settings as settings_routes
 from scan2text.services.queue_service import QueueService
 from scan2text.adapters.vlm_ocr import VlmOcrAdapter
 
@@ -33,6 +35,7 @@ async def lifespan(app: FastAPI):
     queue_svc._vlm_adapter = adapter
     app.state.queue_service = queue_svc
     app.state.ws_manager = _ws_manager
+    app.state.worker_busy = False
     logger.info("Scan2Text API started")
     yield
     logger.info("Scan2Text API shut down")
@@ -47,10 +50,13 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8765", "http://127.0.0.1:8765"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(health_routes.router)
+app.include_router(settings_routes.router)
 
 
 UPLOADS_DIR = Path(__file__).resolve().parents[3] / "uploads"
