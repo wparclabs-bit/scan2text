@@ -115,7 +115,7 @@ def _vlm_worker(
                             ],
                         }
                     ],
-                    max_tokens=task.get("max_tokens", 2048),
+                    max_tokens=task.get("max_tokens", 4096),
                 )
                 texts.append(output["choices"][0]["message"]["content"])
             if len(texts) == 1:
@@ -176,7 +176,7 @@ class VlmOcrAdapter:
         else:
             images = [_shrink_to_png(path.read_bytes())]
 
-        self._input_queue.put({"action": "ocr", "images": images, "max_tokens": 2048})
+        self._input_queue.put({"action": "ocr", "images": images, "max_tokens": 4096})
         try:
             return self._output_queue.get(timeout=self._timeout)
         except queue.Empty:
