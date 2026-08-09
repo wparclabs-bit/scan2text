@@ -20,6 +20,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "llama-cpp-python>=0.3.7,<0.4",
     "pypdfium2>=4.30",
+    "pillow>=10.0",
     "pywebview>=5.2",
     "requests>=2.32",
     "click>=8.1",

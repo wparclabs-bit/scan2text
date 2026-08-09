@@ -4,7 +4,7 @@
 Date: 2026-08-09
 Phase: Phase 7 (Real Backend) IN PROGRESS
 Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 117 green (115 baseline + 2 new from 7.2e)
+Backend tests: 119 green (115 baseline + 1 from 7.2e + 1 from 7.2g)
 Frontend tests: 565 green (unchanged; 7.2b is backend-only)
 PRD: v1.8 source of truth in second-brain/04-Product/
 Next: Phase 7 continued — POST /process, GET /status/{task_id}, polling contract.
@@ -17,6 +17,8 @@ Next: Phase 7 continued — POST /process, GET /status/{task_id}, polling contra
 - **Current Slice:** 7.2e — Consolidated /api/health + /api/settings into running app; localhost CORS; worker_busy init deferred to 7.2f.
 
 - **Next Phase:** Phase 7 continued — 7.2f: worker_busy flip in _run_processing; then POST /process, GET /status/{task_id}, polling contract.
+
+- **2026-08-09 (7.2g):** Real GLM-OCR wiring — vlm_ocr.py rewritten with MTMDChatHandler (vision projector mmproj), settings-driven engine knobs (n_ctx, n_threads, ocr_timeout_seconds, max_pdf_pages, worker_priority), PDF page rendering via pypdfium2+Pillow, three error constants (OCR_TIMEOUT/MODEL_NOT_FOUND/PDF_TOO_MANY_PAGES). New smoke.py manual E2E script. Pillow>=10.0 added as dep. Test: 118 → 119 (+1 routing test for PDF→rendered pages). Backend-only slice; frontend untouched.
 
 - **2026-08-09 (7.2b):** AppSettings extended with engine knobs (language, theme, model_path, mmproj_path, n_ctx, n_threads, ocr_timeout_seconds, worker_priority). PathService gains app_root param + property; models_dir and assets_dir now resolve from app_root (not base_dir); resolve_model_path() added; ensure_runtime_dirs drops assets_dir. Test: 102 → 112 (+10). Backend-only slice; frontend untouched.
 
