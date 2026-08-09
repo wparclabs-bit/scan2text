@@ -97,7 +97,8 @@ class TestVlmOcrPersistentWorkerQueues:
         with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSettingsSvc, \
              patch("scan2text.adapters.vlm_ocr.Process", return_value=mock_process_instance), \
              patch("scan2text.adapters.vlm_ocr.Queue", side_effect=[mock_input_queue, mock_output_queue]), \
-             patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil:
+             patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil, \
+             patch("scan2text.adapters.vlm_ocr._shrink_to_png", side_effect=lambda b: b):
             mock_psutil.Process.return_value = MagicMock()
             mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
 
@@ -149,7 +150,8 @@ class TestVlmOcrTimeoutHandling:
         with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSettingsSvc, \
              patch("scan2text.adapters.vlm_ocr.Process", return_value=mock_process_instance), \
              patch("scan2text.adapters.vlm_ocr.Queue", side_effect=[mock_input_queue, mock_output_queue]), \
-             patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil:
+             patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil, \
+             patch("scan2text.adapters.vlm_ocr._shrink_to_png", side_effect=lambda b: b):
             mock_psutil.Process.return_value = MagicMock()
             mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
 
