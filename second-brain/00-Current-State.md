@@ -4,7 +4,7 @@
 Date: 2026-08-09
 Phase: Phase 7 (Real Backend) IN PROGRESS
 Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 112 green (102 baseline + 10 new from 7.2b)
+Backend tests: 117 green (115 baseline + 2 new from 7.2e)
 Frontend tests: 565 green (unchanged; 7.2b is backend-only)
 PRD: v1.8 source of truth in second-brain/04-Product/
 Next: Phase 7 continued — POST /process, GET /status/{task_id}, polling contract.
@@ -14,9 +14,9 @@ Next: Phase 7 continued — POST /process, GET /status/{task_id}, polling contra
 
 - **Current Phase:** Phase 7 (Real Backend) — IN PROGRESS
 
-- **Current Slice:** 7.2b — Settings engine knobs + PathService model resolution from app root.
+- **Current Slice:** 7.2e — Consolidated /api/health + /api/settings into running app; localhost CORS; worker_busy init deferred to 7.2f.
 
-- **Next Phase:** Phase 7 continued — POST /process endpoint, GET /status/{task_id}, polling contract.
+- **Next Phase:** Phase 7 continued — 7.2f: worker_busy flip in _run_processing; then POST /process, GET /status/{task_id}, polling contract.
 
 - **2026-08-09 (7.2b):** AppSettings extended with engine knobs (language, theme, model_path, mmproj_path, n_ctx, n_threads, ocr_timeout_seconds, worker_priority). PathService gains app_root param + property; models_dir and assets_dir now resolve from app_root (not base_dir); resolve_model_path() added; ensure_runtime_dirs drops assets_dir. Test: 102 → 112 (+10). Backend-only slice; frontend untouched.
 
