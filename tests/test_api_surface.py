@@ -38,3 +38,45 @@ class TestApiSurface:
         assert "cpu_threads" in body
         assert "language" in body
         assert "theme" in body
+
+
+def test_run_processing_toggles_worker_busy(app):
+    import asyncio
+    from pathlib import Path
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from scan2text.api.main import _run_processing, _task_store
+
+    api_app = app
+
+    class _Summary:
+        succeeded = 1
+        failed = 0
+        total_inputs = 1
+        job_results = [{
+            "job_id": "j",
+            "source_file": "f.png",
+            "status": "done",
+            "error_code": None,
+            "output_path": None,
+        }]
+
+    observed = {}
+    mock_queue = MagicMock()
+    mock_queue._vlm_adapter = MagicMock()
+
+    def capture(paths, adapter):
+        observed["busy"] = api_app.state.worker_busy
+        return _Summary()
+
+    mock_queue.process_image_paths.side_effect = capture
+
+    task_id = "t-busy-test"
+    _task_store[task_id] = {"status": "queued", "processed": 0, "total": 1, "result_markdown": None}
+
+    with patch("scan2text.api.main._ws_manager") as mock_wsm:
+        mock_wsm.broadcast = AsyncMock()
+        asyncio.run(_run_processing(task_id, mock_queue, [Path("fake.png")]))
+
+    assert observed.get("busy") is True
+    assert api_app.state.worker_busy is False
