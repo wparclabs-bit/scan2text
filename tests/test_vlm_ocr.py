@@ -98,7 +98,12 @@ class TestVlmOcrPersistentWorkerQueues:
              patch("scan2text.adapters.vlm_ocr.Process", return_value=mock_process_instance), \
              patch("scan2text.adapters.vlm_ocr.Queue", side_effect=[mock_input_queue, mock_output_queue]), \
              patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil, \
-             patch("scan2text.adapters.vlm_ocr._shrink_to_png", side_effect=lambda b: b):
+              patch("scan2text.adapters.vlm_ocr._shrink_to_png", side_effect=lambda b: b), \
+              patch("scan2text.adapters.vlm_ocr._tile_image", side_effect=lambda img: [b"fake-image-bytes-1" if img.size == (80, 60) else b"fake-image-bytes-2"]), \
+              patch("PIL.Image.open") as mock_img_open:
+            mock_img_open.return_value.convert.return_value.size = (80, 60)
+            mock_img_open.return_value.convert.return_value.__enter__ = lambda s: s
+            mock_img_open.return_value.convert.return_value.__exit__ = lambda s, *a: None
             mock_psutil.Process.return_value = MagicMock()
             mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
 
@@ -150,8 +155,13 @@ class TestVlmOcrTimeoutHandling:
         with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSettingsSvc, \
              patch("scan2text.adapters.vlm_ocr.Process", return_value=mock_process_instance), \
              patch("scan2text.adapters.vlm_ocr.Queue", side_effect=[mock_input_queue, mock_output_queue]), \
-             patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil, \
-             patch("scan2text.adapters.vlm_ocr._shrink_to_png", side_effect=lambda b: b):
+              patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil, \
+              patch("scan2text.adapters.vlm_ocr._shrink_to_png", side_effect=lambda b: b), \
+              patch("scan2text.adapters.vlm_ocr._tile_image", side_effect=lambda img: [b"fake-image-bytes"]), \
+              patch("PIL.Image.open") as mock_img_open:
+            mock_img_open.return_value.convert.return_value.size = (80, 60)
+            mock_img_open.return_value.convert.return_value.__enter__ = lambda s: s
+            mock_img_open.return_value.convert.return_value.__exit__ = lambda s, *a: None
             mock_psutil.Process.return_value = MagicMock()
             mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
 
@@ -197,3 +207,21 @@ def test_ocr_pdf_uses_rendered_pages():
         assert result == "# md"
         sent = adapter._input_queue.put.call_args[0][0]
         assert sent["images"] == [b"png1", b"png2"]
+
+
+def test_tile_image_splits_wide_images():
+    from PIL import Image
+
+    from scan2text.adapters.vlm_ocr import _tile_image
+
+    wide = Image.new("RGB", (2300, 1000), "white")
+    assert len(_tile_image(wide)) == 2
+
+
+def test_tile_image_keeps_portrait_single():
+    from PIL import Image
+
+    from scan2text.adapters.vlm_ocr import _tile_image
+
+    tall = Image.new("RGB", (1000, 1400), "white")
+    assert len(_tile_image(tall)) == 1

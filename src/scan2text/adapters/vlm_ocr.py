@@ -2,7 +2,8 @@
 
 Spawns one persistent low-priority worker process that keeps the model and
 vision projector (mmproj) loaded. Parents send downscaled PNG bytes (or
-rendered PDF pages) over a queue; the worker returns Markdown strings.
+rendered PDF pages, auto-tiled for wide layouts) over a queue; the worker
+returns Markdown strings.
 """
 
 from __future__ import annotations
@@ -33,7 +34,11 @@ MODEL_NOT_FOUND = "MODEL_NOT_FOUND"
 OCR_FAILED = "OCR_FAILED"
 PDF_TOO_MANY_PAGES = "PDF_TOO_MANY_PAGES"
 
-# Cap the longest image edge so CPU vision-encoding stays fast and fits n_ctx.
+# Auto-scale: the model reads focused ~1150px views best (proven by smoke
+# tests). Wide images are split into overlapping tiles at that sweet spot;
+# single views are capped at 2048 on the long edge.
+_TILE_TARGET = 1152
+_TILE_OVERLAP = 0.10
 _MAX_IMAGE_EDGE = 2048
 _PDF_RENDER_SCALE = 2.0
 
@@ -44,11 +49,10 @@ _PRIORITY_ATTR = {
 }
 
 
-def _shrink_to_png(image_bytes: bytes) -> bytes:
-    """Downscale an image to <= _MAX_IMAGE_EDGE and re-encode as PNG."""
+def _pil_to_png(img) -> bytes:
+    """Cap the long edge at _MAX_IMAGE_EDGE and encode as PNG."""
     from PIL import Image
 
-    img = Image.open(BytesIO(image_bytes)).convert("RGB")
     w, h = img.size
     longest = max(w, h)
     if longest > _MAX_IMAGE_EDGE:
@@ -57,6 +61,29 @@ def _shrink_to_png(image_bytes: bytes) -> bytes:
     buf = BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
+
+
+def _shrink_to_png(image_bytes: bytes) -> bytes:
+    from PIL import Image
+
+    return _pil_to_png(Image.open(BytesIO(image_bytes)).convert("RGB"))
+
+
+def _tile_image(img) -> List[bytes]:
+    """Auto-scale: split wide images into focused tiles at the sweet spot."""
+    w, h = img.size
+    tiles = []
+    if w >= h * 1.3 and w > _TILE_TARGET * 1.4:
+        count = max(2, round(w / _TILE_TARGET))
+        step = w // count
+        overlap = int(step * _TILE_OVERLAP)
+        for i in range(count):
+            left = max(0, i * step - overlap)
+            right = min(w, (i + 1) * step + overlap)
+            tiles.append(img.crop((left, 0, right, h)))
+    else:
+        tiles.append(img)
+    return [_pil_to_png(t) for t in tiles]
 
 
 def _vlm_worker(
@@ -174,7 +201,10 @@ class VlmOcrAdapter:
             if isinstance(images, dict):
                 return images
         else:
-            images = [_shrink_to_png(path.read_bytes())]
+            from PIL import Image
+
+            with Image.open(path) as pil_img:
+                images = _tile_image(pil_img.convert("RGB"))
 
         self._input_queue.put({"action": "ocr", "images": images, "max_tokens": 4096})
         try:
@@ -192,7 +222,7 @@ class VlmOcrAdapter:
             }
 
     def _render_pdf(self, path: Path) -> List[bytes] | dict[str, Any]:
-        """Render PDF pages to downscaled PNG bytes (FR-06: pixels, not raw PDF)."""
+        """Render PDF pages to auto-tiled PNG bytes (FR-06: pixels, not raw PDF)."""
         import pypdfium2 as pdfium
 
         pdf = pdfium.PdfDocument(str(path))
@@ -205,8 +235,5 @@ class VlmOcrAdapter:
         pages: List[bytes] = []
         for index in range(page_count):
             bitmap = pdf[index].render(scale=_PDF_RENDER_SCALE)
-            pil_image = bitmap.to_pil()
-            buf = BytesIO()
-            pil_image.save(buf, format="PNG")
-            pages.append(_shrink_to_png(buf.getvalue()))
+            pages.extend(_tile_image(bitmap.to_pil().convert("RGB")))
         return pages
