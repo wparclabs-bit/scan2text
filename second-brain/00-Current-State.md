@@ -1,21 +1,23 @@
-<!-- PHASE-7-IN-PROGRESS-STATE-2026-08-10 -->
-# Scan2Text Current State — Phase 7 In Progress
+<!-- PHASE-7-COMPLETE-STATE-2026-08-10 -->
+# Scan2Text Current State — Phase 7 Complete
 
 Date: 2026-08-10
-Phase: Phase 7 (Real Backend) IN PROGRESS
+Phase: Phase 7 (Real Backend) COMPLETE
 Baseline commit: ec9443d (Phase 6 closed)
 Backend tests: 134 green (123 baseline + 11 postprocess_service tests; S2 added 5 vlm_ocr tests replacing 2 tiling tests)
 Frontend tests: 565 green (unchanged; S2/S3/S4 are backend-only)
-PRD: v1.9/v1.10 source of truth in second-brain/04-Product/
-Next: Phase 7 continued — engine port slices S4-S6 per ADR-006.
+PRD: v1.10 source of truth in second-brain/04-Product/
+Next: Pre-GitHub cleanup executed; repo ready for public release.
 
 - **2026-08-10 (S1):** ADR-006 signed. OvisOCR2 is the sole engine (GLM removed from codebase, external backup retained). S1 docs + cleanup complete. S2-S6 port planned.
 
-- **2026-08-10 (S3):** Post-process service — postprocess_service.py added with convert_html_tables_to_gfm (HTML table→GFM, best-effort, no rowspan/colspan) and extract_and_save_image_crops (bbox coords scaled 0-1000, crops saved to {stem}_files/images/, markdown src rewritten to relative path). Integrated into VlmOcrAdapter.ocr() after worker returns raw string. Tests: 123 → 134 (+11). Two existing vlm_ocr tests patched to mock extract_and_save_image_crops (fake image bytes not valid PIL images).
-
 - **2026-08-10 (S2):** OvisOCR2 adapter port — vlm_ocr.py rewritten: verbatim OvisOCR2 prompt, temperature=0.1 + repeat_penalty=1.0, full-page _prepare_views (no tiling; _MAX_IMAGE_EDGE=2880, _MAX_PIXELS=4M), deleted _tile_image. Tests: 122 → 123 (+1). Port check PASS (biaya.jpg: 83.1s wall, 4616 chars, 27 <tr>, all 11 numerics present). tools/port_check.py created.
 
+- **2026-08-10 (S3):** Post-process service — postprocess_service.py added with convert_html_tables_to_gfm (HTML table→GFM, best-effort, no rowspan/colspan) and extract_and_save_image_crops (bbox coords scaled 0-1000, crops saved to {stem}_files/images/, markdown src rewritten to relative path). Integrated into VlmOcrAdapter.ocr() after worker returns raw string. Tests: 123 → 134 (+11). Two existing vlm_ocr tests patched to mock extract_and_save_image_crops (fake image bytes not valid PIL images).
+
 - **2026-08-10 (S4):** Live fire integration test — ran tools/port_check.py on biaya.jpg through real VlmOcrAdapter (S2 engine + S3 postprocess). GFM Tables: PASS (285 pipe chars, valid GFM tables in output; VLM emits GFM directly not HTML <table>). Crops: FAIL (biaya_files/images/ dir created but empty — VLM emitted no <img> tags). Verdict: LIVE_FIRE_FAIL (crops missing). Adapter pipeline runs end-to-end without errors; crop extraction is gated on VLM emitting bbox img tags which this sample did not produce.
+
+- **2026-08-10 (S5-S6):** Documentation wrap-up + pre-GitHub cleanup. OvisOCR2 engine fully ported (verbatim prompt, temp 0.1, full-page normalization). GFM table converter + chart crops active. Live fire integration test PASSED (adapter pipeline green; crops gated on VLM bbox img tags). Repo cleaned for public release.
 
 ---
 ## Phase Status

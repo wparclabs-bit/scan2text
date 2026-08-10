@@ -1,7 +1,7 @@
 # Non-Functional Requirements & Architecture — Scan2Text MVP
 
-Version: 1.9
-Date: 2026-08-08
+Version: 1.10
+Date: 2026-08-10
 Status: Approved for Implementation
 Format: clean non-table (CEO instruction)
 
@@ -17,6 +17,7 @@ Format: clean non-table (CEO instruction)
 - 1.7 — 2026-08-07 — Hotfix finale (CEO-approved): shell = fixed inset-0 absolute viewport lock (fractions decide, content never resizes panels); TopBar 34px with CENTER brand image text.png 153×34 alt="Scan2Text" + static glow; left = logo chip + DEMO intact, no literal text wordmark; Share moved to BottomBar RIGHT (click = soft toast, no navigation); BottomBar left empty, center telemetry (Worker Idle/Busy · RAM "—" until GET /health · version), pinned at any window size; Dropzone: dashed area fills card, bg image bacground-left-top-panel.jpg 15% opacity single-value size centered, header + footer bold ink #1F150C, footer adds "max 10 files per batch", Dropzone ScrollArea removed; 10-file batch cap enforced; queue fixed 14px dot-only status slot (grey / yellow spinner / glossy green / glossy red) with translated tooltips; depth = visible-subtle gradation; Preview header buttons borderless transparent with caramel hover; Radix ScrollArea tray neutralized via CSS override.
 - 1.8 — 2026-08-08 — Phase 6 closure: 1vh TopBar gutter; pathological short-window accepted edge; fake progress deferred to v2/v3; vault map per ADR-004; Phase 6 COMPLETE.
 - 1.9 — 2026-08-08 — ADR-005 consolidation: backend source of truth = src/scan2text; §13 repo tree updated; §14 canonical health = /api/health.
+- 1.10 — 2026-08-10 — ADR-006 engine swap; §12/§13 model lines updated; NFR-04 known-defect reference; NFR-06 model size note.
 
 ---
 
@@ -49,6 +50,7 @@ Format: clean non-table (CEO instruction)
 - Target: human-validated high accuracy (~95% visible text on approved samples).
 - Accuracy judged by human review.
 - Simple lists/tables preserved best-effort; perfect layout reconstruction not required.
+- Known model limitations recorded in ADR-006 defect register; accuracy judged by human review against originals.
 
 ### NFR-05: Reliability
 
@@ -60,7 +62,7 @@ Format: clean non-table (CEO instruction)
 
 ### NFR-06: Portability
 
-- Distributable as folder/zip (~1.5 GB with models).
+- Distributable as folder/zip (~1.5 GB with models). Models ≈1.0GB (Q8 0.81 + mmproj 0.20), within ~1.5GB budget.
 - No complex installer.
 
 ### NFR-07: Compatibility
@@ -120,7 +122,7 @@ Portable desktop app with local web UI: the executable starts a local FastAPI ba
 
 ### Backend
 
-- Python 3.11+; FastAPI; Pydantic; llama-cpp-python; GLM-OCR 0.9B (vlm.gguf) + mmproj.gguf; pypdfium2 or equivalent; JSON settings; rotating local logs.
+- Python 3.11+; FastAPI; Pydantic; llama-cpp-python; OvisOCR2 0.9B (vlm.gguf Q8_0 + mmproj.gguf f16, ADR-006); pypdfium2; JSON settings; rotating local logs.
 
 ### Frontend
 
@@ -147,7 +149,7 @@ Portable desktop app with local web UI: the executable starts a local FastAPI ba
 Scan2Text/
 ├── Scan2Text.exe
 ├── models/
-│   ├── vlm.gguf          # GLM-OCR 0.9B language model
+│   ├── vlm.gguf          # OvisOCR2 0.9B language model (ADR-006)
 │   └── mmproj.gguf       # Vision projector (multimodal adapter)
 ├── assets/
 │   ├── icons/

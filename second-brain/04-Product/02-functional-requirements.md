@@ -2,8 +2,8 @@
 
   
 
-Version: 1.8
-Date: 2026-08-08
+Version: 1.9
+Date: 2026-08-10
 Status: Approved for Implementation
 
   
@@ -32,6 +32,8 @@ Status: Approved for Implementation
 
 | 1.7 | 2026-08-07 | Hotfix finale (CEO-approved): shell = fixed inset-0 (absolute viewport lock; fractions decide, content never resizes panels); TopBar 34px with CENTER brand image text.png 153×34 alt="Scan2Text" + static glow, left = logo chip + DEMO intact (no literal text wordmark), all items vertically centered; Share moved to BottomBar RIGHT (click = soft toast, no navigation); BottomBar left empty, center telemetry (Worker Idle/Busy · RAM "—" until /health · version), pinned at any window size; Dropzone: dashed area fills card, bg image 15% opacity single-value size centered, header + footer bold ink, footer adds "max 10 files per batch", Dropzone ScrollArea removed; 10-file batch cap enforced; queue fixed 14px dot-only status slot (grey/yellow-spinner/green/red) with translated tooltips; depth = visible-subtle gradation; Preview header buttons borderless transparent with caramel hover; Radix ScrollArea tray neutralized via CSS override |
 | 1.8 | 2026-08-08 | Phase 6 closure deltas: fake progress bar deferred to v2/v3 (CEO 2026-08-08); 1vh TopBar gutter; pathological short-window accepted edge; queue empty-state final copy with per-locale icons; QA gate passed — Phase 6 COMPLETE |
+| 1.9 | 2026-08-10 | ADR-006 engine swap; FR-05/FR-06/FR-08 updated for OvisOCR2 and pypdfium2 verification. |
+| 1.10 | 2026-08-10 | PDF Inspector hard limits added to FR-03/FR-06/FR-11 (20MB / 20 pages, error code FILE_TOO_COMPLEX); Persistent Info Screen added to PRD §7 |
 
 
 ---
@@ -134,6 +136,7 @@ Acceptance Criteria:
   - Max 50MB per file → error toast, not added to queue.
   - Unsupported type → error toast, not added to queue.
   - Batch cap: max 10 files per drop → first 10 kept, extras skipped with warning toast ("Max 10 files per batch — extra files were skipped." / ID equivalent) and logged.
+- PDF Inspector: before processing, backend checks page count and file size. Hard limits: 20MB max file size, 20 pages max. Files exceeding either limit are rejected with error code FILE_TOO_COMPLEX.
 - Error/warning toasts use shadcn toast component.
 - Unsupported files in a batch are skipped, logged, and do not stop valid files.
 - If all dropped files are unsupported, show non-blocking warning toast and log.
@@ -177,7 +180,7 @@ Acceptance Criteria:
 - Model remains loaded for subsequent jobs where practical.
 - Missing/corrupt model → actionable error.
 - No internet required after initial download.
-- Model: GLM-OCR 0.9B (`vlm.gguf` + `mmproj.gguf`); runner llama-cpp-python; CPU-only.
+- Model: OvisOCR2 0.9B (`vlm.gguf` + `mmproj.gguf`); runner llama-cpp-python; CPU-only; official single prompt verbatim; temp 0.1 (ADR-006).
 
   
 
@@ -211,9 +214,10 @@ Acceptance Criteria:
 
 - One file failing does not stop remaining valid files where possible.
 
-- Guardrails: max 20 PDF pages, max 50MB per file; exceeded → failed/skipped + logged.
+- PDF Inspector guardrail: reject PDFs >20 pages or >20MB with error code FILE_TOO_COMPLEX. Do not render pixels for rejected files.
+- General file-size guardrail: max 50MB per file (frontend validation); exceeded → error toast, not added to queue.
 
-- PDF handling note: VLM likely needs rendered pixels, not raw PDF bytes (verify).
+- PDF handling: pypdfium2 rasterization verified in production (ADR-006 closes verification).
 
   
 
@@ -255,11 +259,11 @@ Acceptance Criteria:
 
 - Naming: `{original_stem}_{HHmm}_{yyyyMMdd}.md`; collision suffix `_2`, `_3`, …; never overwrite.
 
-- Guardrails: one input → one output; timestamp = processing time; privacy-safe logs; no new dependencies.
+- Guardrails: one input → one .md always; auxiliary asset folder allowed only when source contains charts/figures (ADR-006); timestamp = processing time; privacy-safe logs; no new dependencies.
 
 - Implementation: `datetime.now()` at write; linear collision search; `PathService.resolve_output_path()` single point of naming logic.
 
-- Markdown structure: best-effort text, line breaks, lists, tables (GFM); no invented content; plain text acceptable when uncertain.
+- Markdown structure: best-effort text, line breaks, lists, tables (GFM; model HTML tables converted in backend, stdlib only, best-effort merges); chart crops saved to `<output_stem>_files/images/` when present; no invented content; plain text acceptable when uncertain.
 
 - After processing: UI shows saved Markdown file path.
 
@@ -353,7 +357,8 @@ Acceptance Criteria:
 
 - Toasts for validation errors (type, size) and batch cap warning.
 
-- Example cases: model not found, model load failed, unsupported type, file too large, PDF too many pages, OCR failed, output not writable, invalid settings.
+- Error code mapping: `FILE_TOO_COMPLEX` → "File too large or complex to process. Please try a smaller file."
+- Example cases: model not found, model load failed, unsupported type, file too large, PDF too many pages, FILE_TOO_COMPLEX, OCR failed, output not writable, invalid settings.
 
   
 

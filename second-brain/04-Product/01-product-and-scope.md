@@ -1,7 +1,7 @@
 # PRD: Scan2Text — MVP
 
-Version: 1.8
-Date: 2026-08-08
+Version: 1.9
+Date: 2026-08-10
 Status: Approved for Implementation
 Product Owner: CEO
 Technical Owner: CTO
@@ -19,7 +19,9 @@ Engineering Method: AI-Assisted Software Development (AIASD)
 | 1.5     | 2026-08-07 | Visual identity finalized: coffee & paper palette; no panel borders; depth via gradients + inset highlight + soft shadows + warm glow; top bar logo chip + live-text wordmark + DEMO badge                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | 1.6     | 2026-08-07 | Phase 6 Finale deltas: layout 20/20/60 → 34/60 + 2% gutters; left work column (Dropzone fixed ~38% + Queue flex); viewport-locked shell; Dropzone/Queue/Preview ScrollAreas with always-visible warm scrollbars; literal TopBar wordmark; BottomBar share-left + centered telemetry; Dropzone personality (bold ink text, upload icon left, smile emoji right); theme-aware inline longhand card depth; Queue radiant rays; share placeholder https://placeholder.local; queue row regression contract (icon + name + size + status + tooltip + fake progress)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | 1.7     | 2026-08-07 | Visual hotfix finale (CEO-approved): wordmark becomes CENTER brand image (text.png 153×34, alt="Scan2Text", static glow) — no literal text wordmark; logo chip + DEMO badge kept intact on left (DEMO removed after final product); TopBar height 34px, all items vertically centered; Share icon moved to BottomBar RIGHT; BottomBar left empty, center telemetry (Worker Idle/Busy from queue · RAM "—" until /health · version constant), pinned at any window size via fixed inset-0 shell; Dropzone: dashed area fills card, bg image bacground-left-top-panel.jpg at 15% opacity (single-value background-size, centered), header + footer bold ink #1F150C, footer adds "max 10 files per batch", Dropzone ScrollArea removed; 10-file batch cap enforced (first 10 + warning toast + logged); queue status slot fixed 14px, dot-only no text (grey pending / yellow spinner processing / glossy green completed / glossy red failed); depth = visible-subtle gradation on all cards; Preview header buttons borderless transparent with caramel hover; Radix ScrollArea tray neutralized via CSS override |
-| 1.8     | 2026-08-08 | \| 1.8 \| 2026-08-08 \| Phase 6 closure (CEO-approved): fake progress bar removed from MVP — deferred to v2/v3 on user feedback (single status indicator stays in the right 14px slot); 1vh vertical gutter between TopBar and main; queue empty-state copy finalized with per-locale icons inside strings (📭 EN / 🙈 ID); pathological short-window = documented accepted edge; dropzone upload icon centered+bold deferred to Phase 7; Phase 6 marked COMPLETE (QA gate: first run 37/48 → fixes → re-run all green) \|                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 1.8     | 2026-08-08 | \| 1.8 \| 2026-08-08 \| Phase 6 closure (CEO-approved): fake progress bar removed from MVP — deferred to v2/v3 on user feedback (single status indicator stays in the right 14px slot); 1vh vertical gutter between TopBar and main; queue empty-state copy finalized with per-locale icons inside strings (📭 EN / 🙈 ID); pathological short-window = documented accepted edge; dropzone upload icon centered+bold deferred to Phase 7; Phase 6 marked COMPLETE (QA gate: first run 37/48 → fixes → re-run all green) \|                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 1.9     | 2026-08-10 | ADR-006: primary OCR engine = OvisOCR2 0.9B (Apache-2.0) via llama-cpp-python; GLM-OCR removed from codebase (external backup only); §7/§12 model lines updated; FR-08 asset-folder exception for chart crops; known-defect register accepted |
+| 1.10    | 2026-08-10 | PDF Inspector hard limits (20MB / 20 pages, FILE_TOO_COMPLEX); Persistent Info Screen on every launch with "Don't show this again" checkbox persisted to settings.json |
 
 ---
 
@@ -126,7 +128,7 @@ The MVP is not a document editor.
 - Drag-and-drop file input
 - Image support: PNG, JPG/JPEG, WEBP
 - PDF support for simple scanned PDFs
-- Local OCR using GLM-OCR 0.9B model (vlm.gguf + mmproj.gguf)
+- Local OCR using OvisOCR2 0.9B model (vlm.gguf + mmproj.gguf) via llama-cpp-python, CPU-only, temp 0.1 default (ADR-006)
 - Vision module/mmproj support
 - Model loading on demand
 - FIFO processing queue
@@ -147,6 +149,7 @@ The MVP is not a document editor.
 - Internationalization (i18n): English + Indonesian, auto-detect browser language
 - File validation: Max 50MB per file, reject unsupported types with toast notification
 - Queue status slot: fixed 14px, dot-only (grey/yellow-spinner/green/red) with translated tooltips + thin fake progress bar
+- Persistent Info Screen: shows on every launch with "Welcome to Scan2Text" message and "Don't show this again" checkbox; choice persisted to settings.json
 - BottomBar: center telemetry (Worker Idle/Busy · RAM "—" until /health · version) + RIGHT icon-only Share (placeholder https://placeholder.local, click = soft toast)
 - Coffee & paper visual identity with visible-subtle gradation depth on all cards (theme-aware inline longhand styles)
 - Dropzone: dashed area fills card; bg image at 15% opacity; bold ink header + footer text
@@ -307,8 +310,8 @@ Where:
 
 ## 12. Technical Decisions (Locked)
 
-- Model: GLM-OCR 0.9B (vlm.gguf + mmproj.gguf) via llama-cpp-python, CPU-only.
-- PDF: likely needs PDF-to-image before VLM (verify).
+- Model: OvisOCR2 0.9B (vlm.gguf + mmproj.gguf) via llama-cpp-python, CPU-only, temp 0.1 default (ADR-006).
+- PDF: pypdfium2 rasterization verified (ADR-006).
 - Frontend: Vite + React + TS + Tailwind + shadcn; Zustand memory-only; react-markdown + remark-gfm; no router; HTTP polling.
 - Shell: `fixed inset-0 flex flex-col overflow-hidden`; main `flex-1 min-h-0`; grid `grid-cols-[34fr_60fr] gap-[2%]`; left rows `minmax(0,38fr)/minmax(0,62fr)`. Fractions decide; content never resizes panels.
 - TopBar 34px; center brand image 153×34 alt="Scan2Text" + static glow.
