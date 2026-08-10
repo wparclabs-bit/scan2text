@@ -4,8 +4,8 @@
 Date: 2026-08-10
 Phase: Phase 7 (Real Backend) IN PROGRESS
 Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 134 green (123 baseline + 11 postprocess_service tests)
-Frontend tests: 565 green (unchanged; S3 is backend-only)
+Backend tests: 134 green (123 baseline + 11 postprocess_service tests; S2 added 5 vlm_ocr tests replacing 2 tiling tests)
+Frontend tests: 565 green (unchanged; S2/S3/S4 are backend-only)
 PRD: v1.9/v1.10 source of truth in second-brain/04-Product/
 Next: Phase 7 continued — engine port slices S4-S6 per ADR-006.
 

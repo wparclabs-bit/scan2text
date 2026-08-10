@@ -140,3 +140,5 @@ Misc:
 - Disk is truth: before asserting which engine lives where, list models/ with sizes; renames and deletes change the decision state.
 - Engine swap = recipe swap: prompt, sampling, and geometry travel together (ADR-006).
 - Production defaults must match the spike recipe or the spike evidence is void.
+- YAGNI: Dropped GLM rollback code path to maintain MVP simplicity. Ovis is the sole engine; external backup exists for disaster recovery only.
+- Strict adherence to Matt Pocock TDD skills (github.com/mattpocock/skills): RED->GREEN->REFACTOR cycle enforced. Tests updated before implementation.
