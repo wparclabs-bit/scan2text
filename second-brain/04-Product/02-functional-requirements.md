@@ -48,6 +48,7 @@ Description:
 - On first launch, if no settings exist, the app must guide the user through minimal setup.
 
 Acceptance Criteria:
+- First-run is a two-step wizard: expectations notice (ADR-007 decision 3) then output folder picker; notice re-shown every launch until hide_welcome_notice is set; re-openable from Settings.
 - If `settings/settings.json` does not exist, show first-run setup screen.
 - Ask user to choose default output directory.
 - Default suggestion may be portable `output/` or `Documents/Scan2Text`.
@@ -291,7 +292,7 @@ Acceptance Criteria:
 
 - Settings screen accessible from TopBar.
 
-- Settings: output_dir, max_pdf_pages, cpu_threads (0 = auto = 60% of logical cores, floor, min 1; explicit values still override), check_updates_on_startup, language ("auto" default), theme.
+- Settings: output_dir, max_pdf_pages, cpu_threads (0 = auto = 60% of logical cores, ADR-007), check_updates_on_startup, language ("auto" default), theme, hide_welcome_notice: bool (default false).
 
 - Persist to `settings/settings.json`; theme/language also to localStorage.
 
@@ -359,7 +360,7 @@ Acceptance Criteria:
 - Toasts for validation errors (type, size) and batch cap warning.
 
 - Error code mapping: `FILE_TOO_COMPLEX` → "File too large or complex to process. Please try a smaller file."
-- Example cases: model not found, model load failed, unsupported type, file too large, PDF too many pages, FILE_TOO_COMPLEX, OCR failed, output not writable, invalid settings.
+- Example cases: model not found, model load failed, unsupported type, file too large, PDF too many pages, FILE_TOO_COMPLEX, OCR failed, output not writable, invalid settings, model download failed or size mismatch.
 
   
 

@@ -21,6 +21,8 @@ Next: Pre-GitHub cleanup executed; repo ready for public release.
 
 - **2026-08-10 (8.1):** ADR-007 signed — feedback GForm + offline queue, CPU 60% budget, GDrive distribution + in-app model downloader, monthly cadence. Docs locked; slices 8.2–8.7 next.
 
+- **2026-08-10 (8.2):** ADR-007 signed — feedback GForm + offline queue, CPU auto 60%, welcome expectations screen, GDrive distribution + in-app model downloader, logs no file names + 1 MB rotation, monthly cadence. PRD 01/02 → 1.10, 03 → 1.11, 04 → 1.10. docs/JOURNEY.md skeleton created.
+
 ---
 ## Phase Status
 

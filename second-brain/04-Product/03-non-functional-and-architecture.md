@@ -35,6 +35,7 @@ Format: clean non-table (CEO instruction)
 - Document content stays on the local machine.
 - No telemetry, no analytics, no cloud upload.
 - Logs must not contain extracted OCR text by default.
+- Logs contain no file names and no document content; feedback is never auto-sent (ADR-007).
 
 ### NFR-03: Performance
 
@@ -45,7 +46,7 @@ Format: clean non-table (CEO instruction)
 - CPU-only inference; no GPU required.
 - Zero-CPU idle decoration: all decorative UI (Queue radiant rays, brand glow) static; no ambient canvas/JS loops.
 - Internal scrolling must not reflow or page-scroll the shell.
-- CPU budget: auto threads = 60% of logical cores (floor, min 1) so the PC stays usable during OCR (CEO 2026-08-10).
+- CPU budget: auto threads = 60% of logical cores (floor, min 1) so the PC stays usable during OCR (ADR-007).
 
 ### NFR-04: Accuracy
 
@@ -225,6 +226,7 @@ class AppSettings:
     check_updates_on_startup: bool
     language: str             # "auto" | "en" | "id"
     theme: str                # "dark" | "light"
+    hide_welcome_notice: bool # ADR-007
 ```
 
 ```python
@@ -313,16 +315,15 @@ class UpdateInfo:
 
 ## 17. Update Mechanism
 
-- Source: GitHub-hosted version.json (version, date, download_url, model_version, notes).
+- Source: GitHub-hosted version.json; binaries (app zip + models) hosted on Google Drive; download_url points to GDrive. First run: in-app model downloader (progress + cancel + size verify) or manual zip replacement (ADR-007).
 - Flow: launch → if enabled + online, fetch → if newer, notify in top bar → user downloads zip manually → replaces app files preserving settings/, output/, logs/.
 - Manual process; no self-updating executable.
-- Distribution: app zip + model GGUFs hosted on Google Drive (anyone-with-link); version.json remains GitHub-hosted as source of truth for update checks (ADR-007).
-- First-run model auto-download: streaming to models/ via .part then atomic rename, expected-size verification, progress + cancel UI, translated errors.
 
 ---
 
 ## 18. Logging Requirements
 
-- Location: logs/app.log; rotating; small.
-- Log: app start, settings loaded, model load started/completed, job started/completed/skipped/failed, output saved, update check result, batch-cap skips (filename + byte count only).
+- Location: logs/app.log; size-based rotation: maxBytes 1 MB, backupCount 1.
+- Log: app start, settings loaded, model load started/completed, job started/completed/skipped/failed, output saved, update check result, batch-cap skips (extension + byte count + page count only; no file names; no content).
+- Fields: extension + byte count + page count + duration + error/warning code + model version + timestamp.
 - Never log extracted OCR text or full document contents by default.

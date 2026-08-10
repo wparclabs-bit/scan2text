@@ -21,7 +21,7 @@ Engineering Method: AI-Assisted Software Development (AIASD)
 | 1.7     | 2026-08-07 | Visual hotfix finale (CEO-approved): wordmark becomes CENTER brand image (text.png 153×34, alt="Scan2Text", static glow) — no literal text wordmark; logo chip + DEMO badge kept intact on left (DEMO removed after final product); TopBar height 34px, all items vertically centered; Share icon moved to BottomBar RIGHT; BottomBar left empty, center telemetry (Worker Idle/Busy from queue · RAM "—" until /health · version constant), pinned at any window size via fixed inset-0 shell; Dropzone: dashed area fills card, bg image bacground-left-top-panel.jpg at 15% opacity (single-value background-size, centered), header + footer bold ink #1F150C, footer adds "max 10 files per batch", Dropzone ScrollArea removed; 10-file batch cap enforced (first 10 + warning toast + logged); queue status slot fixed 14px, dot-only no text (grey pending / yellow spinner processing / glossy green completed / glossy red failed); depth = visible-subtle gradation on all cards; Preview header buttons borderless transparent with caramel hover; Radix ScrollArea tray neutralized via CSS override |
 | 1.8     | 2026-08-08 | \| 1.8 \| 2026-08-08 \| Phase 6 closure (CEO-approved): fake progress bar removed from MVP — deferred to v2/v3 on user feedback (single status indicator stays in the right 14px slot); 1vh vertical gutter between TopBar and main; queue empty-state copy finalized with per-locale icons inside strings (📭 EN / 🙈 ID); pathological short-window = documented accepted edge; dropzone upload icon centered+bold deferred to Phase 7; Phase 6 marked COMPLETE (QA gate: first run 37/48 → fixes → re-run all green) \|                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | 1.9     | 2026-08-10 | ADR-006: primary OCR engine = OvisOCR2 0.9B (Apache-2.0) via llama-cpp-python; GLM-OCR removed from codebase (external backup only); §7/§12 model lines updated; FR-08 asset-folder exception for chart crops; known-defect register accepted |
-| 1.10    | 2026-08-10 | ADR-007: Feedback button (Google Form + offline queue) in BottomBar next to Share; CPU auto budget 60% of logical cores; GDrive distribution + in-app first-run model downloader; monthly release cadence |
+| 1.10    | 2026-08-10 | ADR-007: feedback button (GForm + offline queue) in BottomBar left of Share; first-run expectations screen with don't-show-again; CPU auto = 60% of logical cores; GDrive distribution + in-app model downloader; logs no file names, 1 MB size-based rotation; monthly cadence |
 
 ---
 
@@ -158,8 +158,9 @@ The MVP is not a document editor.
 - Fake progress bar in MVP (removed v1.8 by CEO decision; revisit v2/v3 on user feedback)
 - The app shell is pinned to the viewport: fixed inset-0 flex flex-col overflow-hidden. The screen is the only sizing authority. No window/body scroll at any window width or height. BottomBar always visible. A 1vh vertical gutter separates TopBar and main (v1.8).
 - Row: file type icon + name (truncate) + size + fixed 14px status slot (dot-only) + translated tooltip + retry button on failed (fake progress bar deferred to v2/v3, v1.8).
-- Feedback button: icon-only in BottomBar RIGHT next to Share; Google Form when online; offline dialog saves timestamped file to feedback/pending/; launch toast opens pre-filled form and moves file to feedback/sent/; no silent auto-upload
-- In-app first-run model auto-download: streaming to models/ via .part then atomic rename, expected-size verification, progress + cancel, translated errors
+- In-app first-run model auto-download: streaming to models/ via .part then atomic rename, expected-size verification, progress + cancel, translated errors (ADR-007)
+- Feedback button (icon-only, BottomBar right, left of Share): online opens Google Form; offline captures to local feedback queue; launch-time pending reminder (ADR-007)
+- First-run expectations screen, shown every launch until dismissed, re-openable from Settings (ADR-007)
 
 ### Should-Have
 
@@ -197,6 +198,8 @@ The MVP is not a document editor.
 - Hover-only or invisible scrollbars
 - Flat cards without depth
 - Fake progress bar in MVP (removed v1.8 by CEO decision; revisit v2/v3 on user feedback)
+- Legal T&C dialog (replaced by plain expectations notice, ADR-007)
+- Silent auto-send of feedback (opt-in submit only, ADR-007)
 
 ---
 
@@ -320,7 +323,8 @@ Where:
 - BottomBar pinned; telemetry center; Share right (placeholder + toast).
 - Batch cap 10 files; 50MB per file; PNG/JPG/JPEG/WEBP/PDF only.
 - Radix ScrollArea tray neutralized via CSS override (`[data-radix-scroll-area-viewport] > div { display:block; min-width:0; height:auto }`).
-- CPU budget: cpu_threads=0 (auto) = 60% of logical cores (floor, min 1); explicit values still override; worker priority stays lowered.
-- Distribution: app zip + model GGUFs on Google Drive (anyone-with-link); version.json stays GitHub-hosted; download_url points to GDrive.
-- Cadence: monthly releases only, vigorously tested.
+- CPU budget: cpu_threads=0 (auto) = 60% of logical cores (ADR-007); explicit values still override; worker priority stays lowered.
+- Distribution: binaries on Google Drive, version.json on GitHub, download_url → GDrive (ADR-007).
+- Release cadence monthly only (ADR-007).
+- Logs: no file names, no content; 1 MB size-based rotation (ADR-007).
 - Memory hygiene: every slice exits with green tests + commit + Phase-6 summary file + AGENTS.md lessons.

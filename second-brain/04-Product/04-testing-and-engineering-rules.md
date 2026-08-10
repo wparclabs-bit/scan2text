@@ -175,6 +175,11 @@ The MVP is done when (v1.7):
 - RESOLVED in v1.9 (ADR-006): VLM smoke test; PDF-to-image verification (pypdfium2); CEO sample files (biaya + triple accepted with known defects); performance thresholds (30.7 t/s decode); backend GET /health (RAM "—" until S2-S6 built); real share URL post-GitHub; exe icon (Phase 7); final body font; ID translation review; POST /cancel endpoint; dropzone upload icon centered+bold (Phase 7, CEO 2026-08-08); ADR-002 supersession re HTTP polling (new ADR, Phase 7).
 - RESOLVED in v1.10: port slices S2-S6 complete; OvisOCR2 engine fully ported; GFM converter active; live fire integration test passed; pre-GitHub cleanup executed.
 - Still open: slices 8.2–8.7 (CPU cap; feedback backend+frontend; model downloader backend+frontend; placeholder swap + QA).
+- slice: feedback UI (BottomBar button + offline dialog + launch toast)
+- slice: model downloader UI
+- slice: welcome expectations screen
+- swap FEEDBACK_FORM_URL + GDrive links when CEO provides
+- pre-GitHub cleanup manifest
 
 ---
 
@@ -183,6 +188,23 @@ The MVP is done when (v1.7):
 - Phase 7: engine port slices S2-S6 (ADR-006) — COMPLETE; HTML→GFM converter tests — COMPLETE; max_tokens headroom experiment (parked); temp 0.1 re-validation; wide-sheet tiling enhancement (parked); pre-GitHub cleanup manifest — COMPLETE; exe icon; GET /health real telemetry; share swap post-GitHub; QA hardening; dropzone icon centered+bold; ADR-002 supersession; ASR agent brainstorm follow-up (separate product); summary model as in-app feature candidate; slices 8.2–8.7 (CPU cap; feedback backend+frontend; model downloader backend+frontend; placeholder swap + QA).
 - Phase 2: macOS; mobile; in-app editing; compare-toggle; thumbnails; Remove button; perf tuning; update helper.
 - Phase 3: micro-SaaS; cloud API; Tauri/web; accounts; WebSockets; cancel backend.
+
+---
+
+### Testing notes
+
+- Output naming collision test (linear search, never overwrite).
+- File validation guardrails (50MB, type whitelist, batch cap 10).
+- i18n key coverage for all UI strings (EN + ID).
+- Theme toggle class flip regression.
+- Radix ScrollArea viewport neutralizer CSS override present in index.css.
+- Fake progress easing function unit test (0→90% over 30s).
+- Queue status slot dot-only absence test (no text labels rendered).
+- Brand image alt="Scan2Text" assertion in live TopBar render.
+- feedback queue save/move unit tests
+- downloader fake-stream tests
+- welcome dismissal persistence test
+- log rotation config test
 
 ---
 
