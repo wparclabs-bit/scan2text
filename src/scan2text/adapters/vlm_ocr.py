@@ -21,6 +21,10 @@ import psutil
 
 from scan2text.models.settings import AppSettings
 from scan2text.services.path_service import PathService
+from scan2text.services.postprocess_service import (
+    convert_html_tables_to_gfm,
+    extract_and_save_image_crops,
+)
 from scan2text.services.settings_service import SettingsService
 
 logger = logging.getLogger(__name__)
@@ -195,7 +199,7 @@ class VlmOcrAdapter:
 
         self._input_queue.put({"action": "ocr", "images": images, "max_tokens": 4096})
         try:
-            return self._output_queue.get(timeout=self._timeout)
+            raw = self._output_queue.get(timeout=self._timeout)
         except queue.Empty:
             logger.warning(
                 "OCR_TIMEOUT: worker did not return result within %ss for %s",
@@ -207,6 +211,16 @@ class VlmOcrAdapter:
                 "message": f"OCR exceeded {self._timeout}s timeout for {image_path}",
                 "image_path": image_path,
             }
+
+        if isinstance(raw, dict):
+            return raw
+
+        # Post-process: HTML tables → GFM + extract chart crops
+        text = convert_html_tables_to_gfm(raw)
+        source_path = Path(image_path)
+        output_md_path = source_path.parent / f"{source_path.stem}.md"
+        text = extract_and_save_image_crops(text, source_path, output_md_path)
+        return text
 
     def _render_pdf(self, path: Path) -> List[bytes] | dict[str, Any]:
         """Render PDF pages to auto-tiled PNG bytes (FR-06: pixels, not raw PDF)."""
