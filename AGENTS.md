@@ -132,3 +132,11 @@ Misc:
 ## Phase 7 Lessons
 - Lock the project interpreter with py -3.12; system default Python may be too new for native wheels.
 - Backend binds 127.0.0.1 only; local-first means localhost-first.
+- py -3.12 launcher bypasses venvs; lock the interpreter by evidence (the bench command), never by memory.
+- Error hints mislead ('provide the mmproj' appeared with mmproj attached); probe with minimal auditable scripts.
+- Golden outputs are references, not truth; the original file plus human review is the standard.
+- When the agent wanders, hand it verbatim file content; zero design freedom.
+- No run without a file: reproducible, or it didn't happen.
+- Disk is truth: before asserting which engine lives where, list models/ with sizes; renames and deletes change the decision state.
+- Engine swap = recipe swap: prompt, sampling, and geometry travel together (ADR-006).
+- Production defaults must match the spike recipe or the spike evidence is void.
