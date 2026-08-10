@@ -98,8 +98,8 @@ class TestVlmOcrPersistentWorkerQueues:
              patch("scan2text.adapters.vlm_ocr.Process", return_value=mock_process_instance), \
              patch("scan2text.adapters.vlm_ocr.Queue", side_effect=[mock_input_queue, mock_output_queue]), \
              patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil, \
-              patch("scan2text.adapters.vlm_ocr._shrink_to_png", side_effect=lambda b: b), \
-              patch("scan2text.adapters.vlm_ocr._tile_image", side_effect=lambda img: [b"fake-image-bytes-1" if img.size == (80, 60) else b"fake-image-bytes-2"]), \
+               patch("scan2text.adapters.vlm_ocr._shrink_to_png", side_effect=lambda b: b), \
+               patch("scan2text.adapters.vlm_ocr._prepare_views", side_effect=lambda img: [b"fake-image-bytes-1" if img.size == (80, 60) else b"fake-image-bytes-2"]), \
               patch("PIL.Image.open") as mock_img_open:
             mock_img_open.return_value.convert.return_value.size = (80, 60)
             mock_img_open.return_value.convert.return_value.__enter__ = lambda s: s
@@ -156,8 +156,8 @@ class TestVlmOcrTimeoutHandling:
              patch("scan2text.adapters.vlm_ocr.Process", return_value=mock_process_instance), \
              patch("scan2text.adapters.vlm_ocr.Queue", side_effect=[mock_input_queue, mock_output_queue]), \
               patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil, \
-              patch("scan2text.adapters.vlm_ocr._shrink_to_png", side_effect=lambda b: b), \
-              patch("scan2text.adapters.vlm_ocr._tile_image", side_effect=lambda img: [b"fake-image-bytes"]), \
+               patch("scan2text.adapters.vlm_ocr._shrink_to_png", side_effect=lambda b: b), \
+               patch("scan2text.adapters.vlm_ocr._prepare_views", side_effect=lambda img: [b"fake-image-bytes"]), \
               patch("PIL.Image.open") as mock_img_open:
             mock_img_open.return_value.convert.return_value.size = (80, 60)
             mock_img_open.return_value.convert.return_value.__enter__ = lambda s: s
@@ -209,22 +209,44 @@ def test_ocr_pdf_uses_rendered_pages():
         assert sent["images"] == [b"png1", b"png2"]
 
 
-def test_tile_image_splits_wide_images():
+def test_prepare_views_returns_one_view_for_normal_image():
     from PIL import Image
 
-    from scan2text.adapters.vlm_ocr import _tile_image
+    from scan2text.adapters.vlm_ocr import _prepare_views
 
-    wide = Image.new("RGB", (2300, 1000), "white")
-    assert len(_tile_image(wide)) == 2
+    normal = Image.new("RGB", (800, 600), "white")
+    views = _prepare_views(normal)
+    assert len(views) == 1
+    assert isinstance(views[0], bytes)
 
 
-def test_tile_image_keeps_portrait_single():
+def test_prepare_views_caps_long_edge_to_2880():
     from PIL import Image
 
-    from scan2text.adapters.vlm_ocr import _tile_image
+    from scan2text.adapters.vlm_ocr import _MAX_IMAGE_EDGE, _prepare_views
 
-    tall = Image.new("RGB", (1000, 1400), "white")
-    assert len(_tile_image(tall)) == 1
+    wide = Image.new("RGB", (5000, 1000), "white")
+    views = _prepare_views(wide)
+    assert len(views) == 1
+    # After resize the long edge must be <= cap
+    from io import BytesIO
+    reopened = Image.open(BytesIO(views[0]))
+    w, h = reopened.size
+    assert max(w, h) <= _MAX_IMAGE_EDGE
+
+
+def test_prepare_views_caps_pixels_to_4m():
+    from PIL import Image
+
+    from scan2text.adapters.vlm_ocr import _MAX_PIXELS, _prepare_views
+
+    huge = Image.new("RGB", (8000, 8000), "white")
+    views = _prepare_views(huge)
+    assert len(views) == 1
+    from io import BytesIO
+    reopened = Image.open(BytesIO(views[0]))
+    w, h = reopened.size
+    assert w * h <= _MAX_PIXELS
 
 
 def test_worker_is_daemon_so_parent_can_exit():

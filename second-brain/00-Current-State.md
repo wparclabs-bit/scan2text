@@ -1,22 +1,26 @@
-<!-- PHASE-7-IN-PROGRESS-STATE-2026-08-09 -->
+<!-- PHASE-7-IN-PROGRESS-STATE-2026-08-10 -->
 # Scan2Text Current State — Phase 7 In Progress
 
-Date: 2026-08-09
+Date: 2026-08-10
 Phase: Phase 7 (Real Backend) IN PROGRESS
 Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 119 green (115 baseline + 1 from 7.2e + 1 from 7.2g)
-Frontend tests: 565 green (unchanged; 7.2b is backend-only)
-PRD: v1.8 source of truth in second-brain/04-Product/
-Next: Phase 7 continued — POST /process, GET /status/{task_id}, polling contract.
+Backend tests: 123 green (115 baseline + 1 from 7.2e + 1 from 7.2g + 1 from S2 + 5 new vlm_ocr tests replacing tiling)
+Frontend tests: 565 green (unchanged; S2 is backend-only)
+PRD: v1.9 source of truth in second-brain/04-Product/
+Next: Phase 7 continued — engine port slices S3-S6 per ADR-006.
+
+- **2026-08-10 (S2):** OvisOCR2 adapter port — vlm_ocr.py rewritten: verbatim OvisOCR2 prompt, temperature=0.1 + repeat_penalty=1.0, full-page _prepare_views (no tiling; _MAX_IMAGE_EDGE=2880, _MAX_PIXELS=4M), deleted _tile_image. Tests: 122 → 123 (+1). Port check PASS (biaya.jpg: 83.1s wall, 4616 chars, 27 <tr>, all 11 numerics present). tools/port_check.py created.
 
 ---
 ## Phase Status
 
 - **Current Phase:** Phase 7 (Real Backend) — IN PROGRESS
 
-- **Current Slice:** 7.2e — Consolidated /api/health + /api/settings into running app; localhost CORS; worker_busy init deferred to 7.2f.
+- **Current Slice:** OvisOCR2 engine swap spike completed; ADR-006 signed 2026-08-10. Port slices S2-S6 planned.
 
-- **Next Phase:** Phase 7 continued — 7.2f: worker_busy flip in _run_processing; then POST /process, GET /status/{task_id}, polling contract.
+- **Next Phase:** Phase 7 continued — S2: vlm_ocr.py adapter rewrite for OvisOCR2; S3-S6 follow.
+
+- **2026-08-10:** ADR-006 signed and EXECUTED on disk (OvisOCR2 primary at vlm.gguf/mmproj.gguf; GLM = external backup). Docs slice S1 landed; code port S2 next.
 
 - **2026-08-09 (7.2g):** Real GLM-OCR wiring — vlm_ocr.py rewritten with MTMDChatHandler (vision projector mmproj), settings-driven engine knobs (n_ctx, n_threads, ocr_timeout_seconds, max_pdf_pages, worker_priority), PDF page rendering via pypdfium2+Pillow, three error constants (OCR_TIMEOUT/MODEL_NOT_FOUND/PDF_TOO_MANY_PAGES). New smoke.py manual E2E script. Pillow>=10.0 added as dep. Test: 118 → 119 (+1 routing test for PDF→rendered pages). Backend-only slice; frontend untouched.
 
@@ -31,7 +35,7 @@ Next: Phase 7 continued — POST /process, GET /status/{task_id}, polling contra
 
 - **Tests:** 564/564 passing (33 files; +10 from 6.16b: drag counter semantics, shell chain min-h-0, brand glow)
 
-- **PRD v1.7 files 01-04:** COMMITTED at 68efa36 (2026-08-08) as source of truth milestone.
+- **PRD v1.9 files 01-04:** COMMITTED as source of truth milestone (ADR-006 engine swap).
 
 - **2026-08-08:** fake progress bar removed by CEO decision (v2/v3 candidate); toast copy trimmed; empty states centered. Tests: 552 → 554 (+2).
 - **2026-08-08 (6.16b):** vertical shrink chain fixed (panel roots min-h-0); drag-over highlight with counter semantics + warm accent colors; brand glow radial gradient added to TopBar; 1vh gutter between TopBar and main. Tests: 554 → 564 (+10).
@@ -101,4 +105,5 @@ Next: Phase 7 continued — POST /process, GET /status/{task_id}, polling contra
 - [x] Slice 6.14a: Literal wordmark + floating 34/60 layout — Wordmark rendered as literal spans "scan"+"2"+"text" (no i18n indirection); color uses exact right-panel cream/ink token (#F2EBDD dark / #1F150C light). Layout rebuilt: workspace grid 34fr/60fr with 2% gutters and 2% padding; left column stacks dropzone (38% height, min-h 240px) + queue (flex-1); right column preview full-height. Overflow hygiene contract: grid wrappers min-w-0 without overflow-hidden; cards get overflow-hidden+min-w-0. Depth shadows tuned to gutters: 0 8px 20px -8px rgba(0,0,0,0.55) dark / rgba(31,21,12,0.22) light. Radiant rays move with queue card. Tests: 512 → 514 (+2).
 
 - [x] Slice 6.14b: ScrollAreas + file type icons — @radix-ui/react-scroll-area installed (new dep). shadcn-style ScrollArea component created at src/components/ui/scroll-area.tsx. Three regions wrapped: dropzone (data-testid="dropzone-scroll-area"), queue job list (data-testid="queue-scroll-area"), preview Markdown (data-testid="preview-scroll-area"). Queue + preview use h-full+min-h-0 chain for actual overflow scroll; dropzone present for future-proofing. Warm-styled thin scrollbars via CSS (caramel thumb dark #E3A55F / coffee light #92400E, 4px width, zero CPU idle). fileKind.ts already existed with 8 test cases covering all requirements. lucide-react FileImage/FileText glyphs already wired with data-testid="queue-icon-image" and "queue-icon-pdf". Regression test added: clicking completed job switches preview Markdown content. Tests: 514 → 521 (+7).
-      
+       
+

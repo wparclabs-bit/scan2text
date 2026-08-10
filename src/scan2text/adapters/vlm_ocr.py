@@ -1,9 +1,9 @@
-"""VLM OCR adapter — GLM-OCR 0.9B via llama-cpp-python (CPU-only, offline).
+"""VLM OCR adapter — OvisOCR2 0.9B (ADR-006) via llama-cpp-python (CPU-only, offline).
 
 Spawns one persistent low-priority worker process that keeps the model and
-vision projector (mmproj) loaded. Parents send downscaled PNG bytes (or
-rendered PDF pages, auto-tiled for wide layouts) over a queue; the worker
-returns Markdown strings.
+vision projector (mmproj) loaded. Parents send ONE normalized full-page PNG
+per page (no tiling; ADR-006) over a queue; the worker returns Markdown
+strings.
 """
 
 from __future__ import annotations
@@ -25,21 +25,14 @@ from scan2text.services.settings_service import SettingsService
 
 logger = logging.getLogger(__name__)
 
-_VLM_PROMPT = (
-    "Analyze this image and extract all text, tables, and layout into clean, structured Markdown. "
-    "Do not add conversational filler."
-)
+_VLM_PROMPT = '''\nExtract all readable content from the image in natural human reading order and output the result as a single Markdown document. For charts or images, represent them using an HTML image tag: <img src="images/bbox_{left}_{top}_{right}_{bottom}.jpg" />, where left, top, right, bottom are bounding box coordinates scaled to [0, 1000). Format formulas as LaTeX. Format tables as HTML: <table>...</table>. Transcribe all other text as standard Markdown. Preserve the original text without translation or paraphrasing.'''
 OCR_TIMEOUT = "OCR_TIMEOUT"
 MODEL_NOT_FOUND = "MODEL_NOT_FOUND"
 OCR_FAILED = "OCR_FAILED"
 PDF_TOO_MANY_PAGES = "PDF_TOO_MANY_PAGES"
 
-# Auto-scale: the model reads focused ~1150px views best (proven by smoke
-# tests). Wide images are split into overlapping tiles at that sweet spot;
-# single views are capped at 2048 on the long edge.
-_TILE_TARGET = 1152
-_TILE_OVERLAP = 0.10
-_MAX_IMAGE_EDGE = 2048
+_MAX_IMAGE_EDGE = 2880
+_MAX_PIXELS = 4_000_000   # context budget: image tokens ≈ px/1024; keep image + 4096 output within n_ctx 8192
 _PDF_RENDER_SCALE = 2.0
 
 _PRIORITY_ATTR = {
@@ -49,41 +42,32 @@ _PRIORITY_ATTR = {
 }
 
 
-def _pil_to_png(img) -> bytes:
-    """Cap the long edge at _MAX_IMAGE_EDGE and encode as PNG."""
+def _prepare_views(img) -> List[bytes]:
+    """Normalize a single-page image to one PNG view respecting ADR-006 caps."""
     from PIL import Image
 
     w, h = img.size
     longest = max(w, h)
+    area = w * h
+    scale = 1.0
     if longest > _MAX_IMAGE_EDGE:
-        factor = _MAX_IMAGE_EDGE / longest
-        img = img.resize((max(1, int(w * factor)), max(1, int(h * factor))), Image.LANCZOS)
+        scale = min(scale, _MAX_IMAGE_EDGE / longest)
+    if area > _MAX_PIXELS:
+        scale = min(scale, (_MAX_PIXELS / area) ** 0.5)
+    if scale < 1.0:
+        new_w = max(1, int(w * scale))
+        new_h = max(1, int(h * scale))
+        img = img.resize((new_w, new_h), Image.LANCZOS)
     buf = BytesIO()
     img.save(buf, format="PNG")
-    return buf.getvalue()
+    return [buf.getvalue()]
 
 
 def _shrink_to_png(image_bytes: bytes) -> bytes:
     from PIL import Image
 
-    return _pil_to_png(Image.open(BytesIO(image_bytes)).convert("RGB"))
-
-
-def _tile_image(img) -> List[bytes]:
-    """Auto-scale: split wide images into focused tiles at the sweet spot."""
-    w, h = img.size
-    tiles = []
-    if w >= h * 1.3 and w > _TILE_TARGET * 1.4:
-        count = max(2, round(w / _TILE_TARGET))
-        step = w // count
-        overlap = int(step * _TILE_OVERLAP)
-        for i in range(count):
-            left = max(0, i * step - overlap)
-            right = min(w, (i + 1) * step + overlap)
-            tiles.append(img.crop((left, 0, right, h)))
-    else:
-        tiles.append(img)
-    return [_pil_to_png(t) for t in tiles]
+    pil_img = Image.open(BytesIO(image_bytes)).convert("RGB")
+    return _prepare_views(pil_img)[0]
 
 
 def _vlm_worker(
@@ -143,6 +127,8 @@ def _vlm_worker(
                         }
                     ],
                     max_tokens=task.get("max_tokens", 4096),
+                    temperature=0.1,
+                    repeat_penalty=1.0,
                 )
                 texts.append(output["choices"][0]["message"]["content"])
             if len(texts) == 1:
@@ -205,7 +191,7 @@ class VlmOcrAdapter:
             from PIL import Image
 
             with Image.open(path) as pil_img:
-                images = _tile_image(pil_img.convert("RGB"))
+                images = _prepare_views(pil_img.convert("RGB"))
 
         self._input_queue.put({"action": "ocr", "images": images, "max_tokens": 4096})
         try:
@@ -236,5 +222,5 @@ class VlmOcrAdapter:
         pages: List[bytes] = []
         for index in range(page_count):
             bitmap = pdf[index].render(scale=_PDF_RENDER_SCALE)
-            pages.extend(_tile_image(bitmap.to_pil().convert("RGB")))
+            pages.extend(_prepare_views(bitmap.to_pil().convert("RGB")))
         return pages
