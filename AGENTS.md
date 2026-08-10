@@ -81,6 +81,9 @@ Phases 1-6 COMPLETE (Phase 6 closed 2026-08-08 @ 75bc720, 565 tests). Phase 7 NE
 - Batch cap 10; 50MB/file; PNG/JPG/JPEG/WEBP/PDF only; invalid batch = one aggregated toast.
 - Memory-only jobs; localStorage only theme + language.
 - Share = placeholder https://placeholder.local + soft toast, no navigation (real URL post-GitHub, CEO-approved).
+- Feedback button = icon-only in BottomBar RIGHT next to Share; Google Form when online; offline dialog saves to feedback/pending/; launch toast opens pre-filled form and moves file to feedback/sent/; NO silent auto-upload (NFR-02).
+- CPU auto budget: cpu_threads=0 = 60% of logical cores (floor, min 1); explicit values still override.
+- Distribution: app zip + model GGUFs on Google Drive (anyone-with-link); version.json stays GitHub-hosted; monthly release cadence, vigorously tested.
 - i18n EN + ID for all UI strings; brand image alt="Scan2Text" is the only i18n-exempt brand element.
 - CEO taste overrides PRD: re-confirm layout deltas in writing before slicing. Layout-critical UI acceptance = CEO screenshot.
 
@@ -127,6 +130,8 @@ Misc:
 - Path discovery before edit: app under frontend/; i18n frontend/src/locales/. "File not found" is a lookup task, never a stop reason.
 - Every slice exits: green tests + commit + Phase-6 summary + AGENTS.md lessons.
 (6.16a-c): absence tests keep removed features removed (docs drift, tests remember); drag-over highlight needs enter/leave counter + onDragOver preventDefault (boolean flickers on child traversal); per-locale icon inside translation string = i18n owns the whole message (CEO decision 2026-08-08).
+- Non-technical users need non-technical feedback channels (GForm over GitHub Issues).
+- Cap CPU so the PC stays usable — a fast OCR that freezes the PC loses users.
 
 
 ## Phase 7 Lessons
