@@ -142,3 +142,4 @@ Misc:
 - Production defaults must match the spike recipe or the spike evidence is void.
 - YAGNI: Dropped GLM rollback code path to maintain MVP simplicity. Ovis is the sole engine; external backup exists for disaster recovery only.
 - Strict adherence to Matt Pocock TDD skills (github.com/mattpocock/skills): RED->GREEN->REFACTOR cycle enforced. Tests updated before implementation.
+- S2-S4 port success: verbatim prompt + temp 0.1 + full-page normalization (no tiling) is the locked Ovis recipe. GFM stdlib converter prevents frontend HTML table breakage.
