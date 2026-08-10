@@ -100,6 +100,7 @@ class TestVlmOcrPersistentWorkerQueues:
              patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil, \
                patch("scan2text.adapters.vlm_ocr._shrink_to_png", side_effect=lambda b: b), \
                patch("scan2text.adapters.vlm_ocr._prepare_views", side_effect=lambda img: [b"fake-image-bytes-1" if img.size == (80, 60) else b"fake-image-bytes-2"]), \
+              patch("scan2text.adapters.vlm_ocr.extract_and_save_image_crops", side_effect=lambda md, src, out: md), \
               patch("PIL.Image.open") as mock_img_open:
             mock_img_open.return_value.convert.return_value.size = (80, 60)
             mock_img_open.return_value.convert.return_value.__enter__ = lambda s: s
@@ -188,7 +189,8 @@ def test_ocr_pdf_uses_rendered_pages():
 
     with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSS, \
          patch("scan2text.adapters.vlm_ocr.Process") as MockProc, \
-         patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil:
+         patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil, \
+         patch("scan2text.adapters.vlm_ocr.extract_and_save_image_crops", side_effect=lambda md, src, out: md):
         mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
         mock_svc = MagicMock()
         mock_svc.load.return_value = AppSettings()
