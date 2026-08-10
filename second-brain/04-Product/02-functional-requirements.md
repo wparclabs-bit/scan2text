@@ -2,7 +2,7 @@
 
   
 
-Version: 1.9
+Version: 1.10
 Date: 2026-08-10
 Status: Approved for Implementation
 
@@ -33,7 +33,7 @@ Status: Approved for Implementation
 | 1.7 | 2026-08-07 | Hotfix finale (CEO-approved): shell = fixed inset-0 (absolute viewport lock; fractions decide, content never resizes panels); TopBar 34px with CENTER brand image text.png 153×34 alt="Scan2Text" + static glow, left = logo chip + DEMO intact (no literal text wordmark), all items vertically centered; Share moved to BottomBar RIGHT (click = soft toast, no navigation); BottomBar left empty, center telemetry (Worker Idle/Busy · RAM "—" until /health · version), pinned at any window size; Dropzone: dashed area fills card, bg image 15% opacity single-value size centered, header + footer bold ink, footer adds "max 10 files per batch", Dropzone ScrollArea removed; 10-file batch cap enforced; queue fixed 14px dot-only status slot (grey/yellow-spinner/green/red) with translated tooltips; depth = visible-subtle gradation; Preview header buttons borderless transparent with caramel hover; Radix ScrollArea tray neutralized via CSS override |
 | 1.8 | 2026-08-08 | Phase 6 closure deltas: fake progress bar deferred to v2/v3 (CEO 2026-08-08); 1vh TopBar gutter; pathological short-window accepted edge; queue empty-state final copy with per-locale icons; QA gate passed — Phase 6 COMPLETE |
 | 1.9 | 2026-08-10 | ADR-006 engine swap; FR-05/FR-06/FR-08 updated for OvisOCR2 and pypdfium2 verification. |
-| 1.10 | 2026-08-10 | PDF Inspector hard limits added to FR-03/FR-06/FR-11 (20MB / 20 pages, error code FILE_TOO_COMPLEX); Persistent Info Screen added to PRD §7 |
+| 1.10 | 2026-08-10 | ADR-007: Feedback button (Google Form + offline queue) in BottomBar next to Share; CPU auto budget 60% of logical cores; GDrive distribution + in-app first-run model downloader; monthly release cadence |
 
 
 ---
@@ -291,7 +291,7 @@ Acceptance Criteria:
 
 - Settings screen accessible from TopBar.
 
-- Settings: output_dir, max_pdf_pages, cpu_threads (0 = auto), check_updates_on_startup, language ("auto" default), theme.
+- Settings: output_dir, max_pdf_pages, cpu_threads (0 = auto = 60% of logical cores, floor, min 1; explicit values still override), check_updates_on_startup, language ("auto" default), theme.
 
 - Persist to `settings/settings.json`; theme/language also to localStorage.
 
@@ -324,6 +324,7 @@ Acceptance Criteria:
 - On launch only if enabled; non-blocking; silent fail offline.
 
 - Newer version → notification in top bar; no auto-install; manual download.
+- download_url may point to Google Drive (ADR-007).
 
   
 
@@ -483,3 +484,34 @@ Acceptance Criteria:
 - Themed for dark + light; does not shift centered telemetry.
 
 - Production share URL out of scope until post-GitHub swap.
+
+---
+
+### FR-16: Feedback Button (Google Form + Offline Queue)
+
+Description:
+BottomBar includes a feedback button next to Share; online click opens Google Form, offline click saves to local pending queue.
+
+Acceptance Criteria:
+- Icon-only button in BottomBar RIGHT zone immediately next to Share; no text label; translated tooltip.
+- Online: click opens FEEDBACK_FORM_URL in default browser (placeholder URL until CEO provides).
+- Offline: click opens in-app dialog with textarea (feedback message) + optional contact field; submit saves timestamped file to feedback/pending/.
+- On launch: if online and feedback/pending/ contains files, show toast with action that opens pre-filled form URL and moves file to feedback/sent/.
+- No silent auto-upload (NFR-02); user must explicitly trigger the form open action.
+- Dialog strings fully internationalized (EN + ID).
+
+---
+
+### FR-17: In-App First-Run Model Auto-Download
+
+Description:
+On first run when models/ is missing or incomplete, the app streams model GGUFs from the download_url (GDrive) into models/ with progress, cancel, and size verification.
+
+Acceptance Criteria:
+- Trigger: models/ directory missing expected GGUF files on first run.
+- Download target: streaming write to models/ via .part file then atomic rename on completion.
+- Expected-size verification: compare downloaded bytes against Content-Length / expected size; abort and show translated error on mismatch.
+- Progress indicator visible in UI; cancel button stops download and cleans up .part file.
+- Translated error messages for network failure, size mismatch, disk full, user-cancelled.
+- After successful download, app proceeds to normal startup.
+- download_url sourced from GitHub-hosted version.json (ADR-007).

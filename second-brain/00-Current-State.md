@@ -19,6 +19,8 @@ Next: Pre-GitHub cleanup executed; repo ready for public release.
 
 - **2026-08-10 (S5-S6):** Documentation wrap-up + pre-GitHub cleanup. OvisOCR2 engine fully ported (verbatim prompt, temp 0.1, full-page normalization). GFM table converter + chart crops active. Live fire integration test PASSED (adapter pipeline green; crops gated on VLM bbox img tags). Repo cleaned for public release.
 
+- **2026-08-10 (8.1):** ADR-007 signed — feedback GForm + offline queue, CPU 60% budget, GDrive distribution + in-app model downloader, monthly cadence. Docs locked; slices 8.2–8.7 next.
+
 ---
 ## Phase Status
 

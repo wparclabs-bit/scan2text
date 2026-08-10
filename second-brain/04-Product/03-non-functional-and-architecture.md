@@ -1,6 +1,6 @@
 # Non-Functional Requirements & Architecture — Scan2Text MVP
 
-Version: 1.10
+Version: 1.11
 Date: 2026-08-10
 Status: Approved for Implementation
 Format: clean non-table (CEO instruction)
@@ -18,6 +18,7 @@ Format: clean non-table (CEO instruction)
 - 1.8 — 2026-08-08 — Phase 6 closure: 1vh TopBar gutter; pathological short-window accepted edge; fake progress deferred to v2/v3; vault map per ADR-004; Phase 6 COMPLETE.
 - 1.9 — 2026-08-08 — ADR-005 consolidation: backend source of truth = src/scan2text; §13 repo tree updated; §14 canonical health = /api/health.
 - 1.10 — 2026-08-10 — ADR-006 engine swap; §12/§13 model lines updated; NFR-04 known-defect reference; NFR-06 model size note.
+- 1.11 — 2026-08-10 — ADR-007: CPU budget auto = 60% of logical cores; feedback folder in runtime tree; GDrive distribution + in-app downloader.
 
 ---
 
@@ -44,6 +45,7 @@ Format: clean non-table (CEO instruction)
 - CPU-only inference; no GPU required.
 - Zero-CPU idle decoration: all decorative UI (Queue radiant rays, brand glow) static; no ambient canvas/JS loops.
 - Internal scrolling must not reflow or page-scroll the shell.
+- CPU budget: auto threads = 60% of logical cores (floor, min 1) so the PC stays usable during OCR (CEO 2026-08-10).
 
 ### NFR-04: Accuracy
 
@@ -157,6 +159,9 @@ Scan2Text/
 ├── output/
 ├── settings/
 │   └── settings.json
+├── feedback/
+│   ├── pending/
+│   └── sent/
 └── logs/
     └── app.log
 ```
@@ -311,6 +316,8 @@ class UpdateInfo:
 - Source: GitHub-hosted version.json (version, date, download_url, model_version, notes).
 - Flow: launch → if enabled + online, fetch → if newer, notify in top bar → user downloads zip manually → replaces app files preserving settings/, output/, logs/.
 - Manual process; no self-updating executable.
+- Distribution: app zip + model GGUFs hosted on Google Drive (anyone-with-link); version.json remains GitHub-hosted as source of truth for update checks (ADR-007).
+- First-run model auto-download: streaming to models/ via .part then atomic rename, expected-size verification, progress + cancel UI, translated errors.
 
 ---
 
