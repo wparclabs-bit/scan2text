@@ -81,9 +81,12 @@ Phases 1-6 COMPLETE (Phase 6 closed 2026-08-08 @ 75bc720, 565 tests). Phase 7 NE
 - Batch cap 10; 50MB/file; PNG/JPG/JPEG/WEBP/PDF only; invalid batch = one aggregated toast.
 - Memory-only jobs; localStorage only theme + language.
 - Share = placeholder https://placeholder.local + soft toast, no navigation (real URL post-GitHub, CEO-approved).
-- Feedback button = icon-only in BottomBar RIGHT next to Share; Google Form when online; offline dialog saves to feedback/pending/; launch toast opens pre-filled form and moves file to feedback/sent/; NO silent auto-upload (NFR-02).
-- CPU auto budget: cpu_threads=0 = 60% of logical cores (floor, min 1); explicit values still override.
-- Distribution: app zip + model GGUFs on Google Drive (anyone-with-link); version.json stays GitHub-hosted; monthly release cadence, vigorously tested.
+- Feedback = GForm button left of Share + offline queue, no silent send (ADR-007).
+- CPU auto = 60% of logical cores (ADR-007).
+- Welcome expectations screen every launch until dismissed (ADR-007).
+- Binaries on GDrive, version.json on GitHub (ADR-007).
+- Monthly release cadence (ADR-007).
+- Logs: no file names, no content; 1 MB rotation (ADR-007).
 - i18n EN + ID for all UI strings; brand image alt="Scan2Text" is the only i18n-exempt brand element.
 - CEO taste overrides PRD: re-confirm layout deltas in writing before slicing. Layout-critical UI acceptance = CEO screenshot.
 
@@ -132,6 +135,9 @@ Misc:
 (6.16a-c): absence tests keep removed features removed (docs drift, tests remember); drag-over highlight needs enter/leave counter + onDragOver preventDefault (boolean flickers on child traversal); per-locale icon inside translation string = i18n owns the whole message (CEO decision 2026-08-08).
 - Non-technical users need non-technical feedback channels (GForm over GitHub Issues).
 - Cap CPU so the PC stays usable — a fast OCR that freezes the PC loses users.
+- Size-based log rotation beats calendar deletion — caps make failure impossible.
+- Opt-in send, never silent upload — privacy is a product feature.
+- GitHub noreply commit email keeps identity swappable.
 
 
 ## Phase 7 Lessons
