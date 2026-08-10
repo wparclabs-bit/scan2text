@@ -15,6 +15,8 @@ Next: Phase 7 continued — engine port slices S4-S6 per ADR-006.
 
 - **2026-08-10 (S2):** OvisOCR2 adapter port — vlm_ocr.py rewritten: verbatim OvisOCR2 prompt, temperature=0.1 + repeat_penalty=1.0, full-page _prepare_views (no tiling; _MAX_IMAGE_EDGE=2880, _MAX_PIXELS=4M), deleted _tile_image. Tests: 122 → 123 (+1). Port check PASS (biaya.jpg: 83.1s wall, 4616 chars, 27 <tr>, all 11 numerics present). tools/port_check.py created.
 
+- **2026-08-10 (S4):** Live fire integration test — ran tools/port_check.py on biaya.jpg through real VlmOcrAdapter (S2 engine + S3 postprocess). GFM Tables: PASS (285 pipe chars, valid GFM tables in output; VLM emits GFM directly not HTML <table>). Crops: FAIL (biaya_files/images/ dir created but empty — VLM emitted no <img> tags). Verdict: LIVE_FIRE_FAIL (crops missing). Adapter pipeline runs end-to-end without errors; crop extraction is gated on VLM emitting bbox img tags which this sample did not produce.
+
 ---
 ## Phase Status
 
