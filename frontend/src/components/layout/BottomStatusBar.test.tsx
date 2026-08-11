@@ -46,6 +46,11 @@ describe('BottomStatusBar structure', () => {
     expect(footer.innerHTML).toContain('grid-cols-')
   })
 
+  it('feedback button is present in right zone', () => {
+    render(<BottomStatusBar />)
+    expect(screen.getByTestId('feedback-button')).toBeInTheDocument()
+  })
+
   it('share button is present in right zone', () => {
     render(<BottomStatusBar />)
     expect(screen.getByTestId('share-button')).toBeInTheDocument()

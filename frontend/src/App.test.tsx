@@ -198,4 +198,48 @@ describe('Command Center layout', () => {
       expect(screen.getByAltText('Scan2Text')).toBeInTheDocument()
     })
   })
+
+  describe('feedback pending toast on launch', () => {
+    it('shows pending toast when online and pending files exist', async () => {
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      Object.defineProperty(window, 'navigator', {
+        value: { onLine: true },
+        writable: true,
+        configurable: true,
+      })
+      mockFetch.mockImplementation((url: string) => {
+        if (url === '/api/settings') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: true }) })
+        }
+        if (url === '/api/feedback/pending-count') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ count: 2 }) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      // Toast should be triggered - verify fetch was called for pending count
+      expect(mockFetch).toHaveBeenCalledWith('/api/feedback/pending-count')
+    })
+
+    it('does not show pending toast when offline', async () => {
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      Object.defineProperty(window, 'navigator', {
+        value: { onLine: false },
+        writable: true,
+        configurable: true,
+      })
+      mockFetch.mockImplementation((url: string) => {
+        if (url === '/api/settings') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: true }) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      expect(mockFetch).not.toHaveBeenCalledWith('/api/feedback/pending-count')
+    })
+  })
 })

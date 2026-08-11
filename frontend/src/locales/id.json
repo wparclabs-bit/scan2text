@@ -93,5 +93,18 @@
     "bullet4": "Output adalah Markdown sebaik mungkin — selalu periksa kembali angka-angka penting.",
     "dontShowAgain": "Jangan tampilkan lagi",
     "close": "Mulai"
+  },
+  "feedback": {
+    "tooltip": "Kirim masukan",
+    "title": "Kirim Masukan",
+    "messageLabel": "Masukan Anda",
+    "messagePlaceholder": "Ceritakan pendapat Anda...",
+    "contactLabel": "Email (opsional)",
+    "contactPlaceholder": "anda@contoh.com",
+    "submit": "Kirim",
+    "success": "Masukan tersimpan!",
+    "pendingToast": "Anda memiliki masukan tertunda.",
+    "pendingAction": "Kirim sekarang",
+    "formUrl": "https://placeholder.local/feedback"
   }
 }

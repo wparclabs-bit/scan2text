@@ -3,6 +3,7 @@ import { useScan2TextStore } from '@/stores/scan2text.store'
 import { Share } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
+import FeedbackButton from './FeedbackButton'
 
 const VERSION = 'v0.1.0-demo'
 const SHARE_URL = 'https://placeholder.local'
@@ -35,7 +36,8 @@ export default function BottomStatusBar() {
           <span className="h-px w-px bg-border" aria-hidden="true" />
           <span>{VERSION}</span>
         </div>
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-end gap-2">
+          <FeedbackButton onOfflineOpen={() => {}} />
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
