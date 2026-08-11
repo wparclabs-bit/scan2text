@@ -1,13 +1,17 @@
-<!-- PHASE-7-S8-7a-DOWNLOADER-STATE-2026-08-11 -->
-# Scan2Text Current State — Phase 7 S8.7a Model Downloader Service Complete
+<!-- PHASE-7-S8-7b-DOWNLOADER-UI-STATE-2026-08-11 -->
+# Scan2Text Current State — Phase 7 S8.7b Frontend Model Downloader UI Complete
 
 Date: 2026-08-11
-Phase: Phase 7 (Real Backend) — S8.7a COMPLETE
+Phase: Phase 7 (Real Backend) — S8.7b COMPLETE
 Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 186 green
-Frontend tests: 583 green
+Backend tests: 188 green
+Frontend tests: 589 green
 PRD: v1.10 source of truth in second-brain/04-Product/
-Next: Slice 8.7b — Frontend model downloader UI. No known bugs remaining.
+Next: Phase 7 continuation — ASR parked until Scan2Text ships.
+
+- **2026-08-11 (S8.7b):** Frontend model downloader full-screen modal built per ADR-007 Decision 4. New `ModelDownloaderModal` component (`fixed inset-0 z-50 bg-black/80`) with progress bar, byte counters, cancel button, and restart button for failed/cancelled states. Polls `GET /api/download/progress` every 1s; closes on 'complete'. App.tsx wired: checks `GET /api/download/status` on mount; if not 'complete', calls `POST /api/download/start` and opens modal; Welcome Screen renders ONLY after model is ready. Backend: added `GET /api/download/status` endpoint (+2 tests). i18n EN+ID for all downloader strings. Tests: frontend 583→589 (+6), backend 186→188 (+2).
+
+- **2026-08-11 (S8.7a):** Model downloader service + REST API per ADR-007 Decision 4. Backend: new `ModelDownloaderService` (singleton) in `src/scan2text/services/model_downloader_service.py` — streams from URL via stdlib `urllib.request`, writes to `.part`, verifies SHA256, atomically renames to `.gguf`; cancellation via threading Event; progress tracking (bytes_downloaded, total_bytes, status). New routes in `src/scan2text/routes/download.py`: POST /api/download/start, GET /api/download/progress, POST /api/download/cancel — wired into `main.py`. Tests: backend 174→186 (+12: 6 service unit tests + 6 API integration tests). No frontend changes (deferred to S8.7b).
 
 - **2026-08-11 (S8.7a):** Model downloader service + REST API per ADR-007 Decision 4. Backend: new `ModelDownloaderService` (singleton) in `src/scan2text/services/model_downloader_service.py` — streams from URL via stdlib `urllib.request`, writes to `.part`, verifies SHA256, atomically renames to `.gguf`; cancellation via threading Event; progress tracking (bytes_downloaded, total_bytes, status). New routes in `src/scan2text/routes/download.py`: POST /api/download/start, GET /api/download/progress, POST /api/download/cancel — wired into `main.py`. Tests: backend 174→186 (+12: 6 service unit tests + 6 API integration tests). No frontend changes (deferred to S8.7b).
 

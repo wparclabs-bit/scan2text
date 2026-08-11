@@ -97,6 +97,41 @@ class TestDownloadStart:
         assert response.status_code == 500
 
 
+class TestDownloadStatus:
+    def test_get_download_status_returns_state(self, app):
+        api_app = app
+        with patch("scan2text.routes.download._download_svc") as mock_svc:
+            mock_svc.get_progress.return_value = {
+                "status": "complete",
+                "bytes_downloaded": 1024,
+                "total_bytes": 1024,
+                "error_message": None,
+            }
+            with TestClient(api_app) as client:
+                response = client.get("/api/download/status")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "complete"
+        assert data["bytes_downloaded"] == 1024
+        assert data["total_bytes"] == 1024
+
+    def test_get_download_status_defaults_when_idle(self, app):
+        api_app = app
+        with patch("scan2text.routes.download._download_svc") as mock_svc:
+            mock_svc.get_progress.return_value = {
+                "status": "idle",
+                "bytes_downloaded": 0,
+                "total_bytes": 0,
+                "error_message": None,
+            }
+            with TestClient(api_app) as client:
+                response = client.get("/api/download/status")
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "idle"
+
+
 class TestDownloadProgress:
     def test_get_download_progress_returns_state(self, app):
         api_app = app
