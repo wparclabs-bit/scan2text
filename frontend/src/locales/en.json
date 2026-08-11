@@ -93,5 +93,18 @@
     "bullet4": "Output is best-effort Markdown — always double-check important numbers.",
     "dontShowAgain": "Don't show this again",
     "close": "Get Started"
+  },
+  "feedback": {
+    "tooltip": "Send feedback",
+    "title": "Send Feedback",
+    "messageLabel": "Your feedback",
+    "messagePlaceholder": "Tell us what you think...",
+    "contactLabel": "Email (optional)",
+    "contactPlaceholder": "you@example.com",
+    "submit": "Send",
+    "success": "Feedback saved!",
+    "pendingToast": "You have pending feedback to send.",
+    "pendingAction": "Send now",
+    "formUrl": "https://placeholder.local/feedback"
   }
 }

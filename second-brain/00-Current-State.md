@@ -1,13 +1,17 @@
-<!-- PHASE-7-S8-3-CPU-BUDGET-STATE-2026-08-11 -->
-# Scan2Text Current State — Phase 7 S8.3 Complete
+<!-- PHASE-7-S8-5-PRIVACY-FILTER-STATE-2026-08-11 -->
+# Scan2Text Current State — Phase 7 S8.5 Complete
 
 Date: 2026-08-11
-Phase: Phase 7 (Real Backend) — S8.3 COMPLETE
+Phase: Phase 7 (Real Backend) — S8.5 COMPLETE
 Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 155 green (146 baseline + 9 new: cpu_budget auto-calc + vlm_ocr integration)
-Frontend tests: 571 green (unchanged)
+Backend tests: 174 green (146 baseline + 28 new: logging privacy + feedback service + API endpoints)
+Frontend tests: 583 green (571 baseline + 12 new: FeedbackDialog + FeedbackButton + App pending toast)
 PRD: v1.10 source of truth in second-brain/04-Product/
-Next: ADR-007 slices 8.4–8.7 — welcome screen, log rotation, model downloader, release cadence.
+Next: ADR-007 slices 8.6–8.7 — model downloader, release cadence. Known bug: test_feedback_service.py::test_returns_correct_count (2 == 3) remains for separate slice.
+
+- **2026-08-11 (8.5):** PrivacyFilter implemented per ADR-007 Decision 5. logging_service.py gains PrivacyFilter (logging.Filter subclass) that strips file paths (.pdf/.jpg/.png/.webp/.md/.txt + Windows paths) → [FILE_REDACTED] and redacts string args >40 chars → [REDACTED]. StructuredFormatter added for JSON OCR event logs with allowed-fields filter. RotatingFileHandler configured maxBytes=1MB, backupCount=1. PrivacyFilter wired into all handlers. setup_logging uses StructuredFormatter by default. Tests: 166→174 (+8). Known bug: test_feedback_service.py::test_returns_correct_count (2==3) remains.
+
+- **2026-08-11 (8.4):** Feedback button built per ADR-007 Decision 1. Backend: new FeedbackService (save_pending_feedback, get_pending_count, move_pending_to_sent) + POST /api/feedback, GET /api/feedback/pending-count, POST /api/feedback/mark-sent routes. Frontend: icon-only FeedbackButton (MessageSquare) in BottomBar RIGHT zone left of Share; online opens FEEDBACK_FORM_URL in browser, offline opens in-app FeedbackDialog (textarea required min 10 chars + optional contact email); launch-time pending toast with action button when online + pending files exist. i18n EN+ID. NO silent auto-upload. Tests: backend 155→166 (+11), frontend 571→583 (+12).
 
 - **2026-08-11 (8.3):** CPU budget auto-calculation implemented per ADR-007 Decision 2. When cpu_threads=0 in settings, backend calculates floor(logical_cores * 0.6) with minimum 1 thread via new src/scan2text/utils/cpu_budget.py::calculate_auto_threads(). Integrated into VlmOcrAdapter.__init__() in vlm_ocr.py. Tests: 146 → 155 (+9: 7 cpu_budget unit tests + 2 vlm_ocr integration tests). Prevents PC freezing during OCR while maximizing throughput.
 

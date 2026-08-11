@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from scan2text.api.websocket_manager import ConnectionManager
 from scan2text.routes import health as health_routes
 from scan2text.routes import settings as settings_routes
+from scan2text.routes import feedback as feedback_routes
 from scan2text.services.queue_service import QueueService
 from scan2text.adapters.vlm_ocr import VlmOcrAdapter
 
@@ -57,6 +58,7 @@ app.add_middleware(
 
 app.include_router(health_routes.router)
 app.include_router(settings_routes.router)
+app.include_router(feedback_routes.router)
 
 
 UPLOADS_DIR = Path(__file__).resolve().parents[3] / "uploads"
