@@ -1,13 +1,17 @@
-<!-- PHASE-7-S3-UPGRADE-STATE-2026-08-11 -->
-# Scan2Text Current State — Phase 7 S3 Upgrade Complete
+<!-- PHASE-7-S8-3-CPU-BUDGET-STATE-2026-08-11 -->
+# Scan2Text Current State — Phase 7 S8.3 Complete
 
 Date: 2026-08-11
-Phase: Phase 7 (Real Backend) — S3 Upgrade COMPLETE
+Phase: Phase 7 (Real Backend) — S8.3 COMPLETE
 Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 146 green (143 baseline + 3 new: hide_welcome_notice persistence)
-Frontend tests: 571 green (565 baseline + 6 new: WelcomeModal component)
+Backend tests: 155 green (146 baseline + 9 new: cpu_budget auto-calc + vlm_ocr integration)
+Frontend tests: 571 green (unchanged)
 PRD: v1.10 source of truth in second-brain/04-Product/
-Next: ADR-007 slice 8.3 — feedback GForm button.
+Next: ADR-007 slices 8.4–8.7 — welcome screen, log rotation, model downloader, release cadence.
+
+- **2026-08-11 (8.3):** CPU budget auto-calculation implemented per ADR-007 Decision 2. When cpu_threads=0 in settings, backend calculates floor(logical_cores * 0.6) with minimum 1 thread via new src/scan2text/utils/cpu_budget.py::calculate_auto_threads(). Integrated into VlmOcrAdapter.__init__() in vlm_ocr.py. Tests: 146 → 155 (+9: 7 cpu_budget unit tests + 2 vlm_ocr integration tests). Prevents PC freezing during OCR while maximizing throughput.
+
+- **2026-08-11 (S4-Rerun):** CLI smoke test script created at tools/smoke_test_s4.py. Runs samples/biaya.jpg through full backend pipeline (VlmOcrAdapter → postprocess → OutputService.write). PASS: biaya.jpg processed end-to-end. Output: 3352 bytes, 28 GFM table lines (336 pipe chars), 0 crops (no bbox tags emitted), 92s wall time. Full pipeline validated. Exit code 0.
 
 - **2026-08-10 (S1):** ADR-006 signed. OvisOCR2 is the sole engine (GLM removed from codebase, external backup retained). S1 docs + cleanup complete. S2-S6 port planned.
 

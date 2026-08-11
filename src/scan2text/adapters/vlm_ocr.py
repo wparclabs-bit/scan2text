@@ -21,6 +21,7 @@ import psutil
 
 from scan2text.models.settings import AppSettings
 from scan2text.services.path_service import PathService
+from scan2text.utils.cpu_budget import calculate_auto_threads
 from scan2text.services.postprocess_service import (
     convert_html_tables_to_gfm,
     extract_and_save_image_crops,
@@ -158,7 +159,12 @@ class VlmOcrAdapter:
         self._model_path = str(paths.resolve_model_path(settings.model_path or "models/vlm.gguf"))
         self._mmproj_path = str(paths.resolve_model_path(settings.mmproj_path or "models/mmproj.gguf"))
         self._n_ctx = settings.n_ctx
-        self._n_threads = settings.n_threads or settings.cpu_threads or (os.cpu_count() or 1)
+        self._n_threads = calculate_auto_threads(settings.n_threads or settings.cpu_threads)
+        logger.info(
+            "Auto-calculated %d threads for %d logical cores",
+            self._n_threads,
+            os.cpu_count() or 1,
+        )
         self._timeout = settings.ocr_timeout_seconds
         self._max_pdf_pages = settings.max_pdf_pages
 
