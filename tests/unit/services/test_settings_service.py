@@ -70,3 +70,23 @@ class TestSettingsAtomicSave:
         assert settings_file.exists()
         data = json.loads(settings_file.read_text(encoding="utf-8"))
         assert data["output_dir"] == "/test"
+
+
+class TestHideWelcomeNotice:
+    def test_default_value_is_false(self):
+        settings = AppSettings()
+        assert settings.hide_welcome_notice is False
+
+    def test_save_and_load_hide_welcome_notice(self, tmp_path):
+        paths = PathService(base_dir=str(tmp_path))
+        svc = SettingsService(path_service=paths)
+        original = AppSettings(hide_welcome_notice=True)
+        svc.save(original)
+        loaded = svc.load()
+        assert loaded.hide_welcome_notice is True
+
+    def test_load_missing_file_defaults_to_false(self, tmp_path):
+        paths = PathService(base_dir=str(tmp_path))
+        svc = SettingsService(path_service=paths)
+        settings = svc.load()
+        assert settings.hide_welcome_notice is False

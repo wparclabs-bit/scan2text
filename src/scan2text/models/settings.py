@@ -11,6 +11,7 @@ class AppSettings(BaseModel):
     check_updates_on_startup: bool = True
     language: str = "auto"
     theme: str = "dark"
+    hide_welcome_notice: bool = False
 
     # Engine (JSON-only advanced knobs, ADR-005; no UI in MVP)
     model_path: str = ""
