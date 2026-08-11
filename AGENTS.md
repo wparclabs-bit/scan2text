@@ -141,6 +141,7 @@ Misc:
 
 
 ## Phase 7 Lessons
+- CRITICAL: Always use `py -3.12` for backend tests and commands, NEVER bare `python`. System default Python may be 3.14+ which lacks native wheels for llama-cpp-python and other dependencies. Lock the interpreter by evidence (the working command), never by memory. If you see Python 3.14 warnings about httpx2 or missing wheels, STOP and switch to py -3.12 immediately.
 - Lock the project interpreter with py -3.12; system default Python may be too new for native wheels.
 - Backend binds 127.0.0.1 only; local-first means localhost-first.
 - py -3.12 launcher bypasses venvs; lock the interpreter by evidence (the bench command), never by memory.
