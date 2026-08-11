@@ -124,3 +124,141 @@ class TestExtractAndSaveImageCrops:
         result = extract_and_save_image_crops(markdown, source, md_path)
         # Should not crash; original tag may be preserved or rewritten safely
         assert "bbox_500_100_200_400.jpg" in result
+
+    def test_messy_unclosed_tags(self):
+        """HTML with missing closing td and tr tags must still produce valid GFM."""
+        html = (
+            '<table>'
+            '<tr><td>Header A<td>Header B'
+            '<tr><td>Row1 Col1<td>Row1 Col2'
+            '</table>'
+        )
+        result = convert_html_tables_to_gfm(html)
+        assert "| Header A | Header B |" in result
+        assert "|---|---|" in result
+        assert "| Row1 Col1 | Row1 Col2 |" in result
+
+    def test_merged_cells_rowspan_colspan(self):
+        """A cell with rowspan=2 colspan=2 must duplicate its text into all 4 covered grid positions."""
+        html = (
+            '<table>'
+            '<tr><th colspan="2">Merged</th><th>Single</th></tr>'
+            '<tr><td rowspan="2" colspan="2">Span2x2</td><td>A</td></tr>'
+            '<tr><td>B</td></tr>'
+            '</table>'
+        )
+        result = convert_html_tables_to_gfm(html)
+        lines = result.split("\n")
+        # Header row: 3 cols (Merged duplicated across 2, Single)
+        assert lines[0] == "| Merged | Merged | Single |"
+        # First data row: Span2x2 covers col0+col1, then A
+        assert lines[2] == "| Span2x2 | Span2x2 | A |"
+        # Second data row: Span2x2 continues in col0+col1, then B
+        assert lines[3] == "| Span2x2 | Span2x2 | B |"
+
+    def test_ragged_rows_pad_and_truncate(self):
+        """Header has 2 cols. Row with 1 col gets padded. Row with 3 cols gets truncated."""
+        html = (
+            '<table>'
+            '<tr><th>Col1</th><th>Col2</th></tr>'
+            '<tr><td>OnlyOne</td></tr>'
+            '<tr><td>A</td><td>B</td><td>C</td></tr>'
+            '</table>'
+        )
+        result = convert_html_tables_to_gfm(html)
+        lines = result.split("\n")
+        # Header: 2 cols
+        assert lines[0] == "| Col1 | Col2 |"
+        # Padded row: 1 col -> 2 cols
+        assert lines[2] == "| OnlyOne |  |"
+        # Truncated row: 3 cols -> 2 cols
+        assert lines[3] == "| A | B |"
+
+    def test_headerless_table_promotes_first_row(self):
+        """Table with only td elements (no th) must use first row as header."""
+        html = (
+            '<table>'
+            '<tr><td>Name</td><td>Age</td></tr>'
+            '<tr><td>Alice</td><td>30</td></tr>'
+            '</table>'
+        )
+        result = convert_html_tables_to_gfm(html)
+        lines = result.split("\n")
+        assert lines[0] == "| Name | Age |"
+        assert lines[1] == "|---|---|"
+        assert lines[2] == "| Alice | 30 |"
+
+    def test_line_breaks_flattened_to_spaces(self):
+        """br tags inside cells become spaces, not newlines."""
+        html = (
+            '<table>'
+            '<tr><td>Line1<br>Line2</td><td>Plain</td></tr>'
+            '</table>'
+        )
+        result = convert_html_tables_to_gfm(html)
+        assert "Line1 Line2" in result
+        # Only allowed newline is between header and separator row
+        without_separator = result.split("\n|---|")[0]
+        assert "\n" not in without_separator
+
+    def test_ghost_table_reverts_to_plain_text(self):
+        """Table with header but zero data rows outputs plain text without pipe characters."""
+        html = (
+            '<table>'
+            '<tr><th>Name</th><th>Age</th></tr>'
+            '</table>'
+        )
+        result = convert_html_tables_to_gfm(html)
+        # Ghost table: no pipe chars, just the header text
+        assert "|" not in result
+        assert "Name" in result
+        assert "Age" in result
+
+    def test_crop_clamp_coordinates(self, tmp_path):
+        """Feed synthetic bbox coordinates that exceed image dimensions. Assert clamped, not crashed."""
+        img = Image.new("RGB", (1000, 1000), color="red")
+        source = tmp_path / "doc.png"
+        img.save(source)
+        md_path = tmp_path / "output.md"
+        # x2=2000 on a 1000px image -> should clamp to 1000
+        markdown = '<img src="images/bbox_0_0_2000_1000.jpg" />'
+        result = extract_and_save_image_crops(markdown, source, md_path)
+        expected_dir = tmp_path / "output_files" / "images"
+        crop_file = expected_dir / "bbox_0_0_2000_1000.jpg"
+        assert crop_file.exists()
+        with Image.open(crop_file) as crop_img:
+            assert crop_img.size == (1000, 1000)
+        assert "./output_files/images/bbox_0_0_2000_1000.jpg" in result
+
+    def test_crop_reject_tiny(self, tmp_path, caplog):
+        """Feed synthetic bbox that produces a 5x5 pixel crop. Assert skipped and warning logged."""
+        import logging
+        img = Image.new("RGB", (1000, 1000), color="blue")
+        source = tmp_path / "doc.png"
+        img.save(source)
+        md_path = tmp_path / "output.md"
+        # bbox_0_0_5_5 -> scaled to 0,0,5,5 on 1000px image = 5x5 pixels
+        markdown = '<img src="images/bbox_0_0_5_5.jpg" />'
+        with caplog.at_level(logging.WARNING, logger="scan2text"):
+            result = extract_and_save_image_crops(markdown, source, md_path)
+        # Crop should be skipped — original tag preserved
+        assert "bbox_0_0_5_5.jpg" in result
+        expected_dir = tmp_path / "output_files" / "images"
+        assert not (expected_dir / "bbox_0_0_5_5.jpg").exists()
+        assert any("too small" in record.message.lower() for record in caplog.records)
+
+    def test_crop_accept_minimum(self, tmp_path):
+        """Feed synthetic bbox that produces exactly a 20x20 pixel crop. Assert saved successfully."""
+        img = Image.new("RGB", (1000, 1000), color="green")
+        source = tmp_path / "doc.png"
+        img.save(source)
+        md_path = tmp_path / "output.md"
+        # bbox_0_0_20_20 -> scaled to 0,0,20,20 on 1000px image = 20x20 pixels
+        markdown = '<img src="images/bbox_0_0_20_20.jpg" />'
+        result = extract_and_save_image_crops(markdown, source, md_path)
+        expected_dir = tmp_path / "output_files" / "images"
+        crop_file = expected_dir / "bbox_0_0_20_20.jpg"
+        assert crop_file.exists()
+        with Image.open(crop_file) as crop_img:
+            assert crop_img.size == (20, 20)
+        assert "./output_files/images/bbox_0_0_20_20.jpg" in result
