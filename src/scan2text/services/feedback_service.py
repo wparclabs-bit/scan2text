@@ -46,9 +46,18 @@ class FeedbackService:
             "version": "1.0.0",
         }
         target = pending / filename
+        if target.exists():
+            base = filename[:-5]
+            suffix = 2
+            while True:
+                candidate = pending / f"{base}_{suffix}.json"
+                if not candidate.exists():
+                    target = candidate
+                    break
+                suffix += 1
         target.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
         logger.info("Saved pending feedback to %s", target)
-        return filename
+        return target.name
 
     def get_pending_count(self) -> int:
         """Return the number of files in feedback/pending/."""
