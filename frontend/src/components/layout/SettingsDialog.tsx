@@ -112,8 +112,22 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
           </div>
         </div>
 
+        {/* Re-open Welcome Screen */}
+        <div className="pt-4 border-t">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              onOpenChange(false)
+              window.location.reload()
+            }}
+          >
+            {t('settings.reopenWelcome')}
+          </Button>
+        </div>
+
         {/* Close Button */}
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-end pt-2">
           <Button onClick={() => onOpenChange(false)}>Close</Button>
         </div>
       </DialogContent>

@@ -4,10 +4,10 @@
 Date: 2026-08-11
 Phase: Phase 7 (Real Backend) — S3 Upgrade COMPLETE
 Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 143 green (134 baseline + 9 new: 7 table parser + 2 crop guardrail)
-Frontend tests: 565 green (unchanged; S3 is backend-only)
+Backend tests: 146 green (143 baseline + 3 new: hide_welcome_notice persistence)
+Frontend tests: 571 green (565 baseline + 6 new: WelcomeModal component)
 PRD: v1.10 source of truth in second-brain/04-Product/
-Next: S4 live-fire integration test on real VLM output.
+Next: ADR-007 slice 8.3 — feedback GForm button.
 
 - **2026-08-10 (S1):** ADR-006 signed. OvisOCR2 is the sole engine (GLM removed from codebase, external backup retained). S1 docs + cleanup complete. S2-S6 port planned.
 
@@ -22,6 +22,8 @@ Next: S4 live-fire integration test on real VLM output.
 - **2026-08-10 (8.1):** ADR-007 signed — feedback GForm + offline queue, CPU 60% budget, GDrive distribution + in-app model downloader, monthly cadence. Docs locked; slices 8.2–8.7 next.
 
 - **2026-08-10 (8.2):** ADR-007 signed — feedback GForm + offline queue, CPU auto 60%, welcome expectations screen, GDrive distribution + in-app model downloader, logs no file names + 1 MB rotation, monthly cadence. PRD 01/02 → 1.10, 03 → 1.11, 04 → 1.10. docs/JOURNEY.md skeleton created.
+
+- **2026-08-11 (8.2):** Welcome expectations screen built per ADR-007. Modal shows on launch until dismissed. Backend: hide_welcome_notice field in AppSettings (default=False). Frontend: WelcomeModal component with 4 bullets (EN+ID), checkbox persists via PUT /api/settings, re-open button in SettingsDialog. Tests: backend 143→146 (+3), frontend 565→571 (+6).
 
 ---
 ## Phase Status

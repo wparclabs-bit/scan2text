@@ -1,0 +1,103 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import WelcomeModal from './WelcomeModal'
+
+describe('WelcomeModal', () => {
+  let mockFetch: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFetch = vi.fn()
+    vi.stubGlobal('fetch', mockFetch)
+  })
+
+  it('renders when hide_welcome_notice is false', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ hide_welcome_notice: false }),
+    })
+    render(<WelcomeModal />)
+    await waitFor(() => {
+      expect(screen.getByText('Welcome to Scan2Text')).toBeInTheDocument()
+    })
+  })
+
+  it('does not render when hide_welcome_notice is true', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ hide_welcome_notice: true }),
+    })
+    const { container } = render(<WelcomeModal />)
+    await waitFor(() => {
+      expect(container.firstChild).toBeNull()
+    })
+  })
+
+  it('renders all 4 bullets with correct i18n keys', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ hide_welcome_notice: false }),
+    })
+    render(<WelcomeModal />)
+    await waitFor(() => {
+      expect(screen.getByText(/Works fully offline/)).toBeInTheDocument()
+      expect(screen.getByText(/No accounts, no telemetry/)).toBeInTheDocument()
+      expect(screen.getByText(/Big or dense files/)).toBeInTheDocument()
+      expect(screen.getByText(/best-effort Markdown/)).toBeInTheDocument()
+    })
+  })
+
+  it('checkbox toggles state', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ hide_welcome_notice: false }),
+    })
+    render(<WelcomeModal />)
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox')).toBeInTheDocument()
+    })
+    const checkbox = screen.getByRole('checkbox') as HTMLInputElement
+    expect(checkbox).not.toBeChecked()
+    fireEvent.click(checkbox)
+    expect(checkbox).toBeChecked()
+  })
+
+  it('calls PUT /api/settings when "Don\'t show again" is checked', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ hide_welcome_notice: false }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ hide_welcome_notice: true }),
+      })
+    render(<WelcomeModal />)
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox')).toBeInTheDocument()
+    })
+    const checkbox = screen.getByRole('checkbox') as HTMLInputElement
+    fireEvent.click(checkbox)
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/settings',
+        expect.objectContaining({
+          method: 'PUT',
+          headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ hide_welcome_notice: true }),
+        })
+      )
+    })
+  })
+
+  it('renders close button with translated text', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ hide_welcome_notice: false }),
+    })
+    render(<WelcomeModal />)
+    await waitFor(() => {
+      expect(screen.getByText('Get Started')).toBeInTheDocument()
+    })
+  })
+})

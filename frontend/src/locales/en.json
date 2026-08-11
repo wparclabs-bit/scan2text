@@ -82,6 +82,16 @@
     "maxPdfPages": "\ud83d\udd12 Max PDF Pages",
     "cpuThreads": "\ud83d\udd12 CPU Threads",
     "demoModeSwitch": "Demo mode",
-    "locked": "Locked in demo mode"
+    "locked": "Locked in demo mode",
+    "reopenWelcome": "Re-open Welcome Screen"
+  },
+  "welcome": {
+    "title": "Welcome to Scan2Text",
+    "bullet1": "Works fully offline; your files never leave this PC.",
+    "bullet2": "No accounts, no telemetry, no document content or file names in logs.",
+    "bullet3": "Big or dense files can take several minutes; the app stays responsive.",
+    "bullet4": "Output is best-effort Markdown — always double-check important numbers.",
+    "dontShowAgain": "Don't show this again",
+    "close": "Get Started"
   }
 }

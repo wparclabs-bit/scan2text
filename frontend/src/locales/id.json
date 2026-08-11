@@ -82,6 +82,16 @@
     "maxPdfPages": "\ud83d\udd12 Maks Halaman PDF",
     "cpuThreads": "\ud83d\udd12 Thread CPU",
     "demoModeSwitch": "Mode demo",
-    "locked": "Terkunci dalam mode demo"
+    "locked": "Terkunci dalam mode demo",
+    "reopenWelcome": "Buka kembali Layar Sambutan"
+  },
+  "welcome": {
+    "title": "Selamat datang di Scan2Text",
+    "bullet1": "Bekerja sepenuhnya offline; file Anda tidak pernah meninggalkan PC ini.",
+    "bullet2": "Tanpa akun, tanpa telemetri, tanpa isi dokumen atau nama file di log.",
+    "bullet3": "File besar atau padat bisa memakan waktu beberapa menit; aplikasi tetap responsif.",
+    "bullet4": "Output adalah Markdown sebaik mungkin — selalu periksa kembali angka-angka penting.",
+    "dontShowAgain": "Jangan tampilkan lagi",
+    "close": "Mulai"
   }
 }
