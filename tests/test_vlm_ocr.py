@@ -271,3 +271,74 @@ def test_worker_is_daemon_so_parent_can_exit():
         VlmOcrAdapter()
         assert mock_proc.daemon is True
         mock_proc.start.assert_called_once()
+
+
+class TestVlmOcrCpuBudgetIntegration:
+    def test_auto_calculation_when_cpu_threads_zero(self, tmp_scan2text):
+        """When cpu_threads=0, calculate_auto_threads is used (auto mode)."""
+        from scan2text.models.settings import AppSettings
+
+        settings_data = {
+            "output_dir": "",
+            "max_pdf_pages": 20,
+            "cpu_threads": 0,
+            "n_threads": 0,
+            "check_updates_on_startup": True,
+            "model_path": str(tmp_scan2text / "models" / "model.gguf"),
+        }
+        settings_file = tmp_scan2text / "settings" / "settings.json"
+        settings_file.write_text(json.dumps(settings_data), encoding="utf-8")
+
+        with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSS, \
+             patch("scan2text.adapters.vlm_ocr.Process") as MockProc, \
+             patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil, \
+             patch("scan2text.adapters.vlm_ocr.calculate_auto_threads") as mock_calc, \
+             patch("scan2text.adapters.vlm_ocr.os.cpu_count", return_value=8):
+            mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
+            mock_svc = MagicMock()
+            mock_svc.load.return_value = AppSettings(**settings_data)
+            MockSS.return_value = mock_svc
+            mock_proc = MagicMock()
+            mock_proc.pid = 42
+            MockProc.return_value = mock_proc
+            mock_calc.return_value = 4
+
+            from scan2text.adapters.vlm_ocr import VlmOcrAdapter
+            adapter = VlmOcrAdapter()
+
+            mock_calc.assert_called_once_with(0)
+            assert adapter._n_threads == 4
+
+    def test_explicit_threads_used_when_cpu_threads_positive(self, tmp_scan2text):
+        """When cpu_threads>0, explicit value is used (override mode)."""
+        from scan2text.models.settings import AppSettings
+
+        settings_data = {
+            "output_dir": "",
+            "max_pdf_pages": 20,
+            "cpu_threads": 6,
+            "n_threads": 0,
+            "check_updates_on_startup": True,
+            "model_path": str(tmp_scan2text / "models" / "model.gguf"),
+        }
+        settings_file = tmp_scan2text / "settings" / "settings.json"
+        settings_file.write_text(json.dumps(settings_data), encoding="utf-8")
+
+        with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSS, \
+             patch("scan2text.adapters.vlm_ocr.Process") as MockProc, \
+             patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil, \
+             patch("scan2text.adapters.vlm_ocr.calculate_auto_threads") as mock_calc:
+            mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
+            mock_svc = MagicMock()
+            mock_svc.load.return_value = AppSettings(**settings_data)
+            MockSS.return_value = mock_svc
+            mock_proc = MagicMock()
+            mock_proc.pid = 43
+            MockProc.return_value = mock_proc
+            mock_calc.return_value = 6
+
+            from scan2text.adapters.vlm_ocr import VlmOcrAdapter
+            adapter = VlmOcrAdapter()
+
+            mock_calc.assert_called_once_with(6)
+            assert adapter._n_threads == 6
