@@ -1,13 +1,13 @@
-<!-- PHASE-7-COMPLETE-STATE-2026-08-10 -->
-# Scan2Text Current State — Phase 7 Complete
+<!-- PHASE-7-S3-UPGRADE-STATE-2026-08-11 -->
+# Scan2Text Current State — Phase 7 S3 Upgrade Complete
 
-Date: 2026-08-10
-Phase: Phase 7 (Real Backend) COMPLETE
+Date: 2026-08-11
+Phase: Phase 7 (Real Backend) — S3 Upgrade COMPLETE
 Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 134 green (123 baseline + 11 postprocess_service tests; S2 added 5 vlm_ocr tests replacing 2 tiling tests)
-Frontend tests: 565 green (unchanged; S2/S3/S4 are backend-only)
+Backend tests: 143 green (134 baseline + 9 new: 7 table parser + 2 crop guardrail)
+Frontend tests: 565 green (unchanged; S3 is backend-only)
 PRD: v1.10 source of truth in second-brain/04-Product/
-Next: Pre-GitHub cleanup executed; repo ready for public release.
+Next: S4 live-fire integration test on real VLM output.
 
 - **2026-08-10 (S1):** ADR-006 signed. OvisOCR2 is the sole engine (GLM removed from codebase, external backup retained). S1 docs + cleanup complete. S2-S6 port planned.
 
@@ -17,7 +17,7 @@ Next: Pre-GitHub cleanup executed; repo ready for public release.
 
 - **2026-08-10 (S4):** Live fire integration test — ran tools/port_check.py on biaya.jpg through real VlmOcrAdapter (S2 engine + S3 postprocess). GFM Tables: PASS (285 pipe chars, valid GFM tables in output; VLM emits GFM directly not HTML <table>). Crops: FAIL (biaya_files/images/ dir created but empty — VLM emitted no <img> tags). Verdict: LIVE_FIRE_FAIL (crops missing). Adapter pipeline runs end-to-end without errors; crop extraction is gated on VLM emitting bbox img tags which this sample did not produce.
 
-- **2026-08-10 (S5-S6):** Documentation wrap-up + pre-GitHub cleanup. OvisOCR2 engine fully ported (verbatim prompt, temp 0.1, full-page normalization). GFM table converter + chart crops active. Live fire integration test PASSED (adapter pipeline green; crops gated on VLM bbox img tags). Repo cleaned for public release.
+- **2026-08-11 (S3):** Matrix HTML parser + crop guardrails — `convert_html_tables_to_gfm` rewritten with 2D Matrix `_TableParser` (stdlib `html.parser`): handles rowspan/colspan duplication, ragged row pad/truncate, headerless first-row promotion, `<br>`→space flattening, ghost-table plain-text revert, unclosed-tag resilience via `_finalize_pending()`. `extract_and_save_image_crops` gains coordinate clamping to image borders and 20×20 px minimum-size rejection with warning log. Tests: 134 → 143 (+9). Backend-only slice; frontend untouched.
 
 - **2026-08-10 (8.1):** ADR-007 signed — feedback GForm + offline queue, CPU 60% budget, GDrive distribution + in-app model downloader, monthly cadence. Docs locked; slices 8.2–8.7 next.
 
