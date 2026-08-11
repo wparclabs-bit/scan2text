@@ -1,0 +1,168 @@
+"""Model downloader service — streams model from remote URL, verifies SHA256, atomically renames."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import logging
+import threading
+import urllib.request
+from urllib.request import urlopen
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
+
+_VERSION_JSON = "version.json"
+_CHUNK_SIZE = 1 * 1024 * 1024  # 1 MB
+
+
+class ModelDownloaderService:
+    """Singleton-like service that downloads the OCR model with progress tracking."""
+
+    def __init__(self, app_root: Optional[Path] = None) -> None:
+        self._app_root = app_root or Path.cwd()
+        self._status: str = "idle"
+        self._bytes_downloaded: int = 0
+        self._total_bytes: int = 0
+        self._error_message: Optional[str] = None
+        self._cancel_event = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        self._lock = threading.Lock()
+
+    @property
+    def status(self) -> str:
+        return self._status
+
+    @property
+    def bytes_downloaded(self) -> int:
+        return self._bytes_downloaded
+
+    @property
+    def total_bytes(self) -> int:
+        return self._total_bytes
+
+    @property
+    def error_message(self) -> Optional[str]:
+        return self._error_message
+
+    def get_progress(self) -> Dict[str, Any]:
+        with self._lock:
+            return {
+                "status": self._status,
+                "bytes_downloaded": self._bytes_downloaded,
+                "total_bytes": self._total_bytes,
+                "error_message": self._error_message,
+            }
+
+    def start_download(self) -> None:
+        """Read version.json and spawn a background thread to stream the model."""
+        with self._lock:
+            if self._status == "downloading":
+                return
+            self._cancel_event.clear()
+            self._status = "idle"
+            self._bytes_downloaded = 0
+            self._error_message = None
+
+        version_path = self._app_root / _VERSION_JSON
+        if not version_path.exists():
+            with self._lock:
+                self._status = "failed"
+                self._error_message = "version.json not found"
+            return
+
+        try:
+            version_data = json.loads(version_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            with self._lock:
+                self._status = "failed"
+                self._error_message = f"Failed to read version.json: {exc}"
+            return
+
+        url = version_data.get("model_download_url")
+        expected_sha256 = version_data.get("model_sha256")
+        model_version = version_data.get("model_version", "model")
+        declared_size = version_data.get("model_size_bytes", 0)
+
+        if not url:
+            with self._lock:
+                self._status = "failed"
+                self._error_message = "model_download_url not set in version.json"
+            return
+
+        models_dir = self._app_root / "models"
+        models_dir.mkdir(parents=True, exist_ok=True)
+        part_path = models_dir / f"{model_version}.part"
+        final_path = models_dir / f"{model_version}.gguf"
+
+        def _download() -> None:
+            try:
+                req = urllib.request.Request(url)
+                with urlopen(req) as resp:
+                    content_length = resp.getheader("Content-Length")
+                    total = int(content_length) if content_length else declared_size or 0
+
+                    with self._lock:
+                        self._status = "downloading"
+                        self._total_bytes = total
+
+                    with open(part_path, "wb") as f:
+                        while True:
+                            if self._cancel_event.is_set():
+                                with self._lock:
+                                    self._status = "cancelled"
+                                break
+                            chunk = resp.read(_CHUNK_SIZE)
+                            if not chunk:
+                                break
+                            f.write(chunk)
+                            downloaded = part_path.stat().st_size
+                            with self._lock:
+                                self._bytes_downloaded = downloaded
+
+                if self._cancel_event.is_set():
+                    part_path.unlink(missing_ok=True)
+                    return
+
+                # Verify SHA256
+                sha = hashlib.sha256()
+                with open(part_path, "rb") as f:
+                    while True:
+                        if self._cancel_event.is_set():
+                            part_path.unlink(missing_ok=True)
+                            with self._lock:
+                                self._status = "cancelled"
+                            return
+                        block = f.read(_CHUNK_SIZE)
+                        if not block:
+                            break
+                        sha.update(block)
+
+                computed = sha.hexdigest()
+                if computed != expected_sha256:
+                    logger.error("SHA256 mismatch: expected %s, got %s", expected_sha256, computed)
+                    part_path.unlink(missing_ok=True)
+                    with self._lock:
+                        self._status = "failed"
+                        self._error_message = "Hash mismatch"
+                    return
+
+                part_path.rename(final_path)
+                with self._lock:
+                    self._status = "complete"
+                    self._bytes_downloaded = total
+
+            except Exception as exc:
+                logger.error("Download failed: %s", exc)
+                part_path.unlink(missing_ok=True)
+                with self._lock:
+                    self._status = "failed"
+                    self._error_message = str(exc)
+
+        self._thread = threading.Thread(target=_download, daemon=True)
+        self._thread.start()
+
+    def cancel(self) -> None:
+        """Signal the background download thread to stop."""
+        self._cancel_event.set()

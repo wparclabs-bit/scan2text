@@ -1,15 +1,21 @@
-<!-- PHASE-7-S8-5-PRIVACY-FILTER-STATE-2026-08-11 -->
-# Scan2Text Current State — Phase 7 S8.5 Complete
+<!-- PHASE-7-S8-7a-DOWNLOADER-STATE-2026-08-11 -->
+# Scan2Text Current State — Phase 7 S8.7a Model Downloader Service Complete
 
 Date: 2026-08-11
-Phase: Phase 7 (Real Backend) — S8.5 COMPLETE
+Phase: Phase 7 (Real Backend) — S8.7a COMPLETE
 Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 174 green (146 baseline + 28 new: logging privacy + feedback service + API endpoints)
-Frontend tests: 583 green (571 baseline + 12 new: FeedbackDialog + FeedbackButton + App pending toast)
+Backend tests: 186 green
+Frontend tests: 583 green
 PRD: v1.10 source of truth in second-brain/04-Product/
-Next: ADR-007 slices 8.6–8.7 — model downloader, release cadence. Known bug: test_feedback_service.py::test_returns_correct_count (2 == 3) remains for separate slice.
+Next: Slice 8.7b — Frontend model downloader UI. No known bugs remaining.
 
-- **2026-08-11 (8.5):** PrivacyFilter implemented per ADR-007 Decision 5. logging_service.py gains PrivacyFilter (logging.Filter subclass) that strips file paths (.pdf/.jpg/.png/.webp/.md/.txt + Windows paths) → [FILE_REDACTED] and redacts string args >40 chars → [REDACTED]. StructuredFormatter added for JSON OCR event logs with allowed-fields filter. RotatingFileHandler configured maxBytes=1MB, backupCount=1. PrivacyFilter wired into all handlers. setup_logging uses StructuredFormatter by default. Tests: 166→174 (+8). Known bug: test_feedback_service.py::test_returns_correct_count (2==3) remains.
+- **2026-08-11 (S8.7a):** Model downloader service + REST API per ADR-007 Decision 4. Backend: new `ModelDownloaderService` (singleton) in `src/scan2text/services/model_downloader_service.py` — streams from URL via stdlib `urllib.request`, writes to `.part`, verifies SHA256, atomically renames to `.gguf`; cancellation via threading Event; progress tracking (bytes_downloaded, total_bytes, status). New routes in `src/scan2text/routes/download.py`: POST /api/download/start, GET /api/download/progress, POST /api/download/cancel — wired into `main.py`. Tests: backend 174→186 (+12: 6 service unit tests + 6 API integration tests). No frontend changes (deferred to S8.7b).
+
+- **2026-08-11 (S8.6):** Distribution setup — `version.json` manifest created at repo root with schema: app_version, app_download_url, model_version, model_download_url, model_sha256, model_size_bytes, release_notes (all placeholders pending CEO binary upload). `docs/UPDATE.md` written as user-friendly manual update guide for non-technical users. README.md updated with "Updating" section linking to docs/UPDATE.md. No application code modified. Doc-only slice.
+
+- **2026-08-11 (BUG-FIX):** Fixed test_feedback_service.py::test_returns_correct_count (assert 2 == 3). Root cause: save_pending_feedback() used datetime.now().strftime("%Y%m%dT%H%M%S%fZ") for filenames; two saves within the same microsecond produced identical timestamps, causing the second write to overwrite the first — only 2 files on disk instead of 3. Fix: added collision handling in save_pending_feedback() — when target exists, appends _2, _3 suffix until a unique name is found (matching project naming convention). Returns target.name so caller gets the actual filename. Backend tests: 173+1 known failure → 174/174 green.
+
+- **2026-08-11 (8.5):** PrivacyFilter implemented per ADR-007 Decision 5. logging_service.py gains PrivacyFilter (logging.Filter subclass) that strips file paths (.pdf/.jpg/.png/.webp/.md/.txt + Windows paths) → [FILE_REDACTED] and redacts string args >40 chars → [REDACTED]. StructuredFormatter added for JSON OCR event logs with allowed-fields filter. RotatingFileHandler configured maxBytes=1MB, backupCount=1. PrivacyFilter wired into all handlers. setup_logging uses StructuredFormatter by default. Tests: 166→174 (+8).
 
 - **2026-08-11 (8.4):** Feedback button built per ADR-007 Decision 1. Backend: new FeedbackService (save_pending_feedback, get_pending_count, move_pending_to_sent) + POST /api/feedback, GET /api/feedback/pending-count, POST /api/feedback/mark-sent routes. Frontend: icon-only FeedbackButton (MessageSquare) in BottomBar RIGHT zone left of Share; online opens FEEDBACK_FORM_URL in browser, offline opens in-app FeedbackDialog (textarea required min 10 chars + optional contact email); launch-time pending toast with action button when online + pending files exist. i18n EN+ID. NO silent auto-upload. Tests: backend 155→166 (+11), frontend 571→583 (+12).
 
