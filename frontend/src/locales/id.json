@@ -94,6 +94,15 @@
     "dontShowAgain": "Jangan tampilkan lagi",
     "close": "Mulai"
   },
+  "downloader": {
+    "title": "Mengunduh Mesin AI",
+    "description": "Mohon tunggu sementara kami menyiapkan model AI offline...",
+    "progress": "{{downloaded}} dari {{total}}",
+    "cancel": "Batal",
+    "restart": "Mulai Ulang Unduhan",
+    "failed": "Unduhan gagal atau dibatalkan.",
+    "verifying": "Memverifikasi integritas file..."
+  },
   "feedback": {
     "tooltip": "Kirim masukan",
     "title": "Kirim Masukan",

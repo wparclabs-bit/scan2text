@@ -4,13 +4,23 @@ import { usePreferenceStore } from './stores/preferencesStore'
 import { startDemoOrchestrator } from './lib/demoOrchestrator'
 import CommandCenterLayout from './components/layout/CommandCenterLayout'
 import WelcomeModal from './components/layout/WelcomeModal'
+import ModelDownloaderModal from './components/layout/ModelDownloaderModal'
 import { toast } from 'sonner'
 
 const FEEDBACK_FORM_URL = 'https://placeholder.local/feedback'
 
+interface DownloadState {
+  status: string
+  bytes_downloaded: number
+  total_bytes: number
+  error_message?: string | null
+}
+
 function App() {
   const { t } = useTranslation()
   const [hideWelcomeNotice, setHideWelcomeNotice] = useState<boolean | null>(null)
+  const [modelReady, setModelReady] = useState<boolean>(false)
+  const [showDownloader, setShowDownloader] = useState<boolean>(false)
 
   useEffect(() => {
     usePreferenceStore.getState().hydratePreferences(window.localStorage, navigator.language)
@@ -25,6 +35,26 @@ function App() {
       .catch(() => {
         setHideWelcomeNotice(false)
       })
+  }, [])
+
+  useEffect(() => {
+    const checkModelStatus = async () => {
+      try {
+        const res = await fetch('/api/download/status')
+        const data: DownloadState = await res.json()
+        if (data.status === 'complete') {
+          setModelReady(true)
+        } else {
+          // Model not ready — start download and show modal.
+          await fetch('/api/download/start', { method: 'POST' })
+          setShowDownloader(true)
+        }
+      } catch {
+        // Backend unavailable (demo/offline) — skip downloader, proceed to welcome.
+        setModelReady(true)
+      }
+    }
+    void checkModelStatus()
   }, [])
 
   useEffect(() => {
@@ -52,10 +82,16 @@ function App() {
       .catch(() => {})
   }, [])
 
+  const handleDownloaderClose = () => {
+    setShowDownloader(false)
+    setModelReady(true)
+  }
+
   return (
     <>
       <CommandCenterLayout />
-      {!hideWelcomeNotice && <WelcomeModal />}
+      <ModelDownloaderModal open={showDownloader} onClose={handleDownloaderClose} />
+      {modelReady && !hideWelcomeNotice && <WelcomeModal />}
     </>
   )
 }

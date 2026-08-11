@@ -24,6 +24,12 @@ def start_download() -> Dict[str, Any]:
     return _download_svc.get_progress()
 
 
+@router.get("/api/download/status")
+def get_download_status() -> Dict[str, Any]:
+    """Return current download state without triggering anything."""
+    return _download_svc.get_progress()
+
+
 @router.get("/api/download/progress")
 def get_download_progress() -> Dict[str, Any]:
     """Return current download state."""
