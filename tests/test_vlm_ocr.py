@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from scan2text.models.settings import AppSettings
 
 
 @pytest.fixture
@@ -34,8 +35,11 @@ class TestVlmOcrPersistentWorkerSpawn:
             "max_pdf_pages": 20,
             "cpu_threads": 0,
             "check_updates_on_startup": True,
-            "model_path": "/fake/path/to/model.gguf",
+            "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
+            "mmproj_path": str(tmp_scan2text / "models" / "mmproj.gguf"),
         }
+        (tmp_scan2text / "models" / "vlm.gguf").write_bytes(b"fake-model")
+        (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
         settings_file = tmp_scan2text / "settings" / "settings.json"
         settings_file.write_text(json.dumps(settings_data), encoding="utf-8")
 
@@ -74,8 +78,11 @@ class TestVlmOcrPersistentWorkerQueues:
             "max_pdf_pages": 20,
             "cpu_threads": 0,
             "check_updates_on_startup": True,
-            "model_path": str(tmp_scan2text / "models" / "model.gguf"),
+            "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
+            "mmproj_path": str(tmp_scan2text / "models" / "mmproj.gguf"),
         }
+        (tmp_scan2text / "models" / "vlm.gguf").write_bytes(b"fake-model")
+        (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
         settings_file = tmp_scan2text / "settings" / "settings.json"
         settings_file.write_text(json.dumps(settings_data), encoding="utf-8")
 
@@ -138,8 +145,11 @@ class TestVlmOcrTimeoutHandling:
             "max_pdf_pages": 20,
             "cpu_threads": 0,
             "check_updates_on_startup": True,
-            "model_path": str(tmp_scan2text / "models" / "model.gguf"),
+            "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
+            "mmproj_path": str(tmp_scan2text / "models" / "mmproj.gguf"),
         }
+        (tmp_scan2text / "models" / "vlm.gguf").write_bytes(b"fake-model")
+        (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
         settings_file = tmp_scan2text / "settings" / "settings.json"
         settings_file.write_text(json.dumps(settings_data), encoding="utf-8")
 
@@ -182,10 +192,21 @@ class TestVlmOcrTimeoutHandling:
         mock_process_instance.join.assert_not_called()
 
 
-def test_ocr_pdf_uses_rendered_pages():
+def test_ocr_pdf_uses_rendered_pages(tmp_scan2text):
     from unittest.mock import MagicMock, patch
 
     from scan2text.models.settings import AppSettings
+
+    (tmp_scan2text / "models" / "vlm.gguf").write_bytes(b"fake-model")
+    (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
+    settings_data = {
+        "output_dir": "",
+        "max_pdf_pages": 20,
+        "cpu_threads": 0,
+        "check_updates_on_startup": True,
+        "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
+        "mmproj_path": str(tmp_scan2text / "models" / "mmproj.gguf"),
+    }
 
     with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSS, \
          patch("scan2text.adapters.vlm_ocr.Process") as MockProc, \
@@ -193,7 +214,7 @@ def test_ocr_pdf_uses_rendered_pages():
          patch("scan2text.adapters.vlm_ocr.extract_and_save_image_crops", side_effect=lambda md, src, out: md):
         mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
         mock_svc = MagicMock()
-        mock_svc.load.return_value = AppSettings()
+        mock_svc.load.return_value = AppSettings(**settings_data)
         MockSS.return_value = mock_svc
         MockProc.return_value = MagicMock()
 
@@ -209,6 +230,40 @@ def test_ocr_pdf_uses_rendered_pages():
         assert result == "# md"
         sent = adapter._input_queue.put.call_args[0][0]
         assert sent["images"] == [b"png1", b"png2"]
+
+
+def test_ocr_returns_model_not_found_when_files_missing(tmp_scan2text):
+    """When model files are missing, ocr() returns MODEL_NOT_FOUND error dict."""
+    from unittest.mock import MagicMock, patch
+
+    from scan2text.models.settings import AppSettings
+
+    settings_data = {
+        "output_dir": "",
+        "max_pdf_pages": 20,
+        "cpu_threads": 0,
+        "check_updates_on_startup": True,
+        "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
+        "mmproj_path": str(tmp_scan2text / "models" / "mmproj.gguf"),
+    }
+
+    with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSS, \
+         patch("scan2text.adapters.vlm_ocr.Process") as MockProc, \
+         patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil:
+        mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
+        mock_svc = MagicMock()
+        mock_svc.load.return_value = AppSettings(**settings_data)
+        MockSS.return_value = mock_svc
+        mock_proc = MagicMock()
+        MockProc.return_value = mock_proc
+
+        from scan2text.adapters.vlm_ocr import VlmOcrAdapter
+        adapter = VlmOcrAdapter()
+
+        result = adapter.ocr("some-image.png")
+        assert isinstance(result, dict)
+        assert result["error"] == "MODEL_NOT_FOUND"
+        mock_proc.start.assert_not_called()
 
 
 def test_prepare_views_returns_one_view_for_normal_image():
@@ -251,19 +306,31 @@ def test_prepare_views_caps_pixels_to_4m():
     assert w * h <= _MAX_PIXELS
 
 
-def test_worker_is_daemon_so_parent_can_exit():
+def test_worker_is_daemon_so_parent_can_exit(tmp_scan2text):
     from unittest.mock import MagicMock, patch
 
     from scan2text.models.settings import AppSettings
+
+    (tmp_scan2text / "models" / "vlm.gguf").write_bytes(b"fake-model")
+    (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
+    settings_data = {
+        "output_dir": "",
+        "max_pdf_pages": 20,
+        "cpu_threads": 0,
+        "check_updates_on_startup": True,
+        "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
+        "mmproj_path": str(tmp_scan2text / "models" / "mmproj.gguf"),
+    }
 
     with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSS, \
          patch("scan2text.adapters.vlm_ocr.Process") as MockProc, \
          patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil:
         mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
         mock_svc = MagicMock()
-        mock_svc.load.return_value = AppSettings()
+        mock_svc.load.return_value = AppSettings(**settings_data)
         MockSS.return_value = mock_svc
         mock_proc = MagicMock()
+        mock_proc.pid = 42
         MockProc.return_value = mock_proc
 
         from scan2text.adapters.vlm_ocr import VlmOcrAdapter
@@ -278,13 +345,16 @@ class TestVlmOcrCpuBudgetIntegration:
         """When cpu_threads=0, calculate_auto_threads is used (auto mode)."""
         from scan2text.models.settings import AppSettings
 
+        (tmp_scan2text / "models" / "vlm.gguf").write_bytes(b"fake-model")
+        (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
         settings_data = {
             "output_dir": "",
             "max_pdf_pages": 20,
             "cpu_threads": 0,
             "n_threads": 0,
             "check_updates_on_startup": True,
-            "model_path": str(tmp_scan2text / "models" / "model.gguf"),
+            "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
+            "mmproj_path": str(tmp_scan2text / "models" / "mmproj.gguf"),
         }
         settings_file = tmp_scan2text / "settings" / "settings.json"
         settings_file.write_text(json.dumps(settings_data), encoding="utf-8")
@@ -313,13 +383,16 @@ class TestVlmOcrCpuBudgetIntegration:
         """When cpu_threads>0, explicit value is used (override mode)."""
         from scan2text.models.settings import AppSettings
 
+        (tmp_scan2text / "models" / "vlm.gguf").write_bytes(b"fake-model")
+        (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
         settings_data = {
             "output_dir": "",
             "max_pdf_pages": 20,
             "cpu_threads": 6,
             "n_threads": 0,
             "check_updates_on_startup": True,
-            "model_path": str(tmp_scan2text / "models" / "model.gguf"),
+            "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
+            "mmproj_path": str(tmp_scan2text / "models" / "mmproj.gguf"),
         }
         settings_file = tmp_scan2text / "settings" / "settings.json"
         settings_file.write_text(json.dumps(settings_data), encoding="utf-8")
@@ -342,3 +415,100 @@ class TestVlmOcrCpuBudgetIntegration:
 
             mock_calc.assert_called_once_with(6)
             assert adapter._n_threads == 6
+
+
+class TestVlmOcrMissingModelFiles:
+    def test_loaded_is_false_when_model_file_missing(self, tmp_scan2text):
+        """When vlm.gguf does not exist, adapter.loaded must be False."""
+        settings_data = {
+            "output_dir": "",
+            "max_pdf_pages": 20,
+            "cpu_threads": 0,
+            "check_updates_on_startup": True,
+            "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
+            "mmproj_path": str(tmp_scan2text / "models" / "mmproj.gguf"),
+        }
+        # Do NOT create the model files — they are intentionally missing.
+        settings_file = tmp_scan2text / "settings" / "settings.json"
+        settings_file.write_text(json.dumps(settings_data), encoding="utf-8")
+
+        with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSS, \
+             patch("scan2text.adapters.vlm_ocr.Process") as MockProc, \
+             patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil:
+            mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
+            mock_svc = MagicMock()
+            mock_svc.load.return_value = AppSettings(**settings_data)
+            MockSS.return_value = mock_svc
+            mock_proc = MagicMock()
+            MockProc.return_value = mock_proc
+
+            from scan2text.adapters.vlm_ocr import VlmOcrAdapter
+            adapter = VlmOcrAdapter()
+
+            assert adapter.loaded is False
+            mock_proc.start.assert_not_called()
+
+    def test_loaded_is_true_when_both_model_files_exist(self, tmp_scan2text):
+        """When both vlm.gguf and mmproj.gguf exist, adapter.loaded must be True."""
+        (tmp_scan2text / "models" / "vlm.gguf").write_bytes(b"fake-model")
+        (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
+
+        settings_data = {
+            "output_dir": "",
+            "max_pdf_pages": 20,
+            "cpu_threads": 0,
+            "check_updates_on_startup": True,
+            "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
+            "mmproj_path": str(tmp_scan2text / "models" / "mmproj.gguf"),
+        }
+        settings_file = tmp_scan2text / "settings" / "settings.json"
+        settings_file.write_text(json.dumps(settings_data), encoding="utf-8")
+
+        with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSS, \
+             patch("scan2text.adapters.vlm_ocr.Process") as MockProc, \
+             patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil:
+            mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
+            mock_svc = MagicMock()
+            mock_svc.load.return_value = AppSettings(**settings_data)
+            MockSS.return_value = mock_svc
+            mock_proc = MagicMock()
+            mock_proc.pid = 99
+            MockProc.return_value = mock_proc
+
+            from scan2text.adapters.vlm_ocr import VlmOcrAdapter
+            adapter = VlmOcrAdapter()
+
+            assert adapter.loaded is True
+            mock_proc.start.assert_called_once()
+
+    def test_worker_not_spawned_when_mmproj_missing(self, tmp_scan2text):
+        """When mmproj.gguf is missing the worker must not be spawned."""
+        (tmp_scan2text / "models" / "vlm.gguf").write_bytes(b"fake-model")
+        # mmproj.gguf intentionally absent
+
+        settings_data = {
+            "output_dir": "",
+            "max_pdf_pages": 20,
+            "cpu_threads": 0,
+            "check_updates_on_startup": True,
+            "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
+            "mmproj_path": str(tmp_scan2text / "models" / "mmproj.gguf"),
+        }
+        settings_file = tmp_scan2text / "settings" / "settings.json"
+        settings_file.write_text(json.dumps(settings_data), encoding="utf-8")
+
+        with patch("scan2text.adapters.vlm_ocr.SettingsService") as MockSS, \
+             patch("scan2text.adapters.vlm_ocr.Process") as MockProc, \
+             patch("scan2text.adapters.vlm_ocr.psutil") as mock_psutil:
+            mock_psutil.BELOW_NORMAL_PRIORITY_CLASS = 64
+            mock_svc = MagicMock()
+            mock_svc.load.return_value = AppSettings(**settings_data)
+            MockSS.return_value = mock_svc
+            mock_proc = MagicMock()
+            MockProc.return_value = mock_proc
+
+            from scan2text.adapters.vlm_ocr import VlmOcrAdapter
+            adapter = VlmOcrAdapter()
+
+            assert adapter.loaded is False
+            mock_proc.start.assert_not_called()

@@ -1,13 +1,35 @@
-<!-- PHASE-7-S8-7b-DOWNLOADER-UI-STATE-2026-08-11 -->
-# Scan2Text Current State — Phase 7 S8.7b Frontend Model Downloader UI Complete
+<!-- PHASE-7-LIVE-FIRE-PREP-STATE-2026-08-12 -->
+# Scan2Text Current State — Phase 7 Live-Fire Prep Complete
+
+Date: 2026-08-12
+Phase: Phase 7 (Real Backend) — LIVE-FIRE PREP COMPLETE
+Baseline commit: ec9443d (Phase 6 closed)
+Backend tests: 197 green (+2 startup-resilience tests)
+Frontend tests: 589 green
+PRD: v1.10 source of truth in second-brain/04-Product/
+Next: CEO manual GDrive upload + live-fire download test.
+
+- **2026-08-12 (FIX-BACKEND-STARTUP):** VlmOcrAdapter now fails gracefully when model files are missing. `__init__` checks both vlm.gguf and mmproj.gguf exist before spawning the worker process; if missing, logs "Model files not found. Awaiting download." and sets `loaded=False`. `ocr()` returns `MODEL_NOT_FOUND` error dict when unloaded. Health endpoint `_get_adapter_state()` reads adapter.loaded when available, falls back to disk check. GET /api/health and GET /api/download/status both return 200 even without models. Tests: 195 → 197 (+2). See `second-brain/01-Agent-Memory/Phase-7/slice-fix-backend-startup-resilience.md`.
+
+- **2026-08-12 (KILL-CACHE):** Eliminated HTTP/browser caching for downloader API. Backend `GET /api/download/status` and `GET /api/download/progress` now emit `Cache-Control: no-store, no-cache, must-revalidate, max-age=0`, `Pragma: no-cache`, `Expires: 0`. Frontend appends `?t=${Date.now()}` cache-buster to both fetch calls in App.tsx and ModelDownloaderModal.tsx. Tests assert new headers. Fixes 304 Not Modified regression during live-fire polling. See `second-brain/01-Agent-Memory/Phase-7/slice-kill-the-cache-bug.md`.
+
+- **2026-08-11 (DISABLE-DEMO):** Demo Mode disabled for live-fire testing. `IS_DEMO_MODE` default changed from `true` to `false` in `frontend/src/lib/demoMode.ts`. `api.demo.test.ts` updated to explicitly mock `IS_DEMO_MODE: true` via `vi.mock` instead of relying on the global flag. TopBar test updated to assert badge is absent in real mode. Frontend now communicates with real Uvicorn backend on localhost:8000. Tests: 589 green (no regression).
+
+- **2026-08-11 (S8.7c):** Dual-model schema patch — `ModelDownloaderService` refactored to download both `vlm.gguf` and `mmproj.gguf` sequentially using flat keys (`vlm_download_url`, `vlm_sha256`, `vlm_size_bytes`, `mmproj_download_url`, `mmproj_sha256`, `mmproj_size_bytes`). Progress aggregated across both files. `tools/prep_dummy_gdrive.py` rewritten to emit single valid JSON block with GDrive direct-download URLs. `version.json` overwritten with new schema. Tests: backend 188→191 (+3). See `second-brain/01-Agent-Memory/Phase-7/slice-8-7c-dual-model-schema.md`.
+
+- **2026-08-11 (LIVE-FIRE-PREP):** Dummy model files generated for live-fire download testing. Script `tools/prep_dummy_gdrive.py` creates zeroed-byte dummy `.gguf` files (`vlm.gguf` 5 MB, `mmproj.gguf` 2 MB) with exact SHA256 hashes and prints copy-paste-ready JSON snippets matching `version.json` schema. Files in `tools/dummy_models/`. CEO to upload to GDrive, convert share links to direct download URLs, and paste JSON into `version.json`. See `second-brain/01-Agent-Memory/Phase-7/slice-live-fire-prep.md`.
+
+- **2026-08-11 (SPIKE):** PyInstaller bundle spike — proved `llama-cpp-python` (v0.3.34) can be bundled into a standalone Windows `.exe` using `--collect-all llama_cpp`. First attempt without collect-all failed at runtime (DLL path not found); second attempt with `--collect-all` succeeded: Python 3.12.9 + llama_cpp 0.3.34 imported cleanly, no DLL load errors. Generated spec file (`backend-spike.spec`) retained in repo root for future reference. Recommendation: Proceed with Tauri (Option B) — C++ engine bundling is viable, Electron not required. See `second-brain/01-Agent-Memory/Phase-7/spike-pyinstaller.md`.
 
 Date: 2026-08-11
-Phase: Phase 7 (Real Backend) — S8.7b COMPLETE
+Phase: Phase 7 (Real Backend) — SPIKE COMPLETE
 Baseline commit: ec9443d (Phase 6 closed)
 Backend tests: 188 green
 Frontend tests: 589 green
 PRD: v1.10 source of truth in second-brain/04-Product/
-Next: Phase 7 continuation — ASR parked until Scan2Text ships.
+Next: Phase 7 continuation — packaging strategy decided; Tauri recommended.
+
+- **2026-08-11 (SPIKE):** PyInstaller bundle spike — proved `llama-cpp-python` (v0.3.34) can be bundled into a standalone Windows `.exe` using `--collect-all llama_cpp`. First attempt without collect-all failed at runtime (DLL path not found); second attempt with `--collect-all` succeeded: Python 3.12.9 + llama_cpp 0.3.34 imported cleanly, no DLL load errors. Generated spec file (`backend-spike.spec`) retained in repo root for future reference. Recommendation: Proceed with Tauri (Option B) — C++ engine bundling is viable, Electron not required. See `second-brain/01-Agent-Memory/Phase-7/spike-pyinstaller.md`.
 
 - **2026-08-11 (S8.7b):** Frontend model downloader full-screen modal built per ADR-007 Decision 4. New `ModelDownloaderModal` component (`fixed inset-0 z-50 bg-black/80`) with progress bar, byte counters, cancel button, and restart button for failed/cancelled states. Polls `GET /api/download/progress` every 1s; closes on 'complete'. App.tsx wired: checks `GET /api/download/status` on mount; if not 'complete', calls `POST /api/download/start` and opens modal; Welcome Screen renders ONLY after model is ready. Backend: added `GET /api/download/status` endpoint (+2 tests). i18n EN+ID for all downloader strings. Tests: frontend 583→589 (+6), backend 186→188 (+2).
 
@@ -46,11 +68,11 @@ Next: Phase 7 continuation — ASR parked until Scan2Text ships.
 ---
 ## Phase Status
 
-- **Current Phase:** Phase 7 (Real Backend) — IN PROGRESS
+- **Current Phase:** Phase 7 (Real Backend) — LIVE-FIRE PREP COMPLETE
 
-- **Current Slice:** OvisOCR2 engine swap spike completed; ADR-006 signed 2026-08-10. Port slices S2-S6 planned.
+- **Current Slice:** Live-fire dummy files generated; ready for CEO manual GDrive upload and download flow test.
 
-- **Next Phase:** Phase 7 continued — S2: vlm_ocr.py adapter rewrite for OvisOCR2; S3-S6 follow.
+- **Next:** CEO: upload `tools/dummy_models/*.gguf` to GDrive, convert share links to direct URLs, paste JSON into `version.json`, trigger `POST /api/download/start`. After live-fire passes, proceed with S8.8+ real model integration.
 
 - **2026-08-10:** ADR-006 signed and EXECUTED on disk (OvisOCR2 primary at vlm.gguf/mmproj.gguf; GLM = external backup). Docs slice S1 landed; code port S2 next.
 
