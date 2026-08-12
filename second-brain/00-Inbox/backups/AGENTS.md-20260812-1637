@@ -1,9 +1,6 @@
 # Scan2Text — Agent Operating Manual
 Read FIRST before every slice. Do NOT re-read PRD docs unless the slice prompt lists them.
 
-**Role:** This manual is for **Kilo Code only**. The Cloud CTO reads `AGENTS-CTO.md`.
-**Cross-reference:** Kilo executes per this manual; the Cloud CTO writes slice prompts that respect these constraints.
-
 ## 1. Identity & Paths
 - Name: Scan2Text — local-first, offline, portable OCR (images/PDFs to Markdown).
 - Platform: Windows 10/11, x86_64, CPU-only, desktop-only.
@@ -16,21 +13,15 @@ Read FIRST before every slice. Do NOT re-read PRD docs unless the slice prompt l
 - npm run test (Vitest)
 - npm run typecheck (tsc --noEmit)
 - npm run build (Vite)
-- py -3.12 -m pytest -q (backend, Phase 7 only)
+- python -m pytest -q (backend, Phase 7 only)
 ENVIRONMENT: You are in PowerShell on Windows, NOT bash. NEVER use tail/head/grep/ls -la/cat/rm -rf or pipes like "npm run test | tail". USE Get-Content, Select-String, Get-ChildItem -Force, Remove-Item -Recurse -Force. Run commands directly and read full output. If a Unix-ism fails, do NOT retry variations — use the PowerShell equivalent.
 
 ## 3. Engineering Rules (non-negotiable)
-3.1 **TDD Red-Green-Refactor:** failing test first, run, confirm red; minimal code, run, confirm green; refactor only after green. Never skip RED. `/tdd` skill is REQUIRED for all code, script, and config changes. Do not implement without writing the failing test first.
-
-3.2 **Micro-slicing + context budget:** one slice = one logical unit, no scope creep. Local llama.cpp window = 128k; HARD safety cap: input + output <= 90k tokens per slice, input target <= 70k. If exceeded, STOP and request a slice split. Emergency stop: "STOP. Give compact handoff summary only."
-
-3.3 **Compact output rule:** Keep all tool output and explanations compact. Never paste full file contents into responses. For long files, show first 50 lines and last 30 lines only via `Select-Object -First 50` / `Select-Object -Last 30`. Protect the 90k token safety cap at all times.
-
-3.4 **Kilo = Senior Engineer:** slice prompts are complete contracts; execute verbatim; no exploration tours; ask nothing the prompt already answers.
-
-3.5 **Dependency permission rule:** Install dependencies (npm, pip, cargo) ONLY when the slice prompt explicitly states CEO approval for dependency installation. If a dependency is missing and the slice prompt does not authorize installation, flag the blocker — do not install silently.
-
-3.6 **Testing gotchas:**
+3.1 TDD Red-Green-Refactor: failing test first, run, confirm red; minimal code, run, confirm green; refactor only after green. Never skip RED.
+3.2 Micro-slicing + context budget: one slice = one logical unit, no scope creep. Local llama.cpp window = 128k; HARD safety cap: input + output <= 90k tokens per slice, input target <= 70k. If exceeded, STOP and request a slice split. Emergency stop: "STOP. Give compact handoff summary only."
+3.3 Kilo = Senior Engineer: slice prompts are complete contracts; execute verbatim; no exploration tours; ask nothing the prompt already answers.
+3.4 Code quality: small atomic commits; no files outside slice scope; skip generated files; pure utils separated from UI; store actions own side effects, components stay declarative.
+3.5 Testing gotchas:
   - data-testid on all testable DOM; data-state for state.
   - globalThis.setInterval / globalThis.setTimeout for fake timers.
   - Mock navigator.clipboard in clipboard tests.
@@ -38,14 +29,9 @@ ENVIRONMENT: You are in PowerShell on Windows, NOT bash. NEVER use tail/head/gre
   - jsdom renders "* [ ]" but NOT "- [ ]".
   - NEVER Object.values() or new objects inside Zustand selectors; use useMemo / useShallow.
   - jsdom does NO layout math: getComputedStyle flexGrow returns '0', offsetWidth/offsetHeight = 0, Radix Presence won't mount scrollbars without real overflow, hex->rgb conversion. Assert className / source-level, NOT computed pixels. CEO screenshot is the acceptance test for layout-critical UI.
-
-3.7 **i18n:** react-i18next, EN + ID, NO hardcoded strings ever. New strings in BOTH src/locales/en.json AND src/locales/id.json. Inject resources via initI18n() in tests.
-
-3.8 **QA + doc-only boundary:** second-brain/02-QA/ scripts are EXECUTED BY THE CEO (human eyes + mouse + screenshots). Kilo AUTHORS the script; Kilo NEVER runs UI automation (no Playwright/Cypress/puppeteer). "RUN it" = script exists, complete, human-runnable, then STOP. Doc-only slices never touch frontend/ or backend/ source.
-
-3.9 **UI/UX:** toasts via sonner (mounted at root). Desktop-only. Dark DEFAULT, light via toggle. localStorage ONLY for theme + language; jobs NEVER persist. shadcn/ui + lucide-react.
-
-3.10 **PYTHONPATH rule:** When running backend code from repo root (e.g., `py -3.12 -m pytest`, `py -3.12 script.py`), set `$env:PYTHONPATH="src"` so imports resolve correctly. Example: `$env:PYTHONPATH="src"; py -3.12 -m pytest -q`.
+3.6 i18n: react-i18next, EN + ID, NO hardcoded strings ever. New strings in BOTH src/locales/en.json AND src/locales/id.json. Inject resources via initI18n() in tests.
+3.7 QA + doc-only boundary: second-brain/02-QA/ scripts are EXECUTED BY THE CEO (human eyes + mouse + screenshots). Kilo AUTHORS the script; Kilo NEVER runs UI automation (no Playwright/Cypress/puppeteer). "RUN it" = script exists, complete, human-runnable, then STOP. Doc-only slices never touch frontend/ or backend/ source.
+3.8 UI/UX: toasts via sonner (mounted at root). Desktop-only. Dark DEFAULT, light via toggle. localStorage ONLY for theme + language; jobs NEVER persist. shadcn/ui + lucide-react.
 
 ## 4. Locked Architecture — Command Center v1.7
 Shell: fixed inset-0 flex flex-col overflow-hidden. The viewport is the only sizing authority; no window/body scroll; BottomBar always visible.
@@ -72,11 +58,11 @@ Depth (visible-subtle, theme-aware inline longhand: gradient + inset top highlig
 Scrollbars: always-visible, thin, rounded, warm on Queue + Preview only (Dropzone excluded).
 
 ## 6. Memory protocol + vault map
-Every slice: read THIS file + second-brain/00-Current-State.md ONLY; read ADRs/docs only if the slice lists them; update 00-Current-State.md on state changes; write summary to second-brain/01-Agent-Memory/Phase-{N}/slice-{X}-{name}.md (What Changed | Key Decisions | Test Coverage | Open Questions).
+Every slice: read THIS file + second-brain/00-Current-State.md ONLY; read ADRs/docs only if the slice lists them; update 00-Current-State.md on state changes; write summary to second-brain/01-Agent-Memory/Phase-6/slice-{X}-{name}.md (What Changed | Key Decisions | Test Coverage | Open Questions).
 Vault map (canonical):
   second-brain/00-Current-State.md
   second-brain/00-Inbox/
-  second-brain/01-Agent-Memory/   (Phase-2 ... Phase-7 slice summaries + Archive/)
+  second-brain/01-Agent-Memory/   (Phase-2 ... Phase-7 slice summaries)
   second-brain/02-QA/             (manual test scripts; Phase 6 closure)
   second-brain/03-Architecture/   (architecture docs + ADRs/ subfolder)
   second-brain/04-Product/        (PRD v1.7 files 01-04)
@@ -85,7 +71,6 @@ If an actual folder name differs, discover via Get-ChildItem before writing; nev
 
 ## 7. Current phase & status
 Phases 1-6 COMPLETE (Phase 6 closed 2026-08-08 @ 75bc720, 565 tests). Phase 7 NEXT: real backend kickoff; first target GET /health telemetry; ASR parked until Scan2Text ships.
-See second-brain/00-Current-State.md for live test counts and active slice.
 
 ## 8. CEO locked decisions (do NOT override)
 - Local-first, offline, CPU-only; Markdown-output-first; NOT a document editor.
@@ -104,24 +89,14 @@ See second-brain/00-Current-State.md for live test counts and active slice.
 - Logs: no file names, no content; 1 MB rotation (ADR-007).
 - i18n EN + ID for all UI strings; brand image alt="Scan2Text" is the only i18n-exempt brand element.
 - CEO taste overrides PRD: re-confirm layout deltas in writing before slicing. Layout-critical UI acceptance = CEO screenshot.
-- Python locked to py -3.12. Never bare python.
-- TDD is mandatory for all code, script, and config changes.
-- Doc-only slices never touch frontend/ or backend/ source.
-- Kilo authors QA scripts; CEO runs them.
-- Dependency installation requires explicit CEO approval in slice prompt.
 
 ## 9. Definition of done (per slice)
 RED confirmed before impl; GREEN after. npm run test all passing (state new baseline count). npm run typecheck zero errors. npm run build success. i18n keys in BOTH en.json + id.json. data-testid on new testable elements. 00-Current-State.md + slice summary updated. No scope creep beyond NON-GOALS. Commit.
 
-## 10. Final Status States
-- **COMPLETE** — Tests green, typecheck clean, build success, Obsidian updated, committed.
-- **READY FOR CEO MANUAL VERIFICATION** — Code/tests done; CEO must manually verify UI/layout via screenshot or live run before closure.
-- **BLOCKED** — Waiting on CEO decision, external dependency, or diagnosis incomplete.
-
-## 11. Prompt efficiency rule
+## 10. Prompt efficiency rule
 This file holds all stable rules. Slice prompts contain ONLY: SLICE name, BASELINE, GOAL, NON-GOALS, TASKS, VERIFICATION, OBSIDIAN UPDATE, FINAL OUTPUT format, plus a 1-line CONTEXT reminder + the PowerShell constraints block. NEVER use nested triple backticks when handing prompts/files to the CEO (copy breaks).
 
-## 12. Frontend file map (relative to frontend/)
+## 11. Frontend file map (relative to frontend/)
 Layout: src/components/layout/CommandCenterLayout.tsx | TopBar.tsx | BottomStatusBar.tsx | SettingsDialog.tsx
 Panels: src/components/layout/panels/DropZonePanel.tsx | QueuePanel.tsx | PreviewPanel.tsx | MarkdownPreview.tsx
 Dropzone: src/components/dropzone/FileDropZone.tsx
@@ -133,45 +108,43 @@ Theme tokens: src/index.css + tailwind.config.js
 Images: Images/logo.png, Images/text.png, Images/bacground-left-top-panel.jpg
 RULE: never guess paths; if a mapped file is missing, discover via Get-ChildItem.
 
-## 13. Lessons learned (active rules only)
-### Layout / shrink
+## 12. Lessons learned (consolidated)
+Layout/shrink:
 - min-width:auto bites at EVERY grid/flex level -> minmax(0,fr) + min-w-0 on tracks, columns, AND panel roots. Capping tracks alone is not enough.
 - Content-sized containers make sibling panels grow with unrelated content -> minmax(0,fr) + min-h-0 everywhere.
 - For kiosk shells use fixed inset-0 so the viewport is the only sizing authority; ancestor wrappers can silently defeat h-screen.
-- min-height:auto is the vertical twin of min-width:auto: flex/grid children need min-h-0 on the VERTICAL shrink chain (main, columns, panel roots).
-
-### Radix
+- min-height:auto is the vertical twin of min-width:auto: flex/grid children need min-h-0 on the VERTICAL shrink chain (main, columns, panel roots); fixed min-heights defeat the viewport lock at short windows. Panel roots using h-full without min-h-0 collapse at very short window heights.
+Radix:
 - ScrollArea viewport child is display:table -> neutralize with the CSS override in section 4.
 - Radix hides native scrollbars by design -> mount <ScrollBar /> for visible affordance; wheel-only scrolling is a UX bug.
 - Radix scrollbar DOM uses data-orientation / data-state, NOT data-radix-scroll-area-scrollbar.
-
-### Ghosts / forensics
+Ghosts/forensics:
 - Forensics before edit for twice-failed items: trace import chain App.tsx -> Layout -> Panel; grep every matching name; mark LIVE vs GHOST; prove which file is served before editing.
 - Verify the ACTUAL live component before assuming a ghost (style changes can look like regressions).
 - Before deleting, grep ALL consumers incl. tests/debug scripts; delete ghost + its tests + debug harness in one atomic sweep.
 - git show --stat HEAD / git log -5 to check whether the previous slice touched source or only tests/docs.
-
-### jsdom
-- Does no layout math (see 3.6). Assert className/source, not computed pixels. CEO screenshot = layout acceptance.
-
-### Misc
+jsdom:
+- Does no layout math (see 3.5). Assert className/source, not computed pixels. CEO screenshot = layout acceptance.
+Misc:
 - Brand wordmark is an IMAGE; tests assert alt="Scan2Text", not literal text.
 - Never hardcode D:\ paths in frontend; Vite relative imports.
 - Decorative bg layers: backgroundSize single value '100%' (never 'cover' or '100% 100%').
 - Depth must be visible-subtle, not garish.
 - Path discovery before edit: app under frontend/; i18n frontend/src/locales/. "File not found" is a lookup task, never a stop reason.
-- Absence tests keep removed features removed (docs drift, tests remember).
-- Drag-over highlight needs enter/leave counter + onDragOver preventDefault (boolean flickers on child traversal).
-- Per-locale icon inside translation string = i18n owns the whole message (CEO decision 2026-08-08).
+- Every slice exits: green tests + commit + Phase-6 summary + AGENTS.md lessons.
+(6.16a-c): absence tests keep removed features removed (docs drift, tests remember); drag-over highlight needs enter/leave counter + onDragOver preventDefault (boolean flickers on child traversal); per-locale icon inside translation string = i18n owns the whole message (CEO decision 2026-08-08).
 - Non-technical users need non-technical feedback channels (GForm over GitHub Issues).
 - Cap CPU so the PC stays usable — a fast OCR that freezes the PC loses users.
 - Size-based log rotation beats calendar deletion — caps make failure impossible.
 - Opt-in send, never silent upload — privacy is a product feature.
 - GitHub noreply commit email keeps identity swappable.
 
-### Phase 7 — Backend
-- Always use `py -3.12` for backend tests and commands, NEVER bare `python`. System default Python may be 3.14+ which lacks native wheels for llama-cpp-python. Lock the interpreter by evidence, never by memory.
+
+## Phase 7 Lessons
+- CRITICAL: Always use `py -3.12` for backend tests and commands, NEVER bare `python`. System default Python may be 3.14+ which lacks native wheels for llama-cpp-python and other dependencies. Lock the interpreter by evidence (the working command), never by memory. If you see Python 3.14 warnings about httpx2 or missing wheels, STOP and switch to py -3.12 immediately.
+- Lock the project interpreter with py -3.12; system default Python may be too new for native wheels.
 - Backend binds 127.0.0.1 only; local-first means localhost-first.
+- py -3.12 launcher bypasses venvs; lock the interpreter by evidence (the bench command), never by memory.
 - Error hints mislead ('provide the mmproj' appeared with mmproj attached); probe with minimal auditable scripts.
 - Golden outputs are references, not truth; the original file plus human review is the standard.
 - When the agent wanders, hand it verbatim file content; zero design freedom.
@@ -179,6 +152,6 @@ RULE: never guess paths; if a mapped file is missing, discover via Get-ChildItem
 - Disk is truth: before asserting which engine lives where, list models/ with sizes; renames and deletes change the decision state.
 - Engine swap = recipe swap: prompt, sampling, and geometry travel together (ADR-006).
 - Production defaults must match the spike recipe or the spike evidence is void.
-- YAGNI: Ovis is the sole engine; external backup exists for disaster recovery only.
+- YAGNI: Dropped GLM rollback code path to maintain MVP simplicity. Ovis is the sole engine; external backup exists for disaster recovery only.
 - Strict adherence to Matt Pocock TDD skills (github.com/mattpocock/skills): RED->GREEN->REFACTOR cycle enforced. Tests updated before implementation.
 - S2-S4 port success: verbatim prompt + temp 0.1 + full-page normalization (no tiling) is the locked Ovis recipe. GFM stdlib converter prevents frontend HTML table breakage.

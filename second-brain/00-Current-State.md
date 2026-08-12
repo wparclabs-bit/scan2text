@@ -1,13 +1,20 @@
 <!-- PHASE-7-LIVE-FIRE-PREP-STATE-2026-08-12 -->
-# Scan2Text Current State — Phase 7 Live-Fire Prep Complete
+# Scan2Text Current State — Phase 7 Tauri Dev-Mode Plumbing
 
 Date: 2026-08-12
-Phase: Phase 7 (Real Backend) — LIVE-FIRE PREP COMPLETE
+Phase: Phase 7 (Real Backend) — TAURI DEV-MODE PLUMBING
+
+- **2026-08-12 (S9.1d):** Downloader Windows rename + disk-aware status + restart fix. `model_downloader_service.py` gains `os.replace()` (Windows-safe overwrite), `_verify_file()` disk validation, concurrent-start guard (status set to "downloading" before thread spawn), skip-verified-files optimization, and stale .part cleanup at start. `get_progress()` now returns `complete` when both model files verify on disk — App.tsx passes through to Welcome Screen without modal. Frontend: added restart-button click test. Backend: 196→199 passed (+3). Frontend: 589→590 passed (+1). Typecheck + build green. See `second-brain/01-Agent-Memory/Phase-7/slice-9-1d-fix-downloader-windows-rename-and-disk-ack.md`. QA addendum at `second-brain/02-QA/phase-7/s9-1b-tauri-dev-plumbing.md`.
+- **2026-08-12 (S9.1c):** Vite/Tauri watch conflict fix — `frontend/vite.config.ts` server block gains `watch: { ignored: ['**/src-tauri/**'] }` to prevent Vite from watching Rust build artifacts in `src-tauri/target/`, which caused EBUSY crashes during Cargo compilation. Existing `/api` proxy config untouched. Typecheck + build green. See `second-brain/01-Agent-Memory/Phase-7/slice-9-1c-fix-vite-tauri-watch-conflict.md`.
+- **2026-08-12 (S9.2):** Docs hygiene: AGENTS.md and AGENTS-CTO.md role-split cleanup. AGENTS.md refactored into Kilo local lawbook (py -3.12 lock, /tdd enforcement, PYTHONPATH rule, dependency permission rule, compact output rule, final status states). AGENTS-CTO.md refactored into Cloud CTO behavior manual (Preflight Checklist, issue-mode rule, dependency/install rule, doc update rule, pointers to 00-Current-State.md and AGENTS.md instead of stale embedded state). Backups at `second-brain/00-Inbox/backups/`. Archive at `second-brain/01-Agent-Memory/Archive/agents-manual-cleanup-2026-08-12.md`. No source code touched. Doc-only slice.
+- **2026-08-12 (S9.2a):** Standalone backend artifact via PyInstaller. New `src/scan2text/utils/prod_runtime.py` (is_frozen, frozen_exe_dir, get_port=47351, get_host=127.0.0.1). New `src/scan2text/cli.py` entry point. PathService frozen base_dir now resolves to exe parent (was exe_parent/scan2text-data). PyInstaller 6.22.0 spec at `packaging/scan2text-backend.spec`. Artifact: `dist/scan2text-backend/scan2text-backend.exe` (45 MB). Smoke test PASS: health + download/status on 127.0.0.1:47351, missing models handled gracefully. Backend: 199→211 passed (+12 new), 1 known pre-existing failure. See `second-brain/01-Agent-Memory/Phase-7/slice-9-2a-standalone-backend-artifact.md`.
 Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 197 green (+2 startup-resilience tests)
-Frontend tests: 589 green
+Backend tests: 211 passed, 1 pre-existing failure (test_health_contract — dummy models on disk)
+Frontend tests: 590 green
 PRD: v1.10 source of truth in second-brain/04-Product/
-Next: CEO manual GDrive upload + live-fire download test.
+Next: Tauri sidecar wiring — wire scan2text-backend.exe as Tauri backend process.
+
+- **2026-08-12 (S9.1b):** Tauri v2 dev-mode plumbing installed and initialized. `@tauri-apps/cli@2.11.4` added as frontend devDependency. `frontend/src-tauri/` scaffolded via `npx tauri init --ci` with app title "Scan2Text", window 1200×800, devUrl http://localhost:5173, beforeDevCommand "npm run dev". Orchestration scripts `dev.ps1` (Tauri mode) and `dev-web.ps1` (Vite-only mode) created at repo root. All prerequisites verified: Node v24.18.1, npm 11.14.1, Python 3.12.9, Rust 1.97.1, WebView2 151.0.4129.78, MSVC Build Tools present. Frontend typecheck + build + 589 tests green. Backend 196 passed, 1 pre-existing failure unrelated to Tauri. See `second-brain/01-Agent-Memory/Phase-7/slice-9-1b-tauri-dev-plumbing.md`. QA doc at `second-brain/02-qa/phase-7/s9-1b-tauri-dev-plumbing.md`.
 
 - **2026-08-12 (FIX-BACKEND-STARTUP):** VlmOcrAdapter now fails gracefully when model files are missing. `__init__` checks both vlm.gguf and mmproj.gguf exist before spawning the worker process; if missing, logs "Model files not found. Awaiting download." and sets `loaded=False`. `ocr()` returns `MODEL_NOT_FOUND` error dict when unloaded. Health endpoint `_get_adapter_state()` reads adapter.loaded when available, falls back to disk check. GET /api/health and GET /api/download/status both return 200 even without models. Tests: 195 → 197 (+2). See `second-brain/01-Agent-Memory/Phase-7/slice-fix-backend-startup-resilience.md`.
 
