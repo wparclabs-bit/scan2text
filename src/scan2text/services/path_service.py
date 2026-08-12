@@ -50,7 +50,7 @@ class PathService:
 
         # Frozen executable (PyInstaller): sys.executable points to .exe
         if getattr(sys, "frozen", False):
-            return Path(sys.executable).parent / "scan2text-data"
+            return Path(sys.executable).parent
 
         return Path.cwd() / ".scan2text"
 
