@@ -68,6 +68,10 @@ pyinstaller --onedir --name Scan2Text src/scan2text/engine.py
 - **OCR isolation:** `OCREngine` ABC hides `llama-cpp-python` behind an interface; CI uses `FakeOCR`.
 - **Portable runtime:** Runs from any folder without admin rights. Paths resolved via `path_service.py`.
 
+## Updating
+
+See [docs/UPDATE.md](docs/UPDATE.md) for instructions on how to update Scan2Text manually.
+
 ## License
 
 MIT
