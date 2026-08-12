@@ -168,6 +168,13 @@ class VlmOcrAdapter:
         self._timeout = settings.ocr_timeout_seconds
         self._max_pdf_pages = settings.max_pdf_pages
 
+        self._loaded = self._check_model_files()
+        if not self._loaded:
+            logger.warning("Model files not found. Awaiting download.")
+            self._input_queue: Queue = Queue()
+            self._output_queue: Queue = Queue()
+            return
+
         self._input_queue: Queue = Queue()
         self._output_queue: Queue = Queue()
         self._worker_process = Process(
@@ -186,12 +193,26 @@ class VlmOcrAdapter:
         prio_attr = _PRIORITY_ATTR.get(settings.worker_priority, "BELOW_NORMAL_PRIORITY_CLASS")
         psutil.Process(self._worker_process.pid).nice(getattr(psutil, prio_attr))
 
+    def _check_model_files(self) -> bool:
+        """Return True only when both model and mmproj files exist on disk."""
+        return Path(self._model_path).is_file() and Path(self._mmproj_path).is_file()
+
+    @property
+    def loaded(self) -> bool:
+        return self._loaded
+
     @property
     def model_path(self) -> str:
         return self._model_path
 
     def ocr(self, image_path: str) -> str | dict[str, Any]:
         """Submit one file (image or PDF). Returns Markdown or an error dict."""
+        if not self._loaded:
+            return {
+                "error": MODEL_NOT_FOUND,
+                "message": "Model files not loaded. Awaiting download.",
+                "image_path": image_path,
+            }
         path = Path(image_path)
         if path.suffix.lower() == ".pdf":
             images = self._render_pdf(path)

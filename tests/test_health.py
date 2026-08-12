@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -37,3 +39,21 @@ def test_health_model_files_found(tmp_path, monkeypatch):
     (tmp_path / "models" / "mmproj.gguf").write_bytes(b"x")
     monkeypatch.setenv("SCAN2TEXT_HOME", str(tmp_path))
     assert client.get("/api/health").json()["model"]["files_present"] is True
+
+
+def test_health_when_adapter_not_loaded(monkeypatch):
+    """Health endpoint returns loaded=False when adapter.loaded is False."""
+    with patch("scan2text.routes.health._get_adapter_state", return_value={"loaded": False}):
+        r = client.get("/api/health")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["model"]["loaded"] is False
+
+
+def test_health_when_adapter_is_loaded(monkeypatch):
+    """Health endpoint returns loaded=True when adapter.loaded is True."""
+    with patch("scan2text.routes.health._get_adapter_state", return_value={"loaded": True}):
+        r = client.get("/api/health")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["model"]["loaded"] is True
