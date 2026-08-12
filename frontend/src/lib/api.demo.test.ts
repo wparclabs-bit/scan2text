@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+vi.mock('./demoMode', () => ({
+  IS_DEMO_MODE: true,
+  setDemoMode: vi.fn(),
+}))
+
 describe('uploadFile - demo mode', () => {
   let uploadFile: (file: File) => Promise<{ task_id: string }>
   let getTaskStatus: (taskId: string) => Promise<{ task_id: string; status: string; result_markdown?: string }>

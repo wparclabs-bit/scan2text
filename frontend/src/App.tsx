@@ -40,7 +40,7 @@ function App() {
   useEffect(() => {
     const checkModelStatus = async () => {
       try {
-        const res = await fetch('/api/download/status')
+        const res = await fetch(`/api/download/status?t=${Date.now()}`)
         const data: DownloadState = await res.json()
         if (data.status === 'complete') {
           setModelReady(true)
@@ -49,7 +49,8 @@ function App() {
           await fetch('/api/download/start', { method: 'POST' })
           setShowDownloader(true)
         }
-      } catch {
+      } catch (err) {
+        console.error('Downloader error:', err);
         // Backend unavailable (demo/offline) — skip downloader, proceed to welcome.
         setModelReady(true)
       }

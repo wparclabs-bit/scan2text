@@ -28,7 +28,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
 
     const pollProgress = async () => {
       try {
-        const res = await fetch('/api/download/progress')
+        const res = await fetch(`/api/download/progress?t=${Date.now()}`)
         const data: DownloadState = await res.json()
         setState(data)
 
@@ -39,8 +39,8 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
           // Keep polling briefly then stop — user sees restart button.
           if (intervalId) clearInterval(intervalId)
         }
-      } catch {
-        // Ignore network errors during polling.
+      } catch (err) {
+        console.error('Downloader error:', err);
       }
     }
 
@@ -55,16 +55,16 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
   const handleCancel = async () => {
     try {
       await fetch('/api/download/cancel', { method: 'POST' })
-    } catch {
-      // Ignore cancellation errors.
+    } catch (err) {
+      console.error('Downloader error:', err);
     }
   }
 
   const handleRestart = async () => {
     try {
       await fetch('/api/download/start', { method: 'POST' })
-    } catch {
-      // Ignore start errors.
+    } catch (err) {
+      console.error('Downloader error:', err);
     }
   }
 

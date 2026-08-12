@@ -70,9 +70,9 @@ describe('TopBar', () => {
     expect((brandImg as HTMLImageElement).src).toContain('text.png')
   })
 
-  it('DEMO badge exists with data-testid="topbar-demo-badge"', () => {
+  it('does not render DEMO badge when demo mode is disabled', () => {
     render(<TopBar />)
-    expect(screen.getByTestId('topbar-demo-badge')).toBeInTheDocument()
+    expect(screen.queryByTestId('topbar-demo-badge')).not.toBeInTheDocument()
   })
 
   it('logo has accessible aria-label', () => {

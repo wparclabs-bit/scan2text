@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-import tempfile
 import threading
 import time
-from io import BytesIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -29,7 +27,6 @@ class _FakeResponse:
             return b""
         chunk = self._chunks.pop(0)
         if self._bytes_per_read is not None:
-            # Yield one byte at a time to simulate slow network for cancellation tests.
             result = chunk[:self._bytes_per_read]
             self._chunks.insert(0, chunk[self._bytes_per_read:])
             time.sleep(0.002)
@@ -52,12 +49,14 @@ class _FakeResponse:
         pass
 
 
-def _make_version_json(tmp_path, sha256="abc123", size_bytes=1024):
+def _make_version_json(tmp_path, vlm_sha="abc123", vlm_size=1024, mmproj_sha="def456", mmproj_size=512):
     version = {
-        "model_version": "test-model-v1",
-        "model_download_url": "http://example.com/model.gguf",
-        "model_sha256": sha256,
-        "model_size_bytes": size_bytes,
+        "vlm_download_url": "http://example.com/vlm.gguf",
+        "vlm_sha256": vlm_sha,
+        "vlm_size_bytes": vlm_size,
+        "mmproj_download_url": "http://example.com/mmproj.gguf",
+        "mmproj_sha256": mmproj_sha,
+        "mmproj_size_bytes": mmproj_size,
     }
     (tmp_path / "version.json").write_text(json.dumps(version), encoding="utf-8")
     return tmp_path / "version.json"
@@ -65,60 +64,65 @@ def _make_version_json(tmp_path, sha256="abc123", size_bytes=1024):
 
 class TestStartDownload:
     def test_reads_version_json_and_sets_downloading_status(self, tmp_path):
-        data = b"x" * 1024
-        real_sha = hashlib.sha256(data).hexdigest()
-        _make_version_json(tmp_path, sha256=real_sha, size_bytes=len(data))
-        with patch("scan2text.services.model_downloader_service.urlopen", return_value=_FakeResponse([data], len(data))):
+        vlm_data = b"x" * 1024
+        mmproj_data = b"y" * 512
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+
+        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
-            # Give the background thread a moment to start.
             for _ in range(50):
                 if svc.status in ("complete", "failed", "cancelled"):
                     break
                 threading.Event().wait(0.1)
-            # Status should be complete since hash matches and download finishes fast.
             assert svc.status in ("downloading", "complete")
             svc.cancel()
 
-    def test_successful_download_creates_part_then_renames(self, tmp_path):
-        sha = "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592"
-        data = b"A" * 1024
-        expected_hash = hashlib.sha256(data).hexdigest()
-        _make_version_json(tmp_path, sha256=expected_hash, size_bytes=len(data))
+    def test_successful_download_creates_both_gguf_files(self, tmp_path):
+        vlm_data = b"A" * 1024
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        mmproj_data = b"B" * 512
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
         models_dir = tmp_path / "models"
         models_dir.mkdir()
 
-        final_name = "test-model-v1.gguf"
-        part_name = "test-model-v1.part"
-
-        with patch("scan2text.services.model_downloader_service.urlopen", return_value=_FakeResponse([data], len(data))):
+        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
-            # Wait for background thread to finish.
             for _ in range(50):
                 if svc.status in ("complete", "failed", "cancelled"):
                     break
                 threading.Event().wait(0.1)
 
         assert svc.status == "complete"
-        assert (models_dir / final_name).exists()
-        assert not (models_dir / part_name).exists()
+        assert (models_dir / "vlm.gguf").exists()
+        assert (models_dir / "mmproj.gguf").exists()
+        assert not (models_dir / "vlm.gguf.part").exists()
+        assert not (models_dir / "mmproj.gguf.part").exists()
 
-    def test_cancellation_deletes_part_file(self, tmp_path):
-        # Use a large payload so the slowed-down read gives us time to cancel.
-        data = b"x" * (500 * 1024)  # 500 KB
-        real_sha = hashlib.sha256(data).hexdigest()
-        _make_version_json(tmp_path, sha256=real_sha, size_bytes=len(data))
+    def test_cancellation_deletes_part_files(self, tmp_path):
+        vlm_data = b"x" * (500 * 1024)
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        mmproj_data = b"y" * 256
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
         models_dir = tmp_path / "models"
         models_dir.mkdir()
 
-        # Yield one byte at a time with a tiny sleep to simulate slow network.
-        with patch("scan2text.services.model_downloader_service.urlopen", return_value=_FakeResponse([data], len(data), bytes_per_read=1)):
+        responses = [
+            _FakeResponse([vlm_data], len(vlm_data), bytes_per_read=1),
+            _FakeResponse([mmproj_data], len(mmproj_data)),
+        ]
+        with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
             threading.Event().wait(0.01)
             svc.cancel()
-            # Give thread time to notice cancellation.
             for _ in range(30):
                 if svc.status in ("cancelled", "complete", "failed"):
                     break
@@ -129,13 +133,16 @@ class TestStartDownload:
         assert len(part_files) == 0
 
     def test_hash_mismatch_deletes_part_and_sets_failed(self, tmp_path):
-        bad_sha = "0000000000000000000000000000000000000000000000000000000000000000"
-        data = b"B" * 512
-        _make_version_json(tmp_path, sha256=bad_sha, size_bytes=len(data))
+        bad_vlm_sha = "0000000000000000000000000000000000000000000000000000000000000000"
+        vlm_data = b"B" * 512
+        mmproj_data = b"C" * 256
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=bad_vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
         models_dir = tmp_path / "models"
         models_dir.mkdir()
 
-        with patch("scan2text.services.model_downloader_service.urlopen", return_value=_FakeResponse([data], len(data))):
+        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
             for _ in range(50):
@@ -144,9 +151,47 @@ class TestStartDownload:
                 threading.Event().wait(0.1)
 
         assert svc.status == "failed"
-        assert svc.error_message == "Hash mismatch"
+        assert "Hash mismatch" in svc.error_message
         part_files = list(models_dir.glob("*.part"))
         assert len(part_files) == 0
+
+    def test_missing_vlm_url_sets_failed(self, tmp_path):
+        version = {
+            "vlm_download_url": "",
+            "mmproj_download_url": "http://example.com/mmproj.gguf",
+            "mmproj_sha256": "abc",
+            "mmproj_size_bytes": 100,
+        }
+        (tmp_path / "version.json").write_text(json.dumps(version), encoding="utf-8")
+        svc = ModelDownloaderService(app_root=tmp_path)
+        svc.start_download()
+        for _ in range(10):
+            if svc.status in ("failed",):
+                break
+            threading.Event().wait(0.1)
+        assert svc.status == "failed"
+        assert "vlm_download_url not set" in svc.error_message
+
+    def test_missing_mmproj_url_sets_failed(self, tmp_path):
+        vlm_data = b"x" * 128
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        version = {
+            "vlm_download_url": "http://example.com/vlm.gguf",
+            "vlm_sha256": vlm_sha,
+            "vlm_size_bytes": len(vlm_data),
+            "mmproj_download_url": "",
+        }
+        (tmp_path / "version.json").write_text(json.dumps(version), encoding="utf-8")
+        responses = [_FakeResponse([vlm_data], len(vlm_data))]
+        with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
+            svc = ModelDownloaderService(app_root=tmp_path)
+            svc.start_download()
+            for _ in range(50):
+                if svc.status in ("complete", "failed"):
+                    break
+                threading.Event().wait(0.1)
+        assert svc.status == "failed"
+        assert "mmproj_download_url not set" in svc.error_message
 
 
 class TestGetProgress:
@@ -159,11 +204,14 @@ class TestGetProgress:
         assert state["error_message"] is None
 
     def test_state_updates_during_download(self, tmp_path):
-        data = b"C" * 1024
-        real_sha = hashlib.sha256(data).hexdigest()
-        _make_version_json(tmp_path, sha256=real_sha, size_bytes=len(data))
+        vlm_data = b"C" * 1024
+        mmproj_data = b"D" * 512
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
 
-        with patch("scan2text.services.model_downloader_service.urlopen", return_value=_FakeResponse([data], len(data))):
+        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
             for _ in range(50):
@@ -173,5 +221,26 @@ class TestGetProgress:
 
         state = svc.get_progress()
         assert state["status"] == "complete"
-        assert state["bytes_downloaded"] == 1024
-        assert state["total_bytes"] == 1024
+        assert state["bytes_downloaded"] == 1536
+        assert state["total_bytes"] == 1536
+
+    def test_aggregated_progress_during_dual_download(self, tmp_path):
+        vlm_data = b"E" * 1024
+        mmproj_data = b"F" * 1024
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+
+        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
+            svc = ModelDownloaderService(app_root=tmp_path)
+            svc.start_download()
+            for _ in range(50):
+                if svc.status in ("complete", "failed", "cancelled"):
+                    break
+                threading.Event().wait(0.1)
+
+        state = svc.get_progress()
+        assert state["status"] == "complete"
+        assert state["bytes_downloaded"] == 2048
+        assert state["total_bytes"] == 2048

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 
 from scan2text.services.model_downloader_service import ModelDownloaderService
 
@@ -25,14 +25,20 @@ def start_download() -> Dict[str, Any]:
 
 
 @router.get("/api/download/status")
-def get_download_status() -> Dict[str, Any]:
+def get_download_status(response: Response) -> Dict[str, Any]:
     """Return current download state without triggering anything."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     return _download_svc.get_progress()
 
 
 @router.get("/api/download/progress")
-def get_download_progress() -> Dict[str, Any]:
+def get_download_progress(response: Response) -> Dict[str, Any]:
     """Return current download state."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     return _download_svc.get_progress()
 
 

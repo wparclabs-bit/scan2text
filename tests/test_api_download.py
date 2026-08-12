@@ -11,12 +11,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-def _make_version_json(tmp_path, sha256="abc123", size_bytes=1024):
+def _make_version_json(tmp_path, vlm_sha="abc123", vlm_size=1024, mmproj_sha="def456", mmproj_size=512):
     version = {
-        "model_version": "test-model-v1",
-        "model_download_url": "http://example.com/model.gguf",
-        "model_sha256": sha256,
-        "model_size_bytes": size_bytes,
+        "vlm_download_url": "http://example.com/vlm.gguf",
+        "vlm_sha256": vlm_sha,
+        "vlm_size_bytes": vlm_size,
+        "mmproj_download_url": "http://example.com/mmproj.gguf",
+        "mmproj_sha256": mmproj_sha,
+        "mmproj_size_bytes": mmproj_size,
     }
     (tmp_path / "version.json").write_text(json.dumps(version), encoding="utf-8")
     return tmp_path
@@ -83,7 +85,6 @@ class TestDownloadStart:
         mock_svc.start_download.assert_called_once()
 
     def test_post_download_start_returns_failed_status_when_no_version_json(self, tmp_path):
-        # No version.json — service sets status='failed' internally.
         with patch("scan2text.api.main.QueueService") as MockQS, \
              patch("scan2text.api.main.VlmOcrAdapter") as MockVlm, \
              patch("scan2text.routes.download._download_svc") as mock_svc:
@@ -103,8 +104,8 @@ class TestDownloadStatus:
         with patch("scan2text.routes.download._download_svc") as mock_svc:
             mock_svc.get_progress.return_value = {
                 "status": "complete",
-                "bytes_downloaded": 1024,
-                "total_bytes": 1024,
+                "bytes_downloaded": 1536,
+                "total_bytes": 1536,
                 "error_message": None,
             }
             with TestClient(api_app) as client:
@@ -113,8 +114,11 @@ class TestDownloadStatus:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "complete"
-        assert data["bytes_downloaded"] == 1024
-        assert data["total_bytes"] == 1024
+        assert data["bytes_downloaded"] == 1536
+        assert data["total_bytes"] == 1536
+        assert response.headers["Cache-Control"] == "no-store, no-cache, must-revalidate, max-age=0"
+        assert response.headers["Pragma"] == "no-cache"
+        assert response.headers["Expires"] == "0"
 
     def test_get_download_status_defaults_when_idle(self, app):
         api_app = app
@@ -130,6 +134,9 @@ class TestDownloadStatus:
 
         assert response.status_code == 200
         assert response.json()["status"] == "idle"
+        assert response.headers["Cache-Control"] == "no-store, no-cache, must-revalidate, max-age=0"
+        assert response.headers["Pragma"] == "no-cache"
+        assert response.headers["Expires"] == "0"
 
 
 class TestDownloadProgress:
@@ -150,6 +157,9 @@ class TestDownloadProgress:
         assert data["status"] == "downloading"
         assert data["bytes_downloaded"] == 5000
         assert data["total_bytes"] == 10000
+        assert response.headers["Cache-Control"] == "no-store, no-cache, must-revalidate, max-age=0"
+        assert response.headers["Pragma"] == "no-cache"
+        assert response.headers["Expires"] == "0"
 
     def test_get_download_progress_defaults_when_idle(self, app):
         api_app = app
@@ -165,6 +175,9 @@ class TestDownloadProgress:
 
         assert response.status_code == 200
         assert response.json()["status"] == "idle"
+        assert response.headers["Cache-Control"] == "no-store, no-cache, must-revalidate, max-age=0"
+        assert response.headers["Pragma"] == "no-cache"
+        assert response.headers["Expires"] == "0"
 
 
 class TestDownloadCancel:
