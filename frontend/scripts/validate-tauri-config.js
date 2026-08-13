@@ -1,10 +1,12 @@
 /**
- * S9.6 Validation: tauri.conf.json bundle.resources config
+ * S9.6 / S9.7-FIX Validation: tauri.conf.json bundle config
  *
  * Verifies that:
  * 1. tauri.conf.json is valid JSON
- * 2. bundle.resources entry exists
- * 3. The target backend folder exists on disk
+ * 2. bundle.active === true
+ * 3. bundle.icon is a non-empty array
+ * 4. bundle.resources entry exists and is non-empty
+ * 5. The target backend folder exists on disk
  *
  * Run: node frontend/scripts/validate-tauri-config.js
  */
@@ -29,7 +31,7 @@ function assert(condition, message) {
   }
 }
 
-console.log('S9.6 — Tauri bundle.resources validation\n');
+console.log('S9.6/S9.7-FIX — Tauri bundle config validation\n');
 
 // 1. Parse JSON
 console.log('1. Parsing tauri.conf.json...');
@@ -58,7 +60,22 @@ assert(
 );
 
 // 4. Check target path exists
-console.log('\n3. Checking target path exists...');
+// 4. Check bundle.active is true
+console.log('\n3. Checking bundle.active...');
+assert(
+  config.bundle && config.bundle.active === true,
+  'bundle.active must be true for packaging'
+);
+
+// 5. Check bundle.icon is non-empty array
+console.log('\n4. Checking bundle.icon...');
+assert(
+  Array.isArray(config.bundle?.icon) && config.bundle.icon.length > 0,
+  'bundle.icon must be a non-empty array'
+);
+
+// 6. Check target path exists
+console.log('\n5. Checking target path exists...');
 assert(
   existsSync(BACKEND_FOLDER_ABSOLUTE),
   `Backend folder must exist at ${BACKEND_FOLDER_ABSOLUTE}`
