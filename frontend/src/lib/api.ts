@@ -1,6 +1,5 @@
-const API_BASE = 'http://127.0.0.1:8000'
-
 import { IS_DEMO_MODE } from './demoMode'
+import { buildApiUrl } from './apiBase'
 
 export { IS_DEMO_MODE } from './demoMode'
 
@@ -103,7 +102,7 @@ export async function getTaskStatus(taskId: string): Promise<TaskStatusResponse>
     return { task_id: taskId, status: 'processing' }
   }
 
-  const response = await fetch(`/status/${encodeURIComponent(taskId)}`)
+  const response = await fetch(buildApiUrl(`/status/${encodeURIComponent(taskId)}`))
 
   if (!response.ok) {
     throw new Error(`Status check failed: ${response.status} ${response.statusText}`)
@@ -156,7 +155,7 @@ export async function uploadFile(file: File): Promise<UploadResponse> {
 
   const formData = new FormData()
   formData.append('file', file)
-  const response = await fetch(`${API_BASE}/process`, {
+  const response = await fetch(buildApiUrl('/process'), {
     method: 'POST',
     body: formData,
   })
