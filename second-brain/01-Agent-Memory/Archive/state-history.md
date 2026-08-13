@@ -1,3 +1,5 @@
+## 2026-08-13 (S9.4b-4): App.tsx wired — imported buildApiUrl, replaced 4 relative fetch URLs (settings, download/status+cache-buster, download/start, feedback/pending-count) with buildApiUrl() calls. Added 4 RED tests (fixed mock implementations for cross-call stubbing + navigator.onLine). 4 RED tests turned GREEN. S9.4b COMPLETE. Frontend: 610 green, 0 failures.
+
 ## 2026-08-13 (S9.4b-3): Removed hardcoded `API_BASE` constants from api.ts and uploadService.ts; wired all fetch calls through buildApiUrl(). 5 RED tests turned GREEN. Frontend: 606 green, 0 failures.
 
 ## 2026-08-13 (S9.4b-2): ModelDownloaderModal wired — imported buildApiUrl, replaced 3 hardcoded/relative fetch URLs (progress, cancel, start) with buildApiUrl() calls. Added 2 RED tests for cancel/start in PROD mode. 10 tests pass (3 new). Frontend: 601 green, 5 failures remaining (api.test.ts ×3, uploadService.test.ts ×2).
