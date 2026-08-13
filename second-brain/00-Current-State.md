@@ -1,3 +1,4 @@
+- **2026-08-13 (DOC-09):** Poison file cleanup — `00-Current-State.md` updated to reflect S9.4a COMPLETE and S9.4b NEXT; stale references to S9.3 port-cleanup limitations and "known limitation" removed; zombie summary `slice-9-3-tauri-backend-lifecycle.md` moved to Archive (Drop-based cleanup claim was incorrect — FIX-S9.3 used explicit exit hook, not Drop). Doc-only slice; no source touched.
 - **2026-08-13 (DOC-05):** PRD-04 §19 Testing Strategy folded into PRD-03 as §19 (trimmed historical QA run records per CEO Option A); PRD-03 bumped to v1.13; PRD-04 dissolution step 1 of 4. Doc-only slice; no source touched. See `second-brain/01-Agent-Memory/Phase-7/slice-doc-05-prd-04-s19-to-prd-03.md`.
 - **2026-08-13 (DOC-04):** PRD-01 aligned with ADR-008 — Tauri v2 desktop shell & packaging line added to §12; version drift fixed (header 1.9 → 1.11 to match existing 1.10 changelog entry); PRD-01 bumped to v1.11. Doc-only slice; no source touched. See `second-brain/01-Agent-Memory/Phase-7/slice-doc-04-prd-01-tauri-alignment.md`.
 - **2026-08-13 (DOC-03):** AGENTS.md + AGENTS-CTO.md updated: token safety cap reduced from 90k to 45k per slice, input target from 70k to 35k (CEO locked decision). Doc-only slice; no source touched.
@@ -5,20 +6,21 @@
 # Scan2Text Current State — Phase 7 Tauri Dev-Mode Plumbing
 
 Date: 2026-08-13
-Phase: Phase 7 (Real Backend) — PRODUCTION API BASE URL RESOLVER
+Phase: Phase 7 (Real Backend) — FRONTEND API WIRING
 
 - **2026-08-13 (DOC-02):** PRD-03 aligned with ADR-008 — pywebview fully replaced by Tauri v2; runtime folder structure updated to reflect Tauri shell + scan2text-backend artifact + external models/; tech stack updated; stale /api/health "until built" note removed; PRD-03 bumped to v1.12. Doc-only slice; no source touched. See `second-brain/01-Agent-Memory/Phase-7/slice-doc-02-prd-03-tauri-alignment.md`.
 - **2026-08-13 (S9.4a):** Frontend production API base URL resolver — new `frontend/src/lib/apiBase.ts` exporting `getApiBaseUrl()` (returns `http://127.0.0.1:47351` in PROD, empty string in dev) and `buildApiUrl(path)` (normalizes leading slash). Reads `import.meta.env.PROD` inside function for testability via `vi.stubEnv`. 6 unit tests added. Call-site wiring deferred to S9.4b. Frontend: 590→596 passed (+6). Typecheck + build green. See `second-brain/01-Agent-Memory/Phase-7/slice-9-4a-frontend-api-base-url-resolver.md`.
 
-- **2026-08-12 (S9.1d):** Downloader Windows rename + disk-aware status + restart fix. `model_downloader_service.py` gains `os.replace()` (Windows-safe overwrite), `_verify_file()` disk validation, concurrent-start guard (status set to "downloading" before thread spawn), skip-verified-files optimization, and stale .part cleanup at start. `get_progress()` now returns `complete` when both model files verify on disk — App.tsx passes through to Welcome Screen without modal. Frontend: added restart-button click test. Backend: 196→199 passed (+3). Frontend: 589→590 passed (+1). Typecheck + build green. See `second-brain/01-Agent-Memory/Phase-7/slice-9-1d-fix-downloader-windows-rename-and-disk-ack.md`. QA addendum at `second-brain/02-QA/phase-7/s9-1b-tauri-dev-plumbing.md`.
+- **2026-08-13 (S9.4b):** NEXT — Frontend production API wiring. All call sites in the frontend (App.tsx, store, demo mode intercept) to be migrated from hardcoded `http://localhost:8000` to `buildApiUrl()` from `apiBase.ts`. Test coverage: update all existing API-call tests to assert via the resolver. Rust: 10 passed. Backend: 211 passed (1 known pre-existing failure). Typecheck + build green.
 - **2026-08-12 (S9.1c):** Vite/Tauri watch conflict fix — `frontend/vite.config.ts` server block gains `watch: { ignored: ['**/src-tauri/**'] }` to prevent Vite from watching Rust build artifacts in `src-tauri/target/`, which caused EBUSY crashes during Cargo compilation. Existing `/api` proxy config untouched. Typecheck + build green. See `second-brain/01-Agent-Memory/Phase-7/slice-9-1c-fix-vite-tauri-watch-conflict.md`.
 - **2026-08-12 (S9.2):** Docs hygiene: AGENTS.md and AGENTS-CTO.md role-split cleanup. AGENTS.md refactored into Kilo local lawbook (py -3.12 lock, /tdd enforcement, PYTHONPATH rule, dependency permission rule, compact output rule, final status states). AGENTS-CTO.md refactored into Cloud CTO behavior manual (Preflight Checklist, issue-mode rule, dependency/install rule, doc update rule, pointers to 00-Current-State.md and AGENTS.md instead of stale embedded state). Backups at `second-brain/00-Inbox/backups/`. Archive at `second-brain/01-Agent-Memory/Archive/agents-manual-cleanup-2026-08-12.md`. No source code touched. Doc-only slice.
 - **2026-08-12 (S9.2a):** Standalone backend artifact via PyInstaller. New `src/scan2text/utils/prod_runtime.py` (is_frozen, frozen_exe_dir, get_port=47351, get_host=127.0.0.1). New `src/scan2text/cli.py` entry point. PathService frozen base_dir now resolves to exe parent (was exe_parent/scan2text-data). PyInstaller 6.22.0 spec at `packaging/scan2text-backend.spec`. Artifact: `dist/scan2text-backend/scan2text-backend.exe` (45 MB). Smoke test PASS: health + download/status on 127.0.0.1:47351, missing models handled gracefully. Backend: 199→211 passed (+12 new), 1 known pre-existing failure. See `second-brain/01-Agent-Memory/Phase-7/slice-9-2a-standalone-backend-artifact.md`.
 Baseline commit: ec9443d (Phase 6 closed)
 Backend tests: 211 passed, 1 pre-existing failure (test_health_contract — dummy models on disk)
 Frontend tests: 596 green
+Rust tests: 10 passed
 PRD: v1.10 source of truth in second-brain/04-Product/
-Next: Tauri sidecar wiring — wire scan2text-backend.exe as Tauri backend process.
+Next: S9.4b — Frontend production API wiring (call-site migration to buildApiUrl).
 
 - **2026-08-12 (S9.1b):** Tauri v2 dev-mode plumbing installed and initialized. `@tauri-apps/cli@2.11.4` added as frontend devDependency. `frontend/src-tauri/` scaffolded via `npx tauri init --ci` with app title "Scan2Text", window 1200×800, devUrl http://localhost:5173, beforeDevCommand "npm run dev". Orchestration scripts `dev.ps1` (Tauri mode) and `dev-web.ps1` (Vite-only mode) created at repo root. All prerequisites verified: Node v24.18.1, npm 11.14.1, Python 3.12.9, Rust 1.97.1, WebView2 151.0.4129.78, MSVC Build Tools present. Frontend typecheck + build + 589 tests green. Backend 196 passed, 1 pre-existing failure unrelated to Tauri. See `second-brain/01-Agent-Memory/Phase-7/slice-9-1b-tauri-dev-plumbing.md`. QA doc at `second-brain/02-qa/phase-7/s9-1b-tauri-dev-plumbing.md`.
 
@@ -81,11 +83,11 @@ Next: Phase 7 continuation — packaging strategy decided; Tauri recommended.
 ---
 ## Phase Status
 
-- **Current Phase:** Phase 7 (Real Backend) — LIVE-FIRE PREP COMPLETE
+- **Current Phase:** Phase 7 (Real Backend) — FRONTEND API WIRING
 
 - **2026-08-13 (FIX-S9.3b):** Tauri state wiring and X-close exit hook confirmed complete. `AppState(Arc<Mutex<BackendManager>>)` registered via `app.manage()`. Backend starts during Tauri `setup` hook with 30s health check; graceful degradation on failure. Exit hook wired via `RunEvent::ExitRequested { .. } | RunEvent::Exit` — locks mutex, calls `BackendManager::stop()`, logs result. All 10 Tauri Rust tests pass (7 backend_manager_tests + 3 backend_lifecycle). `cargo check` clean (zero warnings). Unused import warnings cleaned from `lib.rs` and `backend_manager_tests.rs`. See `second-brain/01-Agent-Memory/Phase-7/fix-s9-3-tauri-x-close-backend-shutdown.md`.
 
-- **Next:** CEO: upload `tools/dummy_models/*.gguf` to GDrive, convert share links to direct URLs, paste JSON into `version.json`, trigger `POST /api/download/start`. After live-fire passes, proceed with S8.8+ real model integration. Also: verify Tauri dev-mode build with S9.3 backend lifecycle wiring.
+- **Next:** S9.4b — Frontend production API wiring. Migrate all hardcoded `http://localhost:8000` call sites to `buildApiUrl()` from `apiBase.ts`. Update API-call tests to assert via resolver. CEO: upload dummy models to GDrive when ready for live-fire after S9.4b lands.
 
 - **2026-08-10:** ADR-006 signed and EXECUTED on disk (OvisOCR2 primary at vlm.gguf/mmproj.gguf; GLM = external backup). Docs slice S1 landed; code port S2 next.
 
