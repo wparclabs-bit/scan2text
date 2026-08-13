@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import App from './App'
+import { buildApiUrl } from './lib/apiBase'
 
 const mockToggleTheme = vi.fn()
 const mockToggleLanguage = vi.fn()
@@ -220,7 +221,7 @@ describe('Command Center layout', () => {
       render(<App />)
       await new Promise((r) => setTimeout(r, 50))
       // Toast should be triggered - verify fetch was called for pending count
-      expect(mockFetch).toHaveBeenCalledWith('/api/feedback/pending-count')
+      expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/feedback/pending-count'))
     })
 
     it('does not show pending toast when offline', async () => {
@@ -239,7 +240,128 @@ describe('Command Center layout', () => {
       })
       render(<App />)
       await new Promise((r) => setTimeout(r, 50))
-      expect(mockFetch).not.toHaveBeenCalledWith('/api/feedback/pending-count')
+      expect(mockFetch).not.toHaveBeenCalledWith(buildApiUrl('/api/feedback/pending-count'))
+    })
+  })
+
+  describe('API URL construction via buildApiUrl', () => {
+    it('uses buildApiUrl for /api/settings in dev mode', async () => {
+      vi.stubEnv('PROD', false)
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      mockFetch.mockImplementation((url: string) => {
+        if (url === buildApiUrl('/api/settings')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: true }) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/settings'))
+      vi.unstubAllEnvs()
+    })
+
+    it('uses buildApiUrl for /api/download/status in prod mode', async () => {
+      vi.stubEnv('PROD', true)
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      mockFetch.mockImplementation((url: string) => {
+        if (url === buildApiUrl('/api/download/status')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: 'complete' }) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('127.0.0.1:47351'))
+      vi.unstubAllEnvs()
+    })
+
+    it('uses buildApiUrl for /api/settings in prod mode', async () => {
+      vi.stubEnv('PROD', true)
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      mockFetch.mockImplementation((url: string) => {
+        if (url === buildApiUrl('/api/settings')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: true }) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/settings'))
+      vi.unstubAllEnvs()
+    })
+
+    it('uses buildApiUrl for /api/download/status with ?t= cache-buster in prod mode', async () => {
+      vi.stubEnv('PROD', true)
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      mockFetch.mockImplementation((url: string) => {
+        const prodBase = buildApiUrl('/api/download/status')
+        if (url.startsWith(prodBase) && url.includes('?t=')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: 'complete' }) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      const statusCall = mockFetch.mock.calls.find((call) => {
+        const url = call[0] as string
+        return url.startsWith(buildApiUrl('/api/download/status')) && url.includes('?t=')
+      })
+      expect(statusCall).toBeDefined()
+      expect(statusCall![0]).toMatch(/^http:\/\/127\.0\.0\.1:47351\/api\/download\/status\?t=\d+$/)
+      vi.unstubAllEnvs()
+    })
+
+    it('uses buildApiUrl for /api/download/start in prod mode', async () => {
+      vi.stubEnv('PROD', true)
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      mockFetch.mockImplementation((url: string, init?: RequestInit) => {
+        if (url === buildApiUrl('/api/settings')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: false }) })
+        }
+        if (url.startsWith(buildApiUrl('/api/download/status')) && url.includes('?t=')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: 'in_progress' }) })
+        }
+        if (url === buildApiUrl('/api/download/start') && init?.method === 'POST') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/download/start'), expect.objectContaining({ method: 'POST' }))
+      vi.unstubAllEnvs()
+    })
+
+    it('uses buildApiUrl for /api/feedback/pending-count in prod mode', async () => {
+      vi.stubEnv('PROD', true)
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      Object.defineProperty(window, 'navigator', {
+        value: { onLine: true },
+        writable: true,
+        configurable: true,
+      })
+      mockFetch.mockImplementation((url: string) => {
+        if (url === buildApiUrl('/api/settings')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: false }) })
+        }
+        if (url.startsWith(buildApiUrl('/api/download/status')) && url.includes('?t=')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: 'complete' }) })
+        }
+        if (url === buildApiUrl('/api/feedback/pending-count')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ count: 0 }) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/feedback/pending-count'))
+      vi.unstubAllEnvs()
     })
   })
 })

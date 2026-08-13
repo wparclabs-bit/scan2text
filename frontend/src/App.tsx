@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePreferenceStore } from './stores/preferencesStore'
 import { startDemoOrchestrator } from './lib/demoOrchestrator'
+import { buildApiUrl } from './lib/apiBase'
 import CommandCenterLayout from './components/layout/CommandCenterLayout'
 import WelcomeModal from './components/layout/WelcomeModal'
 import ModelDownloaderModal from './components/layout/ModelDownloaderModal'
@@ -27,7 +28,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    fetch('/api/settings')
+    fetch(buildApiUrl('/api/settings'))
       .then((res) => res.json())
       .then((data) => {
         setHideWelcomeNotice(!!data.hide_welcome_notice)
@@ -40,13 +41,13 @@ function App() {
   useEffect(() => {
     const checkModelStatus = async () => {
       try {
-        const res = await fetch(`/api/download/status?t=${Date.now()}`)
+        const res = await fetch(`${buildApiUrl('/api/download/status')}?t=${Date.now()}`)
         const data: DownloadState = await res.json()
         if (data.status === 'complete') {
           setModelReady(true)
         } else {
           // Model not ready — start download and show modal.
-          await fetch('/api/download/start', { method: 'POST' })
+          await fetch(buildApiUrl('/api/download/start'), { method: 'POST' })
           setShowDownloader(true)
         }
       } catch (err) {
@@ -65,7 +66,7 @@ function App() {
 
   useEffect(() => {
     if (!navigator.onLine) return
-    fetch('/api/feedback/pending-count')
+      fetch(buildApiUrl('/api/feedback/pending-count'))
       .then((res) => res.json())
       .then((data) => {
         if (data.count > 0) {
