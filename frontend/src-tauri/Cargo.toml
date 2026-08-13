@@ -14,4 +14,4 @@ serde_json = "1"
 log = "0.4"
 
 [build-dependencies]
-tauri-build = { version = "2.6.3" }
+tauri-build = { version = "2.6.3", features = [] }

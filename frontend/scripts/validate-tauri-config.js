@@ -1,5 +1,5 @@
 /**
- * S9.6 / S9.7-FIX Validation: tauri.conf.json bundle config
+ * S9.6 / S9.7-FIX / S9.8-FIX Validation: tauri.conf.json bundle config
  *
  * Verifies that:
  * 1. tauri.conf.json is valid JSON
@@ -7,6 +7,8 @@
  * 3. bundle.icon is a non-empty array
  * 4. bundle.resources entry exists and is non-empty
  * 5. The target backend folder exists on disk
+ * 6. Identifier is NOT the default placeholder 'com.tauri.dev'
+ * 7. Identifier IS set to the approved value 'com.wingai.scan2text'
  *
  * Run: node frontend/scripts/validate-tauri-config.js
  */
@@ -88,6 +90,21 @@ const hasExpectedPath = resources && Array.isArray(resources) && resources.inclu
 assert(
   hasExpectedPath,
   `bundle.resources must include "${expectedPath}"`
+);
+
+// 6. Check identifier is not the default placeholder
+console.log('\n6. Checking identifier (not default placeholder)...');
+const identifier = config.identifier || (config.bundle && config.bundle.identifier);
+assert(
+  identifier !== 'com.tauri.dev',
+  `identifier must NOT be 'com.tauri.dev' (found: '${identifier}')`
+);
+
+// 7. Check identifier is the approved value
+console.log('\n7. Checking identifier (approved value)...');
+assert(
+  identifier === 'com.wingai.scan2text',
+  `identifier must be 'com.wingai.scan2text' (found: '${identifier}')`
 );
 
 // Summary
