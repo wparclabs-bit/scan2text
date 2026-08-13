@@ -1,4 +1,4 @@
-const API_BASE = 'http://127.0.0.1:8000'
+import { buildApiUrl } from '@/lib/apiBase'
 
 export interface UploadResponse {
   task_id: string
@@ -9,7 +9,7 @@ export async function uploadFiles(files: File[]): Promise<UploadResponse> {
   for (const file of files) {
     formData.append('files', file)
   }
-  const response = await fetch(`${API_BASE}/process`, {
+  const response = await fetch(buildApiUrl('/process'), {
     method: 'POST',
     body: formData,
   })
