@@ -1,178 +1,20 @@
-- **2026-08-13 (DOC-09):** Poison file cleanup — `00-Current-State.md` updated to reflect S9.4a COMPLETE and S9.4b NEXT; stale references to S9.3 port-cleanup limitations and "known limitation" removed; zombie summary `slice-9-3-tauri-backend-lifecycle.md` moved to Archive (Drop-based cleanup claim was incorrect — FIX-S9.3 used explicit exit hook, not Drop). Doc-only slice; no source touched.
-- **2026-08-13 (DOC-05):** PRD-04 §19 Testing Strategy folded into PRD-03 as §19 (trimmed historical QA run records per CEO Option A); PRD-03 bumped to v1.13; PRD-04 dissolution step 1 of 4. Doc-only slice; no source touched. See `second-brain/01-Agent-Memory/Phase-7/slice-doc-05-prd-04-s19-to-prd-03.md`.
-- **2026-08-13 (DOC-04):** PRD-01 aligned with ADR-008 — Tauri v2 desktop shell & packaging line added to §12; version drift fixed (header 1.9 → 1.11 to match existing 1.10 changelog entry); PRD-01 bumped to v1.11. Doc-only slice; no source touched. See `second-brain/01-Agent-Memory/Phase-7/slice-doc-04-prd-01-tauri-alignment.md`.
-- **2026-08-13 (DOC-03):** AGENTS.md + AGENTS-CTO.md updated: token safety cap reduced from 90k to 45k per slice, input target from 70k to 35k (CEO locked decision). Doc-only slice; no source touched.
-<!-- PHASE-7-LIVE-FIRE-PREP-STATE-2026-08-13 -->
-# Scan2Text Current State — Phase 7 Tauri Dev-Mode Plumbing
+## 2026-08-13 (S9.4b-2): ModelDownloaderModal wired — imported buildApiUrl, replaced 3 hardcoded/relative fetch URLs (progress, cancel, start) with buildApiUrl() calls. Added 2 RED tests for cancel/start in PROD mode. 10 tests pass (3 new). Frontend: 601 green, 5 failures remaining (api.test.ts ×3, uploadService.test.ts ×2).
 
-Date: 2026-08-13
-Phase: Phase 7 (Real Backend) — FRONTEND API WIRING
+## 2026-08-13 (S9.4b-1): FeedbackDialog + WelcomeModal already wired — forensics confirmed both files import and call buildApiUrl() from original commits (195d2e5, 8156378). 14 tests pass (7 per file). No source changes needed. 6 pre-existing failures remain in b-2/b-3/b-4 targets.
 
-- **2026-08-13 (DOC-02):** PRD-03 aligned with ADR-008 — pywebview fully replaced by Tauri v2; runtime folder structure updated to reflect Tauri shell + scan2text-backend artifact + external models/; tech stack updated; stale /api/health "until built" note removed; PRD-03 bumped to v1.12. Doc-only slice; no source touched. See `second-brain/01-Agent-Memory/Phase-7/slice-doc-02-prd-03-tauri-alignment.md`.
-- **2026-08-13 (S9.4a):** Frontend production API base URL resolver — new `frontend/src/lib/apiBase.ts` exporting `getApiBaseUrl()` (returns `http://127.0.0.1:47351` in PROD, empty string in dev) and `buildApiUrl(path)` (normalizes leading slash). Reads `import.meta.env.PROD` inside function for testability via `vi.stubEnv`. 6 unit tests added. Call-site wiring deferred to S9.4b. Frontend: 590→596 passed (+6). Typecheck + build green. See `second-brain/01-Agent-Memory/Phase-7/slice-9-4a-frontend-api-base-url-resolver.md`.
+# DOC-05: PRD-04 §19 Testing Strategy → PRD-03 §19
 
-- **2026-08-13 (S9.4b):** NEXT — Frontend production API wiring. All call sites in the frontend (App.tsx, store, demo mode intercept) to be migrated from hardcoded `http://localhost:8000` to `buildApiUrl()` from `apiBase.ts`. Test coverage: update all existing API-call tests to assert via the resolver. Rust: 10 passed. Backend: 211 passed (1 known pre-existing failure). Typecheck + build green.
-- **2026-08-12 (S9.1c):** Vite/Tauri watch conflict fix — `frontend/vite.config.ts` server block gains `watch: { ignored: ['**/src-tauri/**'] }` to prevent Vite from watching Rust build artifacts in `src-tauri/target/`, which caused EBUSY crashes during Cargo compilation. Existing `/api` proxy config untouched. Typecheck + build green. See `second-brain/01-Agent-Memory/Phase-7/slice-9-1c-fix-vite-tauri-watch-conflict.md`.
-- **2026-08-12 (S9.2):** Docs hygiene: AGENTS.md and AGENTS-CTO.md role-split cleanup. AGENTS.md refactored into Kilo local lawbook (py -3.12 lock, /tdd enforcement, PYTHONPATH rule, dependency permission rule, compact output rule, final status states). AGENTS-CTO.md refactored into Cloud CTO behavior manual (Preflight Checklist, issue-mode rule, dependency/install rule, doc update rule, pointers to 00-Current-State.md and AGENTS.md instead of stale embedded state). Backups at `second-brain/00-Inbox/backups/`. Archive at `second-brain/01-Agent-Memory/Archive/agents-manual-cleanup-2026-08-12.md`. No source code touched. Doc-only slice.
-- **2026-08-12 (S9.2a):** Standalone backend artifact via PyInstaller. New `src/scan2text/utils/prod_runtime.py` (is_frozen, frozen_exe_dir, get_port=47351, get_host=127.0.0.1). New `src/scan2text/cli.py` entry point. PathService frozen base_dir now resolves to exe parent (was exe_parent/scan2text-data). PyInstaller 6.22.0 spec at `packaging/scan2text-backend.spec`. Artifact: `dist/scan2text-backend/scan2text-backend.exe` (45 MB). Smoke test PASS: health + download/status on 127.0.0.1:47351, missing models handled gracefully. Backend: 199→211 passed (+12 new), 1 known pre-existing failure. See `second-brain/01-Agent-Memory/Phase-7/slice-9-2a-standalone-backend-artifact.md`.
-Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 211 passed, 1 pre-existing failure (test_health_contract — dummy models on disk)
-Frontend tests: 596 green
-Rust tests: 10 passed
-PRD: v1.10 source of truth in second-brain/04-Product/
-Next: S9.4b — Frontend production API wiring (call-site migration to buildApiUrl).
+## What Changed
+- Copied PRD-04 §19 "Testing Strategy" (second-brain/04-Product/04-testing-and-engineering-rules.md) into PRD-03 (second-brain/04-Product/03-non-functional-and-architecture.md) as new §19, placed after §18 Logging Requirements.
+- Trimmed per CEO Option A: removed the entire "QA Artifact" subsection (historical execution record); removed the historical execution line from "OCR Accuracy Validation" subsection.
+- All other §19 content preserved verbatim: Test Pyramid, Unit Tests, Integration Tests (backend + frontend), Frontend v1.7 visual-contract, Manual/E2E Tests, QA Manual Test Script Artifact requirement, OCR Accuracy Validation requirement line.
+- PRD-03 version bumped from 1.12 to 1.13 with changelog entry.
+- PRD-04 source left intact (deletion deferred to DOC-08).
 
-- **2026-08-12 (S9.1b):** Tauri v2 dev-mode plumbing installed and initialized. `@tauri-apps/cli@2.11.4` added as frontend devDependency. `frontend/src-tauri/` scaffolded via `npx tauri init --ci` with app title "Scan2Text", window 1200×800, devUrl http://localhost:5173, beforeDevCommand "npm run dev". Orchestration scripts `dev.ps1` (Tauri mode) and `dev-web.ps1` (Vite-only mode) created at repo root. All prerequisites verified: Node v24.18.1, npm 11.14.1, Python 3.12.9, Rust 1.97.1, WebView2 151.0.4129.78, MSVC Build Tools present. Frontend typecheck + build + 589 tests green. Backend 196 passed, 1 pre-existing failure unrelated to Tauri. See `second-brain/01-Agent-Memory/Phase-7/slice-9-1b-tauri-dev-plumbing.md`. QA doc at `second-brain/02-qa/phase-7/s9-1b-tauri-dev-plumbing.md`.
+## Key Decisions
+- CEO approved Option A: fold §19 into PRD-03, trim historical QA run records, keep testing requirements.
+- DOC-only slice — no source code touched.
+- Dissolution sequence: DOC-05 (§19→PRD-03), DOC-06 (§21/22/23→PRD-01), DOC-07 (§20→AGENTS.md), DOC-08 (delete PRD-04 + fix refs).
 
-- **2026-08-12 (FIX-BACKEND-STARTUP):** VlmOcrAdapter now fails gracefully when model files are missing. `__init__` checks both vlm.gguf and mmproj.gguf exist before spawning the worker process; if missing, logs "Model files not found. Awaiting download." and sets `loaded=False`. `ocr()` returns `MODEL_NOT_FOUND` error dict when unloaded. Health endpoint `_get_adapter_state()` reads adapter.loaded when available, falls back to disk check. GET /api/health and GET /api/download/status both return 200 even without models. Tests: 195 → 197 (+2). See `second-brain/01-Agent-Memory/Phase-7/slice-fix-backend-startup-resilience.md`.
-
-- **2026-08-12 (KILL-CACHE):** Eliminated HTTP/browser caching for downloader API. Backend `GET /api/download/status` and `GET /api/download/progress` now emit `Cache-Control: no-store, no-cache, must-revalidate, max-age=0`, `Pragma: no-cache`, `Expires: 0`. Frontend appends `?t=${Date.now()}` cache-buster to both fetch calls in App.tsx and ModelDownloaderModal.tsx. Tests assert new headers. Fixes 304 Not Modified regression during live-fire polling. See `second-brain/01-Agent-Memory/Phase-7/slice-kill-the-cache-bug.md`.
-
-- **2026-08-11 (DISABLE-DEMO):** Demo Mode disabled for live-fire testing. `IS_DEMO_MODE` default changed from `true` to `false` in `frontend/src/lib/demoMode.ts`. `api.demo.test.ts` updated to explicitly mock `IS_DEMO_MODE: true` via `vi.mock` instead of relying on the global flag. TopBar test updated to assert badge is absent in real mode. Frontend now communicates with real Uvicorn backend on localhost:8000. Tests: 589 green (no regression).
-
-- **2026-08-11 (S8.7c):** Dual-model schema patch — `ModelDownloaderService` refactored to download both `vlm.gguf` and `mmproj.gguf` sequentially using flat keys (`vlm_download_url`, `vlm_sha256`, `vlm_size_bytes`, `mmproj_download_url`, `mmproj_sha256`, `mmproj_size_bytes`). Progress aggregated across both files. `tools/prep_dummy_gdrive.py` rewritten to emit single valid JSON block with GDrive direct-download URLs. `version.json` overwritten with new schema. Tests: backend 188→191 (+3). See `second-brain/01-Agent-Memory/Phase-7/slice-8-7c-dual-model-schema.md`.
-
-- **2026-08-11 (LIVE-FIRE-PREP):** Dummy model files generated for live-fire download testing. Script `tools/prep_dummy_gdrive.py` creates zeroed-byte dummy `.gguf` files (`vlm.gguf` 5 MB, `mmproj.gguf` 2 MB) with exact SHA256 hashes and prints copy-paste-ready JSON snippets matching `version.json` schema. Files in `tools/dummy_models/`. CEO to upload to GDrive, convert share links to direct download URLs, and paste JSON into `version.json`. See `second-brain/01-Agent-Memory/Phase-7/slice-live-fire-prep.md`.
-
-- **2026-08-11 (SPIKE):** PyInstaller bundle spike — proved `llama-cpp-python` (v0.3.34) can be bundled into a standalone Windows `.exe` using `--collect-all llama_cpp`. First attempt without collect-all failed at runtime (DLL path not found); second attempt with `--collect-all` succeeded: Python 3.12.9 + llama_cpp 0.3.34 imported cleanly, no DLL load errors. Generated spec file (`backend-spike.spec`) retained in repo root for future reference. Recommendation: Proceed with Tauri (Option B) — C++ engine bundling is viable, Electron not required. See `second-brain/01-Agent-Memory/Phase-7/spike-pyinstaller.md`.
-
-Date: 2026-08-11
-Phase: Phase 7 (Real Backend) — SPIKE COMPLETE
-Baseline commit: ec9443d (Phase 6 closed)
-Backend tests: 188 green
-Frontend tests: 589 green
-PRD: v1.10 source of truth in second-brain/04-Product/
-Next: Phase 7 continuation — packaging strategy decided; Tauri recommended.
-
-- **2026-08-11 (SPIKE):** PyInstaller bundle spike — proved `llama-cpp-python` (v0.3.34) can be bundled into a standalone Windows `.exe` using `--collect-all llama_cpp`. First attempt without collect-all failed at runtime (DLL path not found); second attempt with `--collect-all` succeeded: Python 3.12.9 + llama_cpp 0.3.34 imported cleanly, no DLL load errors. Generated spec file (`backend-spike.spec`) retained in repo root for future reference. Recommendation: Proceed with Tauri (Option B) — C++ engine bundling is viable, Electron not required. See `second-brain/01-Agent-Memory/Phase-7/spike-pyinstaller.md`.
-
-- **2026-08-11 (S8.7b):** Frontend model downloader full-screen modal built per ADR-007 Decision 4. New `ModelDownloaderModal` component (`fixed inset-0 z-50 bg-black/80`) with progress bar, byte counters, cancel button, and restart button for failed/cancelled states. Polls `GET /api/download/progress` every 1s; closes on 'complete'. App.tsx wired: checks `GET /api/download/status` on mount; if not 'complete', calls `POST /api/download/start` and opens modal; Welcome Screen renders ONLY after model is ready. Backend: added `GET /api/download/status` endpoint (+2 tests). i18n EN+ID for all downloader strings. Tests: frontend 583→589 (+6), backend 186→188 (+2).
-
-- **2026-08-11 (S8.7a):** Model downloader service + REST API per ADR-007 Decision 4. Backend: new `ModelDownloaderService` (singleton) in `src/scan2text/services/model_downloader_service.py` — streams from URL via stdlib `urllib.request`, writes to `.part`, verifies SHA256, atomically renames to `.gguf`; cancellation via threading Event; progress tracking (bytes_downloaded, total_bytes, status). New routes in `src/scan2text/routes/download.py`: POST /api/download/start, GET /api/download/progress, POST /api/download/cancel — wired into `main.py`. Tests: backend 174→186 (+12: 6 service unit tests + 6 API integration tests). No frontend changes (deferred to S8.7b).
-
-- **2026-08-11 (S8.7a):** Model downloader service + REST API per ADR-007 Decision 4. Backend: new `ModelDownloaderService` (singleton) in `src/scan2text/services/model_downloader_service.py` — streams from URL via stdlib `urllib.request`, writes to `.part`, verifies SHA256, atomically renames to `.gguf`; cancellation via threading Event; progress tracking (bytes_downloaded, total_bytes, status). New routes in `src/scan2text/routes/download.py`: POST /api/download/start, GET /api/download/progress, POST /api/download/cancel — wired into `main.py`. Tests: backend 174→186 (+12: 6 service unit tests + 6 API integration tests). No frontend changes (deferred to S8.7b).
-
-- **2026-08-11 (S8.6):** Distribution setup — `version.json` manifest created at repo root with schema: app_version, app_download_url, model_version, model_download_url, model_sha256, model_size_bytes, release_notes (all placeholders pending CEO binary upload). `docs/UPDATE.md` written as user-friendly manual update guide for non-technical users. README.md updated with "Updating" section linking to docs/UPDATE.md. No application code modified. Doc-only slice.
-
-- **2026-08-11 (BUG-FIX):** Fixed test_feedback_service.py::test_returns_correct_count (assert 2 == 3). Root cause: save_pending_feedback() used datetime.now().strftime("%Y%m%dT%H%M%S%fZ") for filenames; two saves within the same microsecond produced identical timestamps, causing the second write to overwrite the first — only 2 files on disk instead of 3. Fix: added collision handling in save_pending_feedback() — when target exists, appends _2, _3 suffix until a unique name is found (matching project naming convention). Returns target.name so caller gets the actual filename. Backend tests: 173+1 known failure → 174/174 green.
-
-- **2026-08-11 (8.5):** PrivacyFilter implemented per ADR-007 Decision 5. logging_service.py gains PrivacyFilter (logging.Filter subclass) that strips file paths (.pdf/.jpg/.png/.webp/.md/.txt + Windows paths) → [FILE_REDACTED] and redacts string args >40 chars → [REDACTED]. StructuredFormatter added for JSON OCR event logs with allowed-fields filter. RotatingFileHandler configured maxBytes=1MB, backupCount=1. PrivacyFilter wired into all handlers. setup_logging uses StructuredFormatter by default. Tests: 166→174 (+8).
-
-- **2026-08-11 (8.4):** Feedback button built per ADR-007 Decision 1. Backend: new FeedbackService (save_pending_feedback, get_pending_count, move_pending_to_sent) + POST /api/feedback, GET /api/feedback/pending-count, POST /api/feedback/mark-sent routes. Frontend: icon-only FeedbackButton (MessageSquare) in BottomBar RIGHT zone left of Share; online opens FEEDBACK_FORM_URL in browser, offline opens in-app FeedbackDialog (textarea required min 10 chars + optional contact email); launch-time pending toast with action button when online + pending files exist. i18n EN+ID. NO silent auto-upload. Tests: backend 155→166 (+11), frontend 571→583 (+12).
-
-- **2026-08-11 (8.3):** CPU budget auto-calculation implemented per ADR-007 Decision 2. When cpu_threads=0 in settings, backend calculates floor(logical_cores * 0.6) with minimum 1 thread via new src/scan2text/utils/cpu_budget.py::calculate_auto_threads(). Integrated into VlmOcrAdapter.__init__() in vlm_ocr.py. Tests: 146 → 155 (+9: 7 cpu_budget unit tests + 2 vlm_ocr integration tests). Prevents PC freezing during OCR while maximizing throughput.
-
-- **2026-08-11 (S4-Rerun):** CLI smoke test script created at tools/smoke_test_s4.py. Runs samples/biaya.jpg through full backend pipeline (VlmOcrAdapter → postprocess → OutputService.write). PASS: biaya.jpg processed end-to-end. Output: 3352 bytes, 28 GFM table lines (336 pipe chars), 0 crops (no bbox tags emitted), 92s wall time. Full pipeline validated. Exit code 0.
-
-- **2026-08-10 (S1):** ADR-006 signed. OvisOCR2 is the sole engine (GLM removed from codebase, external backup retained). S1 docs + cleanup complete. S2-S6 port planned.
-
-- **2026-08-10 (S2):** OvisOCR2 adapter port — vlm_ocr.py rewritten: verbatim OvisOCR2 prompt, temperature=0.1 + repeat_penalty=1.0, full-page _prepare_views (no tiling; _MAX_IMAGE_EDGE=2880, _MAX_PIXELS=4M), deleted _tile_image. Tests: 122 → 123 (+1). Port check PASS (biaya.jpg: 83.1s wall, 4616 chars, 27 <tr>, all 11 numerics present). tools/port_check.py created.
-
-- **2026-08-10 (S3):** Post-process service — postprocess_service.py added with convert_html_tables_to_gfm (HTML table→GFM, best-effort, no rowspan/colspan) and extract_and_save_image_crops (bbox coords scaled 0-1000, crops saved to {stem}_files/images/, markdown src rewritten to relative path). Integrated into VlmOcrAdapter.ocr() after worker returns raw string. Tests: 123 → 134 (+11). Two existing vlm_ocr tests patched to mock extract_and_save_image_crops (fake image bytes not valid PIL images).
-
-- **2026-08-10 (S4):** Live fire integration test — ran tools/port_check.py on biaya.jpg through real VlmOcrAdapter (S2 engine + S3 postprocess). GFM Tables: PASS (285 pipe chars, valid GFM tables in output; VLM emits GFM directly not HTML <table>). Crops: FAIL (biaya_files/images/ dir created but empty — VLM emitted no <img> tags). Verdict: LIVE_FIRE_FAIL (crops missing). Adapter pipeline runs end-to-end without errors; crop extraction is gated on VLM emitting bbox img tags which this sample did not produce.
-
-- **2026-08-11 (S3):** Matrix HTML parser + crop guardrails — `convert_html_tables_to_gfm` rewritten with 2D Matrix `_TableParser` (stdlib `html.parser`): handles rowspan/colspan duplication, ragged row pad/truncate, headerless first-row promotion, `<br>`→space flattening, ghost-table plain-text revert, unclosed-tag resilience via `_finalize_pending()`. `extract_and_save_image_crops` gains coordinate clamping to image borders and 20×20 px minimum-size rejection with warning log. Tests: 134 → 143 (+9). Backend-only slice; frontend untouched.
-
-- **2026-08-10 (8.1):** ADR-007 signed — feedback GForm + offline queue, CPU 60% budget, GDrive distribution + in-app model downloader, monthly cadence. Docs locked; slices 8.2–8.7 next.
-
-- **2026-08-10 (8.2):** ADR-007 signed — feedback GForm + offline queue, CPU auto 60%, welcome expectations screen, GDrive distribution + in-app model downloader, logs no file names + 1 MB rotation, monthly cadence. PRD 01/02 → 1.10, 03 → 1.11, 04 → 1.10. docs/JOURNEY.md skeleton created.
-
-- **2026-08-11 (8.2):** Welcome expectations screen built per ADR-007. Modal shows on launch until dismissed. Backend: hide_welcome_notice field in AppSettings (default=False). Frontend: WelcomeModal component with 4 bullets (EN+ID), checkbox persists via PUT /api/settings, re-open button in SettingsDialog. Tests: backend 143→146 (+3), frontend 565→571 (+6).
-
----
-## Phase Status
-
-- **Current Phase:** Phase 7 (Real Backend) — FRONTEND API WIRING
-
-- **2026-08-13 (FIX-S9.3b):** Tauri state wiring and X-close exit hook confirmed complete. `AppState(Arc<Mutex<BackendManager>>)` registered via `app.manage()`. Backend starts during Tauri `setup` hook with 30s health check; graceful degradation on failure. Exit hook wired via `RunEvent::ExitRequested { .. } | RunEvent::Exit` — locks mutex, calls `BackendManager::stop()`, logs result. All 10 Tauri Rust tests pass (7 backend_manager_tests + 3 backend_lifecycle). `cargo check` clean (zero warnings). Unused import warnings cleaned from `lib.rs` and `backend_manager_tests.rs`. See `second-brain/01-Agent-Memory/Phase-7/fix-s9-3-tauri-x-close-backend-shutdown.md`.
-
-- **Next:** S9.4b — Frontend production API wiring. Migrate all hardcoded `http://localhost:8000` call sites to `buildApiUrl()` from `apiBase.ts`. Update API-call tests to assert via resolver. CEO: upload dummy models to GDrive when ready for live-fire after S9.4b lands.
-
-- **2026-08-10:** ADR-006 signed and EXECUTED on disk (OvisOCR2 primary at vlm.gguf/mmproj.gguf; GLM = external backup). Docs slice S1 landed; code port S2 next.
-
-- **2026-08-09 (7.2g):** Real GLM-OCR wiring — vlm_ocr.py rewritten with MTMDChatHandler (vision projector mmproj), settings-driven engine knobs (n_ctx, n_threads, ocr_timeout_seconds, max_pdf_pages, worker_priority), PDF page rendering via pypdfium2+Pillow, three error constants (OCR_TIMEOUT/MODEL_NOT_FOUND/PDF_TOO_MANY_PAGES). New smoke.py manual E2E script. Pillow>=10.0 added as dep. Test: 118 → 119 (+1 routing test for PDF→rendered pages). Backend-only slice; frontend untouched.
-
-- **2026-08-09 (7.2b):** AppSettings extended with engine knobs (language, theme, model_path, mmproj_path, n_ctx, n_threads, ocr_timeout_seconds, worker_priority). PathService gains app_root param + property; models_dir and assets_dir now resolve from app_root (not base_dir); resolve_model_path() added; ensure_runtime_dirs drops assets_dir. Test: 102 → 112 (+10). Backend-only slice; frontend untouched.
-
-- **2026-08-08 (6.16c):** queue empty-state copy finalized by CEO ID review; per-locale icons inside strings — CEO decision (i18n owns full message including icon); EN → " Nothing here yet. Drop something tasty!" (leading space retained), ID → "🙈 Masih belum ada file tuh! Coba upload di atas!". No separate icon element in QueuePanel (confirmed via forensics). Tests: 564 → 565 (+1).
-
-- **2026-08-08 (6.17 closure):** Phase 6 marked COMPLETE. QA re-run all green (previously failed checks 1.5, 2.3, 4.6, 5.1, 5.3, 5.5-superseded, 6.1, 7.2, 7.3 now PASS). Stale draft prd-early-dont-use.md quarantined to 00-Inbox.
-
-
-## Frontend Baseline
-
-- **Tests:** 564/564 passing (33 files; +10 from 6.16b: drag counter semantics, shell chain min-h-0, brand glow)
-
-- **PRD v1.9 files 01-04:** COMMITTED as source of truth milestone (ADR-006 engine swap).
-
-- **2026-08-08:** fake progress bar removed by CEO decision (v2/v3 candidate); toast copy trimmed; empty states centered. Tests: 552 → 554 (+2).
-- **2026-08-08 (6.16b):** vertical shrink chain fixed (panel roots min-h-0); drag-over highlight with counter semantics + warm accent colors; brand glow radial gradient added to TopBar; 1vh gutter between TopBar and main. Tests: 554 → 564 (+10).
-
-- **Typecheck:** PASS
-
-- **Build:** PASS (zero source delta this slice)
-
-- **Visuals:** Demo Mode active. TopBar shows amber "DEMO" badge + Settings icon. Bottom bar ticker shows Worker/RAM/Version with vertical dividers. Side-by-side preview panel renders with 30%/70% split. Action header with Copy and Open Folder buttons visible on completed jobs. Settings Dialog with General section (Language/Theme selectors) and locked Processing section (Output Dir, Max PDF Pages, CPU Threads). Tailwind utilities now load correctly; full-width layout enabled via neutral #root rule. Markdown now styled with prose classes. DropZone centered vertically with file-type hint. Panel dividers added between main sections. @tailwindcss/typography@0.5.16 declared in frontend/package.json devDependencies.
-  2026-08-07: repo rehomed to scan2text, Projects-level git retired to .git-backup"
-
-
-## Phase 6 Progress
-
-- [x] Slice 6.x: Tailwind pipeline hotfix (@tailwind directives added, hostile Vite #root rule replaced with full-width neutral container).
-
-- [x] Slice 20.1: Multi-file drop, batch validation, aggregated toast, FIFO queue.
-
-- [x] Slice 20.2: Demo Mode core (mock OCR, rich Markdown, visible badge).
-
-- [x] Slice 20.3: Preview panel docs compliance (side-by-side layout).
-
-- [x] Slice 20.4: Naming utility & preview panel action header (Copy + Open Folder).
-
-- [x] Slice 20.5: Full fake system chrome (worker status, RAM, settings modal).
-
-- [x] Slice 6.9: Visual polish — thumbnail wiring verified, panel dividers added, typography prose installed, DropZone centered with i18n hint.
-
-- [x] Slice 6.10: Thumbnail path fix — data-testid attributes added to img elements in PreviewPanel and QueuePanel for testability.
-
-- [x] Slice 6.10b: Recovery — fixed red test (removeJob cleanup > should call stopProgress on job removal) by mocking progressManager module in store test; @tailwindcss/typography declared; audit shows zero leftover thumbnail references.
-
-- [x] Slice 6.14d: Visual hotfix — TopBar brand image wordmark (text.png, alt="Scan2Text", h-34px), BottomBar rebuilt with centered telemetry + Share icon right, viewport lock via html/body overflow-hidden CSS, DropZone background image at 0.25 opacity, queue status dots + progress bars verified. Tests: 521 → 527 (+6).
-
-- [x] Slice 6.14e: Queue status restore + dropzone taste + card depth + bottombar centering (2026-08-07). QueuePanel: spinner bright yellow (#FACC15) inline style, glossy 3-stop radial-gradient green dot (#86EFAC→#16A34A→#14532D) and red dot (#FCA5A5→#DC2626→#7F1D1D) with translated tooltip, thin progress bar retained, viewport overflow-y auto+min-h-0. DropZonePanel: bg opacity 0.15 (was 0.25), backgroundSize single-value '100%' (not 'cover'), header font-bold text-[#1F150C]. depthStyles.ts: per-panel dark/light recipes — left white-highlight gradient + soft shadow, center warm overlay + strong shadow, right darkest overlay + deepest shadow; light mode white top-highlight 0.5-0.6 alpha + brown fade bottom. BottomStatusBar: h-[36px] flex items-center for vertical centering. Tests: 527 → 543 (+16).
-
-- [x] Slice 6.14f: Fixed status slot + bottombar pin + preview buttons + dropzone fill (2026-08-07). QueuePanel: fixed ~14px status slot always present after filename (grey dot pending #A8A29E/#78716C, yellow spinner processing/uploading #FACC15, green glossy completed, red glossy failed), no visible text labels in slot, tooltips retained, progress bar retained. BottomStatusBar: pinned with shrink-0, grid-cols-[1fr_auto_1fr] for centered telemetry, flex items-center for vertical centering. CommandCenterLayout: shell h-screen flex flex-col, main min-h-0. DropZonePanel: dashed area flex-1 min-h-0 w-full fills between header and hint. PreviewPanel: Copy/Open Folder buttons borderless transparent bg with caramel hover tint rgba(227,165,95,0.12). Tests: 543 → 558 (+15).
-
-- [x] Slice 6.14g: Forensics-first live-tree fix (2026-08-07). Proved via import-chain trace that QueuePanel.tsx and DropZonePanel.tsx are LIVE; DropZone.tsx and debug-drop.test.tsx are GHOST (not imported by app tree). Fixed DropZonePanel hint text: added font-bold + text-[#1F150C] + shrink-0. Deleted 3 ghost files (DropZone.tsx, DropZone.test.tsx, debug-drop.test.tsx). Tests: 558 → 549 (-9 ghost tests). Typecheck + build green.
-
-- [x] Slice 6.14h: Radix tray fix + dropzone fill + 10-file rule (2026-08-07). CSS override neutralizes Radix ScrollArea viewport child display:table (defeats min-w-0 truncation + percentage heights). DropZonePanel: ScrollArea removed entirely — panel no longer scrolls. Header test updated to query dropzone-header directly. i18n: dropzone.hint updated with "max 10 files per batch"; new key dropzone.maxFilesWarning added (en + id). FileDropZone: 10-file cap enforced after type+size validation — excess files skipped with warning toast + console log. ScrollAreas.test.tsx: replaced dead dropzone-scroll-area assertion with header/hint assertions. Tests: 549 → 551 (+2). Typecheck + build green.
-
-- [x] Slice 6.14j: Absolute viewport lock — fixed inset-0 shell (2026-08-07). CommandCenterLayout root changed from h-screen flex flex-col to fixed inset-0 flex flex-col overflow-hidden so the viewport is the only sizing authority. Main uses flex-1 min-h-0 min-w-0 grid grid-cols-[34fr_60fr]. Left column uses min-h-0 grid grid-rows-[minmax(0,38fr)_minmax(0,62fr)] gap-3 so content can never stretch panels. Removed decorative radiant rays and ambient glow from layout component. Added data-testid="app-shell", "main-content", "left-column", "preview-column". palette-lock.test.ts: 4 new tests for [data-radix-scroll-area-viewport] > div neutralizer. Tests: 551 → 544 (-7 removed, +8 added). Typecheck + build green.
-
-- [x] Slice 6.14k: True 34/60 widths + always-visible warm scrollbars (2026-08-07). Grid tracks changed to minmax(0,34fr)_minmax(0,60fr) + min-w-0 on both columns to prevent long filenames from stretching left panel. QueuePanel: removed inner overflow-y-auto div wrapper, added <ScrollBar orientation="vertical" />. PreviewPanel: added <ScrollBar orientation="vertical" />. CSS: appended always-visible warm scrollbar styles targeting [data-radix-scroll-area-viewport] [data-orientation="vertical"] — caramel thumb #E3A55F dark, coffee #92400E light via :not(.dark) selector. Tests: 544 → 548 (+4). Typecheck + build green.
-
-- [x] Slice 6.14z: Panel root min-w-0 — overlap killed (2026-08-08). DropZonePanel, QueuePanel (both states), PreviewPanel (all 4 states) outermost divs now carry min-w-0 w-full to prevent grid item min-content overflow painting over sibling panels. Capping tracks alone (6.14k) was insufficient; every grid item in the truncation chain needs min-w-0. Tests: 548 → 552 (+4). Typecheck + build green.
-
-- [x] Slice 6.11: Calm theme — zinc layered surfaces (#09090b/#18181b/#27272a dark, #fafafa/#e4e4e7 light), Quantico @font-face with swap comment, font-display/font-body CSS vars + Tailwind fontFamily tokens, icon-only TopBar with shadcn Tooltip + i18n keys, rounded-xl card wrappers on DropZone/Queue/Preview panels, prose-base headings via prose-headings:font-display + purple prose-a links, BottomStatusBar font-display.
-
-- [x] Slice 6.12: CEO visual feedback pass — darkMode class strategy fix, ratios 20/20/60 (CEO approved 2026-08-07), border-r dividers removed in favor of p-3 gap-3 floating cards, DropZone fills panel height, Queue status dots (glossy green/red radial-gradient) with tooltips + Spinner during processing, Remove button removed from MVP, Preview action header centered, i18n queue.remove cleaned up, shadcn Spinner installed.
-
-- [x] Slice 6.12b: Alignment + gradient surfaces + light-mode fix (2026-08-07). Light-mode bug root cause: @media (prefers-color-scheme: dark) overrode :root vars; removed media query block. Per-panel neutral gradient surfaces: surface-left / surface-center / surface-right / surface-action classes with dark/light theme variants. Panel h-full wrappers in CommandCenterLayout for uniform column height. DropZone hint moved inside card (mt-auto), click label bigger/bold font-display semibold. Action header gets surface-action background. Regression test added for theme toggle class flip.
-
-- [x] Slice 6.12c: Uniform spacing + vertical gradient sheen + right panel lightening + DropZone dedupe + full-height empty cards (2026-08-07). Grid p-3 gap-3 uniform on all sides. All surface gradients changed from 135deg diagonal to to-bottom vertical (lighter top, base bottom). Right panel dark surface lightened two steps (#202024→#18181b). DropZone inner area icon-only (upload SVG, no text); single heading text retained at card top. PreviewPanel all states (empty/processing/failed/completed) use flex-1 surface-right card with min-w-0 box-border for pixel-perfect bottom alignment. QueuePanel card gains min-w-0 box-border. DropZonePanel card gains min-w-0 box-border.
-
-- [x] Slice 6.12d: CEO locked coffee-and-paper palette 2026-08-07 — purple retired. Dark: bg #000000, surface-left #E1DCC9/fg #1F150C, surface-center #412D15/fg #F2EBDD, surface-right #1F150C/fg #F2EBDD, border #3B2A18, accent #E3A55F. Light: bg #F9F8F6, surface-left #EFE9E3, surface-center #D9CFC7, surface-right #C9B59C, all fg #1F150C, border #1F150C, accent #92400E. Right margin fix: grid-cols changed from percentage-based [20%_20%_60%] to fr-based [2fr_2fr_6fr] so gaps are accounted for and right card has identical window-edge distance as left. Per-surface foreground colors applied (ink on left paper, cream on center/right in dark). Vertical sheen gradients recomputed over new base colors. Palette-lock test + layout regression test added.
-
-- [x] Slice 6.12e: Depth pass — dark background warmed to #080502. All three panel cards + action header: longhand background-color + background-image (vertical gradient, ~12% lighter top stop), box-shadow (dark: 0 12px 32px -12px rgba(0,0,0,0.7)+inset highlight; light: 0 12px 32px -14px rgba(31,21,12,0.28)+inset highlight), warm radial glow dark-only. Border-border removed from all three panel cards in both themes. Dashed drop-target border and bar hairlines retained. Palette-lock test extended with depth recipe checks + no-border-class assertions.
-
-- [x] Slice 6.12f: Overflow hygiene — CommandCenterLayout grid children get min-w-0 overflow-hidden so columns never expand past 20/20/60. QueuePanel filename element already had truncate+min-w-0 (verified). MarkdownPreview article gets min-w-0 break-words so long tokens inside Markdown can't push the right panel. Regression tests: CommandCenterLayout grid child class check + QueuePanel 60-char spaceless name truncate assertion.
-
-- [x] Slice 6.13: Identity finale + Vite __dirname fix — TopBar identity chip with logo.png pictogram + live-text wordmark (scan + accent "2" + text) + DEMO badge; static SVG radiant rays in center panel only (zero CPU, pointer-events-none, aria-hidden); SettingsDialog locked demo mode Switch with 🔒 lock indicator; vite.config.ts + vite.test.config.ts __dirname → import.meta.dirname. New i18n keys: topbar.logoAlt, topbar.wordmarkScan/Two/Text, topbar.demoBadge, settings.demoModeSwitch, settings.locked. Tests: 442 → 459 (+17).
-
-- [x] Slice 6.13b: Depth & presence pass — TopBar separator line removed, header gets warm gradient + downward shadow; lockup chip redesigned as physical stamp tile (h-8 w-8 rounded-lg, warm gradient bg, inset highlight, outer shadow) replacing pill/border wrapper; wordmark gains tracking-wider; BottomBar separator line removed; all three panel cards gain depth utility classes (.depth-panel-left/center/right) with layered vertical gradient overlay (top-darker fade), inset top highlight, soft outer shadow; workspace container gets ambient warm radial glow (dark: 0.14 opacity accent, light: 0.04); DropZone dashed area stretched to w-full; ambient glow marker div added for testability. New CSS classes: .topbar-header, .chip-tile, .depth-panel-left, .depth-panel-center, .depth-panel-right, .workspace-container. Tests: 459 → 472 (+13).
-
-- [x] Slice 6.14a: Literal wordmark + floating 34/60 layout — Wordmark rendered as literal spans "scan"+"2"+"text" (no i18n indirection); color uses exact right-panel cream/ink token (#F2EBDD dark / #1F150C light). Layout rebuilt: workspace grid 34fr/60fr with 2% gutters and 2% padding; left column stacks dropzone (38% height, min-h 240px) + queue (flex-1); right column preview full-height. Overflow hygiene contract: grid wrappers min-w-0 without overflow-hidden; cards get overflow-hidden+min-w-0. Depth shadows tuned to gutters: 0 8px 20px -8px rgba(0,0,0,0.55) dark / rgba(31,21,12,0.22) light. Radiant rays move with queue card. Tests: 512 → 514 (+2).
-
-- [x] Slice 6.14b: ScrollAreas + file type icons — @radix-ui/react-scroll-area installed (new dep). shadcn-style ScrollArea component created at src/components/ui/scroll-area.tsx. Three regions wrapped: dropzone (data-testid="dropzone-scroll-area"), queue job list (data-testid="queue-scroll-area"), preview Markdown (data-testid="preview-scroll-area"). Queue + preview use h-full+min-h-0 chain for actual overflow scroll; dropzone present for future-proofing. Warm-styled thin scrollbars via CSS (caramel thumb dark #E3A55F / coffee light #92400E, 4px width, zero CPU idle). fileKind.ts already existed with 8 test cases covering all requirements. lucide-react FileImage/FileText glyphs already wired with data-testid="queue-icon-image" and "queue-icon-pdf". Regression test added: clicking completed job switches preview Markdown content. Tests: 514 → 521 (+7).
-       
-
+## Open Questions
+- None. DOC-06 is the next dissolution step.
