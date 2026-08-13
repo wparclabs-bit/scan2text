@@ -1,3 +1,4 @@
+- **2026-08-13 (DOC-05):** PRD-04 §19 Testing Strategy folded into PRD-03 as §19 (trimmed historical QA run records per CEO Option A); PRD-03 bumped to v1.13; PRD-04 dissolution step 1 of 4. Doc-only slice; no source touched. See `second-brain/01-Agent-Memory/Phase-7/slice-doc-05-prd-04-s19-to-prd-03.md`.
 - **2026-08-13 (DOC-04):** PRD-01 aligned with ADR-008 — Tauri v2 desktop shell & packaging line added to §12; version drift fixed (header 1.9 → 1.11 to match existing 1.10 changelog entry); PRD-01 bumped to v1.11. Doc-only slice; no source touched. See `second-brain/01-Agent-Memory/Phase-7/slice-doc-04-prd-01-tauri-alignment.md`.
 - **2026-08-13 (DOC-03):** AGENTS.md + AGENTS-CTO.md updated: token safety cap reduced from 90k to 45k per slice, input target from 70k to 35k (CEO locked decision). Doc-only slice; no source touched.
 <!-- PHASE-7-LIVE-FIRE-PREP-STATE-2026-08-13 -->

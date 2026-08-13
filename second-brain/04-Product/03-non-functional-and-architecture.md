@@ -1,7 +1,7 @@
 # Non-Functional Requirements & Architecture — Scan2Text MVP
 
-Version: 1.11
-Date: 2026-08-10
+Version: 1.13
+Date: 2026-08-13
 Status: Approved for Implementation
 Format: clean non-table (CEO instruction)
 
@@ -19,6 +19,8 @@ Format: clean non-table (CEO instruction)
 - 1.9 — 2026-08-08 — ADR-005 consolidation: backend source of truth = src/scan2text; §13 repo tree updated; §14 canonical health = /api/health.
 - 1.10 — 2026-08-10 — ADR-006 engine swap; §12/§13 model lines updated; NFR-04 known-defect reference; NFR-06 model size note.
 - 1.11 — 2026-08-10 — ADR-007: CPU budget auto = 60% of logical cores; feedback folder in runtime tree; GDrive distribution + in-app downloader.
+- 1.12 — 2026-08-13 — DOC-02: aligned with ADR-008; pywebview replaced by Tauri v2; runtime folder + tech stack updated; stale /api/health note removed.
+- 1.13 — 2026-08-13 — DOC-05: folded PRD-04 §19 Testing Strategy into PRD-03 as §19 (trimmed historical QA run records per CEO Option A); PRD-04 dissolution step 1 of 4.
 
 ---
 
@@ -96,7 +98,7 @@ Local-first modular monolith. No cloud services, no external database, no micros
 
 ### Runtime Approach
 
-Portable desktop app with local web UI: the executable starts a local FastAPI backend, serves the React frontend locally, opens the UI in a native desktop window (pywebview).
+Portable desktop app with local web UI: a Tauri v2 shell (Rust, ADR-008) bundles the built React frontend and spawns the PyInstaller folder-based backend artifact (dist/scan2text-backend/scan2text-backend.exe) as a child process; the WebView2-backed native window presents the UI. Backend binds 127.0.0.1:47351 in production.
 
 ### Frontend-Backend Communication
 
@@ -129,7 +131,7 @@ Portable desktop app with local web UI: the executable starts a local FastAPI ba
 
 ### Frontend
 
-- Vite + React + TypeScript; Tailwind CSS + shadcn/ui; Zustand (memory-only job state); react-markdown + remark-gfm; react-i18next (en + id); pywebview; PyInstaller or equivalent.
+- Vite + React + TypeScript; Tailwind CSS + shadcn/ui; Zustand (memory-only job state); react-markdown + remark-gfm; react-i18next (en + id); Tauri v2 (desktop shell, ADR-008); PyInstaller (backend artifact only, folder-based — ADR-008).
 
 ### Key Frontend Decisions (v1.8)
 
@@ -150,13 +152,12 @@ Portable desktop app with local web UI: the executable starts a local FastAPI ba
 
 ```text
 Scan2Text/
-├── Scan2Text.exe
-├── models/
+├── Scan2Text.exe                  # Tauri v2 shell (ADR-008); bundles built React frontend
+├── scan2text-backend/             # PyInstaller folder-based artifact (ADR-008)
+│   └── scan2text-backend.exe      # FastAPI backend; binds 127.0.0.1:47351 in prod
+├── models/                        # EXTERNAL — not bundled; downloaded at runtime (ADR-008)
 │   ├── vlm.gguf          # OvisOCR2 0.9B language model (ADR-006)
 │   └── mmproj.gguf       # Vision projector (multimodal adapter)
-├── assets/
-│   ├── icons/
-│   └── ui/               # Built React frontend assets
 ├── output/
 ├── settings/
 │   └── settings.json
@@ -206,7 +207,7 @@ Internal local contract (not a public API).
 
 - POST /process — multipart file bytes → { "task_id" }; starts background OCR.
 - GET /status/{task_id} — status (pending/uploading/processing/completed/failed/background) + result_markdown on completion.
-- GET /api/health — worker idle/busy, RAM usage, model loaded state (used by BottomBar; until built, UI shows RAM "—").
+- GET /api/health — worker idle/busy, RAM usage, model loaded state (used by BottomBar).
 - GET /api/settings / PUT /api/settings.
 - Future (not MVP-critical): POST /cancel/{task_id}; POST /api/output/open.
 - Share placeholder note (v1.7): MVP Share is frontend-only; target constant https://placeholder.local; no backend endpoint; swapped post-GitHub.
@@ -327,3 +328,83 @@ class UpdateInfo:
 - Log: app start, settings loaded, model load started/completed, job started/completed/skipped/failed, output saved, update check result, batch-cap skips (extension + byte count + page count only; no file names; no content).
 - Fields: extension + byte count + page count + duration + error/warning code + model version + timestamp.
 - Never log extracted OCR text or full document contents by default.
+
+---
+
+## 19. Testing Strategy
+
+Testing must follow AIASD-friendly behavior testing.
+
+### Test Pyramid
+
+- 70% integration tests
+- 20% unit tests
+- 10% end-to/manual tests
+
+### Unit Tests
+
+- output file naming (timestamp + collision resolution)
+- file-name sanitization
+- settings validation
+- version comparison
+- error mapping (backend code → translated UI message)
+- guardrail checks (50MB size, 20-page PDF limit, 10-file batch cap)
+- file type validation (PNG/JPG/JPEG/WEBP/PDF)
+- i18n key resolution
+- fake progress easing function (0→90% over 30s)
+- file-size formatting for queue rows
+
+### Integration Tests
+
+Backend (fake OCR engine):
+
+- add valid file to queue; process; one Markdown per valid input; never merge
+- skip unsupported file in batch + log; continue valid files
+- reject oversized PDF (>20 pages) and file (>50MB)
+- handle missing output folder; settings persistence
+- POST /process returns task_id; GET /status/{task_id} progression; GET /health worker + RAM
+- queue status slot per status: grey dot (pending), yellow spinner (uploading/processing), glossy green (completed), glossy red (failed); dot-only, no visible text; translated tooltips; retry on failed; absence test asserts NO fake progress bar (deferred v2/v3, v1.8)
+
+Frontend:
+
+- Zustand store: addJob, updateJob, startUpload, pollJob; FIFO order; auto-select; background re-poll (60s × 10)
+- fake progress transitions; file validation toasts
+- 10-file cap: dropping 12 valid files creates exactly 10 jobs + warning toast + logged skips
+- queue status slot per status: grey dot (pending), yellow spinner (uploading/processing), glossy green (completed), glossy red (failed); dot-only, no visible text; translated tooltips; thin fake progress bar while active; retry on failed
+- react-markdown + remark-gfm rendering; i18n EN/ID; theme + language persistence
+
+Frontend v1.7 visual-contract (real <App /> render):
+
+- brand image with alt="Scan2Text" present in live TopBar + logo chip left
+- TopBar 34px; items vertically centered
+- shell has fixed inset-0 + flex-col + overflow-hidden; main flex-1 min-h-0; left column grid-rows minmax(0,38fr)/minmax(0,62fr)
+- BottomBar: shrink-0; grid 1fr auto 1fr; center telemetry (Worker/RAM/version); Share icon-only RIGHT; no text label
+- Dropzone: dashed area flex-1 min-h-0; NO ScrollArea; bg layer opacity 0.15 + single-value background-size; header + hint bold ink
+- Preview header: two real <button> elements, borderless, transparent bg, translated labels
+- index.css contains the Radix tray override selector
+- structural constancy: render with 0 jobs vs 10 jobs — same panel structure
+
+### Manual/E2E Tests
+
+Run against real model and real samples:
+
+- launch app; first-run setup; drag-and-drop + picker
+- drop image / PDF → fake progress + Markdown in right panel; auto-select
+- mixed batch with unsupported → skipped + logged; oversized → toast
+- drop 11 files → first 10 processed + warning toast; dropzone size unchanged
+- wide window (2560px) + short window → BottomBar always visible; no page scroll
+- queue: names truncate with ellipsis; status dots visible at row right; warm always-visible scrollbar on queue + preview
+- TopBar: brand image + glow; logo chip + DEMO; icon-only tooltips translated
+- language + theme toggles persist; restart persistence
+- bottom bar telemetry centered; Share right with toast on click
+- drop image / PDF → status spinner + Markdown in right panel; auto-select
+
+### QA Manual Test Script Artifact
+
+- Must exist at `second-brain/02-QA/scan2text-phase6-manual-test.md`.
+- Must include: baseline verification (npm run test count, git log top 3, AGENTS.md map), all visual/scroll/queue/share checks above, result recording (pass/fail, date, commit).
+- Must be RUN before Phase 6 is marked complete.
+
+### OCR Accuracy Validation
+
+- CEO provides 3 representative samples; human review in right panel; ~95% visible text target; best-effort lists/tables.
