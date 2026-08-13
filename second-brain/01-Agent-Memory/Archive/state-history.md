@@ -22,3 +22,8 @@
 
 ## Open Questions
 - None. DOC-06 is the next dissolution step.
+
+## 2026-08-13 (DOC-11): AGENTS.md diet — slimmed stale Phase-6 content, relocated + fixed MCP block to section 3.11, archived Phase-6 visual detail. Backup in 00-Inbox/backups/; archive in 01-Agent-Memory/Archive/. Doc-only slice; no source touched.
+
+## 2026-08-13 (S9.5): Tauri sidecar forensics (read-only) — mapped src-tauri structure (866 source lines, ~30 KB), confirmed BackendManager + RunEvent::Exit hooks already implemented, externalBin config absent, no Rust code changes. Scope report generated; recommends 2-slice split (config wiring + lifecycle completion). Doc-only; no source touched.
+
