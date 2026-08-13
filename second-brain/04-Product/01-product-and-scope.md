@@ -1,7 +1,7 @@
 # PRD: Scan2Text — MVP
 
-Version: 1.9
-Date: 2026-08-10
+Version: 1.11
+Date: 2026-08-13
 Status: Approved for Implementation
 Product Owner: CEO
 Technical Owner: CTO
@@ -22,6 +22,7 @@ Engineering Method: AI-Assisted Software Development (AIASD)
 | 1.8     | 2026-08-08 | \| 1.8 \| 2026-08-08 \| Phase 6 closure (CEO-approved): fake progress bar removed from MVP — deferred to v2/v3 on user feedback (single status indicator stays in the right 14px slot); 1vh vertical gutter between TopBar and main; queue empty-state copy finalized with per-locale icons inside strings (📭 EN / 🙈 ID); pathological short-window = documented accepted edge; dropzone upload icon centered+bold deferred to Phase 7; Phase 6 marked COMPLETE (QA gate: first run 37/48 → fixes → re-run all green) \|                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | 1.9     | 2026-08-10 | ADR-006: primary OCR engine = OvisOCR2 0.9B (Apache-2.0) via llama-cpp-python; GLM-OCR removed from codebase (external backup only); §7/§12 model lines updated; FR-08 asset-folder exception for chart crops; known-defect register accepted |
 | 1.10    | 2026-08-10 | ADR-007: feedback button (GForm + offline queue) in BottomBar left of Share; first-run expectations screen with don't-show-again; CPU auto = 60% of logical cores; GDrive distribution + in-app model downloader; logs no file names, 1 MB size-based rotation; monthly cadence |
+| 1.11    | 2026-08-13 | DOC-04: aligned §12 with ADR-008; added Tauri v2 desktop shell & packaging line; fixed version drift (header was 1.9) |
 
 ---
 
@@ -325,6 +326,7 @@ Where:
 - Radix ScrollArea tray neutralized via CSS override (`[data-radix-scroll-area-viewport] > div { display:block; min-width:0; height:auto }`).
 - CPU budget: cpu_threads=0 (auto) = 60% of logical cores (ADR-007); explicit values still override; worker priority stays lowered.
 - Distribution: binaries on Google Drive, version.json on GitHub, download_url → GDrive (ADR-007).
+- Desktop shell & packaging: Tauri v2 wraps the built React frontend; backend = PyInstaller folder artifact (scan2text-backend.exe) spawned as child process, lifecycle owned by Tauri; production backend 127.0.0.1:47351 (ADR-008).
 - Release cadence monthly only (ADR-007).
 - Logs: no file names, no content; 1 MB size-based rotation (ADR-007).
 - Memory hygiene: every slice exits with green tests + commit + Phase-6 summary file + AGENTS.md lessons.

@@ -1,8 +1,13 @@
-<!-- PHASE-7-LIVE-FIRE-PREP-STATE-2026-08-12 -->
+- **2026-08-13 (DOC-04):** PRD-01 aligned with ADR-008 — Tauri v2 desktop shell & packaging line added to §12; version drift fixed (header 1.9 → 1.11 to match existing 1.10 changelog entry); PRD-01 bumped to v1.11. Doc-only slice; no source touched. See `second-brain/01-Agent-Memory/Phase-7/slice-doc-04-prd-01-tauri-alignment.md`.
+- **2026-08-13 (DOC-03):** AGENTS.md + AGENTS-CTO.md updated: token safety cap reduced from 90k to 45k per slice, input target from 70k to 35k (CEO locked decision). Doc-only slice; no source touched.
+<!-- PHASE-7-LIVE-FIRE-PREP-STATE-2026-08-13 -->
 # Scan2Text Current State — Phase 7 Tauri Dev-Mode Plumbing
 
-Date: 2026-08-12
-Phase: Phase 7 (Real Backend) — TAURI DEV-MODE PLUMBING
+Date: 2026-08-13
+Phase: Phase 7 (Real Backend) — PRODUCTION API BASE URL RESOLVER
+
+- **2026-08-13 (DOC-02):** PRD-03 aligned with ADR-008 — pywebview fully replaced by Tauri v2; runtime folder structure updated to reflect Tauri shell + scan2text-backend artifact + external models/; tech stack updated; stale /api/health "until built" note removed; PRD-03 bumped to v1.12. Doc-only slice; no source touched. See `second-brain/01-Agent-Memory/Phase-7/slice-doc-02-prd-03-tauri-alignment.md`.
+- **2026-08-13 (S9.4a):** Frontend production API base URL resolver — new `frontend/src/lib/apiBase.ts` exporting `getApiBaseUrl()` (returns `http://127.0.0.1:47351` in PROD, empty string in dev) and `buildApiUrl(path)` (normalizes leading slash). Reads `import.meta.env.PROD` inside function for testability via `vi.stubEnv`. 6 unit tests added. Call-site wiring deferred to S9.4b. Frontend: 590→596 passed (+6). Typecheck + build green. See `second-brain/01-Agent-Memory/Phase-7/slice-9-4a-frontend-api-base-url-resolver.md`.
 
 - **2026-08-12 (S9.1d):** Downloader Windows rename + disk-aware status + restart fix. `model_downloader_service.py` gains `os.replace()` (Windows-safe overwrite), `_verify_file()` disk validation, concurrent-start guard (status set to "downloading" before thread spawn), skip-verified-files optimization, and stale .part cleanup at start. `get_progress()` now returns `complete` when both model files verify on disk — App.tsx passes through to Welcome Screen without modal. Frontend: added restart-button click test. Backend: 196→199 passed (+3). Frontend: 589→590 passed (+1). Typecheck + build green. See `second-brain/01-Agent-Memory/Phase-7/slice-9-1d-fix-downloader-windows-rename-and-disk-ack.md`. QA addendum at `second-brain/02-QA/phase-7/s9-1b-tauri-dev-plumbing.md`.
 - **2026-08-12 (S9.1c):** Vite/Tauri watch conflict fix — `frontend/vite.config.ts` server block gains `watch: { ignored: ['**/src-tauri/**'] }` to prevent Vite from watching Rust build artifacts in `src-tauri/target/`, which caused EBUSY crashes during Cargo compilation. Existing `/api` proxy config untouched. Typecheck + build green. See `second-brain/01-Agent-Memory/Phase-7/slice-9-1c-fix-vite-tauri-watch-conflict.md`.
@@ -10,7 +15,7 @@ Phase: Phase 7 (Real Backend) — TAURI DEV-MODE PLUMBING
 - **2026-08-12 (S9.2a):** Standalone backend artifact via PyInstaller. New `src/scan2text/utils/prod_runtime.py` (is_frozen, frozen_exe_dir, get_port=47351, get_host=127.0.0.1). New `src/scan2text/cli.py` entry point. PathService frozen base_dir now resolves to exe parent (was exe_parent/scan2text-data). PyInstaller 6.22.0 spec at `packaging/scan2text-backend.spec`. Artifact: `dist/scan2text-backend/scan2text-backend.exe` (45 MB). Smoke test PASS: health + download/status on 127.0.0.1:47351, missing models handled gracefully. Backend: 199→211 passed (+12 new), 1 known pre-existing failure. See `second-brain/01-Agent-Memory/Phase-7/slice-9-2a-standalone-backend-artifact.md`.
 Baseline commit: ec9443d (Phase 6 closed)
 Backend tests: 211 passed, 1 pre-existing failure (test_health_contract — dummy models on disk)
-Frontend tests: 590 green
+Frontend tests: 596 green
 PRD: v1.10 source of truth in second-brain/04-Product/
 Next: Tauri sidecar wiring — wire scan2text-backend.exe as Tauri backend process.
 
