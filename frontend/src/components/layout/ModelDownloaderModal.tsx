@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { buildApiUrl } from '@/lib/apiBase'
 
 interface DownloadState {
   status: 'idle' | 'downloading' | 'verifying' | 'complete' | 'failed' | 'cancelled'
@@ -28,7 +29,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
 
     const pollProgress = async () => {
       try {
-        const res = await fetch(`/api/download/progress?t=${Date.now()}`)
+        const res = await fetch(buildApiUrl(`/api/download/progress?t=${Date.now()}`))
         const data: DownloadState = await res.json()
         setState(data)
 
@@ -54,7 +55,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
 
   const handleCancel = async () => {
     try {
-      await fetch('/api/download/cancel', { method: 'POST' })
+      await fetch(buildApiUrl('/api/download/cancel'), { method: 'POST' })
     } catch (err) {
       console.error('Downloader error:', err);
     }
@@ -62,7 +63,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
 
   const handleRestart = async () => {
     try {
-      await fetch('/api/download/start', { method: 'POST' })
+      await fetch(buildApiUrl('/api/download/start'), { method: 'POST' })
     } catch (err) {
       console.error('Downloader error:', err);
     }
