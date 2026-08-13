@@ -1,4 +1,4 @@
-use app_lib::{force_kill_process_tree, wait_for_health, BackendManager};
+use app_lib::{boot_backend, force_kill_process_tree, wait_for_health, BackendManager};
 
 const BACKEND_PORT: u16 = 47351;
 const HEALTH_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
@@ -53,4 +53,11 @@ fn test_force_kill_process_tree() {
     }
     // Verify the process is no longer running - the force kill should have succeeded
     // The PID should not be active anymore (verified by the taskkill command succeeding)
+}
+#[test]
+fn test_boot_backend() {
+    let mut manager = BackendManager::new();
+    let result = boot_backend(&mut manager);
+    assert!(result.is_ok(), "boot_backend should succeed, got: {:?}", result);
+    manager.stop().expect("stop should succeed");
 }

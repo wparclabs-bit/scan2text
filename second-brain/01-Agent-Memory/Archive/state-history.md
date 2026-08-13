@@ -1,3 +1,5 @@
+## 2026-08-13 (S9.4b-3): Removed hardcoded `API_BASE` constants from api.ts and uploadService.ts; wired all fetch calls through buildApiUrl(). 5 RED tests turned GREEN. Frontend: 606 green, 0 failures.
+
 ## 2026-08-13 (S9.4b-2): ModelDownloaderModal wired — imported buildApiUrl, replaced 3 hardcoded/relative fetch URLs (progress, cancel, start) with buildApiUrl() calls. Added 2 RED tests for cancel/start in PROD mode. 10 tests pass (3 new). Frontend: 601 green, 5 failures remaining (api.test.ts ×3, uploadService.test.ts ×2).
 
 ## 2026-08-13 (S9.4b-1): FeedbackDialog + WelcomeModal already wired — forensics confirmed both files import and call buildApiUrl() from original commits (195d2e5, 8156378). 14 tests pass (7 per file). No source changes needed. 6 pre-existing failures remain in b-2/b-3/b-4 targets.

@@ -1,8 +1,68 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
+
+/// Backend port (ADR-008).
+const BACKEND_PORT: u16 = 47351;
+
+/// Manages the lifecycle of the Python backend process.
+pub struct BackendManager {
+    child: Option<Child>,
+    port: u16,
+}
+
+impl BackendManager {
+    /// Create a new BackendManager with default port.
+    pub fn new() -> Self {
+        Self {
+            child: None,
+            port: BACKEND_PORT,
+        }
+    }
+
+    /// Start the backend executable and store the child process.
+    pub fn start(&mut self, timeout: Duration) -> Result<(), String> {
+        if self.child.is_some() {
+            return Ok(()); // already running
+        }
+        let exe_path = resolve_backend_path();
+        let child = start_backend(&exe_path);
+        self.child = Some(child);
+        self.wait_for_health(timeout)
+    }
+
+    /// Stop the backend process cleanly.
+    pub fn stop(&mut self) -> Result<(), String> {
+        if let Some(ref mut child) = self.child {
+            stop_backend(child).map_err(|e| e.to_string())?;
+        }
+        self.child = None;
+        Ok(())
+    }
+
+    /// Get the PID of the backend process, or 0 if not running.
+    pub fn get_pid(&self) -> u32 {
+        self.child.as_ref().map(|c| c.id()).unwrap_or(0)
+    }
+
+    /// Wait for the backend to report healthy via /api/health.
+    pub fn wait_for_health(&self, timeout: Duration) -> Result<(), String> {
+        wait_for_health("127.0.0.1", self.port, timeout)
+    }
+
+    /// Wait for the backend port to close after stop.
+    pub fn wait_for_port_closed(&self, port: u16, timeout: Duration) -> Result<(), String> {
+        wait_for_port_closed("127.0.0.1", port, timeout)
+    }
+}
+
+/// Boot the backend: start it and wait for health.
+pub fn boot_backend(manager: &mut BackendManager) -> Result<(), String> {
+    manager.start(Duration::from_secs(30))?;
+    manager.wait_for_health(Duration::from_secs(30))
+}
 
 /// Resolve the backend executable path without hardcoding D:.
 /// Looks relative to CARGO_MANIFEST_DIR (three parent dirs = repo root),
@@ -94,9 +154,10 @@ pub fn start_backend(exe_path: &std::path::Path) -> std::process::Child {
 }
 
 /// Stop the backend process cleanly.
-pub fn stop_backend(child: &mut std::process::Child) -> Result<(), std::io::Error> {
+pub fn stop_backend(child: &mut Child) -> Result<(), std::io::Error> {
     child.kill()?;
-    child.wait()
+    let _ = child.wait()?;
+    Ok(())
 }
 
 /// Wait for port to close, with retry.

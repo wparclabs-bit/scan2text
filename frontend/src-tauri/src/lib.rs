@@ -7,7 +7,7 @@ use tauri::{Manager, RunEvent};
 use log;
 
 mod backend_process;
-pub use backend_process::BackendManager;
+pub use backend_process::{boot_backend, BackendManager};
 
 /// Tauri managed state holding the BackendManager.
 pub struct AppState(pub Arc<Mutex<BackendManager>>);
@@ -328,19 +328,9 @@ pub fn run() {
 
             {
                 let mut mgr = manager.lock().unwrap();
-                if let Err(e) = mgr.start(std::time::Duration::from_secs(30)) {
-                    log::warn!("BackendManager::start failed: {}", e);
-                    return Ok(());
-                }
-            }
-
-            match manager.lock().unwrap().wait_for_health(47351, std::time::Duration::from_secs(30)) {
-                Ok(()) => {
-                    log::info!("Backend /api/health returned 200 on startup");
-                }
-                Err(e) => {
-                    log::warn!("Backend health check failed on startup: {}", e);
-                    let _ = manager.lock().unwrap().stop();
+                if let Err(e) = boot_backend(&mut mgr) {
+                    log::error!("Failed to boot backend: {}", e);
+                    return Err(e.into());
                 }
             }
 
