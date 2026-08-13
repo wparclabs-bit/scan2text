@@ -77,9 +77,9 @@ Next: Phase 7 continuation — packaging strategy decided; Tauri recommended.
 
 - **Current Phase:** Phase 7 (Real Backend) — LIVE-FIRE PREP COMPLETE
 
-- **Current Slice:** Live-fire dummy files generated; ready for CEO manual GDrive upload and download flow test.
+- **2026-08-13 (FIX-S9.3b):** Tauri state wiring and X-close exit hook confirmed complete. `AppState(Arc<Mutex<BackendManager>>)` registered via `app.manage()`. Backend starts during Tauri `setup` hook with 30s health check; graceful degradation on failure. Exit hook wired via `RunEvent::ExitRequested { .. } | RunEvent::Exit` — locks mutex, calls `BackendManager::stop()`, logs result. All 10 Tauri Rust tests pass (7 backend_manager_tests + 3 backend_lifecycle). `cargo check` clean (zero warnings). Unused import warnings cleaned from `lib.rs` and `backend_manager_tests.rs`. See `second-brain/01-Agent-Memory/Phase-7/fix-s9-3-tauri-x-close-backend-shutdown.md`.
 
-- **Next:** CEO: upload `tools/dummy_models/*.gguf` to GDrive, convert share links to direct URLs, paste JSON into `version.json`, trigger `POST /api/download/start`. After live-fire passes, proceed with S8.8+ real model integration.
+- **Next:** CEO: upload `tools/dummy_models/*.gguf` to GDrive, convert share links to direct URLs, paste JSON into `version.json`, trigger `POST /api/download/start`. After live-fire passes, proceed with S8.8+ real model integration. Also: verify Tauri dev-mode build with S9.3 backend lifecycle wiring.
 
 - **2026-08-10:** ADR-006 signed and EXECUTED on disk (OvisOCR2 primary at vlm.gguf/mmproj.gguf; GLM = external backup). Docs slice S1 landed; code port S2 next.
 
