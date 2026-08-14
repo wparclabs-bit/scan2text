@@ -31,3 +31,5 @@
 
 ## 2026-08-14 (S10-E2E-Packaged-Verification): Authored `scripts/verify-packaged-backend.ps1` — searches NSIS/MSI install paths, launches Scan2Text.exe, waits for port 47351 (Test-NetConnection), hits /api/health (Invoke-RestMethod). Created `second-brain/02-qa/s10-e2e-packaged-verification.md` — 7-step CEO QA guide (install, health-check script, UI launch, drop image, verify Markdown, i18n toggle, theme toggle). Status: READY FOR CEO MANUAL VERIFICATION.
 
+## 2026-08-14 (S10-PORTABLE-ASSEMBLY): Portable folder produced at D:\Scan2Text. Added `[[bin]] name = "Scan2Text"` to Cargo.toml — binary now compiles as `Scan2Text.exe` (was `app_lib.exe`). Portable layout: `Scan2Text.exe` + `dist/scan2text-backend/scan2text-backend.exe` + empty `models/`. Replaced obsolete `verify-packaged-backend.ps1` (NSIS/MSI-era) with `verify-portable.ps1` (parameterized -PortablePath, same health-check logic). New SHA256: `B551FF7C...`. Status: READY FOR CEO MANUAL VERIFICATION.
+
