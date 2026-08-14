@@ -22,7 +22,7 @@ void i18next
           app: { title: 'Scan2Text' },
           panels: { dropZone: 'Drop Zone', queue: 'Queue', preview: 'Preview' },
           status: { ready: 'Ready' },
-          actions: { toggleTheme: 'Toggle theme', toggleLanguage: 'Toggle language', shareTooltip: 'Share app link' },
+          actions: { toggleTheme: 'Toggle theme', toggleLanguage: 'Toggle language', langTooltipEn: 'Switch to Bahasa', langTooltipId: 'Switch to English', shareTooltip: 'Share app link' },
           dropzone: {
             hint: 'PNG · JPG · WEBP · PDF — max 50MB per file · max 10 files per batch',
             clickLabel: 'Click or drag files here',
@@ -114,7 +114,7 @@ void i18next
           app: { title: 'Scan2Text' },
           panels: { dropZone: 'Zona Jatuh', queue: 'Antrian', preview: 'Pratinjau' },
           status: { ready: 'Siap' },
-          actions: { toggleTheme: 'Ubah tema', toggleLanguage: 'Ubah bahasa', shareTooltip: 'Bagikan tautan aplikasi' },
+          actions: { toggleTheme: 'Ubah tema', toggleLanguage: 'Ubah bahasa', langTooltipEn: 'Beralih ke Bahasa Indonesia', langTooltipId: 'Beralih ke Bahasa Inggris', shareTooltip: 'Bagikan tautan aplikasi' },
           dropzone: {
             hint: 'PNG · JPG · WEBP · PDF — maks 50MB per file · maks 10 file per batch',
             clickLabel: 'Klik atau seret file ke sini',

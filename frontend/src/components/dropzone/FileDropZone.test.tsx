@@ -216,6 +216,33 @@ describe('FileDropZone', () => {
     expect(dropzone).toHaveClass('w-full')
   })
 
+  it('dropzone container always has centering classes even with prop className', () => {
+    const { container } = render(<FileDropZone className="flex-1 min-h-0 w-full" />)
+    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    // Default centering classes must always be present
+    expect(dropzone).toHaveClass('items-center')
+    expect(dropzone).toHaveClass('justify-center')
+    expect(dropzone).toHaveClass('flex-col')
+    // Prop classes must also be present
+    expect(dropzone).toHaveClass('flex-1')
+    expect(dropzone).toHaveClass('min-h-0')
+    expect(dropzone).toHaveClass('w-full')
+  })
+
+  it('dropzone container has gap-2 and p-4 always', () => {
+    const { container } = render(<FileDropZone />)
+    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    expect(dropzone).toHaveClass('gap-2')
+    expect(dropzone).toHaveClass('p-4')
+  })
+
+  it('dropzone container has flex and w-full always', () => {
+    const { container } = render(<FileDropZone />)
+    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    expect(dropzone).toHaveClass('flex')
+    expect(dropzone).toHaveClass('w-full')
+  })
+
   describe('multi-file behavior', () => {
     it('should add multiple valid files to queue in FIFO order', async () => {
       render(<FileDropZone />)

@@ -72,7 +72,7 @@ export default function TopBar() {
                   {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">
+              <TooltipContent side="bottom" forceMount>
                 <p>{theme === 'dark' ? t('actions.themeTooltipLight') : t('actions.themeTooltipDark')}</p>
               </TooltipContent>
             </Tooltip>
@@ -89,8 +89,8 @@ export default function TopBar() {
                   <span className="text-xs font-medium leading-none">{language.toUpperCase()}</span>
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>{language === 'en' ? t('actions.langTooltipId') : t('actions.langTooltipEn')}</p>
+              <TooltipContent side="bottom" forceMount>
+                <p>{language === 'en' ? t('actions.langTooltipEn') : t('actions.langTooltipId')}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -105,7 +105,7 @@ export default function TopBar() {
                   <Settings className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">
+              <TooltipContent side="bottom" forceMount>
                 <p>{t('actions.settingsTooltip')}</p>
               </TooltipContent>
             </Tooltip>

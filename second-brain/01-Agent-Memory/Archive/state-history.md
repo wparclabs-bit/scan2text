@@ -27,3 +27,7 @@
 
 ## 2026-08-13 (S9.5): Tauri sidecar forensics (read-only) — mapped src-tauri structure (866 source lines, ~30 KB), confirmed BackendManager + RunEvent::Exit hooks already implemented, externalBin config absent, no Rust code changes. Scope report generated; recommends 2-slice split (config wiring + lifecycle completion). Doc-only; no source touched.
 
+## 2026-08-14 (S9.8-FIX): Bundle identifier repaired + production build succeeded. Updated `identifier` in tauri.conf.json from `com.tauri.dev` to `com.wingai.scan2text`. Created `src/main.rs` entry point (Cargo auto-discovers as binary target; no `[bin]` section needed — Tauri CLI rejects standard `[bin]` TOML table syntax). Validation script extended to 7 checks (2 new identifier assertions). Build produced 2 bundles: MSI (~46 MB) + NSIS (~45 MB). Backend embedded in installers via `bundle.resources`.
+
+## 2026-08-14 (S10-E2E-Packaged-Verification): Authored `scripts/verify-packaged-backend.ps1` — searches NSIS/MSI install paths, launches Scan2Text.exe, waits for port 47351 (Test-NetConnection), hits /api/health (Invoke-RestMethod). Created `second-brain/02-qa/s10-e2e-packaged-verification.md` — 7-step CEO QA guide (install, health-check script, UI launch, drop image, verify Markdown, i18n toggle, theme toggle). Status: READY FOR CEO MANUAL VERIFICATION.
+
