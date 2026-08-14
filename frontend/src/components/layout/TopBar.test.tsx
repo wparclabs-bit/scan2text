@@ -2,6 +2,38 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import TopBar from './TopBar'
 
+// Translation map used by the mock
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    'actions.toggleTheme': 'Toggle theme',
+    'actions.toggleLanguage': 'Toggle language',
+    'actions.themeTooltipDark': 'Switch to light mode',
+    'actions.themeTooltipLight': 'Switch to dark mode',
+    'actions.langTooltipEn': 'Switch to Bahasa',
+    'actions.langTooltipId': 'Switch to English',
+    'actions.settingsTooltip': 'Open settings',
+    'actions.shareTooltip': 'Share app link',
+    'topbar.logoAlt': 'Scan2Text logo',
+    'topbar.brandAlt': 'Scan2Text',
+    'topbar.demoBadge': 'DEMO',
+    'settings.title': 'Settings',
+  },
+  id: {
+    'actions.toggleTheme': 'Ubah tema',
+    'actions.toggleLanguage': 'Ubah bahasa',
+    'actions.themeTooltipDark': 'Beralih ke mode terang',
+    'actions.themeTooltipLight': 'Beralih ke mode gelap',
+    'actions.langTooltipEn': 'Beralih ke Bahasa Indonesia',
+    'actions.langTooltipId': 'Beralih ke Bahasa Inggris',
+    'actions.settingsTooltip': 'Buka pengaturan',
+    'actions.shareTooltip': 'Bagikan tautan aplikasi',
+    'topbar.logoAlt': 'Logo Scan2Text',
+    'topbar.brandAlt': 'Scan2Text',
+    'topbar.demoBadge': 'DEMO',
+    'settings.title': 'Pengaturan',
+  },
+}
+
 const mockToggleTheme = vi.fn()
 const mockToggleLanguage = vi.fn()
 
@@ -21,6 +53,20 @@ vi.mock('../../stores/preferencesStore', () => {
   useStore.getState = store.getState.bind(store)
   return { usePreferenceStore: useStore }
 })
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    t: (key: string) => {
+      const lng = mockState.language
+      return translations[lng]?.[key] ?? key
+    },
+    i18n: {
+      language: 'en',
+      changeLanguage: vi.fn(),
+    },
+  }),
+}))
 
 describe('TopBar', () => {
   beforeEach(() => {
@@ -119,5 +165,39 @@ describe('TopBar', () => {
     const style = glow.getAttribute('style') ?? ''
     expect(style).toContain('radial-gradient')
     expect(style).toContain('rgba')
+  })
+
+  it('language toggle button has data-testid="language-toggle"', () => {
+    render(<TopBar />)
+    expect(screen.getByTestId('language-toggle')).toBeInTheDocument()
+  })
+
+  it('language tooltip shows target-language text when language is en', () => {
+    mockState = {
+      theme: 'dark',
+      language: 'en',
+      toggleTheme: mockToggleTheme,
+      toggleLanguage: mockToggleLanguage,
+    }
+    render(<TopBar />)
+    const tooltips = screen.getAllByRole('tooltip', { hidden: true })
+    // 3 tooltips: theme, language, settings
+    expect(tooltips.length).toBe(3)
+    const texts = tooltips.map((tp) => (tp.textContent ?? '').trim())
+    expect(texts).toContain(translations.en['actions.langTooltipEn'])
+  })
+
+  it('language tooltip shows target-language text when language is id', () => {
+    mockState = {
+      theme: 'dark',
+      language: 'id',
+      toggleTheme: mockToggleTheme,
+      toggleLanguage: mockToggleLanguage,
+    }
+    render(<TopBar />)
+    const tooltips = screen.getAllByRole('tooltip', { hidden: true })
+    expect(tooltips.length).toBe(3)
+    const texts = tooltips.map((tp) => (tp.textContent ?? '').trim())
+    expect(texts).toContain(translations.id['actions.langTooltipId'])
   })
 })
