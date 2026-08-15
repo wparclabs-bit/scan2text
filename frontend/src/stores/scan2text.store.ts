@@ -434,21 +434,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
         }
       })
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Status polling failed'
-      if (message.includes('timeout') || message.includes('max attempts')) {
-        throw err
-      }
-      set((state) => {
-        const j = state.jobs[input.jobId]
-        if (!j) return state
-        return {
-          jobs: {
-            ...state.jobs,
-            [input.jobId]: { ...j, status: 'failed', error: message },
-          },
-        }
-      })
+      throw err
     }
   },
 
@@ -458,45 +444,34 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
     const pollOnce = async () => {
       const job = get().jobs[input.jobId]
       if (!job) return
-      if (job.status === 'completed' || job.status === 'failed') return
+      if (job.status === 'completed') return
       try {
         await get().pollJob({ jobId: input.jobId })
       } catch (err) {
-        const message = err instanceof Error ? err.message : ''
-        if (
-          message.includes('timeout') ||
-          message.includes('max attempts')
-        ) {
-          retryCount++
-          if (retryCount > maxRetries) {
-            set((state) => {
-              const j = state.jobs[input.jobId]
-              if (!j) return state
-              return {
-                jobs: {
-                  ...state.jobs,
-                  [input.jobId]: {
-                    ...j,
-                    status: 'failed',
-                    error: 'Polling timeout: max retries exceeded',
-                  },
+        retryCount++
+        if (retryCount > maxRetries) {
+          set((state) => {
+            const j = state.jobs[input.jobId]
+            if (!j) return state
+            const message = err instanceof Error ? err.message : 'Polling failed'
+            return {
+              jobs: {
+                ...state.jobs,
+                [input.jobId]: {
+                  ...j,
+                  status: 'failed',
+                  error: message,
                 },
-              }
-            })
-            return
-          }
-          const currentJob = get().jobs[input.jobId]
-          if (
-            !currentJob ||
-            currentJob.status === 'completed' ||
-            currentJob.status === 'failed'
-          )
-            return
-          globalThis.setTimeout(() => {
-            pollOnce()
-          }, 60_000)
+              },
+            }
+          })
           return
         }
+        const currentJob = get().jobs[input.jobId]
+        if (!currentJob || currentJob.status === 'completed') return
+        globalThis.setTimeout(() => {
+          pollOnce()
+        }, 60_000)
         return
       }
       const currentJob = get().jobs[input.jobId]
