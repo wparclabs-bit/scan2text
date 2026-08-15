@@ -37,10 +37,16 @@ class PathService:
 
         if app_root is not None:
             self._app_root = Path(app_root).resolve()
+            self._app_root_injected = True
+            self._app_root_from_base_dir = False
         elif base_dir is not None:
             self._app_root = self._base_dir
+            self._app_root_injected = False
+            self._app_root_from_base_dir = True
         else:
             self._app_root = self._resolve_app_root()
+            self._app_root_injected = False
+            self._app_root_from_base_dir = False
 
     @staticmethod
     def _resolve_base_dir() -> Path:
@@ -89,16 +95,83 @@ class PathService:
     def log_file(self) -> Path:
         return self.logs_dir / "app.log"
 
+    @staticmethod
+    def _resolve_models_dir() -> Path:
+        """Resolve models directory by priority.
+
+        Priority:
+          1. env SCAN2TEXT_MODELS_DIR if set
+          2. frozen: grandparent when models/ exists there
+          3. frozen: parent when models/ exists there
+          4. dev root (cwd)
+        """
+        # Priority 1: env var
+        env = os.environ.get("SCAN2TEXT_MODELS_DIR")
+        if env:
+            return Path(env).resolve()
+
+        frozen = getattr(sys, "frozen", False)
+
+        if frozen:
+            exe_dir = Path(sys.executable).parent
+
+            # Priority 2: grandparent if models/ exists there
+            grandparent = exe_dir.parent
+            if (grandparent / "models").is_dir():
+                return grandparent
+
+            # Priority 3: exe-adjacent if models/ exists there
+            if (exe_dir / "models").is_dir():
+                return exe_dir
+
+        # Priority 4: dev root (cwd, same as original app_root behavior)
+        if frozen:
+            return Path(sys.executable).parent
+        return Path.cwd()
+
     @property
     def models_dir(self) -> Path:
-        return self.app_root / "models"
+        """Resolve models directory by priority (env → frozen grandparent → parent → dev).
+
+        When app_root is explicitly injected, models_dir = app_root/models.
+        When app_root derived from base_dir, models_dir = base_dir/models.
+        When fully auto-resolved, priority: env SCAN2TEXT_MODELS_DIR → frozen checks → dev root.
+
+        Raises RuntimeError listing probed paths if SCAN2TEXT_MODELS_DIR
+        points to a non-existent directory.
+        """
+        env = os.environ.get("SCAN2TEXT_MODELS_DIR")
+
+        # Env var always takes highest priority
+        if env:
+            resolved = Path(env).resolve()
+            if not resolved.is_dir():
+                paths = [f"  SCAN2TEXT_MODELS_DIR={env}"]
+                if getattr(sys, "frozen", False):
+                    exe_dir = Path(sys.executable).parent
+                    paths.append(f"  frozen grandparent={exe_dir.parent}/models")
+                    paths.append(f"  frozen parent={exe_dir}/models")
+                paths.append(f"  dev root={Path.cwd()}/models")
+                raise RuntimeError(
+                    "Models directory not found.\nProbed locations:\n"
+                    + "\n".join(paths)
+                )
+            return resolved
+
+        # Injected app_root or derived from base_dir
+        if self._app_root_injected or self._app_root_from_base_dir:
+            return self.app_root / "models"
+
+        # Fully auto-resolved: use priority-based resolution
+        resolved = self._resolve_models_dir()
+        return resolved / "models"
 
     def resolve_model_path(self, relative: str) -> Path:
-        """Resolve a model path relative to the app/install root (Rule 8)."""
+        """Resolve a model path relative to the models directory (Rule 8)."""
         p = Path(relative)
         if p.is_absolute():
             return p
-        return self.app_root / relative
+        return self.models_dir / p.name
 
     @property
     def assets_dir(self) -> Path:
