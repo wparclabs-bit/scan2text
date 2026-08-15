@@ -50,3 +50,65 @@ class TestPathServiceFrozen:
              patch.object(sys, "executable", str(fake_exe), create=True):
             svc = PathService()
             assert svc.settings_path == Path("C:/apps/scan2text-backend/settings/settings.json")
+
+    def test_resolve_model_path_frozen_uses_models_dir(self, tmp_path):
+        """Frozen: resolve_model_path must resolve relative to models_dir, not app_root.
+
+        The current bug: resolve_model_path returns self.app_root / relative
+        but models live in models_dir (which may differ from app_root in frozen builds).
+
+        Layout: tmp_path/dist/models/   (code's "grandparent" = exe_dir.parent)
+                tmp_path/dist/backend/app.exe
+        """
+        from scan2text.services.path_service import PathService
+
+        # Place models at code's "grandparent" level: exe_dir.parent
+        models_dir = tmp_path / "dist" / "models"
+        models_dir.mkdir(parents=True)
+        (models_dir / "vlm.gguf").write_text("dummy")
+
+        exe_dir = tmp_path / "dist" / "backend"
+        exe_dir.mkdir(parents=True)
+
+        with patch.object(sys, "frozen", True, create=True), \
+             patch.object(sys, "executable", str(exe_dir / "app.exe"), create=True):
+            svc = PathService()
+
+            # models_dir resolves to code's grandparent = tmp_path/dist/models
+            assert svc.models_dir == tmp_path / "dist" / "models"
+            # app_root = exe dir (NOT where models live)
+            assert svc.app_root == exe_dir
+
+            # The fix: resolve_model_path should use models_dir, not app_root
+            result = svc.resolve_model_path("vlm.gguf")
+            assert result == tmp_path / "dist" / "models" / "vlm.gguf"
+
+    def test_resolve_model_path_frozen_with_subdir(self, tmp_path):
+        """Frozen: resolve_model_path('models/vlm.gguf') -> <models_dir>/vlm.gguf."""
+        from scan2text.services.path_service import PathService
+
+        models_dir = tmp_path / "dist" / "models"
+        models_dir.mkdir(parents=True)
+        (models_dir / "vlm.gguf").write_text("dummy")
+
+        exe_dir = tmp_path / "dist" / "backend"
+        exe_dir.mkdir(parents=True)
+
+        with patch.object(sys, "frozen", True, create=True), \
+             patch.object(sys, "executable", str(exe_dir / "app.exe"), create=True):
+            svc = PathService()
+
+            # Path with subdir prefix — should extract filename, resolve under models_dir
+            result = svc.resolve_model_path("models/vlm.gguf")
+            assert result == tmp_path / "dist" / "models" / "vlm.gguf"
+
+    def test_resolve_model_path_absolute_passthrough(self):
+        """Absolute paths must be returned as-is regardless of frozen state."""
+        from scan2text.services.path_service import PathService
+        fake_exe = Path("C:/apps/scan2text-backend/scan2text-backend.exe")
+        with patch.object(sys, "frozen", True, create=True), \
+             patch.object(sys, "executable", str(fake_exe), create=True):
+            svc = PathService()
+            # Use UNC-style absolute path to avoid Windows normalization
+            result = svc.resolve_model_path(r"\\server\models\model.gguf")
+            assert result == Path(r"\\server\models\model.gguf")
