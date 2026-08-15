@@ -4,7 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
+name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "Scan2Text"
+path = "src/main.rs"
 
 [dependencies]
 tauri = { version = "2.11.3", features = [] }
