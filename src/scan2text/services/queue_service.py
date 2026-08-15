@@ -197,12 +197,19 @@ class QueueService:
         self,
         image_paths: List[str | Path],
         vlm_adapter,
+        path_to_stem: Optional[Dict[Path, str]] = None,
     ) -> BatchSummary:
         """Process a list of image paths using a VlmOcrAdapter instance.
 
         On success the adapter returns a Markdown string which is saved via
         ``path_service.resolve_output_path``.  On error (a dict with an
         ``"error"`` key) the original file is moved to the quarantine folder.
+
+        Args:
+            path_to_stem: Optional mapping from uploaded path to the desired
+                output stem (e.g. sanitized original filename). When provided
+                and the path is present, ``resolve_output_path`` receives the
+                original stem instead of the UUID temp name.
         """
         import shutil
 
@@ -234,7 +241,10 @@ class QueueService:
                         "output_path": None,
                     })
                 else:
-                    output_path = self._paths.resolve_output_path(path)
+                    desired_stem = (
+                        path_to_stem.get(path) if path_to_stem else None
+                    )
+                    output_path = self._paths.resolve_output_path(path, desired_stem)
                     output_path.parent.mkdir(parents=True, exist_ok=True)
                     output_path.write_text(result, encoding="utf-8")
                     logger.info("OCR success: %s -> %s", path.name, output_path.name)
