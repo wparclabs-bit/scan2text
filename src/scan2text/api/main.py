@@ -19,6 +19,7 @@ from scan2text.routes import settings as settings_routes
 from scan2text.routes import feedback as feedback_routes
 from scan2text.routes import download as download_routes
 from scan2text.services.queue_service import QueueService
+from scan2text.services.path_service import PathService
 from scan2text.adapters.vlm_ocr import VlmOcrAdapter
 
 logger = logging.getLogger(__name__)
@@ -72,18 +73,34 @@ def _ensure_uploads_dir() -> Path:
     return UPLOADS_DIR
 
 
-async def _save_uploaded_file(file: UploadFile) -> Path:
-    """Save an uploaded file to the uploads/ directory with a UUID filename."""
+async def _save_uploaded_file(file: UploadFile) -> tuple[Path, str]:
+    """Save an uploaded file to the uploads/ directory with a UUID filename.
+
+    Returns:
+        (target_path, desired_stem) — the UUID-named path on disk and the
+        sanitized original filename stem for output naming.
+    """
     uploads_dir = _ensure_uploads_dir()
     ext = Path(file.filename).suffix if file.filename else ""
     unique_name = f"{uuid.uuid4().hex}{ext}"
     target_path = uploads_dir / unique_name
     content = await file.read()
     target_path.write_bytes(content)
-    return target_path
+
+    if file.filename:
+        desired_stem = PathService.sanitize_filename(Path(file.filename).stem)
+    else:
+        desired_stem = PathService.sanitize_filename(Path(unique_name).stem)
+
+    return target_path, desired_stem
 
 
-async def _run_processing(task_id: str, queue: QueueService, paths: List[Path]) -> None:
+async def _run_processing(
+    task_id: str,
+    queue: QueueService,
+    paths: List[Path],
+    path_to_stem: Dict[Path, str],
+) -> None:
     """Background coroutine that processes files and broadcasts progress."""
     app.state.worker_busy = True
     task = _task_store[task_id]
@@ -97,7 +114,9 @@ async def _run_processing(task_id: str, queue: QueueService, paths: List[Path]) 
     })
 
     try:
-        summary = await asyncio.to_thread(queue.process_image_paths, paths, queue._vlm_adapter)
+        summary = await asyncio.to_thread(
+            queue.process_image_paths, paths, queue._vlm_adapter, path_to_stem
+        )
         processed = summary.succeeded + summary.failed
         task["processed"] = processed
         task["total"] = summary.total_inputs
@@ -145,9 +164,12 @@ async def process_files(files: List[UploadFile] = Form(default=[])) -> Dict[str,
         raise HTTPException(status_code=400, detail="No files provided")
 
     queue: QueueService = app.state.queue_service
-    saved_paths = []
+    saved_paths: List[Path] = []
+    path_to_stem: Dict[Path, str] = {}
     for f in files:
-        saved_paths.append(await _save_uploaded_file(f))
+        path, desired_stem = await _save_uploaded_file(f)
+        saved_paths.append(path)
+        path_to_stem[path] = desired_stem
     task_id = str(uuid.uuid4())
 
     _task_store[task_id] = {
@@ -157,7 +179,7 @@ async def process_files(files: List[UploadFile] = Form(default=[])) -> Dict[str,
         "result_markdown": None,
     }
 
-    asyncio.create_task(_run_processing(task_id, queue, saved_paths))
+    asyncio.create_task(_run_processing(task_id, queue, saved_paths, path_to_stem))
 
     return {"task_id": task_id}
 

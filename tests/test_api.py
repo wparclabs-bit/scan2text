@@ -112,6 +112,68 @@ class TestProcessEndpoint:
         assert suffix == ".pdf"
 
 
+class TestSaveUploadedFileOriginalStem:
+    """Test that _save_uploaded_file captures the original filename stem."""
+
+    def test_save_captures_original_stem(self, tmp_path):
+        """_save_uploaded_file returns (path, desired_stem) where stem is from original filename."""
+        import io
+        from scan2text.api.main import _save_uploaded_file
+
+        uploads_dir = tmp_path / "uploads"
+        with patch("scan2text.api.main.UPLOADS_DIR", uploads_dir):
+            from fastapi import UploadFile
+            file = UploadFile(
+                filename="strutur qris.jpg",
+                file=io.BytesIO(b"fake image bytes"),
+            )
+            path, desired_stem = asyncio.run(_save_uploaded_file(file))
+
+        # Path should be UUID-based on disk
+        name = path.name
+        stem_on_disk = Path(name).stem
+        suffix = Path(name).suffix
+        assert len(stem_on_disk) == 32  # uuid4 hex
+        assert suffix == ".jpg"
+
+        # desired_stem should be sanitized original filename
+        assert desired_stem == "strutur_qris"
+
+    def test_save_fallback_to_uuid_stem_when_filename_none(self, tmp_path):
+        """When file.filename is None, desired_stem falls back to uuid stem."""
+        import io
+        from scan2text.api.main import _save_uploaded_file
+
+        uploads_dir = tmp_path / "uploads"
+        with patch("scan2text.api.main.UPLOADS_DIR", uploads_dir):
+            from fastapi import UploadFile
+            file = UploadFile(
+                filename=None,
+                file=io.BytesIO(b"fake image bytes"),
+            )
+            path, desired_stem = asyncio.run(_save_uploaded_file(file))
+
+        # desired_stem should be the uuid stem (32 hex chars)
+        assert len(desired_stem) == 32
+        assert all(c in "0123456789abcdef" for c in desired_stem)
+
+    def test_save_sanitizes_special_chars_in_stem(self, tmp_path):
+        """Original filename with invalid chars gets sanitized."""
+        import io
+        from scan2text.api.main import _save_uploaded_file
+
+        uploads_dir = tmp_path / "uploads"
+        with patch("scan2text.api.main.UPLOADS_DIR", uploads_dir):
+            from fastapi import UploadFile
+            file = UploadFile(
+                filename="report<v2>.pdf",
+                file=io.BytesIO(b"fake pdf"),
+            )
+            path, desired_stem = asyncio.run(_save_uploaded_file(file))
+
+        assert desired_stem == "reportv2"
+
+
 class TestStatusEndpoint:
     def test_get_status_returns_task_progress(self, app):
         """GET /status/{task_id} returns the current state of a specific task."""
@@ -251,7 +313,7 @@ class TestRunProcessingOffloadsToThread:
              patch("scan2text.api.main.asyncio.to_thread") as mock_to_thread:
             mock_wsm.broadcast = AsyncMock()
             mock_to_thread.side_effect = lambda fn, *a, **kw: fn(*a, **kw)
-            asyncio.run(_run_processing(task_id, mock_queue, [Path("fake.png")]))
+            asyncio.run(_run_processing(task_id, mock_queue, [Path("fake.png")], {}))
 
         # The sync call must go through asyncio.to_thread
         mock_to_thread.assert_called_once()
@@ -259,6 +321,7 @@ class TestRunProcessingOffloadsToThread:
         assert call_args[0][0] == mock_queue.process_image_paths
         assert call_args[0][1] == [Path("fake.png")]
         assert call_args[0][2] == mock_queue._vlm_adapter
+        assert call_args[0][3] == {}
 
 
 class TestWebSocket:

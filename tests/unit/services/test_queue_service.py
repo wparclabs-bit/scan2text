@@ -487,3 +487,52 @@ class TestQueueServiceQuarantine:
         name = output_files[0].name
         assert name.startswith("document_")
         assert name.endswith(".md")
+
+    def test_process_image_paths_uses_original_stem_from_mapping(self, tmp_path):
+        """When path_to_stem is provided, output uses original stem not uuid."""
+        svc = self._make_svc(tmp_path)
+
+        mock_adapter = MagicMock()
+        # Simulate a UUID-named temp file on disk
+        uuid_path = tmp_path / "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6.png"
+        uuid_path.write_bytes(b"fake image")
+        mock_adapter.ocr.return_value = "# QRIS Content\n\nStruktur QRIS test."
+
+        # Map the uuid path to the original stem
+        path_to_stem = {uuid_path: "strutur_qris"}
+        summary = svc.process_image_paths([uuid_path], mock_adapter, path_to_stem=path_to_stem)
+
+        assert summary.succeeded == 1
+        assert summary.failed == 0
+
+        output_files = list((tmp_path / "output").glob("*.md"))
+        assert len(output_files) == 1
+
+        # Output stem must be the original, NOT 32-hex chars
+        name = output_files[0].name
+        assert name.startswith("strutur_qris_")
+        assert name.endswith(".md")
+        # Must NOT be a 32-hex uuid stem
+        stem = Path(name).stem.split("_")[0]
+        assert len(stem) != 32 or not all(c in "0123456789abcdef" for c in stem)
+
+    def test_process_image_paths_fallback_when_no_mapping(self, tmp_path):
+        """Without path_to_stem, falls back to source_path.stem (uuid hex)."""
+        svc = self._make_svc(tmp_path)
+
+        mock_adapter = MagicMock()
+        uuid_path = tmp_path / "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6.png"
+        uuid_path.write_bytes(b"fake image")
+        mock_adapter.ocr.return_value = "# Content"
+
+        # No path_to_stem provided
+        summary = svc.process_image_paths([uuid_path], mock_adapter)
+
+        assert summary.succeeded == 1
+
+        output_files = list((tmp_path / "output").glob("*.md"))
+        assert len(output_files) == 1
+
+        # Should use the uuid stem as fallback
+        name = output_files[0].name
+        assert name.startswith("a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6_")
