@@ -217,6 +217,50 @@ class TestCors:
         assert allow_origin in ("*", "http://localhost:5173")
 
 
+class TestRunProcessingOffloadsToThread:
+    def test_run_processing_uses_asyncio_to_thread(self, app):
+        """_run_processing must offload the sync process_image_paths call to
+        asyncio.to_thread so the event loop is not blocked during OCR."""
+        import asyncio
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock
+
+        api_app, _ = app
+        from scan2text.api.main import _run_processing, _task_store
+
+        class _Summary:
+            succeeded = 1
+            failed = 0
+            total_inputs = 1
+            job_results = [{
+                "job_id": "j",
+                "source_file": "f.png",
+                "status": "done",
+                "error_code": None,
+                "output_path": None,
+            }]
+
+        mock_queue = MagicMock()
+        mock_queue._vlm_adapter = MagicMock()
+        mock_queue.process_image_paths.return_value = _Summary()
+
+        task_id = "t-thread-test"
+        _task_store[task_id] = {"status": "queued", "processed": 0, "total": 1, "result_markdown": None}
+
+        with patch("scan2text.api.main._ws_manager") as mock_wsm, \
+             patch("scan2text.api.main.asyncio.to_thread") as mock_to_thread:
+            mock_wsm.broadcast = AsyncMock()
+            mock_to_thread.side_effect = lambda fn, *a, **kw: fn(*a, **kw)
+            asyncio.run(_run_processing(task_id, mock_queue, [Path("fake.png")]))
+
+        # The sync call must go through asyncio.to_thread
+        mock_to_thread.assert_called_once()
+        call_args = mock_to_thread.call_args
+        assert call_args[0][0] == mock_queue.process_image_paths
+        assert call_args[0][1] == [Path("fake.png")]
+        assert call_args[0][2] == mock_queue._vlm_adapter
+
+
 class TestWebSocket:
     def test_websocket_ping_pong(self, app):
         """WebSocket responds to 'ping' with 'pong'."""

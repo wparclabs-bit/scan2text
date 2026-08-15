@@ -8,6 +8,7 @@ it falls back to 127.0.0.1:8000 so existing workflows are unchanged.
 from __future__ import annotations
 
 import logging
+import multiprocessing
 import uvicorn
 
 from scan2text.api.main import app
@@ -24,4 +25,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     main()

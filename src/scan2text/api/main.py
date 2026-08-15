@@ -97,7 +97,7 @@ async def _run_processing(task_id: str, queue: QueueService, paths: List[Path]) 
     })
 
     try:
-        summary = queue.process_image_paths(paths, queue._vlm_adapter)
+        summary = await asyncio.to_thread(queue.process_image_paths, paths, queue._vlm_adapter)
         processed = summary.succeeded + summary.failed
         task["processed"] = processed
         task["total"] = summary.total_inputs
