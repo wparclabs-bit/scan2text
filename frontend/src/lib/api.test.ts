@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { uploadFile, getTaskStatus, isTaskCompleted, isTaskFailed, pollTaskStatus, defaultDelay } from './api'
 import { setDemoMode } from './demoMode'
+import { buildApiUrl } from './apiBase'
 
 describe('uploadFile', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -46,7 +47,7 @@ describe('uploadFile', () => {
     await expect(uploadFile(file)).rejects.toThrow('Upload failed: 500 Internal Server Error')
   })
 
-  it('should POST multipart/form-data to /process', async () => {
+  it('should POST multipart/form-data to /process with key "files"', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 202,
@@ -57,7 +58,7 @@ describe('uploadFile', () => {
     await uploadFile(file)
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://127.0.0.1:8000/process',
+      buildApiUrl('/process'),
       expect.objectContaining({ method: 'POST' })
     )
 
@@ -65,10 +66,8 @@ describe('uploadFile', () => {
     expect(init.body).toBeInstanceOf(FormData)
 
     const body = init.body as FormData
-    const entries = Array.from(body.entries())
-    expect(entries.length).toBe(1)
-    expect(entries[0][0]).toBe('file')
-    expect(entries[0][1]).toBe(file)
+    expect(body.getAll('files').length).toBe(1)
+    expect((body.get('files') as File).name).toBe(file.name)
   })
 })
 
@@ -102,7 +101,7 @@ describe('getTaskStatus', () => {
 
     await getTaskStatus('t1')
 
-    expect(mockFetch).toHaveBeenCalledWith('/status/t1')
+    expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/status/t1'))
   })
 
   it('should encode taskId safely', async () => {
@@ -114,7 +113,7 @@ describe('getTaskStatus', () => {
 
     await getTaskStatus('a b/c+d')
 
-    expect(mockFetch).toHaveBeenCalledWith('/status/a%20b%2Fc%2Bd')
+    expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/status/a%20b%2Fc%2Bd'))
   })
 
   it('should throw Error with message starting "Status check failed:" on non-2xx', async () => {
@@ -178,6 +177,64 @@ describe('defaultDelay', () => {
     await defaultDelay(10)
     const elapsed = Date.now() - start
     expect(elapsed).toBeGreaterThanOrEqual(10)
+  })
+})
+
+describe('uploadFile - prod URL', () => {
+  let mockFetch: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    setDemoMode(false)
+    mockFetch = vi.fn()
+    vi.stubGlobal('fetch', mockFetch)
+    vi.stubEnv('PROD', true)
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('should POST to buildApiUrl(/process) in prod mode', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.resolve({ task_id: 't1' }),
+    })
+
+    const file = new File(['data'], 'scan.pdf', { type: 'application/pdf' })
+    await uploadFile(file)
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      buildApiUrl('/process'),
+      expect.objectContaining({ method: 'POST' })
+    )
+  })
+})
+
+describe('getTaskStatus - prod URL', () => {
+  let mockFetch: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    setDemoMode(false)
+    mockFetch = vi.fn()
+    vi.stubGlobal('fetch', mockFetch)
+    vi.stubEnv('PROD', true)
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('should call buildApiUrl(/status/{taskId}) in prod mode', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ task_id: 't1', status: 'processing' }),
+    })
+
+    await getTaskStatus('t1')
+
+    expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/status/t1'))
   })
 })
 

@@ -154,7 +154,7 @@ export async function uploadFile(file: File): Promise<UploadResponse> {
   }
 
   const formData = new FormData()
-  formData.append('file', file)
+  formData.append('files', file, file.name)
   const response = await fetch(buildApiUrl('/process'), {
     method: 'POST',
     body: formData,
