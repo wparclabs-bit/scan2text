@@ -13,6 +13,7 @@ export default defineConfig({
     include: ['i18next', 'react-i18next'],
   },
   test: {
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test-setup.ts'],
