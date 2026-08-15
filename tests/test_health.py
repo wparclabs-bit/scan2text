@@ -21,7 +21,7 @@ def test_health_contract():
     assert ram["total_mb"] > 0
     assert 0 <= ram["percent"] <= 100
     model = body["model"]
-    assert model["name"] == "GLM-OCR 0.9B"
+    assert model["name"] == "OvisOCR2 0.9B"
     assert model["loaded"] is False
     assert isinstance(model["files_present"], bool)
 

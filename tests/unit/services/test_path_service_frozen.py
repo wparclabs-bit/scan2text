@@ -112,3 +112,37 @@ class TestPathServiceFrozen:
             # Use UNC-style absolute path to avoid Windows normalization
             result = svc.resolve_model_path(r"\\server\models\model.gguf")
             assert result == Path(r"\\server\models\model.gguf")
+
+    def test_frozen_models_dir_grandparent_when_dist_layout(self, tmp_path):
+        """Frozen: models at project-root (exe_dir.parent.parent) not exe_dir.parent.
+
+        Layout:
+          tmp_path/dist/scan2text-backend/scan2text-backend.exe   (exe)
+          tmp_path/models/                                        (models — TRUE grandparent)
+
+        Current bug: _resolve_models_dir uses exe_dir.parent (= tmp_path/dist)
+        instead of exe_dir.parent.parent (= tmp_path), so files_present stays false.
+        """
+        from scan2text.services.path_service import PathService
+
+        # Models live at project root (grandparent of exe)
+        models_dir = tmp_path / "models"
+        models_dir.mkdir()
+        (models_dir / "vlm.gguf").write_bytes(b"model")
+        (models_dir / "mmproj.gguf").write_bytes(b"mmproj")
+
+        # Exe is nested one level deeper: dist/scan2text-backend/
+        exe_dir = tmp_path / "dist" / "scan2text-backend"
+        exe_dir.mkdir(parents=True)
+
+        fake_exe = exe_dir / "scan2text-backend.exe"
+
+        with patch.object(sys, "frozen", True, create=True), \
+             patch.object(sys, "executable", str(fake_exe), create=True):
+            svc = PathService()
+            # The fix: models_dir must resolve to tmp_path/models (grandparent),
+            # NOT tmp_path/dist/models (parent — the current bug).
+            assert svc.models_dir == models_dir
+            # Both model files must be found
+            assert svc.resolve_model_path("vlm.gguf") == models_dir / "vlm.gguf"
+            assert svc.resolve_model_path("mmproj.gguf") == models_dir / "mmproj.gguf"

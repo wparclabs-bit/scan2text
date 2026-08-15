@@ -14,7 +14,7 @@ logger = logging.getLogger("scan2text.routes.health")
 router = APIRouter()
 
 BACKEND_VERSION = "0.1.0"
-MODEL_NAME = "GLM-OCR 0.9B"
+MODEL_NAME = "OvisOCR2 0.9B"
 
 
 def _ram() -> Dict[str, Any]:

@@ -115,12 +115,17 @@ class PathService:
         if frozen:
             exe_dir = Path(sys.executable).parent
 
-            # Priority 2: grandparent if models/ exists there
-            grandparent = exe_dir.parent
-            if (grandparent / "models").is_dir():
-                return grandparent
+            # Priority 2: true grandparent (two levels up) if models/ exists there
+            project_root = exe_dir.parent.parent
+            if (project_root / "models").is_dir():
+                return project_root
 
-            # Priority 3: exe-adjacent if models/ exists there
+            # Priority 3: parent (one level up) if models/ exists there
+            parent = exe_dir.parent
+            if (parent / "models").is_dir():
+                return parent
+
+            # Priority 4: exe-adjacent if models/ exists there
             if (exe_dir / "models").is_dir():
                 return exe_dir
 
@@ -149,8 +154,9 @@ class PathService:
                 paths = [f"  SCAN2TEXT_MODELS_DIR={env}"]
                 if getattr(sys, "frozen", False):
                     exe_dir = Path(sys.executable).parent
-                    paths.append(f"  frozen grandparent={exe_dir.parent}/models")
-                    paths.append(f"  frozen parent={exe_dir}/models")
+                    paths.append(f"  frozen grandparent={exe_dir.parent.parent}/models")
+                    paths.append(f"  frozen parent={exe_dir.parent}/models")
+                    paths.append(f"  frozen exe-adjacent={exe_dir}/models")
                 paths.append(f"  dev root={Path.cwd()}/models")
                 raise RuntimeError(
                     "Models directory not found.\nProbed locations:\n"
