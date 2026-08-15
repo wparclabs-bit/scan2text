@@ -347,22 +347,20 @@ describe('scan2text store', () => {
       expect(store.getState().jobs['job-1'].status).toBe('processing')
     })
 
-    it('if pollTaskStatus rejects should mark the job failed', async () => {
+    it('if pollTaskStatus rejects should re-throw the error', async () => {
       store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf' })
       store.getState().setTaskId('job-1', 'task-abc')
       mockPollTaskStatus.mockRejectedValue(new Error('Network down'))
-      await store.getState().pollJob({ jobId: 'job-1' })
-      expect(store.getState().jobs['job-1'].status).toBe('failed')
-      expect(store.getState().jobs['job-1'].error).toBe('Network down')
+      await expect(store.getState().pollJob({ jobId: 'job-1' })).rejects.toThrow('Network down')
+      expect(store.getState().jobs['job-1'].status).toBe('pending')
     })
 
-    it('if pollTaskStatus rejects with non-Error should use "Status polling failed"', async () => {
+    it('if pollTaskStatus rejects with non-Error should re-throw the error', async () => {
       store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf' })
       store.getState().setTaskId('job-1', 'task-abc')
       mockPollTaskStatus.mockRejectedValue('string error')
-      await store.getState().pollJob({ jobId: 'job-1' })
-      expect(store.getState().jobs['job-1'].status).toBe('failed')
-      expect(store.getState().jobs['job-1'].error).toBe('Status polling failed')
+      await expect(store.getState().pollJob({ jobId: 'job-1' })).rejects.toBe('string error')
+      expect(store.getState().jobs['job-1'].status).toBe('pending')
     })
 
     it('on completed response should clear previous error', async () => {
@@ -576,6 +574,36 @@ describe('scan2text store', () => {
       const callCount = mockPollTaskStatus.mock.calls.length
       await vi.advanceTimersByTimeAsync(70_000)
       expect(mockPollTaskStatus.mock.calls.length).toBe(callCount)
+    })
+
+    it('should not mark job failed on transient network error during polling', async () => {
+      mockUploadFile.mockResolvedValue({ task_id: 'task-abc' })
+      mockPollTaskStatus.mockRejectedValue(new Error('Failed to fetch'))
+      const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
+      await store.getState().startUpload({ file, jobId: 'my-job-id' })
+      expect(store.getState().jobs['my-job-id'].status).not.toBe('failed')
+      expect(store.getState().jobs['my-job-id'].status).toBe('processing')
+    })
+
+    it('should complete job after stale timeout with background retry and set markdown', async () => {
+      mockUploadFile.mockResolvedValue({ task_id: 'task-abc' })
+      const actualApi = await vi.importActual<typeof import('../lib/api')>('../lib/api')
+      mockPollTaskStatus.mockImplementation(async (...args: unknown[]) => actualApi.pollTaskStatus(...args as Parameters<typeof actualApi.pollTaskStatus>))
+      for (let i = 0; i < 30; i++) {
+        mockGetTaskStatus.mockResolvedValueOnce({ task_id: 'task-abc', status: 'processing' })
+      }
+      mockGetTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'completed', result_markdown: '# Stale timeout markdown' })
+      const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
+      await store.getState().startUpload({ file, jobId: 'my-job-id' })
+      expect(store.getState().jobs['my-job-id'].status).toBe('processing')
+      await vi.advanceTimersByTimeAsync(30_000)
+      expect(store.getState().jobs['my-job-id'].status).not.toBe('failed')
+      expect(store.getState().jobs['my-job-id'].status).toBe('processing')
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(store.getState().jobs['my-job-id'].status).toBe('completed')
+      expect(store.getState().jobs['my-job-id'].resultMarkdown).toBe('# Stale timeout markdown')
+      expect(store.getState().jobs['my-job-id'].markdownOutput).toBe('# Stale timeout markdown')
+      expect(store.getState().jobs['my-job-id'].error).toBeNull()
     })
   })
 
