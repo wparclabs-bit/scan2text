@@ -9,13 +9,14 @@
 - Baseline commit: f0367f8 (S10-FIX22)
 - Backend tests: 259 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
 - Backend exe hash: 9E4A1D8F… (S10-FIX22 RGBA-safe JPEG + failed propagation 2026-08-16 rebuilt, 3-way match)
-- Frontend tests: 624 green overall, 0 failures. S10-FIX20 FirstRun gate + RAM display.
+- Frontend tests: 627 green overall, 0 failures. S10-FIX23 Queue promotion on terminal transition fixed.
 - Rust tests: 6 passed. Build clean (1 dead_code warning).
 - Boot log: <exe_dir>/logs/backend-boot.log — stdout+stderr piped via OpenOptions append mode (S10-R3)
 - PRD: v1.10 source of truth in second-brain/04-Product/
 - Next: CEO Final Exam
 
 ## Recent Changelog (last 5)
+- **2026-08-16 (S10-FIX23-Queue-Promotion-on-Terminal-Transition):** Fixed nested `set()` calls in `pollJob` that corrupted Zustand state (was causing `getState()` to return undefined). Added `promoteNextPending()` to promote oldest pending job with `taskId` to `'processing'` when active job completes/fails. Frontend: 627 passed, 0 failures. Status: COMPLETE.
 - **2026-08-16 (S10-FIX20-FirstRun-Gate-And-Health-RAM):** Fixed first-run downloader modal firing every launch even when models present — now gates on `/api/health` `model.files_present` instead of `/api/download/status` (which requires version.json + SHA256). Fixed BottomBar showing "RAM: —" — now polls `/api/health` every 10s and renders actual percent. Shell hash 507A0775… ≠ stale 8CC8E162…. Smoke: health OK, no modal, RAM displayed. Backend: 259 passed, 1 pre-existing failure. Frontend: 624 passed, 0 failures. Status: COMPLETE.
 - **2026-08-16 (S10-FIX22-RGBA-Safe-Images-And-Failed-Propagation):** Fixed RGBA/LA/P PNG and WEBP inputs crashing with "cannot write mode X as JPEG" by converting crops to RGB before JPEG save in `postprocess_service.py`. Fixed task store never writing `error_code` on batch failure — now sets `status=failed` + `error_code` when any job fails, and `GET /status` returns `error_code` field. +6 tests (3 RGBA postprocess + 3 API failure propagation). Backend: 259 passed, 1 pre-existing failure. Fresh hash D9E3F07D… ≠ stale 9E4BAB70…. Three-way match confirmed. Status: COMPLETE.
 - **2026-08-16 (S10-FIX21-FileType-Routing):** Fixed file-type routing to use suffix + magic-byte tie-breaker instead of display-name substring matching. Added `detect_file_type()` in `pdf_service.py`; wired `VlmOcrAdapter.ocr()` and `QueueService._process_one_job()` to use it. Added `PDF_TOO_COMPLEX` error code and 20 MB PDF size guard. +6 routing tests. Backend: 253 passed, 1 pre-existing failure. Boot gate PASS. Fresh hash 9E4BAB70… ≠ stale 60E94CFF…. Three-way match confirmed. Status: COMPLETE.

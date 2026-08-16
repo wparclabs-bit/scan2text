@@ -64,6 +64,7 @@ export interface Scan2TextState {
   pollJob: (input: { jobId: string }) => Promise<void>
   startPolling: (input: { jobId: string }) => void
   startNextPendingJob: () => void
+  promoteNextPending: () => void
 }
 
 const initialState = {
@@ -272,6 +273,33 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
     }
   },
 
+  promoteNextPending: () => {
+    const state = get()
+    if (state.activeJobId) {
+      const activeJob = state.jobs[state.activeJobId]
+      if (activeJob && !TERMINAL_STATUSES.includes(activeJob.status)) {
+        return
+      }
+    }
+    const nextJobId = state.jobOrder.find((jid) => {
+      const j = state.jobs[jid]
+      return j && j.status === 'pending' && j.taskId !== null
+    })
+    if (nextJobId) {
+      const nextJob = state.jobs[nextJobId]
+      if (nextJob) {
+        set((state) => ({
+          jobs: {
+            ...state.jobs,
+            [nextJobId]: { ...nextJob, status: 'processing' },
+          },
+          activeJobId: nextJobId,
+        }))
+        get().startPolling({ jobId: nextJobId })
+      }
+    }
+  },
+
   retryJob: async (id) => {
     const job = get().jobs[id]
     if (!job || !job.file) return id
@@ -357,6 +385,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
           },
         }
       })
+      get().promoteNextPending()
       return id
     }
   },
@@ -391,47 +420,49 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
           delay: defaultDelay as (ms: number) => Promise<void>,
         },
       )
-      set((state) => {
-        const j = state.jobs[input.jobId]
-        if (!j) return state
-        if (isTaskCompleted(response)) {
-          const md = response.result_markdown ?? ''
-          return {
-            jobs: {
-              ...state.jobs,
-              [input.jobId]: {
-                ...j,
-                status: 'completed',
-                resultMarkdown: md,
-                markdownOutput: md,
-                error: null,
-              },
-            },
-            selectedJobId: input.jobId,
-          }
-        }
-        if (isTaskFailed(response)) {
-          return {
-            jobs: {
-              ...state.jobs,
-              [input.jobId]: {
-                ...j,
-                status: 'failed',
-                error: response.error ?? 'Processing failed',
-              },
-            },
-          }
-        }
-        const newStatus =
-          j.status === 'pending' || j.status === 'uploading'
-            ? 'processing'
-            : j.status
-        return {
+      const j = get().jobs[input.jobId]
+      if (!j) return
+      if (isTaskCompleted(response)) {
+        const md = response.result_markdown ?? ''
+        set({
           jobs: {
-            ...state.jobs,
-            [input.jobId]: { ...j, isBackground: true, status: newStatus },
+            ...get().jobs,
+            [input.jobId]: {
+              ...j,
+              status: 'completed',
+              resultMarkdown: md,
+              markdownOutput: md,
+              error: null,
+            },
           },
-        }
+          selectedJobId: input.jobId,
+        })
+        get().promoteNextPending()
+        return
+      }
+      if (isTaskFailed(response)) {
+        set({
+          jobs: {
+            ...get().jobs,
+            [input.jobId]: {
+              ...j,
+              status: 'failed',
+              error: response.error ?? 'Processing failed',
+            },
+          },
+        })
+        get().promoteNextPending()
+        return
+      }
+      const newStatus =
+        j.status === 'pending' || j.status === 'uploading'
+          ? 'processing'
+          : j.status
+      set({
+        jobs: {
+          ...get().jobs,
+          [input.jobId]: { ...j, isBackground: true, status: newStatus },
+        },
       })
     } catch (err) {
       throw err
