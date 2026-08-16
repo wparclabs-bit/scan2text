@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePreferenceStore } from './stores/preferencesStore'
-import { startDemoOrchestrator } from './lib/demoOrchestrator'
 import { buildApiUrl } from './lib/apiBase'
 import CommandCenterLayout from './components/layout/CommandCenterLayout'
 import WelcomeModal from './components/layout/WelcomeModal'
@@ -50,11 +49,6 @@ function App() {
       }
     }
     void checkModelStatus()
-  }, [])
-
-  useEffect(() => {
-    const cleanup = startDemoOrchestrator()
-    return cleanup
   }, [])
 
   useEffect(() => {

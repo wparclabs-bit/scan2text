@@ -4,11 +4,7 @@
   },
   "topbar": {
     "logoAlt": "Logo Scan2Text",
-    "brandAlt": "Scan2Text",
-    "demoBadge": "DEMO"
-  },
-  "demo": {
-    "badge": "MODE DEMO"
+    "brandAlt": "Scan2Text"
   },
   "panels": {
     "dropZone": "Zona Jatuh",
@@ -54,7 +50,6 @@
   },
   "toast": {
     "copySuccess": "Markdown disalin ke clipboard!",
-    "openFolderDemo": "📂 Mode Demo: Di aplikasi asli, ini akan membuka folder output!",
     "shareComingSoon": "Berbagi segera hadir."
   },
   "queue": {
@@ -73,7 +68,7 @@
     "workerLabel": "Worker: {{status}}",
     "ramUsage": "RAM: {{percent}}%",
     "cpuUsage": "CPU: {{percent}}%",
-    "version": "v0.1.0-demo"
+    "version": "v1.0.0"
   },
   "settings": {
     "title": "Pengaturan",
@@ -82,8 +77,6 @@
     "outputDir": "\ud83d\udd12 Folder Output",
     "maxPdfPages": "\ud83d\udd12 Maks Halaman PDF",
     "cpuThreads": "\ud83d\udd12 Thread CPU",
-    "demoModeSwitch": "Mode demo",
-    "locked": "Terkunci dalam mode demo",
     "reopenWelcome": "Buka kembali Layar Sambutan"
   },
   "welcome": {

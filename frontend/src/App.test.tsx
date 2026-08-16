@@ -35,10 +35,6 @@ vi.mock('./stores/scan2text.store', () => {
   return { useScan2TextStore: useStore }
 })
 
-vi.mock('./lib/demoOrchestrator', () => ({
-  startDemoOrchestrator: vi.fn(),
-}))
-
 describe('Command Center layout', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -66,7 +62,7 @@ describe('Command Center layout', () => {
       render(<App />)
       expect(screen.getByTestId('bottom-bar')).toBeInTheDocument()
       expect(screen.getByText('Worker: Idle')).toBeInTheDocument()
-      expect(screen.getByText('v0.1.0-demo')).toBeInTheDocument()
+      expect(screen.getByText('v1.0.0')).toBeInTheDocument()
     })
 
     it('renders panel-dropzone', () => {
