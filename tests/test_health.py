@@ -57,3 +57,15 @@ def test_health_when_adapter_is_loaded(monkeypatch):
     assert r.status_code == 200
     body = r.json()
     assert body["model"]["loaded"] is True
+
+
+def test_health_returns_cpu_percent():
+    """GET /api/health includes a numeric cpu.percent in [0, 100]."""
+    r = client.get("/api/health")
+    assert r.status_code == 200
+    body = r.json()
+    cpu = body["cpu"]
+    assert isinstance(cpu, dict)
+    assert "percent" in cpu
+    assert isinstance(cpu["percent"], (int, float))
+    assert 0 <= cpu["percent"] <= 100

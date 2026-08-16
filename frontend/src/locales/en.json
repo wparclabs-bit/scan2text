@@ -72,6 +72,7 @@
   "bottomBar": {
     "workerLabel": "Worker: {{status}}",
     "ramUsage": "RAM: {{percent}}%",
+    "cpuUsage": "CPU: {{percent}}%",
     "version": "v0.1.0-demo"
   },
   "settings": {

@@ -22,6 +22,7 @@ export default function BottomStatusBar() {
   const { t } = useTranslation()
   const workerStatus = getWorkerStatus()
   const [ramPercent, setRamPercent] = useState<number | null>(null)
+  const [cpuPercent, setCpuPercent] = useState<number | null>(null)
 
   useEffect(() => {
     const pollHealth = async () => {
@@ -30,6 +31,9 @@ export default function BottomStatusBar() {
         const data = await res.json()
         if (data.ram?.percent != null) {
           setRamPercent(Math.round(data.ram.percent))
+        }
+        if (data.cpu?.percent != null) {
+          setCpuPercent(Math.round(data.cpu.percent))
         }
       } catch {
         // Backend unavailable — keep "—"
@@ -46,6 +50,7 @@ export default function BottomStatusBar() {
   }
 
   const ramDisplay = ramPercent != null ? t('bottomBar.ramUsage', { percent: ramPercent }) : t('bottomBar.ramUsage')
+  const cpuDisplay = cpuPercent != null ? t('bottomBar.cpuUsage', { percent: cpuPercent }) : t('bottomBar.cpuUsage')
 
   return (
     <footer data-testid="bottom-bar" className="px-4 py-1 text-sm text-muted-foreground font-display h-[36px] flex items-center shrink-0">
@@ -55,6 +60,8 @@ export default function BottomStatusBar() {
           <span>{t('bottomBar.workerLabel', { status: workerStatus })}</span>
           <span className="h-px w-px bg-border" aria-hidden="true" />
           <span>{ramDisplay}</span>
+          <span className="h-px w-px bg-border" aria-hidden="true" />
+          <span>{cpuDisplay}</span>
           <span className="h-px w-px bg-border" aria-hidden="true" />
           <span>{VERSION}</span>
         </div>
