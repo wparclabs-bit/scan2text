@@ -20,6 +20,7 @@ from scan2text.services.file_service import (
 from scan2text.models.settings import AppSettings
 from scan2text.services.output_service import OutputService
 from scan2text.services.path_service import PathService
+from scan2text.services.pdf_service import detect_file_type
 from scan2text.services.settings_service import SettingsError, SettingsService
 
 logger = logging.getLogger(__name__)
@@ -138,10 +139,10 @@ class QueueService:
             # Read file bytes
             image_bytes = discovered.path.read_bytes()
 
-            # Determine if PDF or image
-            is_pdf = discovered.extension == ".pdf"
+            # Determine if PDF or image — suffix primary, magic-byte tie-breaker.
+            file_type = detect_file_type(discovered.path)
 
-            if is_pdf:
+            if file_type == "pdf":
                 pages = self._ocr_engine.process_pdf(discovered.path, max_pdf_pages)
             else:
                 text = self._ocr_engine.process_image(image_bytes, name=discovered.name)

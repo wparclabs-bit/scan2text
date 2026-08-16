@@ -27,6 +27,7 @@ from scan2text.services.postprocess_service import (
     extract_and_save_image_crops,
 )
 from scan2text.services.settings_service import SettingsService
+from scan2text.services.pdf_service import detect_file_type
 
 logger = logging.getLogger(__name__)
 
@@ -214,7 +215,8 @@ class VlmOcrAdapter:
                 "image_path": image_path,
             }
         path = Path(image_path)
-        if path.suffix.lower() == ".pdf":
+        file_type = detect_file_type(path)
+        if file_type == "pdf":
             images = self._render_pdf(path)
             if isinstance(images, dict):
                 return images
@@ -250,18 +252,28 @@ class VlmOcrAdapter:
         return text
 
     def _render_pdf(self, path: Path) -> List[bytes] | dict[str, Any]:
-        """Render PDF pages to auto-tiled PNG bytes (FR-06: pixels, not raw PDF)."""
-        import pypdfium2 as pdfium
+        """Render PDF pages to PNG bytes via pdf_service (FR-06: pixels, not raw PDF)."""
+        from scan2text.services.pdf_service import (
+            MAX_PDF_SIZE_BYTES,
+            check_page_limit,
+            check_pdf_size,
+        )
 
-        pdf = pdfium.PdfDocument(str(path))
-        page_count = len(pdf)
-        if page_count > self._max_pdf_pages:
+        ok, err = check_page_limit(path, self._max_pdf_pages)
+        if not ok:
             return {
                 "error": PDF_TOO_MANY_PAGES,
-                "message": f"{path.name} has {page_count} pages (max {self._max_pdf_pages}).",
+                "message": err,
+            }
+        ok, err = check_pdf_size(path)
+        if not ok:
+            return {
+                "error": "PDF_TOO_COMPLEX",
+                "message": err,
             }
         pages: List[bytes] = []
-        for index in range(page_count):
-            bitmap = pdf[index].render(scale=_PDF_RENDER_SCALE)
-            pages.extend(_prepare_views(bitmap.to_pil().convert("RGB")))
+        with pdfium.PdfDocument(str(path)) as pdf:
+            for index in range(len(pdf)):
+                bitmap = pdf[index].render(scale=_PDF_RENDER_SCALE)
+                pages.extend(_prepare_views(bitmap.to_pil().convert("RGB")))
         return pages
