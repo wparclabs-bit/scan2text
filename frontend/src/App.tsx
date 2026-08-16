@@ -10,13 +10,6 @@ import { toast } from 'sonner'
 
 const FEEDBACK_FORM_URL = 'https://placeholder.local/feedback'
 
-interface DownloadState {
-  status: string
-  bytes_downloaded: number
-  total_bytes: number
-  error_message?: string | null
-}
-
 function App() {
   const { t } = useTranslation()
   const [hideWelcomeNotice, setHideWelcomeNotice] = useState<boolean | null>(null)
@@ -41,17 +34,17 @@ function App() {
   useEffect(() => {
     const checkModelStatus = async () => {
       try {
-        const res = await fetch(`${buildApiUrl('/api/download/status')}?t=${Date.now()}`)
-        const data: DownloadState = await res.json()
-        if (data.status === 'complete') {
+        const res = await fetch(`${buildApiUrl('/api/health')}?t=${Date.now()}`)
+        const data: { model: { files_present: boolean }; ram: { percent: number } } = await res.json()
+        if (data.model.files_present) {
           setModelReady(true)
         } else {
-          // Model not ready — start download and show modal.
+          // Model files missing — start download and show modal.
           await fetch(buildApiUrl('/api/download/start'), { method: 'POST' })
           setShowDownloader(true)
         }
       } catch (err) {
-        console.error('Downloader error:', err);
+        console.error('Health check error:', err);
         // Backend unavailable (demo/offline) — skip downloader, proceed to welcome.
         setModelReady(true)
       }

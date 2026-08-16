@@ -66,7 +66,6 @@ describe('Command Center layout', () => {
       render(<App />)
       expect(screen.getByTestId('bottom-bar')).toBeInTheDocument()
       expect(screen.getByText('Worker: Idle')).toBeInTheDocument()
-      expect(screen.getByText('RAM: —')).toBeInTheDocument()
       expect(screen.getByText('v0.1.0-demo')).toBeInTheDocument()
     })
 
@@ -261,13 +260,13 @@ describe('Command Center layout', () => {
       vi.unstubAllEnvs()
     })
 
-    it('uses buildApiUrl for /api/download/status in prod mode', async () => {
+    it('uses buildApiUrl for /api/health in prod mode', async () => {
       vi.stubEnv('PROD', true)
       const mockFetch = vi.fn()
       vi.stubGlobal('fetch', mockFetch)
       mockFetch.mockImplementation((url: string) => {
-        if (url === buildApiUrl('/api/download/status')) {
-          return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: 'complete' }) })
+        if (url === buildApiUrl('/api/health')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ model: { files_present: true } }) })
         }
         return Promise.resolve({ ok: false })
       })
@@ -293,38 +292,39 @@ describe('Command Center layout', () => {
       vi.unstubAllEnvs()
     })
 
-    it('uses buildApiUrl for /api/download/status with ?t= cache-buster in prod mode', async () => {
+    it('does NOT call /api/download/start when health reports files_present=true', async () => {
       vi.stubEnv('PROD', true)
       const mockFetch = vi.fn()
       vi.stubGlobal('fetch', mockFetch)
       mockFetch.mockImplementation((url: string) => {
-        const prodBase = buildApiUrl('/api/download/status')
-        if (url.startsWith(prodBase) && url.includes('?t=')) {
-          return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: 'complete' }) })
+        if (url === buildApiUrl('/api/settings')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: true }) })
+        }
+        if (url === buildApiUrl('/api/health')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ model: { files_present: true }, ram: { percent: 42.5 } }) })
         }
         return Promise.resolve({ ok: false })
       })
       render(<App />)
       await new Promise((r) => setTimeout(r, 50))
-      const statusCall = mockFetch.mock.calls.find((call) => {
+      const startCall = mockFetch.mock.calls.find((call) => {
         const url = call[0] as string
-        return url.startsWith(buildApiUrl('/api/download/status')) && url.includes('?t=')
+        return url === buildApiUrl('/api/download/start') && call[1]?.method === 'POST'
       })
-      expect(statusCall).toBeDefined()
-      expect(statusCall![0]).toMatch(/^http:\/\/127\.0\.0\.1:47351\/api\/download\/status\?t=\d+$/)
+      expect(startCall).toBeUndefined()
       vi.unstubAllEnvs()
     })
 
-    it('uses buildApiUrl for /api/download/start in prod mode', async () => {
+    it('calls /api/download/start when health reports files_present=false', async () => {
       vi.stubEnv('PROD', true)
       const mockFetch = vi.fn()
       vi.stubGlobal('fetch', mockFetch)
       mockFetch.mockImplementation((url: string, init?: RequestInit) => {
         if (url === buildApiUrl('/api/settings')) {
-          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: false }) })
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: true }) })
         }
-        if (url.startsWith(buildApiUrl('/api/download/status')) && url.includes('?t=')) {
-          return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: 'in_progress' }) })
+        if (url.startsWith(buildApiUrl('/api/health')) && url.includes('?t=')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ model: { files_present: false } }) })
         }
         if (url === buildApiUrl('/api/download/start') && init?.method === 'POST') {
           return Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
@@ -334,6 +334,47 @@ describe('Command Center layout', () => {
       render(<App />)
       await new Promise((r) => setTimeout(r, 50))
       expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/download/start'), expect.objectContaining({ method: 'POST' }))
+      vi.unstubAllEnvs()
+    })
+
+    it('does NOT show downloader modal when health reports files_present=true', async () => {
+      vi.stubEnv('PROD', true)
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      mockFetch.mockImplementation((url: string) => {
+        if (url === buildApiUrl('/api/settings')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: true }) })
+        }
+        if (url === buildApiUrl('/api/health')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ model: { files_present: true } }) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      const modal = document.querySelector('[data-testid="model-downloader-modal"]')
+      expect(modal).not.toBeInTheDocument()
+      vi.unstubAllEnvs()
+    })
+
+    it('uses buildApiUrl for /api/health with ?t= cache-buster in prod mode', async () => {
+      vi.stubEnv('PROD', true)
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      mockFetch.mockImplementation((url: string) => {
+        if (url.startsWith(buildApiUrl('/api/health')) && url.includes('?t=')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ model: { files_present: true } }) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      const healthCall = mockFetch.mock.calls.find((call) => {
+        const url = call[0] as string
+        return url.startsWith(buildApiUrl('/api/health')) && url.includes('?t=')
+      })
+      expect(healthCall).toBeDefined()
+      expect(healthCall![0]).toMatch(/^http:\/\/127\.0\.0\.1:47351\/api\/health\?t=\d+$/)
       vi.unstubAllEnvs()
     })
 
@@ -350,8 +391,8 @@ describe('Command Center layout', () => {
         if (url === buildApiUrl('/api/settings')) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: false }) })
         }
-        if (url.startsWith(buildApiUrl('/api/download/status')) && url.includes('?t=')) {
-          return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: 'complete' }) })
+        if (url === buildApiUrl('/api/health')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ model: { files_present: true } }) })
         }
         if (url === buildApiUrl('/api/feedback/pending-count')) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve({ count: 0 }) })
