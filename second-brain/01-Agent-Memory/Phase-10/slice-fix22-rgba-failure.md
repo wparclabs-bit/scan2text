@@ -3,7 +3,7 @@
 **Date:** 2026-08-16
 **Phase:** 10
 **Commit:** 529a7d6
-**Hash:** D9E3F07D
+**Hash:** 9E4A1D8F (rebuilt 2026-08-16)
 
 ## What Changed
 
@@ -39,4 +39,4 @@
 
 ## Baseline
 - Backend: 259 passed, 1 pre-existing failure (test_health_contract)
-- Hash: D9E3F07D ≠ stale 9E4BAB70 (three-way match: packaging = repo dist = portable)
+- Hash: 9E4A1D8F ≠ stale 9E4BAB70 (three-way match: packaging = repo dist = portable)
