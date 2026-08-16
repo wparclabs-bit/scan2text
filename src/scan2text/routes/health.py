@@ -26,6 +26,12 @@ def _ram() -> Dict[str, Any]:
     }
 
 
+def _cpu() -> Dict[str, Any]:
+    return {
+        "percent": float(psutil.cpu_percent()),
+    }
+
+
 def _get_adapter_state(request: Request) -> Dict[str, bool]:
     """Return the adapter's loaded state, or defaults if adapter is unavailable."""
     queue_svc = getattr(request.app.state, "queue_service", None)
@@ -59,6 +65,7 @@ def health(request: Request) -> Dict[str, Any]:
         "status": "ok",
         "worker": worker,
         "ram": _ram(),
+        "cpu": _cpu(),
         "model": {
             "name": MODEL_NAME,
             "loaded": adapter_state["loaded"],

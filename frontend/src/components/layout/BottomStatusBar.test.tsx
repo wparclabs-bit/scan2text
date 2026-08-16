@@ -86,4 +86,24 @@ describe('BottomStatusBar structure', () => {
     const footer = screen.getByTestId('bottom-bar') as HTMLElement
     expect(footer.textContent).not.toContain('RAM: —')
   })
+
+  it('renders CPU percent from health endpoint', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ cpu: { percent: 27 } }),
+    }))
+    ;(useTranslation as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      t: (key: string, vars?: Record<string, unknown>) => {
+        if (key === 'bottomBar.workerLabel') return `Worker: Idle`
+        if (key === 'bottomBar.ramUsage') return `RAM: ${vars?.percent ?? '—'}%`
+        if (key === 'bottomBar.cpuUsage') return `CPU: ${vars?.percent ?? '—'}%`
+        if (key === 'actions.shareTooltip') return 'Share app link'
+        return key
+      },
+    })
+    render(<BottomStatusBar />)
+    await new Promise((r) => setTimeout(r, 50))
+    const footer = screen.getByTestId('bottom-bar') as HTMLElement
+    expect(footer.textContent).toContain('CPU: 27%')
+  })
 })
