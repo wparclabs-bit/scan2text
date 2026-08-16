@@ -1,7 +1,7 @@
 # PRD: Scan2Text — MVP
 
-Version: 1.11
-Date: 2026-08-13
+Version: 1.12
+Date: 2026-08-16
 Status: Approved for Implementation
 Product Owner: CEO
 Technical Owner: CTO
@@ -23,6 +23,7 @@ Engineering Method: AI-Assisted Software Development (AIASD)
 | 1.9     | 2026-08-10 | ADR-006: primary OCR engine = OvisOCR2 0.9B (Apache-2.0) via llama-cpp-python; GLM-OCR removed from codebase (external backup only); §7/§12 model lines updated; FR-08 asset-folder exception for chart crops; known-defect register accepted |
 | 1.10    | 2026-08-10 | ADR-007: feedback button (GForm + offline queue) in BottomBar left of Share; first-run expectations screen with don't-show-again; CPU auto = 60% of logical cores; GDrive distribution + in-app model downloader; logs no file names, 1 MB size-based rotation; monthly cadence |
 | 1.11    | 2026-08-13 | DOC-04: aligned §12 with ADR-008; added Tauri v2 desktop shell & packaging line; fixed version drift (header was 1.9) |
+| 1.12    | 2026-08-16 | Phase 10 closure: BottomBar telemetry adds CPU% (CEO-approved 2026-08-16) |
 
 ---
 
@@ -151,7 +152,7 @@ The MVP is not a document editor.
 - File validation: Max 50MB per file, reject unsupported types with toast notification
 - Queue status slot: fixed 14px, dot-only (grey/yellow-spinner/green/red) with translated tooltips + thin fake progress bar
 - Persistent Info Screen: shows on every launch with "Welcome to Scan2Text" message and "Don't show this again" checkbox; choice persisted to settings.json
-- BottomBar: center telemetry (Worker Idle/Busy · RAM "—" until /health · version) + RIGHT icon-only Share (placeholder https://placeholder.local, click = soft toast)
+- BottomBar: center telemetry (Worker Idle/Busy · RAM · CPU% · version) + RIGHT icon-only Share (placeholder https://placeholder.local, click = soft toast)
 - Coffee & paper visual identity with visible-subtle gradation depth on all cards (theme-aware inline longhand styles)
 - Dropzone: dashed area fills card; bg image at 15% opacity; bold ink header + footer text
 - Queue status slot: fixed 14px, dot-only (grey/yellow-spinner/green/red) with translated tooltips (fake progress bar deferred to v2/v3, v1.8)
@@ -254,7 +255,7 @@ The app shell is pinned to the viewport: `fixed inset-0 flex flex-col overflow-h
 ### BottomBar (pinned, shrink-0)
 
 - LEFT: empty.
-- CENTER: Worker Idle/Busy (derived from queue state) · RAM "—" (until GET /health) · version constant. Centered via grid 1fr auto 1fr, vertically centered.
+- CENTER: Worker Idle/Busy (derived from queue state) · RAM · CPU% · version constant. Centered via grid 1fr auto 1fr, vertically centered.
 - RIGHT: icon-only Share button, placeholder https://placeholder.local, translated tooltip, click = soft toast (no navigation).
 
 ---

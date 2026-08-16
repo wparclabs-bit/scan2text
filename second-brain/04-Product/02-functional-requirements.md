@@ -2,8 +2,8 @@
 
   
 
-Version: 1.10
-Date: 2026-08-10
+Version: 1.11
+Date: 2026-08-16
 Status: Approved for Implementation
 
   
@@ -34,6 +34,7 @@ Status: Approved for Implementation
 | 1.8 | 2026-08-08 | Phase 6 closure deltas: fake progress bar deferred to v2/v3 (CEO 2026-08-08); 1vh TopBar gutter; pathological short-window accepted edge; queue empty-state final copy with per-locale icons; QA gate passed — Phase 6 COMPLETE |
 | 1.9 | 2026-08-10 | ADR-006 engine swap; FR-05/FR-06/FR-08 updated for OvisOCR2 and pypdfium2 verification. |
 | 1.10 | 2026-08-10 | ADR-007: Feedback button (Google Form + offline queue) in BottomBar next to Share; CPU auto budget 60% of logical cores; GDrive distribution + in-app first-run model downloader; monthly release cadence |
+| 1.11 | 2026-08-16 | Phase 10 closure: BottomBar telemetry adds CPU%; /api/health returns cpu percent |
 
 
 ---
@@ -79,7 +80,7 @@ Layout Structure:
 
 | Right Preview Column | ~60% | Live Preview (rendered Markdown full-width, read-only, internal scroll) |
 
-| Bottom Bar | Full width, pinned (shrink-0) | LEFT: empty. CENTER: Worker Idle/Busy · RAM "—" · version. RIGHT: icon-only Share |
+| Bottom Bar | Full width, pinned (shrink-0) | LEFT: empty. CENTER: Worker Idle/Busy · RAM · CPU% · version. RIGHT: icon-only Share |
 
   
 
@@ -116,7 +117,7 @@ Right Preview Column requirements:
 
 Bottom Bar requirements:
 - Pinned (shrink-0), always visible; vertically centered content; center group via grid 1fr auto 1fr.
-- CENTER: Worker Idle/Busy (derived from queue state) · RAM "—" (until backend GET /health) · version constant.
+- CENTER: Worker Idle/Busy (derived from queue state) · RAM · CPU% · version constant. Data sourced from backend GET /api/health (returns cpu percent via psutil.cpu_percent()).
 - RIGHT: icon-only Share button, translated tooltip, no text label.
 - LEFT: empty.
 

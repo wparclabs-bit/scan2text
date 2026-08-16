@@ -1,7 +1,7 @@
 # Non-Functional Requirements & Architecture — Scan2Text MVP
 
-Version: 1.13
-Date: 2026-08-13
+Version: 1.14
+Date: 2026-08-16
 Status: Approved for Implementation
 Format: clean non-table (CEO instruction)
 
@@ -21,6 +21,7 @@ Format: clean non-table (CEO instruction)
 - 1.11 — 2026-08-10 — ADR-007: CPU budget auto = 60% of logical cores; feedback folder in runtime tree; GDrive distribution + in-app downloader.
 - 1.12 — 2026-08-13 — DOC-02: aligned with ADR-008; pywebview replaced by Tauri v2; runtime folder + tech stack updated; stale /api/health note removed.
 - 1.13 — 2026-08-13 — DOC-05: folded PRD-04 §19 Testing Strategy into PRD-03 as §19 (trimmed historical QA run records per CEO Option A); PRD-04 dissolution step 1 of 4.
+- 1.14 — 2026-08-16 — Phase 10 closure: BottomBar telemetry adds CPU%; GET /api/health returns cpu percent; loopback-CORS note points to ADR-008 addendum.
 
 ---
 
@@ -111,7 +112,7 @@ Portable desktop app with local web UI: a Tauri v2 shell (Rust, ADR-008) bundles
 - Shell: fixed inset-0 flex flex-col overflow-hidden; TopBar shrink-0 (34px); main flex-1 min-h-0; BottomBar shrink-0. 1vh vertical gutter between TopBar and main (v1.8).
 - Main grid: grid-cols-[34fr_60fr] gap-[2%]; left column grid-rows minmax(0,38fr)/minmax(0,62fr); all panels min-h-0.
 - TopBar: left logo chip + DEMO badge; center brand image text.png 153×34 alt="Scan2Text" + static radial glow (CSS-only); right icon-only theme/language/settings with translated tooltips; all vertically centered.
-- BottomBar: grid 1fr auto 1fr; center Worker Idle/Busy (queue-derived) · RAM "—" (until GET /health) · version constant; right icon-only Share (placeholder https://placeholder.local, toast on click).
+- BottomBar: grid 1fr auto 1fr; center Worker Idle/Busy (queue-derived) · RAM · CPU% · version constant; right icon-only Share (placeholder https://placeholder.local, toast on click).
 - Dropzone: no ScrollArea; dashed area flex-1 min-h-0 fills card; bg image layer 15% opacity, background-size single value 100%, center, no-repeat, pointer-events none.
 - Queue + Preview: ScrollArea with always-visible warm scrollbars.
 - Radix ScrollArea tray neutralized globally via CSS override: [data-radix-scroll-area-viewport] > div { display:block; min-width:0; height:auto } — this is what makes truncation and internal scroll work inside Radix viewports.
@@ -207,10 +208,11 @@ Internal local contract (not a public API).
 
 - POST /process — multipart file bytes → { "task_id" }; starts background OCR.
 - GET /status/{task_id} — status (pending/uploading/processing/completed/failed/background) + result_markdown on completion.
-- GET /api/health — worker idle/busy, RAM usage, model loaded state (used by BottomBar).
+- GET /api/health — worker idle/busy, RAM percent, CPU percent (psutil.cpu_percent()), model loaded state (used by BottomBar).
 - GET /api/settings / PUT /api/settings.
 - Future (not MVP-critical): POST /cancel/{task_id}; POST /api/output/open.
 - Share placeholder note (v1.7): MVP Share is frontend-only; target constant https://placeholder.local; no backend endpoint; swapped post-GitHub.
+- Loopback CORS: backend `allow_origins=["*"]` is safe because backend binds 127.0.0.1 only (local-first, NFR-02). See ADR-008 addendum 2026-08-16 for full rationale.
 - Legacy note: /api/jobs routes are NOT used in MVP.
 
 ---
