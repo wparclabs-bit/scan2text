@@ -49,8 +49,8 @@ export default function BottomStatusBar() {
     toast.info(t('toast.shareComingSoon'))
   }
 
-  const ramDisplay = ramPercent != null ? t('bottomBar.ramUsage', { percent: ramPercent }) : t('bottomBar.ramUsage')
-  const cpuDisplay = cpuPercent != null ? t('bottomBar.cpuUsage', { percent: cpuPercent }) : t('bottomBar.cpuUsage')
+  const ramDisplay = ramPercent != null ? t('bottomBar.ramUsage', { percent: ramPercent }) : '—'
+  const cpuDisplay = cpuPercent != null ? t('bottomBar.cpuUsage', { percent: cpuPercent }) : '—'
 
   return (
     <footer data-testid="bottom-bar" className="px-4 py-1 text-sm text-muted-foreground font-display h-[36px] flex items-center shrink-0">

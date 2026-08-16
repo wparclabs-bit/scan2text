@@ -39,14 +39,14 @@
   },
   "preview": {
     "emptyState": "Pilih pekerjaan yang sudah selesai untuk melihat keajaibannya.",
+    "copyBtn": "Salin Markdown",
+    "openFolderBtn": "Buka Folder",
     "processing": "Memproses dokumen...",
     "failed": "Gagal OCR",
     "pdfPlaceholder": "Dokumen PDF",
     "loading": "Memproses file Anda...",
     "error": "Pemrosesan gagal. Silakan coba lagi.",
-    "retry": "Coba Lagi",
-    "copyBtn": "Salin Markdown",
-    "openFolderBtn": "Buka Folder"
+    "retry": "Coba Lagi"
   },
   "toast": {
     "copySuccess": "Markdown disalin ke clipboard!",

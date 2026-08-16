@@ -39,14 +39,14 @@
   },
   "preview": {
     "emptyState": "Select a completed job to preview the magic.",
+    "copyBtn": "Copy Markdown",
+    "openFolderBtn": "Open Folder",
     "processing": "Processing document...",
     "failed": "OCR Failed",
     "pdfPlaceholder": "PDF Document",
     "loading": "Processing your file...",
     "error": "Processing failed. Please try again.",
-    "retry": "Retry",
-    "copyBtn": "Copy Markdown",
-    "openFolderBtn": "Open Folder"
+    "retry": "Retry"
   },
   "toast": {
     "copySuccess": "Markdown copied to clipboard!",

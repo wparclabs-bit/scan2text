@@ -425,4 +425,49 @@ describe('PreviewPanel', () => {
       expect(screen.queryByText('First Document')).not.toBeInTheDocument()
     })
   })
+
+  describe('Visual Contract — Empty State with Header Buttons (PRD FR-02)', () => {
+    it('renders empty state text when no job is selected', () => {
+      setupStore(null, {})
+      render(<PreviewPanel />)
+      expect(screen.getByTestId('preview-empty')).toBeInTheDocument()
+      expect(screen.getByText('Select a completed job to preview the magic.')).toBeInTheDocument()
+    })
+
+    it('renders TWO header buttons in empty state (structural constancy: 0 jobs = same panel structure)', () => {
+      setupStore(null, {})
+      render(<PreviewPanel />)
+      // PRD mandate: header buttons always rendered even when no job selected
+      expect(screen.getByTestId('preview-copy-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('preview-open-folder-btn')).toBeInTheDocument()
+    })
+
+    it('both header buttons are present and visible in empty state (data-testid verified)', () => {
+      setupStore(null, {})
+      render(<PreviewPanel />)
+      const copyBtn = document.querySelector('[data-testid="preview-copy-btn"]')
+      const openBtn = document.querySelector('[data-testid="preview-open-folder-btn"]')
+      expect(copyBtn).toBeInTheDocument()
+      expect(openBtn).toBeInTheDocument()
+      expect(copyBtn).toBeVisible()
+      expect(openBtn).toBeVisible()
+    })
+
+    it('empty state header buttons have correct labels', () => {
+      setupStore(null, {})
+      render(<PreviewPanel />)
+      const copyBtn = screen.getByTestId('preview-copy-btn')
+      const openBtn = screen.getByTestId('preview-open-folder-btn')
+      expect(copyBtn).toHaveTextContent('Copy Markdown')
+      expect(openBtn).toHaveTextContent('Open Folder')
+    })
+
+    it('empty state maintains full panel structure (flex, min-w-0, h-full)', () => {
+      setupStore(null, {})
+      render(<PreviewPanel />)
+      const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
+      expect(panel).toHaveClass('h-full')
+      expect(panel).toHaveClass('min-w-0')
+    })
+  })
 })
