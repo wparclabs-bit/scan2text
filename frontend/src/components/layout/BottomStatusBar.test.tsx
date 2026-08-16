@@ -12,17 +12,20 @@ describe('BottomStatusBar structure', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     ;(useTranslation as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      t: (key: string) => {
+      t: (key: string, vars?: Record<string, unknown>) => {
         switch (key) {
           case 'bottomBar.workerLabel':
-            return 'Worker: Idle'
+            return `Worker: ${vars?.status ?? 'Idle'}`
           case 'bottomBar.ramUsage':
-            return 'RAM: —'
+            return `RAM: ${vars?.percent != null ? `${vars.percent}%` : '—'}`
           case 'bottomBar.cpuUsage':
-            return 'CPU: —'
+            return `CPU: ${vars?.percent != null ? `${vars.percent}%` : '—'}`
           case 'actions.shareTooltip':
             return 'Share app link'
           default:
+            // Always return the fallback format to simulate missing i18n key
+            if (key.includes('ramUsage')) return `RAM: —%`
+            if (key.includes('cpuUsage')) return `CPU: —%`
             return key
         }
       },
@@ -78,10 +81,21 @@ describe('BottomStatusBar structure', () => {
     }))
     ;(useTranslation as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       t: (key: string, vars?: Record<string, unknown>) => {
-        if (key === 'bottomBar.workerLabel') return `Worker: Idle`
-        if (key === 'bottomBar.ramUsage') return `RAM: ${vars?.percent ?? '—'}%`
-        if (key === 'actions.shareTooltip') return 'Share app link'
-        return key
+        switch (key) {
+          case 'bottomBar.workerLabel':
+            return `Worker: Idle`
+          case 'bottomBar.ramUsage':
+            return `RAM: ${vars?.percent ?? '—'}%`
+          case 'bottomBar.cpuUsage':
+            return `CPU: ${vars?.percent ?? '—'}%`
+          case 'actions.shareTooltip':
+            return 'Share app link'
+          default:
+            // Always return the fallback format to simulate missing i18n key
+            if (key.includes('ramUsage')) return `RAM: —%`
+            if (key.includes('cpuUsage')) return `CPU: —%`
+            return key
+        }
       },
     })
     render(<BottomStatusBar />)
@@ -97,16 +111,110 @@ describe('BottomStatusBar structure', () => {
     }))
     ;(useTranslation as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       t: (key: string, vars?: Record<string, unknown>) => {
-        if (key === 'bottomBar.workerLabel') return `Worker: Idle`
-        if (key === 'bottomBar.ramUsage') return `RAM: ${vars?.percent ?? '—'}%`
-        if (key === 'bottomBar.cpuUsage') return `CPU: ${vars?.percent ?? '—'}%`
-        if (key === 'actions.shareTooltip') return 'Share app link'
-        return key
+        switch (key) {
+          case 'bottomBar.workerLabel':
+            return `Worker: Idle`
+          case 'bottomBar.ramUsage':
+            return `RAM: ${vars?.percent ?? '—'}%`
+          case 'bottomBar.cpuUsage':
+            return `CPU: ${vars?.percent ?? '—'}%`
+          case 'actions.shareTooltip':
+            return 'Share app link'
+          default:
+            // Always return the fallback format to simulate missing i18n key
+            if (key.includes('ramUsage')) return `RAM: —%`
+            if (key.includes('cpuUsage')) return `CPU: —%`
+            return key
+        }
       },
     })
     render(<BottomStatusBar />)
     await new Promise((r) => setTimeout(r, 50))
     const footer = screen.getByTestId('bottom-bar') as HTMLElement
     expect(footer.textContent).toContain('CPU: 27%')
+  })
+
+  it('renders "—" for RAM when /api/health fails (telemetry fallback)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')))
+    ;(useTranslation as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      t: (key: string, vars?: Record<string, unknown>) => {
+        switch (key) {
+          case 'bottomBar.workerLabel':
+            return `Worker: Idle`
+          case 'bottomBar.ramUsage':
+            return `RAM: ${vars?.percent != null ? `${vars.percent}%` : '—'}`
+          case 'bottomBar.cpuUsage':
+            return `CPU: ${vars?.percent != null ? `${vars.percent}%` : '—'}`
+          case 'actions.shareTooltip':
+            return 'Share app link'
+          default:
+            // Always return the fallback format to simulate missing i18n key
+            if (key.includes('ramUsage')) return `RAM: —%`
+            if (key.includes('cpuUsage')) return `CPU: —%`
+            return key
+        }
+      },
+    })
+    render(<BottomStatusBar />)
+    await new Promise((r) => setTimeout(r, 50))
+    const footer = screen.getByTestId('bottom-bar') as HTMLElement
+    expect(footer.textContent).toContain('—')
+    expect(footer.textContent).not.toContain('{{percent}}')
+  })
+
+  it('renders "—" for CPU when /api/health fails (telemetry fallback)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')))
+    ;(useTranslation as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      t: (key: string, vars?: Record<string, unknown>) => {
+        switch (key) {
+          case 'bottomBar.workerLabel':
+            return `Worker: Idle`
+          case 'bottomBar.ramUsage':
+            return `RAM: ${vars?.percent != null ? `${vars.percent}%` : '—'}`
+          case 'bottomBar.cpuUsage':
+            return `CPU: ${vars?.percent != null ? `${vars.percent}%` : '—'}`
+          case 'actions.shareTooltip':
+            return 'Share app link'
+          default:
+            // Always return the fallback format to simulate missing i18n key
+            if (key.includes('ramUsage')) return `RAM: —%`
+            if (key.includes('cpuUsage')) return `CPU: —%`
+            return key
+        }
+      },
+    })
+    render(<BottomStatusBar />)
+    await new Promise((r) => setTimeout(r, 50))
+    const footer = screen.getByTestId('bottom-bar') as HTMLElement
+    expect(footer.textContent).toContain('—')
+    expect(footer.textContent).not.toContain('{{percent}}')
+  })
+
+  it('does NOT render literal "{{percent}}" when health fetch fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')))
+    ;(useTranslation as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+      t: (key: string, vars?: Record<string, unknown>) => {
+        switch (key) {
+          case 'bottomBar.workerLabel':
+            return `Worker: Idle`
+          case 'bottomBar.ramUsage':
+            return `RAM: ${vars?.percent != null ? `${vars.percent}%` : '—'}`
+          case 'bottomBar.cpuUsage':
+            return `CPU: ${vars?.percent != null ? `${vars.percent}%` : '—'}`
+          case 'actions.shareTooltip':
+            return 'Share app link'
+          default:
+            // Always return the fallback format to simulate missing i18n key
+            if (key.includes('ramUsage')) return `RAM: —%`
+            if (key.includes('cpuUsage')) return `CPU: —%`
+            return key
+        }
+      },
+    })
+    render(<BottomStatusBar />)
+    await new Promise((r) => setTimeout(r, 50))
+    const footer = screen.getByTestId('bottom-bar') as HTMLElement
+    expect(footer.textContent).not.toContain('{{percent}}')
+    expect(footer.textContent).toContain('—')
   })
 })
