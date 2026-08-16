@@ -853,5 +853,68 @@ describe('scan2text store', () => {
       store.getState().reset()
       expect(store.getState().jobOrder).toEqual([])
     })
+
+    it('should promote pending job with taskId when active completes via pollJob', async () => {
+      mockUploadFile.mockResolvedValue({ task_id: 'task-1' })
+      const file1 = new File(['a'], 'first.png', { type: 'image/png' })
+      const file2 = new File(['b'], 'second.png', { type: 'image/png' })
+
+      await store.getState().startUpload({ file: file1, jobId: 'job-1' })
+      expect(store.getState().activeJobId).toBe('job-1')
+      expect(store.getState().jobs['job-1'].status).toBe('processing')
+
+      mockUploadFile.mockResolvedValue({ task_id: 'task-2' })
+      await store.getState().startUpload({ file: file2, jobId: 'job-2' })
+      expect(store.getState().activeJobId).toBe('job-1')
+      expect(store.getState().jobs['job-2'].status).toBe('pending')
+      expect(store.getState().jobs['job-2'].taskId).toBe('task-2')
+
+      mockPollTaskStatus
+        .mockResolvedValueOnce({ task_id: 'task-1', status: 'completed', result_markdown: '# Done' })
+        .mockResolvedValueOnce({ task_id: 'task-2', status: 'processing' })
+      await store.getState().pollJob({ jobId: 'job-1' })
+
+      expect(store.getState().activeJobId).toBe('job-2')
+      expect(store.getState().jobs['job-2'].status).toBe('processing')
+      expect(mockPollTaskStatus).toHaveBeenCalled()
+    })
+
+    it('should promote pending job with taskId when active fails via pollJob', async () => {
+      mockUploadFile.mockResolvedValue({ task_id: 'task-1' })
+      const file1 = new File(['a'], 'first.png', { type: 'image/png' })
+      const file2 = new File(['b'], 'second.png', { type: 'image/png' })
+
+      await store.getState().startUpload({ file: file1, jobId: 'job-1' })
+      expect(store.getState().activeJobId).toBe('job-1')
+      expect(store.getState().jobs['job-1'].status).toBe('processing')
+
+      mockUploadFile.mockResolvedValue({ task_id: 'task-2' })
+      await store.getState().startUpload({ file: file2, jobId: 'job-2' })
+      expect(store.getState().activeJobId).toBe('job-1')
+      expect(store.getState().jobs['job-2'].status).toBe('pending')
+      expect(store.getState().jobs['job-2'].taskId).toBe('task-2')
+
+      mockPollTaskStatus
+        .mockResolvedValueOnce({ task_id: 'task-1', status: 'failed', error: 'OCR error' })
+        .mockResolvedValueOnce({ task_id: 'task-2', status: 'processing' })
+      await store.getState().pollJob({ jobId: 'job-1' })
+
+      expect(store.getState().activeJobId).toBe('job-2')
+      expect(store.getState().jobs['job-2'].status).toBe('processing')
+      expect(mockPollTaskStatus).toHaveBeenCalled()
+    })
+
+    it('should promote pending job when active upload fails', async () => {
+      const file1 = new File(['a'], 'first.png', { type: 'image/png' })
+      mockUploadFile.mockRejectedValue(new Error('Network error'))
+      await store.getState().startUpload({ file: file1, jobId: 'job-1' })
+      expect(store.getState().jobs['job-1'].status).toBe('failed')
+
+      mockUploadFile.mockResolvedValue({ task_id: 'task-2' })
+      const file2 = new File(['b'], 'second.png', { type: 'image/png' })
+      await store.getState().startUpload({ file: file2, jobId: 'job-2' })
+      expect(store.getState().activeJobId).toBe('job-2')
+      expect(store.getState().jobs['job-2'].status).toBe('processing')
+    })
   })
 })
