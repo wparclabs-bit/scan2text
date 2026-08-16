@@ -5,7 +5,7 @@
 ## Baseline
 - Phase: Phase 10 (E2E Packaged Verification) — MSI + NSIS installers built, portable assembly done, backend wired to HTTP (ADR-008), Rust boot log active (S10-R3)
 - Date: 2026-08-16
-- Tauri shell hash: E8C3128C64E9E0BE028AB5E4A099709374EA4407140A165BE0776D5AF51927FE (S10-FIX12b rebuilt 2026-08-16)
+- Tauri shell hash: 5F676E6DC16E2390FFACE55FD49DAE15B20FE26E46BD1DDAD294C249648643DA (S10-FIX16 no-console rebuilt 2026-08-16)
 - Baseline commit: ec9443d (Phase 6 closed)
 - Backend tests: 245 passed, 1 pre-existing failure (test_health_model_files_found — dummy models on disk)
 - Backend exe hash: 2B557E12F9EA77A745000EFD5EAB9F1C956600D0561B572BD3074B9030915515 (S10-FIX14 rebuild-swapped 2026-08-16, 3-way match)
@@ -16,6 +16,7 @@
 - Next: CEO Final Exam (S10-FIX9 shell rebuilt)
 
 ## Recent Changelog (last 5)
+- **2026-08-16 (S10-FIX16-No-Console-Window):** Added `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]` as first line of `frontend/src-tauri/src/main.rs`. Rebuilt Tauri shell (npx tauri build --no-bundle). Fresh hash 5F676E6D… ≠ stale E8C3128C…. Swapped into portable D:\Scan2Text. Status: READY FOR CEO MANUAL VERIFICATION (CEO launches, confirms no console window).
 - **2026-08-16 (S10-FIX14-Output-Root-OptionA):** Frozen output_dir now resolves to portable root by walking up from exe_dir (exe, parent, grandparent) to first ancestor containing models/, then appending /output. Dev behavior unchanged. +1 test (test_frozen_output_dir_resolves_to_portable_root). Backend: 245 passed, 1 pre-existing failure. Boot gate PASS: Uvicorn on 127.0.0.1:47351, model loaded=true, files_present=true. Fresh hash 2B557E12… ≠ stale FCE98DB5…. 3-way match confirmed. Status: COMPLETE.
 - **2026-08-16 (S10-FIX12b-Shell-Rebuild-Swap):** Rebuilt Tauri shell from current frontend source (npx tauri build --no-bundle). Fresh hash E8C3128C… ≠ stale ECA0B63C…. Swapped into portable D:\Scan2Text. Portable hash match verified. Smoke: shell launched, backend 127.0.0.1:47351 Listen confirmed. Status: COMPLETE.
 - **2026-08-16 (S10-FIX12a-Backend-Rebuild-Swap):** Rebuilt backend exe via PyInstaller (exit 0). Fresh hash FCE98DB5… ≠ stale 61646D82…. Swapped into portable D:\Scan2Text + repo dist. Boot gate PASS: Uvicorn on 127.0.0.1:47351, zero ModuleNotFoundError, zero Model files not found. 3-way hash raw match confirmed. Status: COMPLETE.
