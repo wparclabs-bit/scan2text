@@ -22,9 +22,9 @@ ENVIRONMENT: You are in PowerShell on Windows, NOT bash. NEVER use tail/head/gre
 ## 3. Engineering Rules (non-negotiable)
 3.1 **TDD Red-Green-Refactor:** failing test first, run, confirm red; minimal code, run, confirm green; refactor only after green. Never skip RED. `/tdd` skill is REQUIRED for all code, script, and config changes. Do not implement without writing the failing test first.
 
-3.2 **Micro-slicing + context budget:** one slice = one logical unit, no scope creep. Local llama.cpp window = 128k; HARD safety cap: input + output <= 90k tokens per slice, input target <= 70k. If exceeded, STOP and request a slice split. Emergency stop: "STOP. Give compact handoff summary only."
+3.2 **Micro-slicing + context budget:** one slice = one logical unit, no scope creep. Local llama.cpp window = 128k; HARD safety cap: input + output <= 45k tokens per slice, input target <= 35k. If exceeded, STOP and request a slice split. Emergency stop: "STOP. Give compact handoff summary only."
 
-3.3 **Compact output rule:** Keep all tool output and explanations compact. Never paste full file contents into responses. For long files, show first 50 lines and last 30 lines only via `Select-Object -First 50` / `Select-Object -Last 30`. Protect the 90k token safety cap at all times.
+3.3 **Compact output rule:** Keep all tool output and explanations compact. Never paste full file contents into responses. For long files, show first 50 lines and last 30 lines only via `Select-Object -First 50` / `Select-Object -Last 30`. Protect the 45k token safety cap at all times.
 
 3.4 **Kilo = Senior Engineer:** slice prompts are complete contracts; execute verbatim; no exploration tours; ask nothing the prompt already answers.
 
@@ -47,6 +47,12 @@ ENVIRONMENT: You are in PowerShell on Windows, NOT bash. NEVER use tail/head/gre
 
 3.10 **PYTHONPATH rule:** When running backend code from repo root (e.g., `py -3.12 -m pytest`, `py -3.12 script.py`), set `$env:PYTHONPATH="src"` so imports resolve correctly. Example: `$env:PYTHONPATH="src"; py -3.12 -m pytest -q`.
 
+3.11 **MCP & Tool Usage (invoke when relevant, not on every task)**
+   Available MCP servers — invoke only when relevant to the current task:
+   - Code Diagnostics (typescript-lsp / python-lsp): Before marking a code task complete, run the matching LSP for diagnostics. Zero-Error Policy: never mark complete while the LSP reports errors; resolve first. Complements npm run typecheck and py -3.12 -m pytest.
+   - Live Docs (context7): Before writing code against an external library API you are unsure about (React, FastAPI, Zustand, Pydantic, Tailwind, Vitest), query context7 for current docs; do not guess signatures.
+   UI automation stays CEO-only per 3.8 — Kilo does NOT run Playwright/Cypress.
+
 ## 4. Locked Architecture — Command Center v1.7
 Shell: fixed inset-0 flex flex-col overflow-hidden. The viewport is the only sizing authority; no window/body scroll; BottomBar always visible.
 TopBar (34px, items vertically centered): LEFT logo chip + DEMO badge (no literal wordmark); CENTER brand image text.png 153x34 alt="Scan2Text" + static CSS radial glow; RIGHT icon-only theme/language/settings with translated tooltips.
@@ -58,11 +64,9 @@ Preview: borderless transparent header buttons (Copy Markdown / Open Folder) wit
 Radix ScrollArea tray neutralized globally: [data-radix-scroll-area-viewport] > div { display:block; min-width:0; height:auto }.
 The rendered TopBar must be the live one in the App import chain; delete ghosts on sight.
 State: Zustand memory-only; jobOrder[] FIFO; one active job at a time. Jobs NEVER persist.
-Demo Mode (Phase 6): IS_DEMO_MODE flag in src/lib/demoMode.ts intercepts the API; PDF -> rich sample, images -> simple; in-memory task map; amber DEMO badge.
 Backend contract (Phase 7): POST /process -> task_id; GET /status/{task_id}; GET /health. Poll 15 x 2000ms = 30s, then background re-poll 60s x 10.
 Validation: max 50MB; PNG/JPG/JPEG/WEBP/PDF only; batch cap 10 (first 10 kept, extras skipped + warning toast + logged); invalid batch = ONE aggregated sonner toast; invalid files never enter queue.
 Output naming: {stem}_{HHmm}_{yyyyMMdd}.md, collision _2/_3, never overwrite. Pure util src/lib/naming.ts -> generateOutputFilename().
-Fake progress: 0 -> 90% over 30s eased; jump 100% on complete; red on fail; pulse ~90% in background.
 Tailwind & theme (CRITICAL): Tailwind v3; postcss.config.js + tailwind.config.js v3 format; NEVER install tailwind v4. src/index.css MUST start with @tailwind base; @tailwind components; @tailwind utilities (guardrail test enforces). Dark = .dark class on <html>; do NOT use @media prefers-color-scheme for theme vars. NEVER reintroduce Vite boilerplate. Preflight strips heading/list styles -> rendered Markdown MUST use @tailwindcss/typography prose.
 
 ## 5. Coffee & Paper palette (single source)
@@ -84,8 +88,7 @@ Vault map (canonical):
 If an actual folder name differs, discover via Get-ChildItem before writing; never guess.
 
 ## 7. Current phase & status
-Phases 1-6 COMPLETE (Phase 6 closed 2026-08-08 @ 75bc720, 565 tests). Phase 7 NEXT: real backend kickoff; first target GET /health telemetry; ASR parked until Scan2Text ships.
-See second-brain/00-Current-State.md for live test counts and active slice.
+Live state (phase, active slice, test counts) lives in second-brain/00-Current-State.md. Do NOT embed phase status or test counts here — they drift. Read that file at session start.
 
 ## 8. CEO locked decisions (do NOT override)
 - Local-first, offline, CPU-only; Markdown-output-first; NOT a document editor.
@@ -155,13 +158,9 @@ RULE: never guess paths; if a mapped file is missing, discover via Get-ChildItem
 - Does no layout math (see 3.6). Assert className/source, not computed pixels. CEO screenshot = layout acceptance.
 
 ### Misc
-- Brand wordmark is an IMAGE; tests assert alt="Scan2Text", not literal text.
 - Never hardcode D:\ paths in frontend; Vite relative imports.
-- Decorative bg layers: backgroundSize single value '100%' (never 'cover' or '100% 100%').
-- Depth must be visible-subtle, not garish.
 - Path discovery before edit: app under frontend/; i18n frontend/src/locales/. "File not found" is a lookup task, never a stop reason.
 - Absence tests keep removed features removed (docs drift, tests remember).
-- Drag-over highlight needs enter/leave counter + onDragOver preventDefault (boolean flickers on child traversal).
 - Per-locale icon inside translation string = i18n owns the whole message (CEO decision 2026-08-08).
 - Non-technical users need non-technical feedback channels (GForm over GitHub Issues).
 - Cap CPU so the PC stays usable — a fast OCR that freezes the PC loses users.

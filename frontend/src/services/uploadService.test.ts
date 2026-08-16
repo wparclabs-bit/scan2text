@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { uploadFiles } from './uploadService'
+import { buildApiUrl } from '@/lib/apiBase'
 
 describe('uploadFiles', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -22,7 +23,7 @@ describe('uploadFiles', () => {
     await uploadFiles([file1, file2])
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://127.0.0.1:8000/process',
+      buildApiUrl('/process'),
       expect.objectContaining({ method: 'POST' })
     )
 
@@ -70,5 +71,23 @@ describe('uploadFiles', () => {
     expect(entries[0][1]).toBe(file1)
     expect(entries[1][0]).toBe('files')
     expect(entries[1][1]).toBe(file2)
+  })
+
+  it('uses buildApiUrl in prod mode', async () => {
+    vi.stubEnv('PROD', true)
+    mockFetch.mockReset()
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.resolve({ task_id: 'abc-123' }),
+    })
+
+    await uploadFiles([new File(['x'], 'test.png')])
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      buildApiUrl('/process'),
+      expect.objectContaining({ method: 'POST' })
+    )
+    vi.unstubAllEnvs()
   })
 })
