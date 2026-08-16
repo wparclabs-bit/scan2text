@@ -18,6 +18,8 @@ describe('BottomStatusBar structure', () => {
             return 'Worker: Idle'
           case 'bottomBar.ramUsage':
             return 'RAM: —'
+          case 'bottomBar.cpuUsage':
+            return 'CPU: —'
           case 'actions.shareTooltip':
             return 'Share app link'
           default:
@@ -65,7 +67,8 @@ describe('BottomStatusBar structure', () => {
   it('version string is present in center zone', () => {
     render(<BottomStatusBar />)
     const footer = screen.getByTestId('bottom-bar') as HTMLElement
-    expect(footer.textContent).toContain('v0.1.0-demo')
+    // Final product: shipped version is v1.0.0
+    expect(footer.textContent).toContain('v1.0.0')
   })
 
   it('shows RAM value from health endpoint instead of dash', async () => {

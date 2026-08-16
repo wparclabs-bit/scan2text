@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import FeedbackButton from './FeedbackButton'
 import { buildApiUrl } from '@/lib/apiBase'
 
-const VERSION = 'v0.1.0-demo'
+const VERSION = 'v1.0.0'
 const SHARE_URL = 'https://placeholder.local'
 
 function getWorkerStatus() {

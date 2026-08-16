@@ -4,11 +4,7 @@
   },
   "topbar": {
     "logoAlt": "Scan2Text logo",
-    "brandAlt": "Scan2Text",
-    "demoBadge": "DEMO"
-  },
-  "demo": {
-    "badge": "DEMO"
+    "brandAlt": "Scan2Text"
   },
   "panels": {
     "dropZone": "Drop Zone",
@@ -54,7 +50,6 @@
   },
   "toast": {
     "copySuccess": "Markdown copied to clipboard!",
-    "openFolderDemo": "📂 Demo Mode: In the real app, this opens your output folder!",
     "shareComingSoon": "Sharing coming soon."
   },
   "queue": {
@@ -73,7 +68,7 @@
     "workerLabel": "Worker: {{status}}",
     "ramUsage": "RAM: {{percent}}%",
     "cpuUsage": "CPU: {{percent}}%",
-    "version": "v0.1.0-demo"
+    "version": "v1.0.0"
   },
   "settings": {
     "title": "Settings",
@@ -82,8 +77,6 @@
     "outputDir": "\ud83d\udd12 Output Directory",
     "maxPdfPages": "\ud83d\udd12 Max PDF Pages",
     "cpuThreads": "\ud83d\udd12 CPU Threads",
-    "demoModeSwitch": "Demo mode",
-    "locked": "Locked in demo mode",
     "reopenWelcome": "Re-open Welcome Screen"
   },
   "welcome": {

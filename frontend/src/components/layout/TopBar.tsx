@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
 import { usePreferenceStore } from '../../stores/preferencesStore'
-import { IS_DEMO_MODE } from '../../lib/api'
 import { Settings, Moon, Sun, Globe } from 'lucide-react'
 import { useState } from 'react'
 import SettingsDialog from './SettingsDialog'
@@ -33,14 +32,6 @@ export default function TopBar() {
             >
               <img src={logoUrl} alt="" className="w-6 h-6 object-contain" />
             </div>
-            {IS_DEMO_MODE && (
-              <span
-                data-testid="topbar-demo-badge"
-                className="bg-amber-500/20 text-amber-500 border border-amber-500/50 px-2 py-0.5 rounded-full text-xs font-bold font-display"
-              >
-                {t('topbar.demoBadge')}
-              </span>
-            )}
           </div>
           <div className="flex items-center justify-center absolute inset-x-0 pointer-events-none">
             <div

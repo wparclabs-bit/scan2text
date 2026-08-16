@@ -86,7 +86,8 @@ export default function PreviewPanel() {
             <button
               data-testid="preview-open-folder-btn"
               onClick={() => {
-                toast.info(t('toast.openFolderDemo'))
+                // In final product, this would open the output folder
+                // For now, placeholder behavior
               }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border-none bg-transparent hover:bg-[rgba(227,165,95,0.12)] hover:text-[#E3A55F] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
             >

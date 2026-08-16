@@ -17,6 +17,9 @@ const translations: Record<string, Record<string, string>> = {
     'topbar.brandAlt': 'Scan2Text',
     'topbar.demoBadge': 'DEMO',
     'settings.title': 'Settings',
+    'bottomBar.workerLabel': 'Worker: Idle',
+    'bottomBar.ramUsage': 'RAM: —',
+    'bottomBar.cpuUsage': 'CPU: —',
   },
   id: {
     'actions.toggleTheme': 'Ubah tema',
@@ -31,6 +34,9 @@ const translations: Record<string, Record<string, string>> = {
     'topbar.brandAlt': 'Scan2Text',
     'topbar.demoBadge': 'DEMO',
     'settings.title': 'Pengaturan',
+    'bottomBar.workerLabel': 'Worker: Idle',
+    'bottomBar.ramUsage': 'RAM: —',
+    'bottomBar.cpuUsage': 'CPU: —',
   },
 }
 
@@ -184,6 +190,13 @@ describe('TopBar', () => {
     const style = glow.getAttribute('style') ?? ''
     expect(style).toContain('radial-gradient')
     expect(style).toContain('rgba')
+  })
+
+  it('does not render DEMO badge in final product (absence test)', () => {
+    render(<TopBar />)
+    // Final product: no DEMO badge should exist at all
+    expect(screen.queryByTestId('topbar-demo-badge')).not.toBeInTheDocument()
+    expect(screen.queryByText('DEMO')).not.toBeInTheDocument()
   })
 
   it('language toggle button has data-testid="language-toggle"', () => {

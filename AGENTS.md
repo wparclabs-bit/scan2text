@@ -55,7 +55,7 @@ ENVIRONMENT: You are in PowerShell on Windows, NOT bash. NEVER use tail/head/gre
 
 ## 4. Locked Architecture — Command Center v1.7
 Shell: fixed inset-0 flex flex-col overflow-hidden. The viewport is the only sizing authority; no window/body scroll; BottomBar always visible.
-TopBar (34px, items vertically centered): LEFT logo chip + DEMO badge (no literal wordmark); CENTER brand image text.png 153x34 alt="Scan2Text" + static CSS radial glow; RIGHT icon-only theme/language/settings with translated tooltips.
+TopBar (34px, items vertically centered): LEFT logo chip only (DEMO removed 2026-08-17, final product); CENTER brand image text.png 153x34 alt="Scan2Text" + static CSS radial glow; RIGHT icon-only theme/language/settings with translated tooltips.
 Main: flex-1 min-h-0 mt-[1vh] min-w-0, grid grid-cols-[minmax(0,34fr)_minmax(0,60fr)] gap-[2%]. Left column grid-rows minmax(0,38fr) Dropzone / minmax(0,62fr) Queue. Right = Preview (full-width read-only Markdown, internal scroll). min-w-0 on columns AND panel roots. 1vh vertical gutter between TopBar and main (CEO delta 2026-08-08). Fractions decide; content never resizes panels.
 BottomBar (pinned shrink-0): grid 1fr auto 1fr; LEFT empty; CENTER Worker Idle/Busy · RAM "—" (until GET /health) · version; RIGHT icon-only Share (placeholder https://placeholder.local, click = soft toast, no navigation).
 Dropzone: dashed area flex-1 min-h-0 fills card; bg bacground-left-top-panel.jpg at 15% opacity, background-size single value 100%, centered, no-repeat, pointer-events none; bold ink #1F150C header + footer ("max 10 files per batch"); NO ScrollArea.
@@ -72,7 +72,7 @@ Tailwind & theme (CRITICAL): Tailwind v3; postcss.config.js + tailwind.config.js
 ## 5. Coffee & Paper palette (single source)
 DARK: bg #080502; Dropzone #E1DCC9 (ink #1F150C); Queue #412D15 (cream #F2EBDD); Preview #1F150C (cream); accent #E3A55F; border #3B2A18.
 LIGHT: bg #F9F8F6; #EFE9E3 / #D9CFC7 / #C9B59C; all fg #1F150C; border #1F150C; accent #92400E.
-Depth (visible-subtle, theme-aware inline longhand: gradient + inset top highlight + soft shadow + warm glow): dark shadow 0 12px 32px -12px rgba(0,0,0,0.7) + warm radial glow; light shadow 0 12px 32px -14px rgba(31,21,12,0.28) + white top-highlight. No flat cards, no borders, no purple. DEMO amber + green/red dots retained.
+Depth (visible-subtle, theme-aware inline longhand: gradient + inset top highlight + soft shadow + warm glow): dark shadow 0 12px 32px -12px rgba(0,0,0,0.7) + warm radial glow; light shadow 0 12px 32px -14px rgba(31,21,12,0.28) + white top-highlight. No flat cards, no borders, no purple.
 Scrollbars: always-visible, thin, rounded, warm on Queue + Preview only (Dropzone excluded).
 
 ## 6. Memory protocol + vault map
@@ -129,7 +129,7 @@ Layout: src/components/layout/CommandCenterLayout.tsx | TopBar.tsx | BottomStatu
 Panels: src/components/layout/panels/DropZonePanel.tsx | QueuePanel.tsx | PreviewPanel.tsx | MarkdownPreview.tsx
 Dropzone: src/components/dropzone/FileDropZone.tsx
 Store: src/stores/scan2text.store.ts
-Utils: src/lib/naming.ts | src/lib/demoMode.ts
+Utils: src/lib/naming.ts | src/lib/api.ts
 UI primitives: src/components/ui/ (button, card, dialog, input, label, spinner, tooltip, scroll-area)
 i18n: src/locales/en.json + src/locales/id.json
 Theme tokens: src/index.css + tailwind.config.js

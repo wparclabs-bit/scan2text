@@ -1,0 +1,656 @@
+Folder PATH listing for volume NVME
+Volume serial number is 0000009F A816:87BD
+D:.
+¦   .gitignore
+¦   .graphifyignore
+¦   AGENTS-CTO.md
+¦   AGENTS.md
+¦   backend-spike.spec
+¦   boot-gate-stderr.log
+¦   build.log
+¦   dev-web.ps1
+¦   dev.ps1
+¦   fix_json.py
+¦   full.log
+¦   LICENSE
+¦   pyproject.toml
+¦   pytest.ini
+¦   README.md
+¦   shell-build.log
+¦   tc.log
+¦   tree.txt
+¦   version.json
+¦   vitest-11.log
+¦   
++---.obsidian
+¦   ¦   app.json
+¦   ¦   appearance.json
+¦   ¦   community-plugins.json
+¦   ¦   core-plugins.json
+¦   ¦   workspace.json
+¦   ¦   
+¦   +---plugins
+¦   ¦   +---dataview
+¦   ¦   ¦       main.js
+¦   ¦   ¦       manifest.json
+¦   ¦   ¦       styles.css
+¦   ¦   ¦       
+¦   ¦   +---obsidian-kanban
+¦   ¦           main.js
+¦   ¦           manifest.json
+¦   ¦           styles.css
+¦   ¦           
+¦   +---themes
+¦       +---AnuPpuccin
+¦               manifest.json
+¦               theme.css
+¦               
++---.scan2text
+¦   +---assets
+¦   +---feedback
+¦   ¦   +---pending
+¦   ¦   +---sent
+¦   +---logs
+¦   +---models
+¦   +---output
+¦   ¦       biaya_1041_20260811.md
+¦   ¦       biaya_1043_20260811.md
+¦   ¦       
+¦   +---settings
+¦           settings.json
+¦           
++---.vscode
+¦       settings.json
+¦       
++---frontend
+¦   ¦   .gitignore
+¦   ¦   .npmrc
+¦   ¦   .oxlintrc.json
+¦   ¦   components.json
+¦   ¦   green.log
+¦   ¦   index.html
+¦   ¦   package-lock.json
+¦   ¦   package.json
+¦   ¦   postcss.config.js
+¦   ¦   README.md
+¦   ¦   red.log
+¦   ¦   shell-build.log
+¦   ¦   tailwind.config.js
+¦   ¦   tc.log
+¦   ¦   tsconfig.app.json
+¦   ¦   tsconfig.json
+¦   ¦   tsconfig.node.json
+¦   ¦   vite.config.ts
+¦   ¦   vite.test.config.ts
+¦   ¦   
+¦   +---Images
+¦   ¦       bacground-left-top-panel.jpg
+¦   ¦       logo.png
+¦   ¦       text-light.jpg
+¦   ¦       text.png
+¦   ¦       
+¦   +---public
+¦   ¦       favicon.svg
+¦   ¦       icons.svg
+¦   ¦       
+¦   +---scripts
+¦   ¦       validate-tauri-config.js
+¦   ¦       
+¦   +---src
+¦   ¦   ¦   App.css
+¦   ¦   ¦   App.test.tsx
+¦   ¦   ¦   App.tsx
+¦   ¦   ¦   index.css
+¦   ¦   ¦   main.tsx
+¦   ¦   ¦   test-setup.ts
+¦   ¦   ¦   vite-env.d.ts
+¦   ¦   ¦   
+¦   ¦   +---assets
+¦   ¦   ¦   ¦   hero.png
+¦   ¦   ¦   ¦   react.svg
+¦   ¦   ¦   ¦   vite.svg
+¦   ¦   ¦   ¦   
+¦   ¦   ¦   +---fonts
+¦   ¦   ¦           Quantico-Regular.ttf
+¦   ¦   ¦           
+¦   ¦   +---components
+¦   ¦   ¦   +---dropzone
+¦   ¦   ¦   ¦       FileDropZone.test.tsx
+¦   ¦   ¦   ¦       FileDropZone.toast.test.tsx
+¦   ¦   ¦   ¦       FileDropZone.tsx
+¦   ¦   ¦   ¦       
+¦   ¦   ¦   +---layout
+¦   ¦   ¦   ¦   ¦   BottomStatusBar.test.tsx
+¦   ¦   ¦   ¦   ¦   BottomStatusBar.tsx
+¦   ¦   ¦   ¦   ¦   CommandCenterLayout.test.tsx
+¦   ¦   ¦   ¦   ¦   CommandCenterLayout.tsx
+¦   ¦   ¦   ¦   ¦   FeedbackButton.test.tsx
+¦   ¦   ¦   ¦   ¦   FeedbackButton.tsx
+¦   ¦   ¦   ¦   ¦   FeedbackDialog.test.tsx
+¦   ¦   ¦   ¦   ¦   FeedbackDialog.tsx
+¦   ¦   ¦   ¦   ¦   ModelDownloaderModal.test.tsx
+¦   ¦   ¦   ¦   ¦   ModelDownloaderModal.tsx
+¦   ¦   ¦   ¦   ¦   SettingsDialog.test.tsx
+¦   ¦   ¦   ¦   ¦   SettingsDialog.tsx
+¦   ¦   ¦   ¦   ¦   TopBar.test.tsx
+¦   ¦   ¦   ¦   ¦   TopBar.tsx
+¦   ¦   ¦   ¦   ¦   WelcomeModal.test.tsx
+¦   ¦   ¦   ¦   ¦   WelcomeModal.tsx
+¦   ¦   ¦   ¦   ¦   
+¦   ¦   ¦   ¦   +---panels
+¦   ¦   ¦   ¦           DropZonePanel.test.tsx
+¦   ¦   ¦   ¦           DropZonePanel.tsx
+¦   ¦   ¦   ¦           MarkdownPreview.test.tsx
+¦   ¦   ¦   ¦           MarkdownPreview.tsx
+¦   ¦   ¦   ¦           PreviewPanel.test.tsx
+¦   ¦   ¦   ¦           PreviewPanel.tsx
+¦   ¦   ¦   ¦           QueuePanel.icons.test.tsx
+¦   ¦   ¦   ¦           QueuePanel.integration.test.tsx
+¦   ¦   ¦   ¦           QueuePanel.test.tsx
+¦   ¦   ¦   ¦           QueuePanel.tsx
+¦   ¦   ¦   ¦           ScrollAreas.test.tsx
+¦   ¦   ¦   ¦           
+¦   ¦   ¦   +---ui
+¦   ¦   ¦           button.tsx
+¦   ¦   ¦           card.tsx
+¦   ¦   ¦           dialog.tsx
+¦   ¦   ¦           input.tsx
+¦   ¦   ¦           label.tsx
+¦   ¦   ¦           scroll-area.tsx
+¦   ¦   ¦           spinner.tsx
+¦   ¦   ¦           tooltip.tsx
+¦   ¦   ¦           
+¦   ¦   +---hooks
+¦   ¦   ¦       useProgressSocket.test.ts
+¦   ¦   ¦       useProgressSocket.ts
+¦   ¦   ¦       
+¦   ¦   +---i18n
+¦   ¦   ¦       i18n.test.ts
+¦   ¦   ¦       index.ts
+¦   ¦   ¦       resources.test.ts
+¦   ¦   ¦       
+¦   ¦   +---lib
+¦   ¦   ¦       api.demo.test.ts
+¦   ¦   ¦       api.test.ts
+¦   ¦   ¦       api.ts
+¦   ¦   ¦       apiBase.test.ts
+¦   ¦   ¦       apiBase.ts
+¦   ¦   ¦       cleanupObjectURLs.test.ts
+¦   ¦   ¦       cleanupObjectURLs.ts
+¦   ¦   ¦       demoMode.ts
+¦   ¦   ¦       demoOrchestrator.test.ts
+¦   ¦   ¦       demoOrchestrator.ts
+¦   ¦   ¦       depthStyles.test.ts
+¦   ¦   ¦       depthStyles.ts
+¦   ¦   ¦       fileKind.test.ts
+¦   ¦   ¦       fileKind.ts
+¦   ¦   ¦       fileValidation.test.ts
+¦   ¦   ¦       fileValidation.ts
+¦   ¦   ¦       formatBytes.test.ts
+¦   ¦   ¦       formatBytes.ts
+¦   ¦   ¦       naming.test.ts
+¦   ¦   ¦       naming.ts
+¦   ¦   ¦       preferences.test.ts
+¦   ¦   ¦       preferences.ts
+¦   ¦   ¦       progressManager.test.ts
+¦   ¦   ¦       progressManager.ts
+¦   ¦   ¦       utils.ts
+¦   ¦   ¦       
+¦   ¦   +---locales
+¦   ¦   ¦       en.json
+¦   ¦   ¦       id.json
+¦   ¦   ¦       
+¦   ¦   +---services
+¦   ¦   ¦       uploadService.test.ts
+¦   ¦   ¦       uploadService.ts
+¦   ¦   ¦       
+¦   ¦   +---stores
+¦   ¦   ¦       fileStore.test.ts
+¦   ¦   ¦       fileStore.ts
+¦   ¦   ¦       preferencesStore.test.ts
+¦   ¦   ¦       preferencesStore.ts
+¦   ¦   ¦       scan2text.store.test.ts
+¦   ¦   ¦       scan2text.store.ts
+¦   ¦   ¦       
+¦   ¦   +---theme
+¦   ¦           palette-lock.test.ts
+¦   ¦           
+¦   +---src-tauri
+¦       ¦   build.rs
+¦       ¦   Cargo.lock
+¦       ¦   Cargo.toml
+¦       ¦   tauri.conf.json
+¦       ¦   
+¦       +---capabilities
+¦       ¦       default.json
+¦       ¦       
+¦       +---gen
+¦       ¦   +---schemas
+¦       ¦           acl-manifests.json
+¦       ¦           capabilities.json
+¦       ¦           desktop-schema.json
+¦       ¦           windows-schema.json
+¦       ¦           
+¦       +---icons
+¦       ¦       128x128.png
+¦       ¦       128x128@2x.png
+¦       ¦       1x1.png
+¦       ¦       32x32.png
+¦       ¦       icon.icns
+¦       ¦       icon.ico
+¦       ¦       
+¦       +---src
+¦       ¦       backend_process.rs
+¦       ¦       lib.rs
+¦       ¦       main.rs
+¦       ¦       
+¦       +---tests
+¦               backend_lifecycle.rs
+¦               backend_manager_tests.rs
+¦               
++---models
+¦       mmproj.gguf
+¦       vlm.gguf
+¦       
++---node_modules
+¦   +---.vite
+¦       +---vitest
+¦           +---da39a3ee5e6b4b0d3255bfef95601890afd80709
+¦                   results.json
+¦                   
++---packaging
+¦       build-14.log
+¦       scan2text-backend.spec
+¦       
++---scripts
+¦       build-backend.ps1
+¦       cleanroom-boot.ps1
+¦       probe-backend-ocr.ps1
+¦       two-exe-probe.ps1
+¦       verify-portable.ps1
+¦       
++---second-brain
+¦   ¦   00-Current-State.md
+¦   ¦   Welcome.md
+¦   ¦   
+¦   +---00-Inbox
+¦   ¦   ¦   prd-early-dont-use.md
+¦   ¦   ¦   
+¦   ¦   +---backups
+¦   ¦           AGENTS-CTO.md-20260812-1637
+¦   ¦           AGENTS-pre-diet-2026-08-13.md
+¦   ¦           AGENTS.md-20260812-1637
+¦   ¦           
+¦   +---01-Agent-Memory
+¦   ¦   ¦   S10-fix-clean-bytes-rebuild.md
+¦   ¦   ¦   
+¦   ¦   +---Archive
+¦   ¦   ¦       agents-diet-2026-08-13.md
+¦   ¦   ¦       agents-manual-cleanup-2026-08-12.md
+¦   ¦   ¦       slice-9-3-tauri-backend-lifecycle.md
+¦   ¦   ¦       state-history.md
+¦   ¦   ¦       
+¦   ¦   +---Phase-10
+¦   ¦   ¦       slice-10-backend-rebuild.md
+¦   ¦   ¦       slice-10-diag3-config-divergence-fix.md
+¦   ¦   ¦       slice-10-e2e-packaged-verification.md
+¦   ¦   ¦       slice-10-fix2-clean-rebuild.md
+¦   ¦   ¦       slice-10-fix8-deadlock-freeze-executor.md
+¦   ¦   ¦       slice-11-path-math-ghost-name-fix.md
+¦   ¦   ¦       slice-11-rust-boot-log.md
+¦   ¦   ¦       slice-11b-pollJob-green.md
+¦   ¦   ¦       slice-11c-testscope-config.md
+¦   ¦   ¦       slice-12-option-a-commit-prep.md
+¦   ¦   ¦       slice-12a-backend-rebuild-swap.md
+¦   ¦   ¦       slice-13b-bootgate-swap.md
+¦   ¦   ¦       slice-9-pathservice-fix.md
+¦   ¦   ¦       slice-doc26-closure.md
+¦   ¦   ¦       slice-fix-diag18-backend-json-contract.md
+¦   ¦   ¦       slice-fix10-naming.md
+¦   ¦   ¦       slice-fix14-output-root.md
+¦   ¦   ¦       slice-fix16-no-console.md
+¦   ¦   ¦       slice-fix17-rust-lifecycle.md
+¦   ¦   ¦       slice-fix18-cors-rebuild.md
+¦   ¦   ¦       slice-fix20-firstrun-health.md
+¦   ¦   ¦       slice-fix21-filetype-routing.md
+¦   ¦   ¦       slice-fix22-rgba-failure.md
+¦   ¦   ¦       slice-fix24-cpu-telemetry.md
+¦   ¦   ¦       slice-fix25-rebuild-swap.md
+¦   ¦   ¦       slice-fix7-process-field.md
+¦   ¦   ¦       slice-fix8c-swap-gate-docs.md
+¦   ¦   ¦       slice-fix9-shell-rebuild.md
+¦   ¦   ¦       slice-S10-FIX12b-shell-rebuild-swap.md
+¦   ¦   ¦       slice-S10-FIX23-Queue-Promotion.md
+¦   ¦   ¦       
+¦   ¦   +---Phase-2
+¦   ¦   ¦       phase2-completion-summary.md
+¦   ¦   ¦       Slice-2-Summary.md
+¦   ¦   ¦       Slice-2.5-Summary.md
+¦   ¦   ¦       Slice-2.6-Summary.md
+¦   ¦   ¦       Slice-3-Summary.md
+¦   ¦   ¦       Slice-5-Summary.md
+¦   ¦   ¦       Slice-6-Summary.md
+¦   ¦   ¦       
+¦   ¦   +---Phase-3
+¦   ¦   ¦       slice-6-5-summary.md
+¦   ¦   ¦       Slice-8-Summary.md
+¦   ¦   ¦       
+¦   ¦   +---Phase-4
+¦   ¦   ¦       slice-10-summary.md
+¦   ¦   ¦       slice-11-summary.md
+¦   ¦   ¦       slice-11.5-summary.md
+¦   ¦   ¦       slice-11.6-summary.md
+¦   ¦   ¦       slice-12a-summary.md
+¦   ¦   ¦       slice-12b-summary.md
+¦   ¦   ¦       slice-12c-summary.md
+¦   ¦   ¦       slice-12d-summary.md
+¦   ¦   ¦       slice-12e-summary.md
+¦   ¦   ¦       
+¦   ¦   +---Phase-5
+¦   ¦   ¦       Phase-5-command-center-plan.md
+¦   ¦   ¦       Phase-5-command-center-ui-plan.md
+¦   ¦   ¦       phase-5-final-summary.md
+¦   ¦   ¦       slice-13-summary.md
+¦   ¦   ¦       slice-13.2-summary.md
+¦   ¦   ¦       slice-14-summary.md
+¦   ¦   ¦       slice-15-summary.md
+¦   ¦   ¦       slice-16-summary.md
+¦   ¦   ¦       slice-17-summary.md
+¦   ¦   ¦       slice-18-3-summary.md
+¦   ¦   ¦       slice-19-2-summary.md
+¦   ¦   ¦       slice-19-3-summary.md
+¦   ¦   ¦       slice-19.1-summary.md
+¦   ¦   ¦       slice-19.4-patch-zustand-infinite-loop-fix.md
+¦   ¦   ¦       slice-20.1-final-summary.md
+¦   ¦   ¦       
+¦   ¦   +---Phase-6
+¦   ¦   ¦       Beautify Backlog.md
+¦   ¦   ¦       hex-table-coffee-paper.md
+¦   ¦   ¦       PHASE-6-COMPLETE.md
+¦   ¦   ¦       slice-20.1-multi-file-batch-validation.md
+¦   ¦   ¦       slice-20.2-demo-mode-core.md
+¦   ¦   ¦       slice-20.3-preview-panel-docs-compliance.md
+¦   ¦   ¦       slice-20.4-naming-and-actions.md
+¦   ¦   ¦       slice-20.5-fake-system-chrome.md
+¦   ¦   ¦       slice-20.5-hotfix-layout-grid-ui-polish.md
+¦   ¦   ¦       slice-6-10-thumbnail-fix.md
+¦   ¦   ¦       slice-6-11-calm-theme.md
+¦   ¦   ¦       slice-6-12-feedback-pass.md
+¦   ¦   ¦       slice-6-12b-alignment-gradients-lightmode.md
+¦   ¦   ¦       slice-6-12c-uniform-spacing-vertical-gradients.md
+¦   ¦   ¦       slice-6-14d-visual-hotfix.md
+¦   ¦   ¦       slice-6-14e-queue-dropzone-depth.md
+¦   ¦   ¦       slice-6-14f-status-slot-bottombar-buttons.md
+¦   ¦   ¦       slice-6-14g-forensics-live-tree-fix.md
+¦   ¦   ¦       slice-6-14h-radix-tray-fix.md
+¦   ¦   ¦       slice-6-14j-absolute-viewport-lock.md
+¦   ¦   ¦       slice-6-14k-widths-scrollbars.md
+¦   ¦   ¦       slice-6-14z-panel-minw0.md
+¦   ¦   ¦       slice-6-9-visual-polish.md
+¦   ¦   ¦       slice-6.10b-thumbnail-removal-recovery.md
+¦   ¦   ¦       slice-6.12d-coffee-paper-palette.md
+¦   ¦   ¦       slice-6.12e-depth-pass.md
+¦   ¦   ¦       slice-6.12f-overflow-hygiene.md
+¦   ¦   ¦       slice-6.13-identity-finale.md
+¦   ¦   ¦       slice-6.13b-depth-presence.md
+¦   ¦   ¦       slice-6.14a-literal-wordmark-floating-layout.md
+¦   ¦   ¦       slice-6.14b-scrollareas-file-icons.md
+¦   ¦   ¦       slice-6.15a-manual-hygiene.md
+¦   ¦   ¦       slice-6.15b-qa-script.md
+¦   ¦   ¦       slice-6.15c-prd-commit.md
+¦   ¦   ¦       slice-6.16a-queue-messaging.md
+¦   ¦   ¦       slice-6.16b-shell-affordances.md
+¦   ¦   ¦       slice-6.16c-id-copy.md
+¦   ¦   ¦       slice-6.17-closure.md
+¦   ¦   ¦       slice-6.x-tailwind-pipeline-hotfix.md
+¦   ¦   ¦       Untitled.md
+¦   ¦   ¦       
+¦   ¦   +---Phase-7
+¦   ¦           audit-adr007-state.md
+¦   ¦           audit-python-version.md
+¦   ¦           bugfix-feedback-count.md
+¦   ¦           fix-s9-3-tauri-x-close-backend-shutdown.md
+¦   ¦           issue-s10-entry-point.md
+¦   ¦           issue-s10-portable-backend.md
+¦   ¦           issue-s10-tooltip-overlap-diagnosis.md
+¦   ¦           issue-s10-ui-bugs-diagnosis.md
+¦   ¦           slice-10-fix3-ui-tooltip-icon.md
+¦   ¦           slice-10-fix4-tooltip-visibility.md
+¦   ¦           slice-10-portable-assembly.md
+¦   ¦           slice-10-portable-backend-fix.md
+¦   ¦           slice-10-portable-refresh.md
+¦   ¦           slice-10-r1-redo-pathservice.md
+¦   ¦           slice-10-r2-redo-backend-rebuild.md
+¦   ¦           slice-7-1a-backend-bootstrap.md
+¦   ¦           slice-7-2a-retire-backend.md
+¦   ¦           slice-7-2b-settings-engine-knobs.md
+¦   ¦           slice-7-2c-hygiene-unignore-models.md
+¦   ¦           slice-7-2d-health-contract.md
+¦   ¦           slice-7-2e-consolidate-api.md
+¦   ¦           slice-7-2f-worker-busy.md
+¦   ¦           slice-7-2g-fix-speed-resilience.md
+¦   ¦           slice-7-2g-fix2-resolution.md
+¦   ¦           slice-7-2g-fix3-output-budget.md
+¦   ¦           slice-7-2g-fix4-auto-scale-tiling.md
+¦   ¦           slice-7-2g-fix5-daemon-worker.md
+¦   ¦           slice-7-2g-real-vlm-wiring.md
+¦   ¦           slice-8-2-doc-lock.md
+¦   ¦           slice-8-2-welcome-screen.md
+¦   ¦           slice-8-3-cpu-budget.md
+¦   ¦           slice-8-4-feedback-button.md
+¦   ¦           slice-8-5-privacy-filter.md
+¦   ¦           slice-8-6-distribution.md
+¦   ¦           slice-8-7a-backend-downloader.md
+¦   ¦           slice-8-7b-frontend-downloader.md
+¦   ¦           slice-8-7c-dual-model-schema.md
+¦   ¦           slice-9-1b-tauri-dev-plumbing.md
+¦   ¦           slice-9-1c-fix-vite-tauri-watch-conflict.md
+¦   ¦           slice-9-1d-fix-downloader-windows-rename-and-disk-ack.md
+¦   ¦           slice-9-2-docs-hygiene-agents-role-split.md
+¦   ¦           slice-9-2a-standalone-backend-artifact.md
+¦   ¦           slice-9-3a-pure-rust-backend-manager.md
+¦   ¦           slice-9-4a-frontend-api-base-url-resolver.md
+¦   ¦           slice-9-4b-1-feedbackdialog-welcomemodal-wiring.md
+¦   ¦           slice-9-4b-2-modeldownloader-wiring.md
+¦   ¦           slice-9-4b-3-api-uploadservice-wiring.md
+¦   ¦           slice-9-4b-4-app-wiring.md
+¦   ¦           slice-9-5-tauri-forensics.md
+¦   ¦           slice-9-6-tauri-bundle-resources.md
+¦   ¦           slice-9-7-fix-config-regression.md
+¦   ¦           slice-9-7-rust-ignition.md
+¦   ¦           slice-9-8-fix-bundle-identifier.md
+¦   ¦           slice-9-8-production-build.md
+¦   ¦           slice-doc-01-adr-008-tauri-shell.md
+¦   ¦           slice-doc-02-prd-03-tauri-alignment.md
+¦   ¦           slice-doc-03-agents-45k-cap.md
+¦   ¦           slice-doc-04-prd-01-tauri-alignment.md
+¦   ¦           slice-doc-05-prd-04-s19-to-prd-03.md
+¦   ¦           slice-doc-09-poison-file-cleanup.md
+¦   ¦           slice-doc-11-agents-diet.md
+¦   ¦           slice-fix-backend-startup-resilience.md
+¦   ¦           slice-kill-the-cache-bug.md
+¦   ¦           slice-live-fire-prep.md
+¦   ¦           slice-ovis-port-adapter.md
+¦   ¦           slice-ovis-spike.md
+¦   ¦           slice-s3-postprocess-service.md
+¦   ¦           slice-S3-upgrade.md
+¦   ¦           spike-pyinstaller.md
+¦   ¦           
+¦   +---02-qa
+¦   ¦   ¦   CEO-Final-Exam.md
+¦   ¦   ¦   E2E-Packaged-Verif-Kitchen-Sink-QA.md
+¦   ¦   ¦   s10-e2e-packaged-verification.md
+¦   ¦   ¦   scan2text-phase6-manual-test.md
+¦   ¦   ¦   
+¦   ¦   +---phase-7
+¦   ¦           s9-1b-tauri-dev-plumbing.md
+¦   ¦           
+¦   +---03-Architecture
+¦   ¦   +---ADRs
+¦   ¦           001-optimistic-ui.md
+¦   ¦           002-websockets-over-polling.md
+¦   ¦           ADR-003-platform-agnostic-file-upload.md
+¦   ¦           ADR-004-Second-Brain Vault Consolidation.md
+¦   ¦           ADR-005-Consolidate the backend.md
+¦   ¦           ADR-006-ovisocr2-engine-swap.md
+¦   ¦           ADR-007-feedback-cpu-budget-gdrive-distribution.md
+¦   ¦           ADR-007-feedback-cpu-welcome-distribution-log-privacy.md
+¦   ¦           ADR-008-tauri-desktop-shell-packaging.md
+¦   ¦           
+¦   +---04-Product
+¦   ¦       01-product-and-scope.md
+¦   ¦       02-functional-requirements.md
+¦   ¦       03-non-functional-and-architecture.md
+¦   ¦       04-testing-and-engineering-rules.md
+¦   ¦       
+¦   +---05-Sprints
+¦           Sprint 1 Review.md
+¦           Sprint 2 - Phase 4.md
+¦           Sprint 3 - Phase 6.md
+¦           
++---src
+¦   +---scan2text
+¦       ¦   cli.py
+¦       ¦   engine.py
+¦       ¦   smoke.py
+¦       ¦   
+¦       +---adapters
+¦       ¦       ocr_engine.py
+¦       ¦       vlm_ocr.py
+¦       ¦       __init__.py
+¦       ¦       
+¦       +---api
+¦       ¦       main.py
+¦       ¦       websocket_manager.py
+¦       ¦       __init__.py
+¦       ¦       
+¦       +---models
+¦       ¦       errors.py
+¦       ¦       job.py
+¦       ¦       ocr_result.py
+¦       ¦       settings.py
+¦       ¦       __init__.py
+¦       ¦       
+¦       +---routes
+¦       ¦       download.py
+¦       ¦       feedback.py
+¦       ¦       health.py
+¦       ¦       jobs.py
+¦       ¦       settings.py
+¦       ¦       __init__.py
+¦       ¦       
+¦       +---services
+¦       ¦       feedback_service.py
+¦       ¦       file_service.py
+¦       ¦       logging_service.py
+¦       ¦       model_downloader_service.py
+¦       ¦       output_service.py
+¦       ¦       path_service.py
+¦       ¦       pdf_service.py
+¦       ¦       postprocess_service.py
+¦       ¦       queue_service.py
+¦       ¦       settings_service.py
+¦       ¦       update_service.py
+¦       ¦       __init__.py
+¦       ¦       
+¦       +---ui
+¦       ¦   +---static
+¦       ¦           app.js
+¦       ¦           index.html
+¦       ¦           styles.css
+¦       ¦           
+¦       +---utils
+¦               cpu_budget.py
+¦               prod_runtime.py
+¦               __init__.py
+¦               
++---standards
+¦   +---architecture
+¦   ¦       ADR-Standard.md
+¦   ¦       API-contract.md
+¦   ¦       Database-Schema.md
+¦   ¦       
+¦   +---design
+¦   ¦       UI-specs.md
+¦   ¦       
+¦   +---devops
+¦   ¦       Deployment-Guide.md
+¦   ¦       Runbook.md
+¦   ¦       
+¦   +---engineering
+¦   ¦       Code-review-checklist.md
+¦   ¦       Testing-standards.md
+¦   ¦       
+¦   +---product
+¦   ¦       PRD-template.md
+¦   ¦       PRD.md
+¦   ¦       User-Story.md
+¦   ¦       
+¦   +---security
+¦   +---testing
++---tests
+¦   ¦   conftest.py
+¦   ¦   test_api.py
+¦   ¦   test_api_download.py
+¦   ¦   test_api_feedback.py
+¦   ¦   test_api_surface.py
+¦   ¦   test_cli.py
+¦   ¦   test_health.py
+¦   ¦   test_vlm_ocr.py
+¦   ¦   
+¦   +---fakes
+¦   ¦       ocr.py
+¦   ¦       __init__.py
+¦   ¦       
+¦   +---integration
+¦   ¦       test_batch_processing.py
+¦   ¦       test_output_generation.py
+¦   ¦       test_pdf_handling.py
+¦   ¦       test_phase2_pipeline.py
+¦   ¦       test_queue_service.py
+¦   ¦       __init__.py
+¦   ¦       
+¦   +---unit
+¦       ¦   test_error_mapping.py
+¦       ¦   test_file_naming.py
+¦       ¦   test_prod_runtime.py
+¦       ¦   test_settings_validation.py
+¦       ¦   test_version_comparison.py
+¦       ¦   
+¦       +---adapters
+¦       ¦       test_vlm_ocr_routing.py
+¦       ¦       __init__.py
+¦       ¦       
+¦       +---services
+¦       ¦       test_feedback_service.py
+¦       ¦       test_file_service.py
+¦       ¦       test_logging_service.py
+¦       ¦       test_models_dir_priority.py
+¦       ¦       test_model_downloader_service.py
+¦       ¦       test_output_service.py
+¦       ¦       test_path_service.py
+¦       ¦       test_path_service_frozen.py
+¦       ¦       test_path_service_models_resolution.py
+¦       ¦       test_postprocess_service.py
+¦       ¦       test_queue_service.py
+¦       ¦       test_settings_service.py
+¦       ¦       __init__.py
+¦       ¦       
+¦       +---utils
+¦               test_cpu_budget.py
+¦               __init__.py
+¦               
++---tools
+    ¦   gdrive_probe.bin
+    ¦   gdrive_probe2.bin
+    ¦   ocr_bench.py
+    ¦   port_check.py
+    ¦   prep_dummy_gdrive.py
+    ¦   smoke_backend_exe.ps1
+    ¦   smoke_test_s4.py
+    ¦   spike_pyinstaller.py
+    ¦   
+    +---dummy_models
+            mmproj.gguf
+            vlm.gguf
+            

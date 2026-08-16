@@ -35,8 +35,6 @@ describe('PreviewPanel', () => {
             return 'Open Folder'
           case 'toast.copySuccess':
             return 'Markdown copied to clipboard!'
-          case 'toast.openFolderDemo':
-            return '📂 Demo Mode: In the real app, this opens your output folder!'
           default:
             return key
         }
@@ -297,48 +295,49 @@ describe('PreviewPanel', () => {
       expect(openFolderBtn).toHaveTextContent('Open Folder')
     })
 
-    it('copies markdown to clipboard when copy button is clicked (mocked)', async () => {
-      setupStore('job-1', {
-        'job-1': {
-          id: 'job-1',
-          fileName: 'test.png',
-          fileType: 'image/png',
-          status: 'completed',
-          resultMarkdown: '# Copied Content\n\nTest text.',
-        },
-      })
-      render(<PreviewPanel />)
-
-      ;(window as any).navigator = {
-        clipboard: {
-          writeText: vi.fn().mockResolvedValue(undefined),
-        },
-      }
-
-      const copyBtn = screen.getByTestId('preview-copy-btn')
-      await userEvent.click(copyBtn)
-
-      expect((window as any).navigator.clipboard.writeText).toHaveBeenCalledWith('# Copied Content\n\nTest text.')
-      expect(toast.success).toHaveBeenCalledWith('Markdown copied to clipboard!')
+  it('copies markdown to clipboard when copy button is clicked (mocked)', async () => {
+    setupStore('job-1', {
+      'job-1': {
+        id: 'job-1',
+        fileName: 'test.png',
+        fileType: 'image/png',
+        status: 'completed',
+        resultMarkdown: '# Copied Content\n\nTest text.',
+      },
     })
+    render(<PreviewPanel />)
 
-    it('shows demo toast when open folder button is clicked', async () => {
-      setupStore('job-1', {
-        'job-1': {
-          id: 'job-1',
-          fileName: 'test.png',
-          fileType: 'image/png',
-          status: 'completed',
-          resultMarkdown: '# Test',
-        },
-      })
-      render(<PreviewPanel />)
+    ;(window as any).navigator = {
+      clipboard: {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      },
+    }
 
-      const openFolderBtn = screen.getByTestId('preview-open-folder-btn')
-      await userEvent.click(openFolderBtn)
+    const copyBtn = screen.getByTestId('preview-copy-btn')
+    await userEvent.click(copyBtn)
 
-      expect(toast.info).toHaveBeenCalledWith('📂 Demo Mode: In the real app, this opens your output folder!')
+    expect((window as any).navigator.clipboard.writeText).toHaveBeenCalledWith('# Copied Content\n\nTest text.')
+    expect(toast.success).toHaveBeenCalledWith('Markdown copied to clipboard!')
+  })
+
+  it('open folder button click handler is a no-op (final product)', async () => {
+    setupStore('job-1', {
+      'job-1': {
+        id: 'job-1',
+        fileName: 'test.png',
+        fileType: 'image/png',
+        status: 'completed',
+        resultMarkdown: '# Test',
+      },
     })
+    render(<PreviewPanel />)
+
+    const openFolderBtn = screen.getByTestId('preview-open-folder-btn')
+    await userEvent.click(openFolderBtn)
+
+    // In final product, the handler is a no-op (placeholder for future file system access)
+    expect(toast.info).not.toHaveBeenCalled()
+  })
 
     it('copy button is borderless with transparent background', () => {
       setupStore('job-1', {

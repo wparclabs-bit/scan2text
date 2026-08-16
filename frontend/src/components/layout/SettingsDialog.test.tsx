@@ -37,35 +37,38 @@ describe('SettingsDialog', () => {
     expect(screen.getByText(/Processing.*Backend Required/i)).toBeInTheDocument()
   })
 
-  it('renders Output Directory input as disabled', () => {
+  it('renders Output Directory input as enabled (final product)', () => {
     render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
     const outputInput = screen.getByLabelText(/output directory/i)
-    expect(outputInput).toBeDisabled()
+    expect(outputInput).not.toBeDisabled()
   })
 
-  it('renders Browse button as disabled', () => {
+  it('renders Browse button as enabled (final product)', () => {
     render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
     const browseBtn = screen.getByText('Browse')
-    expect(browseBtn).toBeDisabled()
+    expect(browseBtn).not.toBeDisabled()
   })
 
-  it('renders Max PDF Pages input as disabled', () => {
+  it('renders Max PDF Pages input as enabled (final product)', () => {
     render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
     const maxPagesInput = screen.getByLabelText(/max pdf pages/i)
-    expect(maxPagesInput).toBeDisabled()
+    expect(maxPagesInput).not.toBeDisabled()
   })
 
-  it('renders CPU Threads input as disabled', () => {
+  it('renders CPU Threads input as enabled (final product)', () => {
     render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
     const cpuInput = screen.getByLabelText(/cpu threads/i)
-    expect(cpuInput).toBeDisabled()
+    expect(cpuInput).not.toBeDisabled()
   })
 
-  it('renders lock emoji in Processing section labels', () => {
+  it('does not render demo mode switch (final product)', () => {
     render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    // Check for 🔒 emoji in the processing section labels
-    const content = screen.getByTestId('settings-dialog').innerHTML
-    expect(content).toContain('\ud83d\udd12')
+    expect(screen.queryByTestId('settings-demo-mode-switch')).not.toBeInTheDocument()
+  })
+
+  it('does not render lock emoji or lock indicator (final product)', () => {
+    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
+    expect(screen.queryByTestId('settings-lock-indicator')).not.toBeInTheDocument()
   })
 
   it('does not render when open is false', () => {
@@ -73,27 +76,5 @@ describe('SettingsDialog', () => {
       <SettingsDialog open={false} onOpenChange={mockOnOpenChange} />
     )
     expect(container.querySelector('[data-testid="settings-dialog"]')).not.toBeInTheDocument()
-  })
-
-  it('renders a locked demo mode switch', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    expect(screen.getByTestId('settings-demo-mode-switch')).toBeInTheDocument()
-  })
-
-  it('demo mode switch is disabled', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    const sw = screen.getByTestId('settings-demo-mode-switch') as HTMLElement
-    expect(sw).toHaveAttribute('aria-disabled', 'true')
-  })
-
-  it('renders lock emoji indicator with data-testid', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    expect(screen.getByTestId('settings-lock-indicator')).toBeInTheDocument()
-  })
-
-  it('lock indicator has accessible translated label', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    const lock = screen.getByTestId('settings-lock-indicator')
-    expect(lock).toHaveAttribute('title', 'Locked in demo mode')
   })
 })

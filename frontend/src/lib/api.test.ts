@@ -1,13 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { uploadFile, getTaskStatus, isTaskCompleted, isTaskFailed, pollTaskStatus, defaultDelay } from './api'
-import { setDemoMode } from './demoMode'
 import { buildApiUrl } from './apiBase'
 
 describe('uploadFile', () => {
   let mockFetch: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
-    setDemoMode(false)
     mockFetch = vi.fn()
     vi.stubGlobal('fetch', mockFetch)
   })
@@ -97,7 +95,6 @@ describe('getTaskStatus', () => {
   let mockFetch: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
-    setDemoMode(false)
     mockFetch = vi.fn()
     vi.stubGlobal('fetch', mockFetch)
   })
@@ -206,7 +203,6 @@ describe('uploadFile - prod URL', () => {
   let mockFetch: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
-    setDemoMode(false)
     mockFetch = vi.fn()
     vi.stubGlobal('fetch', mockFetch)
     vi.stubEnv('PROD', true)
@@ -237,7 +233,6 @@ describe('getTaskStatus - prod URL', () => {
   let mockFetch: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
-    setDemoMode(false)
     mockFetch = vi.fn()
     vi.stubGlobal('fetch', mockFetch)
     vi.stubEnv('PROD', true)
