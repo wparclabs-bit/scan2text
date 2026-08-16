@@ -262,3 +262,45 @@ class TestExtractAndSaveImageCrops:
         with Image.open(crop_file) as crop_img:
             assert crop_img.size == (20, 20)
         assert "./output_files/images/bbox_0_0_20_20.jpg" in result
+
+    def test_rgba_png_crop_saves_as_rgb_jpeg(self, tmp_path):
+        """RGBA PNG source must not raise on JPEG save; crop must be RGB mode."""
+        img = Image.new("RGBA", (1000, 1000), color=(255, 0, 0, 128))
+        source = tmp_path / "rgba_doc.png"
+        img.save(source)
+        md_path = tmp_path / "output.md"
+        markdown = '<img src="images/bbox_100_100_300_300.jpg" />'
+        result = extract_and_save_image_crops(markdown, source, md_path)
+        expected_dir = tmp_path / "output_files" / "images"
+        crop_file = expected_dir / "bbox_100_100_300_300.jpg"
+        assert crop_file.exists()
+        with Image.open(crop_file) as crop_img:
+            assert crop_img.mode == "RGB"
+            assert crop_img.size == (200, 200)
+        assert "./output_files/images/bbox_100_100_300_300.jpg" in result
+
+    def test_la_png_crop_saves_as_rgb_jpeg(self, tmp_path):
+        """LA (luminance+alpha) PNG source must not raise on JPEG save."""
+        img = Image.new("LA", (1000, 1000), color=(200, 255))
+        source = tmp_path / "la_doc.png"
+        img.save(source)
+        md_path = tmp_path / "output.md"
+        markdown = '<img src="images/bbox_0_0_500_500.jpg" />'
+        result = extract_and_save_image_crops(markdown, source, md_path)
+        crop_file = tmp_path / "output_files" / "images" / "bbox_0_0_500_500.jpg"
+        assert crop_file.exists()
+        with Image.open(crop_file) as crop_img:
+            assert crop_img.mode == "RGB"
+
+    def test_p_mode_png_crop_saves_as_rgb_jpeg(self, tmp_path):
+        """P (palette) PNG source must not raise on JPEG save."""
+        img = Image.new("P", (1000, 1000), color=1)
+        source = tmp_path / "p_doc.png"
+        img.save(source)
+        md_path = tmp_path / "output.md"
+        markdown = '<img src="images/bbox_0_0_500_500.jpg" />'
+        result = extract_and_save_image_crops(markdown, source, md_path)
+        crop_file = tmp_path / "output_files" / "images" / "bbox_0_0_500_500.jpg"
+        assert crop_file.exists()
+        with Image.open(crop_file) as crop_img:
+            assert crop_img.mode == "RGB"
