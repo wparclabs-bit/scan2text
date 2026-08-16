@@ -4,6 +4,9 @@ use std::path::PathBuf;
 use std::process::{Child, Command};
 use std::time::{Duration, Instant};
 
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+
 /// Backend port (ADR-008).
 const BACKEND_PORT: u16 = 47351;
 
@@ -23,9 +26,16 @@ impl BackendManager {
     }
 
     /// Start the backend executable and store the child process.
+    /// Idempotent: if a live child already exists, reuse it.
+    /// If a dead child exists, restart it.
     pub fn start(&mut self, timeout: Duration) -> Result<(), String> {
-        if self.child.is_some() {
-            return Ok(()); // already running
+        if let Some(ref mut child) = self.child {
+            // Verify existing child is still alive
+            if child.try_wait().ok().flatten().is_some() {
+                // Child has died — fall through to restart
+            } else {
+                return Ok(()); // already running and alive
+            }
         }
         let exe_path = resolve_backend_path();
         let child = start_backend(&exe_path);
@@ -158,6 +168,18 @@ pub fn ensure_log_dir(log_path: &std::path::Path) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Creation flags for backend process spawn.
+/// On Windows: CREATE_NO_WINDOW (0x08000000) suppresses the black console.
+#[cfg(windows)]
+const BACKEND_CREATION_FLAGS: u32 = 0x08000000;
+
+/// Return the creation flags used when spawning the backend process.
+/// Exposed for testing.
+#[cfg(windows)]
+pub fn spawn_creation_flags() -> u32 {
+    BACKEND_CREATION_FLAGS
+}
+
 /// Build a Command that pipes stdout+stderr to the log file.
 /// Creates the log directory if needed.
 pub fn spawn_config(
@@ -172,6 +194,8 @@ pub fn spawn_config(
     let mut cmd = Command::new(exe_path);
     cmd.stdout(log_file.try_clone()?);
     cmd.stderr(log_file);
+    #[cfg(windows)]
+    cmd.creation_flags(BACKEND_CREATION_FLAGS);
     Ok(cmd)
 }
 
@@ -297,5 +321,44 @@ mod tests {
         if let Some(parent) = test_log.parent() {
             let _ = std::fs::remove_dir_all(parent);
         }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn test_spawn_creation_flags_no_window_on_windows() {
+        // CREATE_NO_WINDOW = 0x08000000
+        let flags = spawn_creation_flags();
+        assert!(
+            (flags & 0x08000000) != 0,
+            "spawn_creation_flags must include CREATE_NO_WINDOW (0x08000000) on Windows, got: {:#x}",
+            flags
+        );
+    }
+
+    #[test]
+    fn test_boot_backend_single_live_child() {
+        let mut manager = BackendManager::new();
+
+        // First boot
+        let result1 = boot_backend(&mut manager);
+        assert!(result1.is_ok(), "first boot_backend should succeed");
+        let pid1 = manager.get_pid();
+        assert!(pid1 > 0, "first boot should yield a live PID");
+
+        // Second boot — must reuse same child, not spawn a new one
+        let result2 = boot_backend(&mut manager);
+        assert!(result2.is_ok(), "second boot_backend should succeed (idempotent)");
+        let pid2 = manager.get_pid();
+        assert_eq!(
+            pid1, pid2,
+            "second boot must reuse same child PID, not spawn a new one (pid1={}, pid2={})",
+            pid1, pid2
+        );
+
+        // Verify the child is still alive (not a zombie)
+        let alive = manager.child.as_mut().map(|c| c.try_wait().unwrap().is_none()).unwrap_or(false);
+        assert!(alive, "child process must still be alive after idempotent boot");
+
+        manager.stop().expect("stop should succeed");
     }
 }

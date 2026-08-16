@@ -162,5 +162,9 @@ export async function uploadFile(file: File): Promise<UploadResponse> {
   if (!response.ok) {
     throw new Error(`Upload failed: ${response.status} ${response.statusText}`)
   }
-  return response.json() as Promise<UploadResponse>
+  try {
+    return (await response.json()) as UploadResponse
+  } catch {
+    throw new Error('Server communication error')
+  }
 }
