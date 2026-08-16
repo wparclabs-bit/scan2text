@@ -69,6 +69,28 @@ describe('uploadFile', () => {
     expect(body.getAll('files').length).toBe(1)
     expect((body.get('files') as File).name).toBe(file.name)
   })
+
+  it('should throw a clean error when response is 202 but body is not valid JSON', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+    })
+
+    const file = new File(['content'], 'doc.png', { type: 'image/png' })
+    await expect(uploadFile(file)).rejects.toThrow('Server communication error')
+  })
+
+  it('should throw a clean error when response is 202 but body is empty', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+    })
+
+    const file = new File(['content'], 'doc.png', { type: 'image/png' })
+    await expect(uploadFile(file)).rejects.toThrow('Server communication error')
+  })
 })
 
 describe('getTaskStatus', () => {
