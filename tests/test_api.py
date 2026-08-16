@@ -61,6 +61,27 @@ class TestProcessEndpoint:
             assert isinstance(p, Path)
             assert p.exists()
 
+    def test_post_process_returns_valid_json_with_task_id(self, app):
+        """POST /process returns valid JSON with task_id field (contract test)."""
+        api_app, _ = app
+        with TestClient(api_app) as client:
+            response = client.post(
+                "/process",
+                files={"files": ("test.png", b"fake image bytes")},
+            )
+
+        assert response.status_code == 202
+        # Verify content-type is JSON
+        assert "application/json" in response.headers.get("content-type", "")
+        # Verify response body is valid JSON with task_id
+        data = response.json()
+        assert isinstance(data, dict)
+        assert "task_id" in data
+        assert isinstance(data["task_id"], str)
+        assert len(data["task_id"]) > 0
+        # Ensure no extra unexpected fields in minimal response
+        assert set(data.keys()) == {"task_id"}
+
     def test_post_process_creates_task_in_store(self, app):
         """POST /process registers the task in the in-memory store."""
         api_app, _ = app
@@ -277,6 +298,19 @@ class TestCors:
         assert response.status_code == 200
         allow_origin = response.headers.get("access-control-allow-origin")
         assert allow_origin in ("*", "http://localhost:5173")
+
+    def test_cors_allows_tauri_localhost_origin(self, app):
+        """CORS middleware allows requests from tauri://localhost (Tauri shell)."""
+        api_app, _ = app
+        with TestClient(api_app) as client:
+            response = client.get(
+                "/status/some-task",
+                headers={"Origin": "tauri://localhost"},
+            )
+
+        # 404 is expected since the task doesn't exist; CORS header must be present.
+        allow_origin = response.headers.get("access-control-allow-origin")
+        assert allow_origin == "*"
 
 
 class TestRunProcessingOffloadsToThread:

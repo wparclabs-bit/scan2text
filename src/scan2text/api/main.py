@@ -53,7 +53,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8765", "http://127.0.0.1:8765"],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -152,7 +152,7 @@ async def _run_processing(
 
 
 @app.post("/process", status_code=202)
-async def process_files(files: List[UploadFile] = Form(default=[])) -> Dict[str, str]:
+async def process_files(files: List[UploadFile] = Form(default=[])) -> JSONResponse:
     """Trigger batch OCR processing for uploaded files.
 
     Accepts multipart/form-data with one or more files. Each file is saved
@@ -181,7 +181,7 @@ async def process_files(files: List[UploadFile] = Form(default=[])) -> Dict[str,
 
     asyncio.create_task(_run_processing(task_id, queue, saved_paths, path_to_stem))
 
-    return {"task_id": task_id}
+    return JSONResponse(content={"task_id": task_id}, status_code=202)
 
 
 @app.get("/status/{task_id}")
