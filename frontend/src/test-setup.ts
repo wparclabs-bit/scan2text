@@ -57,7 +57,7 @@ void i18next
           },
           bottomBar: {
             workerLabel: 'Worker: {{status}}',
-            ramUsage: 'RAM: —',
+            ramUsage: 'RAM: {{percent}}%',
             version: 'v0.1.0-demo',
           },
           settings: {
@@ -149,7 +149,7 @@ void i18next
           },
           bottomBar: {
             workerLabel: 'Worker: {{status}}',
-            ramUsage: 'RAM: —',
+            ramUsage: 'RAM: {{percent}}%',
             version: 'v0.1.0-demo',
           },
           settings: {
