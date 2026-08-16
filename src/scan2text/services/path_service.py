@@ -83,8 +83,27 @@ class PathService:
     def settings_path(self) -> Path:
         return self.base_dir / "settings" / "settings.json"
 
+    @staticmethod
+    def _resolve_output_dir() -> Path:
+        """Resolve output directory for frozen executables.
+
+        Walks up from exe_dir (exe_dir, exe_dir.parent, exe_dir.parent.parent)
+        and returns the first ancestor containing a models/ directory, with /output appended.
+        Falls back to exe_dir / "output" if no ancestor contains models/.
+        Non-frozen is handled by the output_dir property directly.
+        """
+        exe_dir = Path(sys.executable).parent
+
+        for cand in (exe_dir, exe_dir.parent, exe_dir.parent.parent):
+            if (cand / "models").is_dir():
+                return cand / "output"
+
+        return exe_dir / "output"
+
     @property
     def output_dir(self) -> Path:
+        if getattr(sys, "frozen", False):
+            return self._resolve_output_dir()
         return self.base_dir / "output"
 
     @property

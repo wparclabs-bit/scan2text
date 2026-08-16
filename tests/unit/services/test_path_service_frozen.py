@@ -146,3 +146,33 @@ class TestPathServiceFrozen:
             # Both model files must be found
             assert svc.resolve_model_path("vlm.gguf") == models_dir / "vlm.gguf"
             assert svc.resolve_model_path("mmproj.gguf") == models_dir / "mmproj.gguf"
+
+    def test_frozen_output_dir_resolves_to_portable_root(self, tmp_path):
+        """Frozen: output_dir must land at portable root (first ancestor with models/).
+
+        Layout:
+          tmp_path/models/                    (portable root — has models)
+          tmp_path/dist/scan2text-backend/app.exe  (exe)
+
+        Current bug: output_dir = exe_dir / "output" = tmp_path/dist/scan2text-backend/output.
+        Expected fix: output_dir = tmp_path/output.
+        """
+        from scan2text.services.path_service import PathService
+
+        # Portable root with models/
+        models_dir = tmp_path / "models"
+        models_dir.mkdir()
+        (models_dir / "vlm.gguf").write_bytes(b"model")
+
+        # Exe nested two levels deep
+        exe_dir = tmp_path / "dist" / "scan2text-backend"
+        exe_dir.mkdir(parents=True)
+        fake_exe = exe_dir / "scan2text-backend.exe"
+
+        with patch.object(sys, "frozen", True, create=True), \
+             patch.object(sys, "executable", str(fake_exe), create=True):
+            svc = PathService()
+            # models_dir resolves to portable root (grandparent of exe)
+            assert svc.models_dir == tmp_path / "models"
+            # output_dir must be at portable root, NOT inside dist/
+            assert svc.output_dir == tmp_path / "output"
