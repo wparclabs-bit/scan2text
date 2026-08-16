@@ -3,19 +3,24 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 10 (E2E Packaged Verification) — MSI + NSIS installers built, portable assembly done, backend wired to HTTP (ADR-008), Rust boot log active (S10-R3)
+- Phase: Phase 10 (E2E Packaged Verification) — MSI + NSIS installers built, portable assembly done, backend wired to HTTP (ADR-008), Rust boot log active (S10-R3), CREATE_NO_WINDOW applied (S10-FIX17)
 - Date: 2026-08-16
-- Tauri shell hash: 5F676E6DC16E2390FFACE55FD49DAE15B20FE26E46BD1DDAD294C249648643DA (S10-FIX16 no-console rebuilt 2026-08-16)
-- Baseline commit: ec9443d (Phase 6 closed)
-- Backend tests: 247 passed, 1 pre-existing failure (test_health_model_files_found — dummy models on disk)
-- Backend exe hash: 60E94CFFCF5903A5AAB153CA00764CE856B40E513E4C0C51037385975D44F38A (S10-FIX18 CORS-rebuild-swapped 2026-08-16, 3-way match)
-- Frontend tests: 85 passed (store), 619 green overall, 0 failures. S10-FIX11c vitest discovery scoping complete.
-- Rust tests: 9 passed (4 backend_process unit + 1 backend_lifecycle + 4 backend_manager; 0 failures). S10-R3 build clean (2 dead_code warnings only).
+- Tauri shell hash: 8CC8E16239C86A083C23C78D2E0B7A70927169BE435B8B81DA12646BECAC4A3E (S10-FIX17 CREATE_NO_WINDOW+boot-guard rebuilt 2026-08-16)
+- Baseline commit: 3c34396 (S10-FIX17)
+- Backend tests: 253 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
+- Backend exe hash: 9E4BAB70… (S10-FIX21 FileType-Routing fix 2026-08-16, 3-way match)
+- Frontend tests: 85 passed (store), 621 green overall, 0 failures. S10-FIX11c vitest discovery scoping complete.
+- Rust tests: 6 passed (4 backend_process unit + 2 new: CREATE_NO_WINDOW flag + idempotent boot guard; 1 backend_lifecycle + 4 backend_manager; 0 failures). Build clean (1 dead_code warning).
 - Boot log: <exe_dir>/logs/backend-boot.log — stdout+stderr piped via OpenOptions append mode (S10-R3)
 - PRD: v1.10 source of truth in second-brain/04-Product/
 - Next: CEO Final Exam
 
 ## Recent Changelog (last 5)
+- **2026-08-16 (S10-FIX21-FileType-Routing):** Fixed file-type routing to use suffix + magic-byte tie-breaker instead of display-name substring matching. Added `detect_file_type()` in `pdf_service.py`; wired `VlmOcrAdapter.ocr()` and `QueueService._process_one_job()` to use it. Added `PDF_TOO_COMPLEX` error code and 20 MB PDF size guard. +6 routing tests. Backend: 253 passed, 1 pre-existing failure. Boot gate PASS. Fresh hash 9E4BAB70… ≠ stale 60E94CFF…. Three-way match confirmed. Status: COMPLETE.
+- **2026-08-16 (S10-FIX17-Rust-CREATE-NO-WINDOW-Boot-Guard):** Applied CREATE_NO_WINDOW (0x08000000) via CommandExt in spawn_config() on Windows; strengthened BackendManager::start() idempotent guard to verify child liveness via try_wait(). +2 Rust unit tests, +2 frontend tests. Shell hash 8CC8E162… ≠ stale 5F676E6D…. Smoke: health OK, 1 Rust-spawned backend PID, no console. Python multiprocessing children (3 total PIDs) are expected — not fixable from Rust per NON-GOALS. Status: COMPLETE.
+- **2026-08-16 (S10-FIX18-Backend-CORS-Rebuild-Swap):** Changed CORS `allow_origins` from specific HTTP origins to `["*"]` so Tauri shell (`tauri://localhost`) is accepted. Backend binds 127.0.0.1 only — safe per ADR-008. +1 test (`test_cors_allows_tauri_localhost_origin`). Backend: 247 passed, 1 pre-existing failure. Fresh hash 60E94CFF… ≠ stale 2B557E12…. Three-way match confirmed. Status: COMPLETE.
+- **2026-08-16 (slice-fix-diag18-backend-json-contract):** Fixed backend POST /process to explicitly return JSONResponse with task_id contract. Hardened frontend api.ts uploadFile() to catch JSON parse errors and throw clean "Server communication error" instead of unhandled SyntaxError. Added backend contract test (test_post_process_returns_valid_json_with_task_id) and 2 frontend tests for malformed JSON handling. Backend: 16 passed. Frontend: 621 passed. Typecheck clean. Build success. Status: COMPLETE.
+- **2026-08-16 (S10-FIX16-No-Console-Window):** Added `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]` as first line of `frontend/src-tauri/src/main.rs`. Rebuilt Tauri shell (npx tauri build --no-bundle). Fresh hash 5F676E6D… ≠ stale E8C3128C…. Swapped into portable D:\Scan2Text. Status: READY FOR CEO MANUAL VERIFICATION (CEO launches, confirms no console window).
 - **2026-08-16 (S10-FIX18-Backend-CORS-Rebuild-Swap):** Changed CORS `allow_origins` from specific HTTP origins to `["*"]` so Tauri shell (`tauri://localhost`) is accepted. Backend binds 127.0.0.1 only — safe per ADR-008. +1 test (`test_cors_allows_tauri_localhost_origin`). Backend: 247 passed, 1 pre-existing failure. Fresh hash 60E94CFF… ≠ stale 2B557E12…. Three-way match confirmed. Status: COMPLETE.
 - **2026-08-16 (slice-fix-diag18-backend-json-contract):** Fixed backend POST /process to explicitly return JSONResponse with task_id contract. Hardened frontend api.ts uploadFile() to catch JSON parse errors and throw clean "Server communication error" instead of unhandled SyntaxError. Added backend contract test (test_post_process_returns_valid_json_with_task_id) and 2 frontend tests for malformed JSON handling. Backend: 16 passed. Frontend: 621 passed. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-16 (S10-FIX16-No-Console-Window):** Added `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]` as first line of `frontend/src-tauri/src/main.rs`. Rebuilt Tauri shell (npx tauri build --no-bundle). Fresh hash 5F676E6D… ≠ stale E8C3128C…. Swapped into portable D:\Scan2Text. Status: READY FOR CEO MANUAL VERIFICATION (CEO launches, confirms no console window).

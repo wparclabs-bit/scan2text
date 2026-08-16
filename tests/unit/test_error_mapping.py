@@ -20,6 +20,7 @@ class TestErrorMapping:
             "UNSUPPORTED_FILE",
             "FILE_TOO_LARGE",
             "PDF_TOO_MANY_PAGES",
+            "PDF_TOO_COMPLEX",
             "OCR_FAILED",
             "OUTPUT_DIR_NOT_WRITABLE",
             "SETTINGS_INVALID",
