@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { buildApiUrl } from '@/lib/apiBase'
 
 interface FeedbackDialogProps {
   open: boolean
@@ -21,7 +22,7 @@ export default function FeedbackDialog({ open, onClose }: FeedbackDialogProps) {
     }
     setSubmitting(true)
     try {
-      const res = await fetch('/api/feedback', {
+      const res = await fetch(buildApiUrl('/api/feedback'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

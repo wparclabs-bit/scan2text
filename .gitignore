@@ -16,15 +16,17 @@ venv/
 .pytest_cache/
 .obsidian/
 .DS_Store
+target/
 Thumbs.db
 .env
 .env.local
 # Python
 backend/.venv/
-
+.vite
 __pycache__/
 *.pyc
-
+.vite-temp/
+.tmp/
 
 # Local test material — never commit real documents
 samples/
@@ -35,3 +37,4 @@ uploads/
 graphify-out/
 src/graphify-out/
 .kilo/
+*.log.txt

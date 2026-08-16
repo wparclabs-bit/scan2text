@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import WelcomeModal from './WelcomeModal'
+import { buildApiUrl } from '@/lib/apiBase'
 
 describe('WelcomeModal', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -80,7 +81,7 @@ describe('WelcomeModal', () => {
     fireEvent.click(checkbox)
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        '/api/settings',
+        buildApiUrl('/api/settings'),
         expect.objectContaining({
           method: 'PUT',
           headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
@@ -99,5 +100,19 @@ describe('WelcomeModal', () => {
     await waitFor(() => {
       expect(screen.getByText('Get Started')).toBeInTheDocument()
     })
+  })
+
+  it('uses buildApiUrl for /api/settings in prod mode', async () => {
+    vi.stubEnv('PROD', true)
+    mockFetch.mockReset()
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ hide_welcome_notice: false }),
+    })
+    render(<WelcomeModal />)
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('127.0.0.1:47351'))
+    })
+    vi.unstubAllEnvs()
   })
 })

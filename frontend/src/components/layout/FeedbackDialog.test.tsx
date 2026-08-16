@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import FeedbackDialog from './FeedbackDialog'
+import { buildApiUrl } from '@/lib/apiBase'
 
 const mockFetch = vi.fn()
 const mockClose = vi.fn()
@@ -38,7 +39,7 @@ describe('FeedbackDialog', () => {
     fireEvent.click(submitBtn)
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        '/api/feedback',
+        buildApiUrl('/api/feedback'),
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
@@ -62,7 +63,7 @@ describe('FeedbackDialog', () => {
     fireEvent.click(submitBtn)
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        '/api/feedback',
+        buildApiUrl('/api/feedback'),
         expect.objectContaining({
           body: JSON.stringify({ message: 'No contact', contact: null }),
         })
@@ -88,5 +89,26 @@ describe('FeedbackDialog', () => {
   it('does not render when open is false', () => {
     const { container } = render(<FeedbackDialog open={false} onClose={mockClose} />)
     expect(container.querySelector('[data-testid="feedback-dialog"]')).not.toBeInTheDocument()
+  })
+
+  it('uses buildApiUrl in prod mode', async () => {
+    vi.stubEnv('PROD', true)
+    mockFetch.mockReset()
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ filename: 'test.json' }),
+    })
+    render(<FeedbackDialog open={true} onClose={mockClose} />)
+    const textarea = screen.getByTestId('feedback-textarea') as HTMLTextAreaElement
+    fireEvent.change(textarea, { target: { value: 'Prod test!' } })
+    const submitBtn = screen.getByTestId('feedback-submit') as HTMLButtonElement
+    fireEvent.click(submitBtn)
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        buildApiUrl('/api/feedback'),
+        expect.anything()
+      )
+    })
+    vi.unstubAllEnvs()
   })
 })

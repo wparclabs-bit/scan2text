@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import threading
 import urllib.request
 from urllib.request import urlopen
@@ -52,8 +53,55 @@ class ModelDownloaderService:
     def error_message(self) -> Optional[str]:
         return self._error_message
 
+    def _verify_file(self, path: Path, expected_sha256: str, expected_size: int) -> bool:
+        """Check that a file exists, matches expected size and SHA256."""
+        if not path.exists():
+            return False
+        try:
+            actual_size = path.stat().st_size
+            if actual_size != expected_size:
+                return False
+            sha = hashlib.sha256()
+            with open(path, "rb") as f:
+                while True:
+                    block = f.read(_CHUNK_SIZE)
+                    if not block:
+                        break
+                    sha.update(block)
+            return sha.hexdigest() == expected_sha256
+        except Exception:
+            return False
+
     def get_progress(self) -> Dict[str, Any]:
         with self._lock:
+            # Disk-aware: if both files verify on disk, report complete without download.
+            if self._status not in ("downloading",):
+                version_path = self._app_root / _VERSION_JSON
+                if version_path.exists():
+                    try:
+                        version_data = json.loads(version_path.read_text(encoding="utf-8"))
+                    except Exception:
+                        pass
+                    else:
+                        models_dir = self._app_root / "models"
+                        all_valid = True
+                        for key_prefix, filename in _MODEL_SPECS:
+                            expected_sha = version_data.get(f"{key_prefix}_sha256")
+                            expected_size = version_data.get(f"{key_prefix}_size_bytes", 0)
+                            if not expected_sha or not expected_size:
+                                all_valid = False
+                                break
+                            if not self._verify_file(models_dir / filename, expected_sha, expected_size):
+                                all_valid = False
+                                break
+                        if all_valid:
+                            total = sum(version_data.get(f"{k}_size_bytes", 0) for k, _ in _MODEL_SPECS)
+                            return {
+                                "status": "complete",
+                                "bytes_downloaded": total,
+                                "total_bytes": total,
+                                "error_message": None,
+                            }
             return {
                 "status": self._status,
                 "bytes_downloaded": self._bytes_downloaded,
@@ -64,10 +112,11 @@ class ModelDownloaderService:
     def start_download(self) -> None:
         """Read version.json and spawn a background thread to stream both model files."""
         with self._lock:
+            # Guard against concurrent duplicate starts; allow restart from failed/cancelled/idle.
             if self._status == "downloading":
                 return
             self._cancel_event.clear()
-            self._status = "idle"
+            self._status = "downloading"
             self._bytes_downloaded = 0
             self._error_message = None
 
@@ -108,6 +157,10 @@ class ModelDownloaderService:
         models_dir = self._app_root / "models"
         models_dir.mkdir(parents=True, exist_ok=True)
 
+        # Clean stale .part files safely at start.
+        for model_cfg in models_config:
+            (models_dir / f"{model_cfg['filename']}.part").unlink(missing_ok=True)
+
         def _download() -> None:
             total_declared = sum(m["declared_size"] for m in models_config)
             downloaded_so_far = 0
@@ -123,9 +176,16 @@ class ModelDownloaderService:
                     filename = model_cfg["filename"]
                     expected_sha256 = model_cfg["expected_sha256"]
                     declared_size = model_cfg["declared_size"]
+                    final_path = models_dir / filename
+
+                    # Skip files that already verify on disk.
+                    if self._verify_file(final_path, expected_sha256, declared_size):
+                        downloaded_so_far += declared_size
+                        with self._lock:
+                            self._bytes_downloaded = downloaded_so_far
+                        continue
 
                     part_path = models_dir / f"{filename}.part"
-                    final_path = models_dir / filename
 
                     try:
                         req = urllib.request.Request(url)
@@ -177,7 +237,8 @@ class ModelDownloaderService:
                                 self._error_message = f"Hash mismatch for {filename}"
                             return
 
-                        part_path.rename(final_path)
+                        # Windows-safe atomic rename: os.replace overwrites existing target.
+                        os.replace(part_path, final_path)
                         downloaded_so_far += total
 
                     except Exception as exc:

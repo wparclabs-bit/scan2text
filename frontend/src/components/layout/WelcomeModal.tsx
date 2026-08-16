@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { buildApiUrl } from '@/lib/apiBase'
 
 interface WelcomeModalProps {
   open?: boolean
@@ -15,7 +16,7 @@ export default function WelcomeModal({ open: controlledOpen, onOpenChange }: Wel
 
   useEffect(() => {
     if (controlledOpen !== undefined) return
-    fetch('/api/settings')
+    fetch(buildApiUrl('/api/settings'))
       .then((res) => res.json())
       .then((data) => {
         if (!data.hide_welcome_notice) {
@@ -30,7 +31,7 @@ export default function WelcomeModal({ open: controlledOpen, onOpenChange }: Wel
   const handleCheckboxChange = (checked: boolean) => {
     setHideNotice(checked)
     if (typeof fetch !== 'undefined') {
-      const result = fetch('/api/settings', {
+      const result = fetch(buildApiUrl('/api/settings'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ hide_welcome_notice: checked }),

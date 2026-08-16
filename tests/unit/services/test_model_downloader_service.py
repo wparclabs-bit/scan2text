@@ -195,8 +195,8 @@ class TestStartDownload:
 
 
 class TestGetProgress:
-    def test_initial_state(self):
-        svc = ModelDownloaderService()
+    def test_initial_state(self, tmp_path):
+        svc = ModelDownloaderService(app_root=tmp_path)
         state = svc.get_progress()
         assert state["status"] == "idle"
         assert state["bytes_downloaded"] == 0
@@ -244,3 +244,76 @@ class TestGetProgress:
         assert state["status"] == "complete"
         assert state["bytes_downloaded"] == 2048
         assert state["total_bytes"] == 2048
+
+
+class TestDiskAwareDownload:
+    def test_precreated_vlm_with_correct_sha_skips_download_and_no_rename_error(self, tmp_path):
+        """Bug 1: Windows WinError 183 when vlm.gguf already exists at rename step."""
+        vlm_data = b"Z" * 1024
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        mmproj_data = b"W" * 512
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+        models_dir = tmp_path / "models"
+        models_dir.mkdir()
+        (models_dir / "vlm.gguf").write_bytes(vlm_data)
+
+        responses = [_FakeResponse([mmproj_data], len(mmproj_data))]
+        with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
+            svc = ModelDownloaderService(app_root=tmp_path)
+            svc.start_download()
+            for _ in range(50):
+                if svc.status in ("complete", "failed", "cancelled"):
+                    break
+                threading.Event().wait(0.1)
+
+        assert svc.status == "complete"
+        assert (models_dir / "vlm.gguf").exists()
+        assert (models_dir / "mmproj.gguf").exists()
+
+    def test_valid_models_on_disk_returns_complete_without_download(self, tmp_path):
+        """Bug 2: GET /api/download/status should validate disk files and return complete."""
+        vlm_data = b"P" * 1024
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        mmproj_data = b"Q" * 512
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+        models_dir = tmp_path / "models"
+        models_dir.mkdir()
+        (models_dir / "vlm.gguf").write_bytes(vlm_data)
+        (models_dir / "mmproj.gguf").write_bytes(mmproj_data)
+
+        svc = ModelDownloaderService(app_root=tmp_path)
+        state = svc.get_progress()
+        assert state["status"] == "complete"
+
+    def test_concurrent_start_calls_do_not_run_two_downloads(self, tmp_path):
+        """Guard against concurrent duplicate starts spawning two download threads."""
+        vlm_data = b"R" * 1024
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        mmproj_data = b"S" * 512
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+        models_dir = tmp_path / "models"
+        models_dir.mkdir()
+
+        call_count = 0
+        original_urlopen = None
+
+        def counting_urlopen(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            return _FakeResponse([vlm_data if call_count % 2 == 1 else mmproj_data], 1024 if call_count % 2 == 1 else 512)
+
+        import scan2text.services.model_downloader_service as mds
+        with patch.object(mds, "urlopen", side_effect=counting_urlopen):
+            svc = ModelDownloaderService(app_root=tmp_path)
+            svc.start_download()
+            svc.start_download()
+            for _ in range(50):
+                if svc.status in ("complete", "failed", "cancelled"):
+                    break
+                threading.Event().wait(0.1)
+
+        assert svc.status == "complete"
+        assert call_count == 2

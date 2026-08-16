@@ -40,7 +40,7 @@ all_hiddenimports = [*llama_hiddenimports, *pil_hiddenimports]
 
 a = Analysis(
     ["../src/scan2text/cli.py"],
-    pathex=[],
+    pathex=['D:\WingAI\Projects\scan2text\src'],
     binaries=all_binaries,
     datas=[],
     hiddenimports=all_hiddenimports,
