@@ -3,12 +3,12 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 10 (E2E Packaged Verification) — MSI + NSIS installers built, portable assembly done, backend wired to HTTP (ADR-008), Rust boot log active (S10-R3), CREATE_NO_WINDOW applied (S10-FIX17), CPU telemetry added (S10-FIX24)
+- Phase: Phase 10 (E2E Packaged Verification) — MSI + NSIS installers built, portable assembly done, backend wired to HTTP (ADR-008), Rust boot log active (S10-R3), CREATE_NO_WINDOW applied (S10-FIX17), CPU telemetry added (S10-FIX24), artifacts rebuilt + swapped (S10-FIX25)
 - Date: 2026-08-16
-- Tauri shell hash: 507A0775… (S10-FIX20 FirstRun Gate + Health RAM rebuilt 2026-08-16)
+- Tauri shell hash: 00B1DA35… (S10-FIX25 rebuild 2026-08-16; was 507A0775)
 - Baseline commit: ac17b13 (S10-FIX24)
 - Backend tests: 260 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
-- Backend exe hash: 9E4A1D8F… (S10-FIX22 RGBA-safe JPEG + failed propagation 2026-08-16 rebuilt, 3-way match; no rebuild for S10-FIX24 — source-only)
+- Backend exe hash: 542AF7FF… (S10-FIX25 rebuild 2026-08-16; was 9E4A1D8F)
 - Frontend tests: 628 green overall, 0 failures. S10-FIX24 CPU telemetry added to BottomBar.
 - Rust tests: 6 passed. Build clean (1 dead_code warning).
 - Boot log: <exe_dir>/logs/backend-boot.log — stdout+stderr piped via OpenOptions append mode (S10-R3)
@@ -16,6 +16,7 @@
 - Next: CEO Final Exam
 
 ## Recent Changelog (last 5)
+- **2026-08-16 (S10-FIX25-Rebuild-Swap):** Rebuilt BOTH backend (PyInstaller) and shell (Tauri --no-bundle) from current source. Swapped into D:\Scan2Text portable + repo packaging dist. Three-way hash match confirmed: 542AF7FF… (backend), 00B1DA35… (shell). Both ≠ stale (9E4A1D8F / 507A0775). No source changes. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-16 (S10-FIX24-CPU-Telemetry):** Added cpu.percent to GET /api/health via psutil.cpu_percent(); BottomBar renders CPU% between RAM and version; i18n keys bottomBar.cpuUsage in en.json + id.json. No new dependency (psutil already locked). Backend: 260 passed, 1 pre-existing failure. Frontend: 628 passed, 0 failures. Status: COMPLETE.
 - **2026-08-16 (S10-FIX23-Queue-Promotion-on-Terminal-Transition):** Fixed nested `set()` calls in `pollJob` that corrupted Zustand state (was causing `getState()` to return undefined). Added `promoteNextPending()` to promote oldest pending job with `taskId` to `'processing'` when active job completes/fails. Frontend: 627 passed, 0 failures. Status: COMPLETE.
 - **2026-08-16 (S10-FIX23-Queue-Promotion-on-Terminal-Transition):** Fixed nested `set()` calls in `pollJob` that corrupted Zustand state (was causing `getState()` to return undefined). Added `promoteNextPending()` to promote oldest pending job with `taskId` to `'processing'` when active job completes/fails. Frontend: 627 passed, 0 failures. Status: COMPLETE.
