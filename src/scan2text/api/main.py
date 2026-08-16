@@ -120,7 +120,11 @@ async def _run_processing(
         processed = summary.succeeded + summary.failed
         task["processed"] = processed
         task["total"] = summary.total_inputs
-        task["status"] = "completed"
+        if summary.failed > 0:
+            task["status"] = "failed"
+            task["error_code"] = "OCR_FAILED"
+        else:
+            task["status"] = "completed"
 
         # Collect result markdown from successful jobs
         result_parts: List[str] = []
@@ -142,6 +146,7 @@ async def _run_processing(
     except Exception as exc:
         logger.error("Batch processing failed: %s", exc)
         task["status"] = "failed"
+        task["error_code"] = "UNKNOWN_ERROR"
         await _ws_manager.broadcast({
             "task_id": task_id,
             "status": "failed",
@@ -197,6 +202,8 @@ def get_status(task_id: str) -> Any:
         "processed": task["processed"],
         "total": task["total"],
     }
+    if task.get("error_code"):
+        result["error_code"] = task["error_code"]
     if task["status"] == "completed" and task.get("result_markdown"):
         result["result_markdown"] = task["result_markdown"]
     return result

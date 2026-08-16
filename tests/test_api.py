@@ -358,6 +358,83 @@ class TestRunProcessingOffloadsToThread:
         assert call_args[0][3] == {}
 
 
+class TestStatusFailurePropagation:
+    """GET /status must return failed + error_code when any job fails."""
+
+    def test_status_returns_failed_when_job_fails(self, app):
+        """When process_image_paths raises, status becomes 'failed' with error_code."""
+        api_app, _ = app
+        from scan2text.api.main import _task_store
+
+        task_id = "fail-task"
+        _task_store[task_id] = {
+            "status": "processing",
+            "processed": 0,
+            "total": 1,
+            "result_markdown": None,
+        }
+
+        with TestClient(api_app) as client:
+            response = client.get(f"/status/{task_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        # Initially still processing (mock hasn't run yet)
+        assert data["status"] == "processing"
+
+    def test_status_returns_failed_after_ocr_exception(self, app):
+        """When vlm_adapter.ocr raises, the task store gets status=failed + error_code."""
+        api_app, mock_qs = app
+        from scan2text.api.main import _task_store
+
+        # Make the adapter raise on ocr call
+        mock_qs._vlm_adapter.ocr.side_effect = RuntimeError("RGBA JPEG save failed")
+        mock_qs.process_image_paths.side_effect = RuntimeError("RGBA JPEG save failed")
+
+        with TestClient(api_app) as client:
+            response = client.post(
+                "/process",
+                files={"files": ("rgba.png", b"fake rgba bytes")},
+            )
+
+        assert response.status_code == 202
+        task_id = response.json()["task_id"]
+
+        # Background task runs via asyncio.create_task; poll until status settles
+        import asyncio
+        async def _poll():
+            for _ in range(10):
+                await asyncio.sleep(0.05)
+        asyncio.run(_poll())
+
+        assert task_id in _task_store
+        task = _task_store[task_id]
+        assert task["status"] == "failed"
+        assert task.get("error_code") is not None
+
+    def test_status_includes_error_code_field(self, app):
+        """GET /status/{task_id} returns error_code when status is failed."""
+        api_app, _ = app
+        from scan2text.api.main import _task_store
+
+        task_id = "failed-task"
+        _task_store[task_id] = {
+            "status": "failed",
+            "processed": 0,
+            "total": 1,
+            "result_markdown": None,
+            "error_code": "OCR_FAILED",
+        }
+
+        with TestClient(api_app) as client:
+            response = client.get(f"/status/{task_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "failed"
+        assert data["error_code"] == "OCR_FAILED"
+
+
 class TestWebSocket:
     def test_websocket_ping_pong(self, app):
         """WebSocket responds to 'ping' with 'pong'."""

@@ -304,6 +304,8 @@ def extract_and_save_image_crops(
                 return match.group(0)
 
             crop = pil_img.crop((x1, y1, x2, y2))
+            if crop.mode != "RGB":
+                crop = crop.convert("RGB")
             out_name = f"bbox_{l_}_{t_}_{r_}_{b_}.jpg"
             out_path = crop_dir / out_name
             crop.save(out_path, format="JPEG")
