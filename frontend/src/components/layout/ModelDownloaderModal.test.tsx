@@ -193,7 +193,7 @@ describe('ModelDownloaderModal', () => {
     await waitFor(() => {
       expect(screen.getByTestId('download-restart-btn')).toBeInTheDocument()
     })
-    expect(screen.getByText(/downloader\.error\.network/)).toBeInTheDocument()
+    expect(screen.getByText('Network connection failed. Please check your connection and try again.')).toBeInTheDocument()
   })
 
   it('re-triggers fetch when retry button is clicked after network error', async () => {
@@ -224,5 +224,65 @@ describe('ModelDownloaderModal', () => {
       expect(screen.getByText('Downloading AI Engine')).toBeInTheDocument()
     })
     expect(screen.queryByText(/0 B of 0 B/)).not.toBeInTheDocument()
+  })
+
+  it('renders translated versionJsonMissing error instead of raw string', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ status: 'failed', bytes_downloaded: 0, total_bytes: 0, error_message: 'version.json not found' }),
+    })
+    render(<ModelDownloaderModal open={true} onClose={() => {}} />)
+    await waitFor(() => {
+      expect(screen.getByTestId('download-restart-btn')).toBeInTheDocument()
+    })
+    const errorText = screen.getByText(/Model manifest not found/).textContent
+    expect(errorText).toBe('Model manifest not found. Restart download to fetch it.')
+    expect(screen.queryByText(/Error: version\.json not found/)).not.toBeInTheDocument()
+  })
+
+  it('shows single progressUnknown line when total_bytes is 0, not doubled', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ status: 'idle', bytes_downloaded: 0, total_bytes: 0 }),
+    })
+    render(<ModelDownloaderModal open={true} onClose={() => {}} />)
+    await waitFor(() => {
+      expect(screen.getByText('Downloading AI Engine')).toBeInTheDocument()
+    })
+    const modal = screen.getByTestId('model-downloader-modal')
+    const textContent = modal.textContent!
+    const matches = textContent.match(/Waiting for download info…/g)
+    expect(matches).toHaveLength(1)
+    expect(textContent).not.toMatch(/Waiting.*of.*Waiting/)
+  })
+
+  it('enter visible retrying state on restart click while request in flight', async () => {
+    let startResolve: (() => void) | null = null
+    const startPromise = new Promise<void>(resolve => { startResolve = resolve })
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ status: 'failed', bytes_downloaded: 0, total_bytes: 0, error_message: 'Hash mismatch' }),
+      })
+      .mockImplementation(async (url: string | URL | RequestInfo) => {
+        if (url.toString().includes('/api/download/start')) {
+          return { ok: true, json: () => startPromise } as Response
+        }
+        return { ok: true, json: () => Promise.resolve({ status: 'failed', bytes_downloaded: 0, total_bytes: 0, error_message: 'Hash mismatch' }) } as Response
+      })
+    render(<ModelDownloaderModal open={true} onClose={() => {}} />)
+    await waitFor(() => {
+      expect(screen.getByTestId('download-restart-btn')).toBeInTheDocument()
+    })
+    const restartButton = screen.getByTestId('download-restart-btn')
+    fireEvent.click(restartButton)
+    await waitFor(() => {
+      expect(restartButton).toBeDisabled()
+    })
+    startResolve!()
+    await startPromise
+    await waitFor(() => {
+      expect(restartButton).not.toBeDisabled()
+    })
   })
 })

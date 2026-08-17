@@ -3,17 +3,18 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX39 ImgTag-Policy
+- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX40 Downloader-RetryUX
 - Date: 2026-08-18
 - Tauri shell hash: 1E7E7589…
 - Backend tests: 281 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
 - Backend exe hash: 130E9C3E… (FIX41 rebuild pending)
-- Frontend tests: 630 green overall, 0 failures
+- Frontend tests: 633 green overall, 0 failures
 - Rust tests: 2 passed in debug (validate_output_path validation). Build clean (0 warnings)
 - PRD: v1.12 source of truth in second-brain/04-Product/
-- Next: CEO packaged re-smoke (manual UI verification) → BUG-37/38/39 fixes
+- Next: FIX41 smoke verification (visual proof of retrying state) → CEO packaged re-smoke
 
 ## Recent Changelog (last 5)
+- **2026-08-18 (S11-FIX40-Downloader-RetryUX):** Fixed three ModelDownloaderModal bugs: (1) `getErrorMessage()` now handles `version.json not found` → translated `downloader.error.versionJsonMissing` before generic fallback; (2) progress JSX renders single `t('downloader.progressUnknown')` when `total_bytes === 0` instead of doubled interpolation; (3) restart button enters visible retrying state (disabled + "Retry Download") while `POST /api/download/start` is in flight. +3 frontend tests, fix pre-existing regex test. Frontend: 633 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-18 (S11-FIX39-ImgTag-Policy):** Enforced CEO-locked Option B split policy: (1) backend `_has_raw_text()` strips `<...>` tags before alphabetic check via `re.sub(r"<[^>]+>", "", text)`, preventing img-tag letters from fooling the no-text guard; (2) frontend `MarkdownPreview` strips `/ <img[^>]*/?>/gi` from display string only — raw content prop untouched so saved .md chart crops (FR-08) survive; (3) saved .md content UNCHANGED. +3 backend tests, +1 frontend test. Backend: 281 passed, 1 pre-existing. Frontend: 630 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-18 (S11-FIX38-Pypdfium2-Bundling):** Added pypdfium2 to PyInstaller spec — `collect_all("pypdfium2")` + binaries/hiddenimports merged into all_binaries/all_hiddenimports. Fixes BUG-37: packaged exe could not render PDFs (pypdfium2 auto-hook does NOT populate binaries/hiddenimports). +3 tests. Backend: 278 passed, 1 pre-existing failure. No source changes. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-18 (S11-FIX37-Rebuild-Swap-Registry):** Rebuilt backend (PyInstaller exit 0, hash 130E9C3E…) and Tauri shell (--no-bundle exit 0, hash 1E7E7589…). Swapped into D:\Scan2Text portable + repo dist. Three-way hash match confirmed. Boot gate PASS: Uvicorn on 127.0.0.1:47351, zero ModuleNotFoundError, zero Model files not found in current session. No source changes. Status: COMPLETE.
