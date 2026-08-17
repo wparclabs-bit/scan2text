@@ -3,15 +3,16 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX43b Rebuild-Probe-Onedir
+- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX43c Recovery-Swap-Probe
 - Date: 2026-08-18
-- Tauri shell hash: A6A9783E68A3DC389B4AAAC3528A0C634ACD5D5FF9386F3DED191C280BF732EB (unchanged from 4:50 AM — tauri build produced no output)
-- Backend tests: 283 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
-- Backend exe hash: 02A8AD361C18316CF1FC7B91F5903EBF5C9B4D8A979739813787C798ED9B6FE2 (rebuilt, onedir spec)
-- Frontend tests: 633 green overall, 0 failures
+- Tauri shell hash: A6A9783E68A3DC389B4AAAC3528A0C634ACD5D5FF9386F3DED191C280BF732EB (same, copied from repo dist)
+- Backend hash: 3F76DAE3C79367D590E8B70113F7873A56473C15A118E359DEE50B95F2662CA3 (folder-based onedir)
+- pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 7.2MB)
+- Backend tests: 283 passed, 1 pre-existing failure (test_health_contract)
+- Frontend tests: 633 green, 0 failures
 - PRD: v1.12 source of truth in second-brain/04-Product/
-- Next: CEO re-smoke — manual verification of folder-based backend + shell
-- RESULT: success=false — Scan2Text.exe failed to start ("%1 is not a valid Win32 application"); pdfium.dll not copied to portable dist (_internal missing); probe EXIT=2 (OCR_FAILED: name 'pdfium' is not defined)
+- Next: CEO re-smoke — manual verification; FIX43d needs source fix for vlm_ocr.py pdfium import
+- RESULT: success=false — Clean swap PASS (wipe+copy, health ok, model loaded, files present, dll present); probe EXIT=1 (OCR_FAILED: name 'pdfium' is not defined). Root cause: S10-FIX21 (75c77ec) removed `import pypdfium2 as pdfium` from vlm_ocr.py but line 275 still calls `pdfium.PdfDocument()`. Same regression as 43b.
 
 ## Recent Changelog (last 5)
 - **2026-08-18 (S11-FIX43a-Spec-Onedir):** COMPLETE — Spec now produces folder-based artifact per ADR-008 Decision 2 / CEO Option B. Added `onefile=False` to EXE + `COLLECT(exe, a.binaries, a.datas, name='scan2text-backend')` block. Removed manual shutil.move post-build hack. +2 spec-contract tests (not-on efile + COLLECT presence). Backend: 283 passed, 1 pre-existing. Status: COMPLETE — STEP 2 pending rebuild.
