@@ -19,6 +19,8 @@ from typing import Any, List
 
 import psutil
 
+import pypdfium2 as pdfium
+
 from scan2text.models.settings import AppSettings
 from scan2text.services.path_service import PathService
 from scan2text.utils.cpu_budget import calculate_auto_threads
