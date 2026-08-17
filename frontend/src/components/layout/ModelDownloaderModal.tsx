@@ -21,6 +21,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
     bytes_downloaded: 0,
     total_bytes: 0,
   })
+  const [retrying, setRetrying] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -63,10 +64,13 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
   }
 
   const handleRestart = async () => {
+    setRetrying(true)
     try {
       await fetch(buildApiUrl('/api/download/start'), { method: 'POST' })
     } catch (err) {
       console.error('Downloader error:', err);
+    } finally {
+      setRetrying(false)
     }
   }
 
@@ -77,6 +81,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
   const getErrorMessage = (): string => {
     if (!state.error_message) return ''
     if (state.error_message === 'network_error') return t('downloader.error.network')
+    if (state.error_message === 'version.json not found') return t('downloader.error.versionJsonMissing')
     if (state.error_message.toLowerCase().includes('size') || state.error_message.toLowerCase().includes('mismatch')) return t('downloader.error.sizeMismatch')
     if (state.error_message.toLowerCase().includes('disk') || state.error_message.toLowerCase().includes('full')) return t('downloader.error.diskFull')
     if (state.error_message.toLowerCase().includes('cancel')) return t('downloader.error.userCancelled')
@@ -112,7 +117,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
 
         <div className="mb-4">
           <div className="flex justify-between text-xs text-[#F2EBDD]/60 mb-1">
-            <span>{t('downloader.progress', { downloaded: formatBytes(state.bytes_downloaded), total: formatBytes(state.total_bytes) })}</span>
+            <span>{state.total_bytes > 0 ? t('downloader.progress', { downloaded: formatBytes(state.bytes_downloaded), total: formatBytes(state.total_bytes) }) : t('downloader.progressUnknown')}</span>
             <span>{percentage}%</span>
           </div>
           <div className="w-full bg-[#3B2A18] rounded-full h-2 overflow-hidden">
@@ -148,9 +153,10 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
             <button
               data-testid="download-restart-btn"
               onClick={handleRetry}
-              className="flex-1 py-2 px-4 rounded-lg text-sm font-medium bg-[#E3A55F] text-[#1F150C] hover:bg-[#d4944e] transition-colors"
+              disabled={retrying}
+              className="flex-1 py-2 px-4 rounded-lg text-sm font-medium bg-[#E3A55F] text-[#1F150C] hover:bg-[#d4944e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {t('downloader.restart')}
+              {retrying ? t('downloader.retry') : t('downloader.restart')}
             </button>
           )}
         </div>
