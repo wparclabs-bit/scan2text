@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import List, Optional
 
@@ -55,10 +56,17 @@ class OutputService:
 
     @staticmethod
     def _has_raw_text(result: OCRResult) -> bool:
-        """Return True when the raw OCR page texts contain alphabet letters."""
+        """Return True when the raw OCR page texts contain alphabet letters.
+
+        HTML-like tags (e.g. <img ...>) are stripped first so their letters
+        cannot fool the alphabetic check.
+        """
+        def _clean(text: str) -> str:
+            return re.sub(r"<[^>]+>", "", text)
+
         if result.pages:
-            return any(has_no_text(page.text) is False for page in result.pages)
-        return not has_no_text(result.full_text or "")
+            return any(has_no_text(_clean(page.text)) is False for page in result.pages)
+        return not has_no_text(_clean(result.full_text or ""))
 
     def write(
         self,
