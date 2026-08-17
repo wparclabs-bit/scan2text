@@ -64,7 +64,7 @@ export default function TopBar() {
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p>{theme === 'dark' ? t('actions.themeTooltipLight') : t('actions.themeTooltipDark')}</p>
+                <p>{theme === 'dark' ? t('actions.themeTooltipDark') : t('actions.themeTooltipLight')}</p>
               </TooltipContent>
             </Tooltip>
 

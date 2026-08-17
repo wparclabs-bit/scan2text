@@ -240,4 +240,34 @@ describe('TopBar', () => {
 
     vi.useRealTimers()
   })
+
+  it('theme tooltip shows switch-to-light string in dark theme', () => {
+    vi.useFakeTimers()
+    mockState.theme = 'dark'
+    render(<TopBar />)
+    const btn = screen.getByTestId('theme-toggle') as HTMLButtonElement
+    fireEvent.pointerEnter(btn)
+    vi.advanceTimersByTime(300)
+
+    const tooltipEls = screen.getAllByTestId('tooltip-content')
+    const texts = Array.from(tooltipEls).map((el) => el.textContent ?? '')
+    expect(texts.some((t) => t.includes('Switch to light mode'))).toBe(true)
+
+    vi.useRealTimers()
+  })
+
+  it('theme tooltip shows switch-to-dark string in light theme', () => {
+    vi.useFakeTimers()
+    mockState.theme = 'light'
+    render(<TopBar />)
+    const btn = screen.getByTestId('theme-toggle') as HTMLButtonElement
+    fireEvent.pointerEnter(btn)
+    vi.advanceTimersByTime(300)
+
+    const tooltipEls = screen.getAllByTestId('tooltip-content')
+    const texts = Array.from(tooltipEls).map((el) => el.textContent ?? '')
+    expect(texts.some((t) => t.includes('Switch to dark mode'))).toBe(true)
+
+    vi.useRealTimers()
+  })
 })
