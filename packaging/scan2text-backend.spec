@@ -40,8 +40,13 @@ tmp_ret_pdf = collect_all("pypdfium2")
 pdf_binaries = tmp_ret_pdf[1]
 pdf_hiddenimports = tmp_ret_pdf[2]
 
-all_binaries = [*llama_binaries, *pil_binaries, *pdf_binaries]
-all_hiddenimports = [*llama_hiddenimports, *pil_hiddenimports, *pdf_hiddenimports]
+# pypdfium2_raw holds the actual pdfium.dll; collect_all("pypdfium2") returns empty binaries
+tmp_ret_raw = collect_all("pypdfium2_raw")
+raw_binaries = tmp_ret_raw[1]
+raw_hiddenimports = tmp_ret_raw[2]
+
+all_binaries = [*llama_binaries, *pil_binaries, *pdf_binaries, *raw_binaries]
+all_hiddenimports = [*llama_hiddenimports, *pil_hiddenimports, *pdf_hiddenimports, *raw_hiddenimports]
 
 a = Analysis(
     ["../src/scan2text/cli.py"],
