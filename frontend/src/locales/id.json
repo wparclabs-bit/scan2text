@@ -92,10 +92,19 @@
     "title": "Mengunduh Mesin AI",
     "description": "Mohon tunggu sementara kami menyiapkan model AI offline...",
     "progress": "{{downloaded}} dari {{total}}",
+    "progressUnknown": "Menunggu informasi unduhan…",
     "cancel": "Batal",
     "restart": "Mulai Ulang Unduhan",
+    "retry": "Coba Lagi Unduhan",
     "failed": "Unduhan gagal atau dibatalkan.",
-    "verifying": "Memverifikasi integritas file..."
+    "verifying": "Memverifikasi integritas file...",
+    "error": {
+      "network": "Koneksi jaringan gagal. Periksa koneksi Anda dan coba lagi.",
+      "sizeMismatch": "Ukuran file yang diunduh tidak sesuai dengan ukuran yang diharapkan.",
+      "diskFull": "Ruang disk tidak cukup untuk menyelesaikan unduhan.",
+      "userCancelled": "Unduhan dibatalkan."
+    },
+    "errorGeneric": "Kesalahan: {{message}}"
   },
   "feedback": {
     "tooltip": "Kirim masukan",

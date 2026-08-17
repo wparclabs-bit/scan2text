@@ -5,15 +5,18 @@
 ## Baseline
 - Phase: Phase 10 (E2E Packaged Verification) — closure-pending
 - Date: 2026-08-17
-- Tauri shell hash: 00B1DA35…
+- Tauri shell hash: 8428E15C…
 - Backend tests: 262 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
 - Backend exe hash: 542AF7FF…
-- Frontend tests: 630 green overall, 0 failures. S11-FIX28c: Theme toggle tooltip now dynamic (shows target theme on hover). S11-FIX28b: Preview header buttons moved to always-rendered top row.
+- Frontend tests: 633 green overall, 0 failures. S11-FIX31: ModelDownloaderModal button now enabled in idle/error states; raw error strings replaced by translated graceful messages; no "0 B of 0 B" when expected size unknown. +3 tests.
 - Rust tests: 6 passed. Build clean (1 dead_code warning).
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - Next: CEO new-bug list (next window); bug fixes → closure commit → .gitignore audit → play-GitHub push
 
 ## Recent Changelog (last 5)
+- **2026-08-17 (S11-FIX31-Downloader-DeadButton-GracefulError):** Fixed ModelDownloaderModal dead-button bug — button now always rendered in idle/failed/cancelled states (was conditionally hidden in idle). Fetch rejections now set failed state with translated network error instead of silent log. Raw `error_message` rendered via `getErrorMessage()` mapper producing translated strings for network/size-mismatch/disk-full/user-cancelled; generic fallback wraps unknown messages. `formatBytes(0)` replaced with `t('downloader.progressUnknown')` so "0 B of 0 B" never appears when expected size is unknown. +3 tests. Frontend: 633 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR FIX32 REBUILD.
+- **2026-08-17 (S11-FIX29b-Tauri-DragDrop-V2-Key):** Replaced stale v1 `fileDropEnabled` assertion in validate-tauri-config.js with correct Tauri v2 key `dragDropEnabled` (confirmed via config.schema.json). Added `"dragDropEnabled": false` to `app.windows[0]` in tauri.conf.json — Tauri v2 intercepts OS file drops by default (`dragDropEnabled=true`), blocking HTML5 onDrop in packaged exe. Setting to `false` passes drops through to the DOM. Validator #8: RED→GREEN. Frontend: 630 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR FIX32 REBUILD.
+- **2026-08-17 (S10-FIX29-Tauri-Config-Schema-Fix):** Removed invalid `fileDropEnabled` property from `app.windows[0]` in `tauri.conf.json` — Tauri v2 schema strictly forbids this v1-only field, causing build failure with "Additional properties are not allowed". Drag-and-drop continues to work via React Dropzone (HTML5 APIs). Frontend: 630 passed, 0 failures. Typecheck clean. Build success (exit 0, no schema errors). Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-FIX29-Tauri-DragDrop-Passthrough):** Set `app.windows[0].fileDropEnabled: false` in tauri.conf.json — Tauri v1/v2 webview intercepts OS file drops by default (`fileDropEnabled=true`), blocking HTML5 onDrop handlers in packaged exe. Setting to `false` lets DOM receive native drop events. Extended validate-tauri-config.js with assertion #8. Frontend: 630 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION (packaged proof at FIX32).
 - **2026-08-17 (S11-FIX28c-DynamicThemeTooltip):** Fixed inverted ternary in TopBar theme-toggle tooltip — dark mode now correctly shows "Switch to light mode" and light mode shows "Switch to dark mode". +2 tests. Frontend: 630 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-17 (S11-FIX28b-Portable-Settings-Path):** Added `_resolve_portable_root()` to PathService — walks up from exe parent to first ancestor containing `models/`. Fixed `settings_path`, `logs_dir`, and new `feedback_dir` properties to use portable root in frozen mode (matching FIX14 output_dir logic). Settings, logs, and feedback now persist at D:\Scan2Text\ on reopen instead of inside dist\scan2text-backend\. +2 tests. Backend: 262 passed, 1 pre-existing failure. Typecheck clean. Build success. Status: COMPLETE.
