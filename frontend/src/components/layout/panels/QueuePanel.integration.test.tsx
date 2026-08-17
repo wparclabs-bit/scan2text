@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import QueuePanel from './QueuePanel'
+import PreviewPanel from './PreviewPanel'
 
 vi.mock('@/lib/cleanupObjectURLs', () => ({
   cleanupObjectURLs: vi.fn(),
+}))
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+  }),
 }))
 
 const realStore = await vi.importActual<typeof import('@/stores/scan2text.store')>('@/stores/scan2text.store')
@@ -48,4 +55,110 @@ describe('QueuePanel real store integration — no infinite loop', () => {
     }).not.toThrow()
   })
 
+})
+
+describe('Queue row click selects job in preview (FR-02/FR-04)', () => {
+  beforeEach(() => {
+    useScan2TextStore.setState({ jobs: {}, selectedJobId: null, activeJobId: null })
+  })
+
+  it('clicking a queue row selects that job and preview shows its markdown', () => {
+    const jobs = {
+      'job-a': {
+        id: 'job-a',
+        fileName: 'first.png',
+        fileSize: 500,
+        fileType: 'image/png',
+        status: 'completed' as const,
+        createdAt: 1000,
+        taskId: 'task-a',
+        isBackground: false,
+        resultMarkdown: '# First Document\n\nPage one content.',
+        markdownOutput: '# First Document\n\nPage one content.',
+        error: null,
+        file: null,
+        progress: 100,
+      },
+      'job-b': {
+        id: 'job-b',
+        fileName: 'second.pdf',
+        fileSize: 600,
+        fileType: 'application/pdf',
+        status: 'completed' as const,
+        createdAt: 2000,
+        taskId: 'task-b',
+        isBackground: true,
+        resultMarkdown: '# Second Document\n\nPage two content.',
+        markdownOutput: '# Second Document\n\nPage two content.',
+        error: null,
+        file: null,
+        progress: 100,
+      },
+    }
+    useScan2TextStore.setState({ jobs, selectedJobId: null, activeJobId: null })
+
+    render(
+      <>
+        <QueuePanel />
+        <PreviewPanel />
+      </>,
+    )
+
+    const rows = screen.getAllByTestId('queue-item')
+    expect(rows).toHaveLength(2)
+
+    // Initially no preview content from either job
+    expect(screen.queryByText('# First Document')).not.toBeInTheDocument()
+    expect(screen.queryByText('# Second Document')).not.toBeInTheDocument()
+
+    // Click first row
+    fireEvent.click(rows[0])
+    expect(useScan2TextStore.getState().selectedJobId).toBe('job-a')
+    expect(screen.getByText('First Document')).toBeInTheDocument()
+    expect(screen.queryByText('Second Document')).not.toBeInTheDocument()
+
+    // Click second row
+    fireEvent.click(rows[1])
+    expect(useScan2TextStore.getState().selectedJobId).toBe('job-b')
+    expect(screen.getByText('Second Document')).toBeInTheDocument()
+    expect(screen.queryByText('First Document')).not.toBeInTheDocument()
+  })
+
+  it('retry button click does NOT trigger row selection (stopPropagation)', async () => {
+    const jobs = {
+      'job-fail': {
+        id: 'job-fail',
+        fileName: 'failed.png',
+        fileSize: 500,
+        fileType: 'image/png',
+        status: 'failed' as const,
+        createdAt: 1000,
+        taskId: 'task-x',
+        isBackground: false,
+        resultMarkdown: null,
+        markdownOutput: '',
+        error: 'OCR error',
+        file: { name: 'failed.png' } as File,
+        progress: 0,
+      },
+    }
+    const retryJob = vi.fn().mockResolvedValue('new-job-id')
+    useScan2TextStore.setState({ jobs, selectedJobId: null, activeJobId: null, retryJob })
+
+    render(
+      <>
+        <QueuePanel />
+        <PreviewPanel />
+      </>,
+    )
+
+    const _row = screen.getByTestId('queue-item')
+    void _row
+    const retryBtn = screen.getByTestId('queue-item-retry')
+
+    fireEvent.click(retryBtn)
+    // Row selection must NOT have been triggered
+    expect(useScan2TextStore.getState().selectedJobId).toBeNull()
+    expect(retryJob).toHaveBeenCalledWith('job-fail')
+  })
 })
