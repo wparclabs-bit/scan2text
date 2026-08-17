@@ -3,17 +3,19 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX33b GREEN
+- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX34a GREEN
 - Date: 2026-08-17
 - Tauri shell hash: 61B4939F…
-- Backend tests: 262 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
+- Backend tests: 266 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
 - Backend exe hash: A9C7BF5F…
-- Frontend tests: 634 green overall, 0 failures
+- Frontend tests: 632 green overall, 0 failures
 - Rust tests: 0 passed in debug (release-only tests gated). Build clean (0 warnings)
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - Next: S11-FIX34 (TBD)
 
 ## Recent Changelog (last 5)
+- **2026-08-17 (S11-FIX34a-Settings-EffectiveOutputDir):** Fixed BUG-34 — GET /api/settings now returns EFFECTIVE output_dir: stored value when non-empty after strip, otherwise str(PathService.output_dir). Resolve-on-read only; GET never rewrites settings.json. SettingsService.load() stays raw. +4 tests. Backend: 266 passed, 1 pre-existing failure. Status: READY FOR CEO MANUAL VERIFICATION.
+- **2026-08-17 (S11-FIX33b-SettingsDialog-GREEN):** Fixed SettingsDialog.test.tsx import crash (`../../lib/i18n` → `../../i18n`), aligned `initI18n()` to real signature with resources object. Fixed SettingsDialog.tsx key names (`savedToast`→`saved`, `saveFailedToast`→`saveFailed`, `loadFailedToast`→`loadFailed`, `cpuThreadsHint`→`autoHint`). Added new i18n keys to en.json + id.json + test-setup.ts. Fixed test-3 toast assertion to spy on `toast.success` instead of DOM lookup. api.ts already had `getSettings()`/`saveSettings()`. 5/5 SettingsDialog tests green. Frontend: 634 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-FIX33b-SettingsDialog-GREEN):** Fixed SettingsDialog.test.tsx import crash (`../../lib/i18n` → `../../i18n`), aligned `initI18n()` to real signature with resources object. Fixed SettingsDialog.tsx key names (`savedToast`→`saved`, `saveFailedToast`→`saveFailed`, `loadFailedToast`→`loadFailed`, `cpuThreadsHint`→`autoHint`). Added new i18n keys to en.json + id.json + test-setup.ts. Fixed test-3 toast assertion to spy on `toast.success` instead of DOM lookup. api.ts already had `getSettings()`/`saveSettings()`. 5/5 SettingsDialog tests green. Frontend: 634 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-DOC-Targeted-Test-Rule):** Added targeted test execution rule to AGENTS.md 3.6 — during RED/GREEN phases only run the target test file, never the full suite, to prevent context window bloat from 639-test output. No code changes.
 - **2026-08-17 (S11-FIX35-ProseCompact):** Fixed BUG-35 preview bloat — replaced redundant `prose-sm prose-base` dual with `prose-base prose-compact` in MarkdownPreview; added `.prose-compact` CSS override (`line-height: 1.4`, `p { margin: 0.25em }`) in index.css. +1 test. Frontend: 634 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
