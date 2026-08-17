@@ -107,13 +107,14 @@ assert(
   `identifier must be 'com.wingai.scan2text' (found: '${identifier}')`
 );
 
-// 8. Check fileDropEnabled is false (Tauri v1/v2: webview intercepts OS file drops by default;
+// 8. Check dragDropEnabled is false (Tauri v2: webview intercepts OS file drops by default;
 //    setting to false allows HTML5 onDrop/onDragOver handlers to receive native drop events)
-console.log('\n8. Checking windows[0].fileDropEnabled (OS drag-drop passthrough)...');
+//    Schema source: config.schema.json WindowConfig.dragDropEnabled — default true, type boolean
+console.log('\n8. Checking windows[0].dragDropEnabled (OS drag-drop passthrough)...');
 const firstWindow = config.app && Array.isArray(config.app.windows) && config.app.windows[0];
 assert(
-  firstWindow && firstWindow.fileDropEnabled === false,
-  'app.windows[0].fileDropEnabled must be false to allow HTML5 drag-and-drop in packaged Tauri app'
+  firstWindow && firstWindow.dragDropEnabled === false,
+  'app.windows[0].dragDropEnabled must be false to allow HTML5 drag-and-drop in packaged Tauri app'
 );
 
 // Summary
