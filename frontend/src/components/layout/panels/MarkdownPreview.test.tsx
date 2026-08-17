@@ -56,6 +56,13 @@ describe('MarkdownPreview', () => {
     expect(container).toHaveClass('dark:prose-invert')
   })
 
+  it('applies prose-compact and does NOT apply prose-sm to container', () => {
+    render(<MarkdownPreview markdown="# Hello" />)
+    const container = document.querySelector('[data-testid="preview-markdown"]') as HTMLElement
+    expect(container).toHaveClass('prose-compact')
+    expect(container).not.toHaveClass('prose-sm')
+  })
+
   it('renders headings with proper styling when typography plugin is loaded', () => {
     render(<MarkdownPreview markdown="# Heading\n\n## Subheading" />)
     const container = document.querySelector('[data-testid="preview-markdown"]') as HTMLElement

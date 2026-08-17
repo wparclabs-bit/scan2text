@@ -48,6 +48,15 @@
   }
 }
 
+.prose-compact {
+  line-height: 1.4;
+}
+
+.prose-compact p {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
 :root {
   --background: #F9F8F6;
   --foreground: #1F150C;
