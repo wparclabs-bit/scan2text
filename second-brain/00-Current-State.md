@@ -5,6 +5,7 @@
 ## Baseline
 - Phase: Phase 10 (E2E Packaged Verification) — READY FOR CEO MANUAL VERIFICATION
 - Date: 2026-08-17
+- S11-DIAG-Packaged-Regressions-Forensics: Forensics complete. BUG-33 (settings not persisted) = SettingsDialog has no save button/API call — pure static mockup. BUG-34 (Open Folder dead) = empty onClick handler, no Tauri shell capability. BUG-35 (preview bloat + tiny thumb) = prose typography default margins (1em top+bottom per paragraph) on one-line-per-paragraph OCR output. FIXED in S11-FIX35-ProseCompact: replaced prose-sm+prose-base dual with prose-base+prose-compact; added CSS line-height 1.4 + 0.25em margin overrides. Report in Phase-10/slice-S11-DIAG-Packaged-Regressions-Forensics.md.
 - Tauri shell hash: 61B4939F… (fresh; S11-FIX32 rebuild)
 - Backend tests: 262 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
 - Backend exe hash: A9C7BF5F… (fresh; S11-FIX32 rebuild)
@@ -14,6 +15,7 @@
 - Next: CEO packaged re-smoke (OS file drops, full workflow)
 
 ## Recent Changelog (last 5)
+- **2026-08-17 (S11-FIX35-ProseCompact):** Fixed BUG-35 preview bloat — replaced redundant `prose-sm prose-base` dual with `prose-base prose-compact` in MarkdownPreview; added `.prose-compact` CSS override (`line-height: 1.4`, `p { margin: 0.25em }`) in index.css. +1 test. Frontend: 634 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-FIX32-Rebuild-And-Swap):** Rebuilt backend (PyInstaller exit 0, hash A9C7BF5F…) and Tauri shell (--no-bundle exit 0, hash 61B4939F…). Swapped into D:\Scan2Text portable + repo dist. Three-way hash match confirmed. Boot gate PASS: Uvicorn on 127.0.0.1:47351, zero ModuleNotFoundError, zero Model files not found. No source changes. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-FIX30-Settings-PortableRoot):** Refactored `_resolve_output_dir()` to delegate to shared `_resolve_portable_root()` — eliminates duplicate walk-up logic. `settings_path`, `logs_dir`, `feedback_dir` already used portable root from S11-FIX28b; this unifies the resolver so output_dir also calls through `_resolve_portable_root()`. Dev behavior unchanged. Backend: 262 passed, 1 pre-existing failure. Status: READY FOR FIX32 REBUILD.
 - **2026-08-17 (S11-FIX29b-Tauri-DragDrop-V2-Key):** Committed fix — replaced v1 `fileDropEnabled` with correct Tauri v2 key `dragDropEnabled` in `tauri.conf.json` + validator assertion #8 (confirmed via `config.schema.json`). Tauri v2 intercepts OS file drops by default (`dragDropEnabled=true`), blocking HTML5 onDrop in packaged exe; `false` passes drops through to DOM. Validator 8/8 PASS. Frontend: 633 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR FIX32 REBUILD.
