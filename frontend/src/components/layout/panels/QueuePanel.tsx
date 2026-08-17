@@ -15,6 +15,7 @@ export default function QueuePanel() {
   const jobsRef = useScan2TextStore((s) => s.jobs)
   const selectedJobId = useScan2TextStore((s) => s.selectedJobId)
   const retryJob = useScan2TextStore((s) => s.retryJob)
+  const setSelectedJobId = useScan2TextStore((s) => s.setSelectedJobId)
   const theme = usePreferenceStore((s) => s.theme)
   const depthStyle = getDepthStyle({ theme, panel: 'center' })
 
@@ -50,7 +51,17 @@ export default function QueuePanel() {
             <div
               key={job.id}
               data-testid="queue-item"
-              className={`flex items-center gap-3 p-2 rounded-lg ${isSelected ? 'bg-accent/10' : ''}`}
+              tabIndex={0}
+              role="button"
+              aria-selected={isSelected}
+              onClick={() => setSelectedJobId(job.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setSelectedJobId(job.id)
+                }
+              }}
+              className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer focus-visible:ring-2 focus-visible:ring-accent/50 outline-none ${isSelected ? 'bg-accent/10' : ''}`}
             >
               <div className="w-10 h-10 shrink-0 rounded overflow-hidden bg-muted flex items-center justify-center">
                 {kind === 'image' ? (
@@ -145,13 +156,10 @@ export default function QueuePanel() {
               {job.status === 'failed' && (
                 <button
                   data-testid="queue-item-retry"
-                  onClick={async () => {
+                  onClick={(e) => {
+                    e.stopPropagation()
                     setIsRetrying(job.id)
-                    try {
-                      await retryJob(job.id)
-                    } finally {
-                      setIsRetrying(null)
-                    }
+                    retryJob(job.id).finally(() => setIsRetrying(null))
                   }}
                   disabled={isRetryingThis}
                   className="text-xs text-primary hover:text-foreground shrink-0 disabled:opacity-50"
