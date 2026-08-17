@@ -82,4 +82,13 @@ describe('MarkdownPreview', () => {
     expect(container?.textContent).toContain('Item 1')
     expect(container?.textContent).toContain('Item 2')
   })
+
+  it('strips <img> tags from display so raw HTML is not visible', () => {
+    const md = '<img src="./x_files/images/bbox_1_2_3_4.jpg" />\n\nO-SHOCK'
+    render(<MarkdownPreview markdown={md} />)
+    const container = document.querySelector('[data-testid="preview-markdown"]')
+    expect(container?.textContent).not.toContain('<img')
+    expect(container?.textContent).not.toContain('src=')
+    expect(container?.textContent).toContain('O-SHOCK')
+  })
 })

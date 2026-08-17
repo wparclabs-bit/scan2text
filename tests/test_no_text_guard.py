@@ -109,3 +109,51 @@ class TestNoTextGuardIntegration:
         content = output_path.read_text(encoding="utf-8")
         assert "No text detected" in content
         assert "Tidak ada teks terdeteksi" in content
+
+
+# --- Tag-stripping guard: img tags must not fool the detector ---------------
+
+class TestTagStrippingGuard:
+    def test_img_tag_with_digits_only_returns_false(self):
+        """img tag letters must not defeat has_no_text — digits only = no text."""
+        result = OCRResult(
+            job_id="j4",
+            source_file="watch.png",
+            pages=[OCRPage(page_number=1, text='<img src="images/bbox_1_2_3_4.jpg" />\n91\n92')],
+            full_text='<img src="images/bbox_1_2_3_4.jpg" />\n91\n92',
+        )
+        assert OutputService._has_raw_text(result) is False
+
+    def test_img_tag_with_real_text_returns_true(self):
+        """Real text after tag stripping must still be detected."""
+        result = OCRResult(
+            job_id="j5",
+            source_file="doc.png",
+            pages=[OCRPage(page_number=1, text='<img src="images/bbox_1_2_3_4.jpg" />\nUNIT 1 OPENING')],
+            full_text='<img src="images/bbox_1_2_3_4.jpg" />\nUNIT 1 OPENING',
+        )
+        assert OutputService._has_raw_text(result) is True
+
+    def test_img_tag_digits_ocr_writes_bilingual_notice(self, tmp_path):
+        """digits+tag OCR must trigger the bilingual notice, not write raw img tags."""
+        paths = PathService(base_dir=str(tmp_path))
+        svc = OutputService(path_service=paths)
+        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
+
+        job = OCRJob(
+            job_id="j6",
+            file_name="watch.png",
+            file_path=str(tmp_path / "watch.png"),
+            status=JobStatus.DONE,
+        )
+        result = OCRResult(
+            job_id="j6",
+            source_file="watch.png",
+            pages=[OCRPage(page_number=1, text='<img src="images/bbox_1_2_3_4.jpg" />\n91\n92')],
+            full_text='<img src="images/bbox_1_2_3_4.jpg" />\n91\n92',
+        )
+        output_path = svc.write(job, result)
+        content = output_path.read_text(encoding="utf-8")
+        assert "No text detected" in content
+        assert "Tidak ada teks terdeteksi" in content
+        assert "<img" not in content
