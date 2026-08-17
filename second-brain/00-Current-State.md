@@ -3,15 +3,15 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 10 (E2E Packaged Verification) — Phase 10 closure sprint
+- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX33a RED
 - Date: 2026-08-17
 - Tauri shell hash: 61B4939F…
 - Backend tests: 262 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
 - Backend exe hash: A9C7BF5F…
-- Frontend tests: 634 green overall, 0 failures
+- Frontend tests: 634 green overall, 0 failures (SettingsDialog.test.tsx: suite fails at import — RED)
 - Rust tests: 0 passed in debug (release-only tests gated). Build clean (0 warnings)
 - PRD: v1.12 source of truth in second-brain/04-Product/
-- Next: S11-FIX33-SettingsDialog-Functional
+- Next: S11-FIX33b-SettingsDialog-GREEN
 
 ## Recent Changelog (last 5)
 - **2026-08-17 (S11-DOC-Targeted-Test-Rule):** Added targeted test execution rule to AGENTS.md 3.6 — during RED/GREEN phases only run the target test file, never the full suite, to prevent context window bloat from 639-test output. No code changes.
