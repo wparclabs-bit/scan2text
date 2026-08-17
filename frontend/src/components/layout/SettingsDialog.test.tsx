@@ -1,80 +1,100 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import SettingsDialog from './SettingsDialog'
-
-const mockOnOpenChange = vi.fn()
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import SettingsDialog from './SettingsDialog';
+import { initI18n } from '../../lib/i18n';
 
 describe('SettingsDialog', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-  })
+    initI18n('en');
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any) => {
+      if (url.toString().includes('/api/settings')) {
+        return new Response(JSON.stringify({
+          output_dir: 'C:\\test\\output',
+          max_pdf_pages: 20,
+          cpu_threads: 0,
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return new Response('', { status: 404 });
+    });
+  });
 
-  it('renders with data-testid="settings-dialog"', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    expect(screen.getByTestId('settings-dialog')).toBeInTheDocument()
-  })
+  it('populates inputs from GET /api/settings', async () => {
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+    await waitFor(() => {
+      expect(screen.getByTestId('settings-output-dir')).toHaveValue('C:\\test\\output');
+    });
+  });
 
-  it('closes when Close button is clicked', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    const closeBtn = screen.getAllByText('Close')[0] as HTMLElement
-    fireEvent.click(closeBtn)
-    expect(mockOnOpenChange).toHaveBeenCalledWith(false)
-  })
+  it('fires PUT with merged payload when save button clicked', async () => {
+    const putMock = vi.fn();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any, options: any) => {
+      if (options?.method === 'PUT') {
+        putMock(JSON.parse(options.body));
+        return new Response('{"status":"ok"}', { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        output_dir: 'C:\\test\\output',
+        max_pdf_pages: 20,
+        cpu_threads: 0,
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+    await waitFor(() => screen.getByTestId('settings-save-btn'));
+    fireEvent.change(screen.getByTestId('settings-max-pdf-pages'), { target: { value: '30' } });
+    fireEvent.click(screen.getByTestId('settings-save-btn'));
+    await waitFor(() => {
+      expect(putMock).toHaveBeenCalledWith(expect.objectContaining({
+        output_dir: 'C:\\test\\output',
+        max_pdf_pages: 30,
+        cpu_threads: 0,
+      }));
+    });
+  });
 
-  it('renders General section with Language selector', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    expect(screen.getByText('General')).toBeInTheDocument()
-    expect(screen.getByLabelText(/language/i)).toBeInTheDocument()
-  })
+  it('shows translated success toast on save', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any, options: any) => {
+      if (options?.method === 'PUT') {
+        return new Response('{"status":"ok"}', { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        output_dir: 'C:\\test\\output',
+        max_pdf_pages: 20,
+        cpu_threads: 0,
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+    await waitFor(() => screen.getByTestId('settings-save-btn'));
+    fireEvent.click(screen.getByTestId('settings-save-btn'));
+    await waitFor(() => {
+      expect(screen.getByText(/settings.saved/i)).toBeInTheDocument();
+    });
+  });
 
-  it('renders General section with Theme selector', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    expect(screen.getByLabelText(/theme/i)).toBeInTheDocument()
-  })
+  it('does NOT render language or theme selects', () => {
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+    expect(screen.queryByLabelText(/language/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/theme/i)).not.toBeInTheDocument();
+  });
 
-  it('renders Processing section header', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    expect(screen.getByText(/Processing.*Backend Required/i)).toBeInTheDocument()
-  })
-
-  it('renders Output Directory input as enabled (final product)', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    const outputInput = screen.getByLabelText(/output directory/i)
-    expect(outputInput).not.toBeDisabled()
-  })
-
-  it('renders Browse button as enabled (final product)', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    const browseBtn = screen.getByText('Browse')
-    expect(browseBtn).not.toBeDisabled()
-  })
-
-  it('renders Max PDF Pages input as enabled (final product)', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    const maxPagesInput = screen.getByLabelText(/max pdf pages/i)
-    expect(maxPagesInput).not.toBeDisabled()
-  })
-
-  it('renders CPU Threads input as enabled (final product)', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    const cpuInput = screen.getByLabelText(/cpu threads/i)
-    expect(cpuInput).not.toBeDisabled()
-  })
-
-  it('does not render demo mode switch (final product)', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    expect(screen.queryByTestId('settings-demo-mode-switch')).not.toBeInTheDocument()
-  })
-
-  it('does not render lock emoji or lock indicator (final product)', () => {
-    render(<SettingsDialog open={true} onOpenChange={mockOnOpenChange} />)
-    expect(screen.queryByTestId('settings-lock-indicator')).not.toBeInTheDocument()
-  })
-
-  it('does not render when open is false', () => {
-    const { container } = render(
-      <SettingsDialog open={false} onOpenChange={mockOnOpenChange} />
-    )
-    expect(container.querySelector('[data-testid="settings-dialog"]')).not.toBeInTheDocument()
-  })
-})
+  it('blocks PUT when max_pdf_pages < 1', async () => {
+    const putMock = vi.fn();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any, options: any) => {
+      if (options?.method === 'PUT') {
+        putMock();
+        return new Response('{"status":"ok"}', { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        output_dir: 'C:\\test\\output',
+        max_pdf_pages: 20,
+        cpu_threads: 0,
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+    await waitFor(() => screen.getByTestId('settings-save-btn'));
+    fireEvent.change(screen.getByTestId('settings-max-pdf-pages'), { target: { value: '0' } });
+    fireEvent.click(screen.getByTestId('settings-save-btn'));
+    await waitFor(() => {
+      expect(putMock).not.toHaveBeenCalled();
+    });
+  });
+});
