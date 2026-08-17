@@ -53,10 +53,10 @@ describe('PreviewPanel', () => {
     )
   }
 
-  it('renders PDF icon placeholder for all queue items without img elements', () => {
+  it('renders empty state text for all queue items without selected job', () => {
     setupStore(null, {})
     render(<PreviewPanel />)
-    expect(screen.getByTestId('preview-empty')).toBeInTheDocument()
+    expect(screen.getByTestId('preview-empty-state')).toBeInTheDocument()
   })
 
   it('renders MarkdownPreview component in right column with data-testid', () => {
@@ -88,18 +88,17 @@ describe('PreviewPanel', () => {
     expect(screen.getByText('Result content')).toBeInTheDocument()
   })
 
-  it('does not show thumbnail or markdown when no job selected', () => {
+  it('does not show markdown when no job selected', () => {
     setupStore(null, {})
     render(<PreviewPanel />)
-    expect(screen.getByTestId('preview-empty')).toBeInTheDocument()
-    expect(screen.queryByTestId('preview-pdf-icon')).not.toBeInTheDocument()
+    expect(screen.getByTestId('preview-empty-state')).toBeInTheDocument()
     expect(screen.queryByTestId('preview-markdown')).not.toBeInTheDocument()
   })
 
-  it('renders Markdown container with full-width class when no job selected', () => {
+  it('renders empty-state container when no job selected', () => {
     setupStore(null, {})
     render(<PreviewPanel />)
-    const emptyState = screen.getByTestId('preview-empty')
+    const emptyState = screen.getByTestId('preview-empty-state')
     expect(emptyState).toBeInTheDocument()
   })
 
@@ -107,7 +106,7 @@ describe('PreviewPanel', () => {
     setupStore(null, {})
     render(<PreviewPanel />)
     const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
-    const card = panel?.querySelector('[data-testid="preview-empty"]')?.parentElement as HTMLElement | null
+    const card = panel?.querySelector('[data-testid="preview-empty-state"]')?.parentElement as HTMLElement | null
     expect(card).toBeInTheDocument()
     expect(card).toHaveClass('flex')
     expect(card).toHaveClass('items-center')
@@ -120,7 +119,7 @@ describe('PreviewPanel', () => {
     render(<PreviewPanel />)
     const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
     expect(panel).toHaveClass('h-full')
-    const card = panel?.querySelector('[data-testid="preview-empty"]')?.parentElement as HTMLElement | null
+    const card = panel?.querySelector('[data-testid="preview-empty-state"]')?.parentElement as HTMLElement | null
     expect(card).toBeInTheDocument()
     expect(card).toHaveClass('flex-1')
     expect(card?.style.backgroundImage).toContain('linear-gradient')
@@ -221,46 +220,24 @@ describe('PreviewPanel', () => {
   })
 
   describe('Action Header (Copy & Open Folder)', () => {
-    it('hides action header when job is processing', () => {
-      setupStore('job-1', {
-        'job-1': {
-          id: 'job-1',
-          fileName: 'test.png',
-          fileType: 'image/png',
-          status: 'processing',
-          markdownOutput: '',
-        },
+    it('header is always rendered regardless of job status (structural constancy)', () => {
+      ;([null, 'processing', 'failed', 'completed'] as const).forEach((status) => {
+        const jobs = status === null ? {} : {
+          'job-1': {
+            id: 'job-1',
+            fileName: 'test.png',
+            fileType: 'image/png',
+            status,
+            resultMarkdown: status === 'completed' ? '# Result' : undefined,
+            markdownOutput: status !== 'completed' ? '' : undefined,
+            error: status === 'failed' ? 'OCR error' : undefined,
+          },
+        }
+        setupStore(status === null ? null : 'job-1', jobs)
+        const { unmount } = render(<PreviewPanel />)
+        expect(screen.getByTestId('preview-header')).toBeInTheDocument()
+        unmount()
       })
-      render(<PreviewPanel />)
-      expect(screen.queryByTestId('preview-action-header')).not.toBeInTheDocument()
-    })
-
-    it('hides action header when job is failed', () => {
-      setupStore('job-1', {
-        'job-1': {
-          id: 'job-1',
-          fileName: 'test.png',
-          fileType: 'image/png',
-          status: 'failed',
-          markdownOutput: '',
-        },
-      })
-      render(<PreviewPanel />)
-      expect(screen.queryByTestId('preview-action-header')).not.toBeInTheDocument()
-    })
-
-    it('shows action header when job is completed', () => {
-      setupStore('job-1', {
-        'job-1': {
-          id: 'job-1',
-          fileName: 'test.png',
-          fileType: 'image/png',
-          status: 'completed',
-          resultMarkdown: '# Result\n\nSome text.',
-        },
-      })
-      render(<PreviewPanel />)
-      expect(screen.getByTestId('preview-action-header')).toBeInTheDocument()
     })
 
     it('renders copy button with correct data-testid and label', () => {
@@ -430,7 +407,7 @@ describe('PreviewPanel', () => {
     it('renders empty state text when no job is selected', () => {
       setupStore(null, {})
       render(<PreviewPanel />)
-      expect(screen.getByTestId('preview-empty')).toBeInTheDocument()
+      expect(screen.getByTestId('preview-empty-state')).toBeInTheDocument()
       expect(screen.getByText('Select a completed job to preview the magic.')).toBeInTheDocument()
     })
 
@@ -468,6 +445,48 @@ describe('PreviewPanel', () => {
       const panel = document.querySelector('[data-testid="panel-preview"]') as HTMLElement
       expect(panel).toHaveClass('h-full')
       expect(panel).toHaveClass('min-w-0')
+    })
+  })
+
+  describe('FIX28b — Always-Rendered Preview Header (PRD structural constancy)', () => {
+    it('preview-header container exists in empty state with both buttons inside', () => {
+      setupStore(null, {})
+      render(<PreviewPanel />)
+      const header = screen.getByTestId('preview-header')
+      expect(header).toBeInTheDocument()
+      expect(header.querySelector('[data-testid="preview-copy-btn"]')).toBeInTheDocument()
+      expect(header.querySelector('[data-testid="preview-open-folder-btn"]')).toBeInTheDocument()
+    })
+
+    it('preview-empty-state container contains zero buttons', () => {
+      setupStore(null, {})
+      render(<PreviewPanel />)
+      const emptyState = screen.getByTestId('preview-empty-state')
+      expect(emptyState.querySelectorAll('button').length).toBe(0)
+    })
+
+    it('preview-header exists in processing state (structural constancy)', () => {
+      setupStore('job-1', {
+        'job-1': { id: 'job-1', fileName: 'test.png', fileType: 'image/png', status: 'processing', markdownOutput: '' },
+      })
+      render(<PreviewPanel />)
+      expect(screen.getByTestId('preview-header')).toBeInTheDocument()
+    })
+
+    it('preview-header exists in failed state (structural constancy)', () => {
+      setupStore('job-1', {
+        'job-1': { id: 'job-1', fileName: 'test.png', fileType: 'image/png', status: 'failed', markdownOutput: '', error: 'OCR error' },
+      })
+      render(<PreviewPanel />)
+      expect(screen.getByTestId('preview-header')).toBeInTheDocument()
+    })
+
+    it('preview-header exists in completed state (structural constancy)', () => {
+      setupStore('job-1', {
+        'job-1': { id: 'job-1', fileName: 'test.png', fileType: 'image/png', status: 'completed', resultMarkdown: '# Result' },
+      })
+      render(<PreviewPanel />)
+      expect(screen.getByTestId('preview-header')).toBeInTheDocument()
     })
   })
 })
