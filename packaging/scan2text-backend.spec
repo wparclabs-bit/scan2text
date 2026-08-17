@@ -83,15 +83,15 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    onefile=False,
 )
 
-# Move output into folder structure: dist/scan2text-backend/
-dist_dir = os.path.join(os.path.dirname(os.path.abspath("packaging/scan2text-backend.spec")), "..", "dist", "scan2text-backend")
-dist_dir = os.path.normpath(dist_dir)
-os.makedirs(dist_dir, exist_ok=True)
-src_exe = os.path.join(os.path.dirname(os.path.abspath("packaging/scan2text-backend.spec")), "..", "dist", "scan2text-backend.exe")
-src_exe = os.path.normpath(src_exe)
-dst_exe = os.path.join(dist_dir, "scan2text-backend.exe")
-if os.path.isfile(src_exe) and not os.path.isfile(dst_exe):
-    import shutil
-    shutil.move(src_exe, dst_exe)
+# COLLECT wraps the exe + binaries + datas into the onedir folder artifact.
+# ADR-008 Decision 2 / CEO Option B: folder-based output so pypdfium2_raw/
+# pdfium.dll lands as a real sibling file on disk (required by the loader).
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    name="scan2text-backend",
+)
