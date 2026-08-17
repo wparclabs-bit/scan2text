@@ -35,8 +35,13 @@ tmp_ret_pil = collect_all("PIL")
 pil_binaries = tmp_ret_pil[1]
 pil_hiddenimports = tmp_ret_pil[2]
 
-all_binaries = [*llama_binaries, *pil_binaries]
-all_hiddenimports = [*llama_hiddenimports, *pil_hiddenimports]
+# Collect pypdfium2 native binaries and hidden imports (locked PDF rasterizer, PRD §12)
+tmp_ret_pdf = collect_all("pypdfium2")
+pdf_binaries = tmp_ret_pdf[1]
+pdf_hiddenimports = tmp_ret_pdf[2]
+
+all_binaries = [*llama_binaries, *pil_binaries, *pdf_binaries]
+all_hiddenimports = [*llama_hiddenimports, *pil_hiddenimports, *pdf_hiddenimports]
 
 a = Analysis(
     ["../src/scan2text/cli.py"],
