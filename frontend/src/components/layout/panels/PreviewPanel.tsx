@@ -5,13 +5,15 @@ import MarkdownPreview from './MarkdownPreview'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
 import { getDepthStyle } from '@/lib/depthStyles'
+import { getSettings } from '@/lib/api'
+import { invoke } from '@tauri-apps/api/core'
 
 function PreviewHeader({ job }: { job: any }) {
   const { t } = useTranslation()
   return (
     <header
       data-testid="preview-header"
-      className="flex items-center justify-center gap-2 p-3 shrink-0"
+      className="flex flex-wrap items-center justify-center gap-2 p-3 shrink-0 min-w-0"
       style={{ backgroundColor: 'transparent' }}
     >
       <button
@@ -34,9 +36,13 @@ function PreviewHeader({ job }: { job: any }) {
 
       <button
         data-testid="preview-open-folder-btn"
-        onClick={() => {
-          // In final product, this would open the output folder
-          // For now, placeholder behavior
+        onClick={async () => {
+          try {
+            const settings = await getSettings()
+            await invoke('open_output_folder', { path: settings.output_dir })
+          } catch (err) {
+            toast.error(t('preview.openFolderFailed'))
+          }
         }}
         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border-none bg-transparent hover:bg-[rgba(227,165,95,0.12)] hover:text-[#E3A55F] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
       >

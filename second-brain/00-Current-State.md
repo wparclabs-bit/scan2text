@@ -3,17 +3,18 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX34a GREEN
+- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX34b GREEN
 - Date: 2026-08-17
 - Tauri shell hash: 61B4939F…
 - Backend tests: 266 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
 - Backend exe hash: A9C7BF5F…
-- Frontend tests: 632 green overall, 0 failures
-- Rust tests: 0 passed in debug (release-only tests gated). Build clean (0 warnings)
+- Frontend tests: 629 green overall, 0 failures
+- Rust tests: 2 passed in debug (validate_output_path validation). Build clean (0 warnings)
 - PRD: v1.12 source of truth in second-brain/04-Product/
-- Next: S11-FIX34 (TBD)
+- Next: S11-FIX34c (TBD)
 
 ## Recent Changelog (last 5)
+- **2026-08-17 (S11-FIX34b-OpenFolder-EndToEnd):** Wired Open Folder button end-to-end: PreviewPanel.tsx onClick calls getSettings() → invoke('open_output_folder', { path }). Added flex-wrap + min-w-0 to preview header for narrow-width wrap. Rust: registered open_output_folder via invoke_handler(generate_handler![]), extracted validate_output_path into pure fn with 2 debug unit tests. i18n: preview.openFolderFailed in en.json + id.json. +2 Rust tests, +3 frontend tests (replaced 1 no-op test). Frontend: 629 passed, 0 failures. Rust: 2 passed, 0 warnings. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-FIX34a-Settings-EffectiveOutputDir):** Fixed BUG-34 — GET /api/settings now returns EFFECTIVE output_dir: stored value when non-empty after strip, otherwise str(PathService.output_dir). Resolve-on-read only; GET never rewrites settings.json. SettingsService.load() stays raw. +4 tests. Backend: 266 passed, 1 pre-existing failure. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-FIX33b-SettingsDialog-GREEN):** Fixed SettingsDialog.test.tsx import crash (`../../lib/i18n` → `../../i18n`), aligned `initI18n()` to real signature with resources object. Fixed SettingsDialog.tsx key names (`savedToast`→`saved`, `saveFailedToast`→`saveFailed`, `loadFailedToast`→`loadFailed`, `cpuThreadsHint`→`autoHint`). Added new i18n keys to en.json + id.json + test-setup.ts. Fixed test-3 toast assertion to spy on `toast.success` instead of DOM lookup. api.ts already had `getSettings()`/`saveSettings()`. 5/5 SettingsDialog tests green. Frontend: 634 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-FIX33b-SettingsDialog-GREEN):** Fixed SettingsDialog.test.tsx import crash (`../../lib/i18n` → `../../i18n`), aligned `initI18n()` to real signature with resources object. Fixed SettingsDialog.tsx key names (`savedToast`→`saved`, `saveFailedToast`→`saveFailed`, `loadFailedToast`→`loadFailed`, `cpuThreadsHint`→`autoHint`). Added new i18n keys to en.json + id.json + test-setup.ts. Fixed test-3 toast assertion to spy on `toast.success` instead of DOM lookup. api.ts already had `getSettings()`/`saveSettings()`. 5/5 SettingsDialog tests green. Frontend: 634 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.

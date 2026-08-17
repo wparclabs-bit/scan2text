@@ -180,6 +180,57 @@ pub fn stop_backend_process(child: &mut std::process::Child) -> Result<(), std::
     }
 }
 
+/// Validate an output directory path: reject empty/whitespace-only, require existing dir.
+pub fn validate_output_path(path: &str) -> Result<&str, String> {
+    let trimmed = path.trim();
+    if trimmed.is_empty() {
+        return Err("Output path is empty".to_string());
+    }
+    if !std::path::Path::new(trimmed).exists() {
+        return Err(format!("Output path does not exist: {}", trimmed));
+    }
+    Ok(trimmed)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_empty_path_rejected() {
+        let result = validate_output_path("");
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Output path is empty");
+    }
+
+    #[test]
+    fn test_validate_whitespace_only_rejected() {
+        let result = validate_output_path("   ");
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Output path is empty");
+    }
+}
+
+/// Open the user's output folder in the system file explorer.
+#[tauri::command]
+fn open_output_folder(path: String) -> Result<(), String> {
+    let validated = validate_output_path(&path)?;
+    std::fs::create_dir_all(validated).map_err(|e| format!("Failed to create output dir: {}", e))?;
+    #[cfg(windows)]
+    {
+        Command::new("explorer.exe")
+            .arg(validated)
+            .spawn()
+            .map_err(|e| format!("Failed to spawn explorer: {}", e))?;
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = validated;
+        return Err("open_output_folder is only supported on Windows".to_string());
+    }
+    Ok(())
+}
+
 /// State to manage the backend child process (legacy, used by tests).
 pub struct BackendState(pub Mutex<Option<std::process::Child>>);
 
@@ -336,6 +387,7 @@ pub fn run() {
 
             Ok(())
         })
+        .invoke_handler(tauri::generate_handler![open_output_folder])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(move |app: &tauri::AppHandle, event: RunEvent| {
