@@ -41,6 +41,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
           if (intervalId) clearInterval(intervalId)
         }
       } catch (err) {
+        setState({ status: 'failed', bytes_downloaded: 0, total_bytes: 0, error_message: 'network_error' })
         console.error('Downloader error:', err);
       }
     }
@@ -69,6 +70,19 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
     }
   }
 
+  const handleRetry = async () => {
+    await handleRestart()
+  }
+
+  const getErrorMessage = (): string => {
+    if (!state.error_message) return ''
+    if (state.error_message === 'network_error') return t('downloader.error.network')
+    if (state.error_message.toLowerCase().includes('size') || state.error_message.toLowerCase().includes('mismatch')) return t('downloader.error.sizeMismatch')
+    if (state.error_message.toLowerCase().includes('disk') || state.error_message.toLowerCase().includes('full')) return t('downloader.error.diskFull')
+    if (state.error_message.toLowerCase().includes('cancel')) return t('downloader.error.userCancelled')
+    return t('downloader.errorGeneric', { message: state.error_message })
+  }
+
   if (!open) return null
 
   const percentage = state.total_bytes > 0
@@ -76,7 +90,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
     : 0
 
   const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 B'
+    if (bytes === 0) return t('downloader.progressUnknown')
     const k = 1024
     const sizes = ['B', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
@@ -113,7 +127,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
         </div>
 
         {state.error_message && (
-          <p className="text-xs text-red-400 mb-4">{state.error_message}</p>
+          <p className="text-xs text-red-400 mb-4">{getErrorMessage()}</p>
         )}
 
         {(state.status === 'failed' || state.status === 'cancelled') && (
@@ -130,10 +144,10 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
               {t('downloader.cancel')}
             </button>
           )}
-          {(state.status === 'failed' || state.status === 'cancelled') && (
+          {(state.status === 'idle' || state.status === 'failed' || state.status === 'cancelled') && (
             <button
               data-testid="download-restart-btn"
-              onClick={handleRestart}
+              onClick={handleRetry}
               className="flex-1 py-2 px-4 rounded-lg text-sm font-medium bg-[#E3A55F] text-[#1F150C] hover:bg-[#d4944e] transition-colors"
             >
               {t('downloader.restart')}

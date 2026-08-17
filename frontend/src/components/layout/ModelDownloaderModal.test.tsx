@@ -186,4 +186,43 @@ describe('ModelDownloaderModal', () => {
     })
     vi.unstubAllEnvs()
   })
+
+  it('shows translated network error and retry button when fetch rejects', async () => {
+    mockFetch.mockRejectedValue(new Error('Network Error'))
+    render(<ModelDownloaderModal open={true} onClose={() => {}} />)
+    await waitFor(() => {
+      expect(screen.getByTestId('download-restart-btn')).toBeInTheDocument()
+    })
+    expect(screen.getByText(/downloader\.error\.network/)).toBeInTheDocument()
+  })
+
+  it('re-triggers fetch when retry button is clicked after network error', async () => {
+    mockFetch
+      .mockRejectedValueOnce(new Error('Network Error'))
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ status: 'failed', bytes_downloaded: 0, total_bytes: 0, error_message: 'version.json not found' }),
+      })
+    render(<ModelDownloaderModal open={true} onClose={() => {}} />)
+    await waitFor(() => {
+      expect(screen.getByTestId('download-restart-btn')).toBeInTheDocument()
+    })
+    const retryButton = screen.getByTestId('download-restart-btn')
+    fireEvent.click(retryButton)
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  it('does not render literal "0 B of 0 B" when total_bytes is unknown', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ status: 'idle', bytes_downloaded: 0, total_bytes: 0 }),
+    })
+    render(<ModelDownloaderModal open={true} onClose={() => {}} />)
+    await waitFor(() => {
+      expect(screen.getByText('Downloading AI Engine')).toBeInTheDocument()
+    })
+    expect(screen.queryByText(/0 B of 0 B/)).not.toBeInTheDocument()
+  })
 })
