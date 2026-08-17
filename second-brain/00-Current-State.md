@@ -8,12 +8,13 @@
 - Tauri shell hash: 00B1DA35…
 - Backend tests: 262 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
 - Backend exe hash: 542AF7FF…
-- Frontend tests: 630 green overall, 0 failures. S11-FIX28b: Preview header buttons moved to always-rendered top row (structural constancy 0 vs 10 jobs).
+- Frontend tests: 630 green overall, 0 failures. S11-FIX28c: Theme toggle tooltip now dynamic (shows target theme on hover). S11-FIX28b: Preview header buttons moved to always-rendered top row.
 - Rust tests: 6 passed. Build clean (1 dead_code warning).
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - Next: CEO new-bug list (next window); bug fixes → closure commit → .gitignore audit → play-GitHub push
 
 ## Recent Changelog (last 5)
+- **2026-08-17 (S11-FIX28c-DynamicThemeTooltip):** Fixed inverted ternary in TopBar theme-toggle tooltip — dark mode now correctly shows "Switch to light mode" and light mode shows "Switch to dark mode". +2 tests. Frontend: 630 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-17 (S11-FIX28b-Portable-Settings-Path):** Added `_resolve_portable_root()` to PathService — walks up from exe parent to first ancestor containing `models/`. Fixed `settings_path`, `logs_dir`, and new `feedback_dir` properties to use portable root in frozen mode (matching FIX14 output_dir logic). Settings, logs, and feedback now persist at D:\Scan2Text\ on reopen instead of inside dist\scan2text-backend\. +2 tests. Backend: 262 passed, 1 pre-existing failure. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-17 (S11-FIX28b-PreviewHeaderPosition):** Moved Copy Markdown + Open Folder buttons from inside empty-state block and duplicated in completed-state block to a single always-rendered `PreviewHeader` component at the top of PreviewPanel. Renamed `preview-action-header` → `preview-header`, `preview-empty` → `preview-empty-state`. Empty state now contains only the translated ✨ message with zero buttons. Header rendered in all 4 states (empty/processing/failed/completed). +5 visual-contract tests. Frontend: 630 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-FIX28b-PreviewHeaderPosition):** Moved Copy Markdown + Open Folder buttons from inside empty-state block and duplicated in completed-state block to a single always-rendered `PreviewHeader` component at the top of PreviewPanel. Renamed `preview-action-header` → `preview-header`, `preview-empty` → `preview-empty-state`. Empty state now contains only the translated ✨ message with zero buttons. Header rendered in all 4 states (empty/processing/failed/completed). +5 visual-contract tests. Frontend: 630 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
