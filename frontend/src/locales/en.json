@@ -77,7 +77,15 @@
     "outputDir": "\ud83d\udd12 Output Directory",
     "maxPdfPages": "\ud83d\udd12 Max PDF Pages",
     "cpuThreads": "\ud83d\udd12 CPU Threads",
-    "reopenWelcome": "Re-open Welcome Screen"
+    "reopenWelcome": "Re-open Welcome Screen",
+    "save": "Save",
+    "close": "Close",
+    "saved": "Settings saved",
+    "saveFailed": "Failed to save settings.",
+    "loadFailed": "Failed to load settings.",
+    "validationPages": "Max PDF Pages must be at least 1.",
+    "validationThreads": "CPU Threads cannot be negative.",
+    "autoHint": "0 = auto"
   },
   "welcome": {
     "title": "Welcome to Scan2Text",

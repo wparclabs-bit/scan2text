@@ -77,7 +77,15 @@
     "outputDir": "\ud83d\udd12 Folder Output",
     "maxPdfPages": "\ud83d\udd12 Maks Halaman PDF",
     "cpuThreads": "\ud83d\udd12 Thread CPU",
-    "reopenWelcome": "Buka kembali Layar Sambutan"
+    "reopenWelcome": "Buka kembali Layar Sambutan",
+    "save": "Simpan",
+    "close": "Tutup",
+    "saved": "Pengaturan disimpan",
+    "saveFailed": "Gagal menyimpan pengaturan.",
+    "loadFailed": "Gagal memuat pengaturan.",
+    "validationPages": "Maks Halaman PDF minimal 1.",
+    "validationThreads": "Thread CPU tidak boleh negatif.",
+    "autoHint": "0 = otomatis"
   },
   "welcome": {
     "title": "Selamat datang di Scan2Text",

@@ -3,17 +3,18 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX33a RED
+- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX33b GREEN
 - Date: 2026-08-17
 - Tauri shell hash: 61B4939F…
 - Backend tests: 262 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
 - Backend exe hash: A9C7BF5F…
-- Frontend tests: 634 green overall, 0 failures (SettingsDialog.test.tsx: suite fails at import — RED)
+- Frontend tests: 634 green overall, 0 failures
 - Rust tests: 0 passed in debug (release-only tests gated). Build clean (0 warnings)
 - PRD: v1.12 source of truth in second-brain/04-Product/
-- Next: S11-FIX33b-SettingsDialog-GREEN
+- Next: S11-FIX34 (TBD)
 
 ## Recent Changelog (last 5)
+- **2026-08-17 (S11-FIX33b-SettingsDialog-GREEN):** Fixed SettingsDialog.test.tsx import crash (`../../lib/i18n` → `../../i18n`), aligned `initI18n()` to real signature with resources object. Fixed SettingsDialog.tsx key names (`savedToast`→`saved`, `saveFailedToast`→`saveFailed`, `loadFailedToast`→`loadFailed`, `cpuThreadsHint`→`autoHint`). Added new i18n keys to en.json + id.json + test-setup.ts. Fixed test-3 toast assertion to spy on `toast.success` instead of DOM lookup. api.ts already had `getSettings()`/`saveSettings()`. 5/5 SettingsDialog tests green. Frontend: 634 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-DOC-Targeted-Test-Rule):** Added targeted test execution rule to AGENTS.md 3.6 — during RED/GREEN phases only run the target test file, never the full suite, to prevent context window bloat from 639-test output. No code changes.
 - **2026-08-17 (S11-FIX35-ProseCompact):** Fixed BUG-35 preview bloat — replaced redundant `prose-sm prose-base` dual with `prose-base prose-compact` in MarkdownPreview; added `.prose-compact` CSS override (`line-height: 1.4`, `p { margin: 0.25em }`) in index.css. +1 test. Frontend: 634 passed, 0 failures. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-FIX32-Rebuild-And-Swap):** Rebuilt backend (PyInstaller exit 0, hash A9C7BF5F…) and Tauri shell (--no-bundle exit 0, hash 61B4939F…). Swapped into D:\Scan2Text portable + repo dist. Three-way hash match confirmed. Boot gate PASS: Uvicorn on 127.0.0.1:47351, zero ModuleNotFoundError, zero Model files not found. No source changes. Status: READY FOR CEO MANUAL VERIFICATION.
