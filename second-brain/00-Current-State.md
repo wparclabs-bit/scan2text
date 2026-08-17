@@ -3,18 +3,19 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX41a SingleScriptRebuild
+- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX43a Spec-Onedir
 - Date: 2026-08-18
 - Tauri shell hash: A6A9783E…
-- Backend tests: 281 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
-- Backend exe hash: 02A8AD36… (FIX41a rebuilt with pypdfium2_raw DLL bundling)
+- Backend tests: 283 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
+- Backend exe hash: STALE — needs rebuild (spec changed to onedir; STEP 2 does it)
 - Frontend tests: 633 green overall, 0 failures
 - Rust tests: 2 passed in debug. Build clean (1 dead_code warning).
 - PRD: v1.12 source of truth in second-brain/04-Product/
-- Next: S11-FIX42-Forensics-SpecDll — COMPLETE (forensics done; root cause: pypdfium2_raw.bindings resolves DLL via __file__-relative path; fix = runtime hook patching _get_library to use sys._MEIPASS)
-- BOOT GATE: status=ok, model.loaded=true, model.files_present=true
+- Next: S11-FIX43b-Rebuild-Probe-Onedir — rebuild both artifacts with onedir spec, probe PDF live
+- BOOT GATE: status=ok, model.loaded=true, model.files_present=true (from prior rebuild)
 
 ## Recent Changelog (last 5)
+- **2026-08-18 (S11-FIX43a-Spec-Onedir):** COMPLETE — Spec now produces folder-based artifact per ADR-008 Decision 2 / CEO Option B. Added `onefile=False` to EXE + `COLLECT(exe, a.binaries, a.datas, name='scan2text-backend')` block. Removed manual shutil.move post-build hack. +2 spec-contract tests (not-on efile + COLLECT presence). Backend: 283 passed, 1 pre-existing. Status: COMPLETE — STEP 2 pending rebuild.
 - **2026-08-18 (S11-FIX42-Forensics-SpecDll):** COMPLETE — Three-verdict forensics: (1) spec correctly collects pdfium.dll via collect_all("pypdfium2_raw") into all_binaries→Analysis; (2) loader resolves via pathlib.Path(__file__).parent/'./pdfium.dll' → _MEIPASS/pypdfium2_raw/pdfium.dll; (3) build is onefile (45.5 MB exe, no standalone DLLs). Root cause: __file__-relative resolution may fail if DLL extraction lags or subdir not preserved. Fix proposed: runtime hook patching _get_library to use sys._MEIPASS directly. Backend: 281 passed, 1 pre-existing. Frontend: 633 passed. Status: READY FOR FIX43 IMPLEMENTATION.
 - **2026-08-18 (S11-FIX41a-SingleScriptRebuild):** Rebuilt backend with fixed spec — added `collect_all("pypdfium2_raw")` to bundle `pdfium.dll` inside exe (pypdfium2 auto-hook returns empty binaries; raw package holds the actual DLL). Rebuilt Tauri shell. Swapped into D:\Scan2Text portable. Boot gate PASS: health ok, model.loaded=true, files_present=true. Backend: 281 passed, 1 pre-existing. Frontend: 633 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-18 (S11-FIX40-Downloader-RetryUX):** Fixed three ModelDownloaderModal bugs: (1) `getErrorMessage()` now handles `version.json not found` → translated `downloader.error.versionJsonMissing` before generic fallback; (2) progress JSX renders single `t('downloader.progressUnknown')` when `total_bytes === 0` instead of doubled interpolation; (3) restart button enters visible retrying state (disabled + "Retry Download") while `POST /api/download/start` is in flight. +3 frontend tests, fix pre-existing regex test. Frontend: 633 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
