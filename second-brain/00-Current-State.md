@@ -12,6 +12,7 @@
 - Rust tests: 2 passed in debug (validate_output_path validation). Build clean (0 warnings)
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - Next: FIX41 smoke verification (visual proof of retrying state) → CEO packaged re-smoke
+- BLOCKED: S11-FIX41b-PDF-LiveProof — PdfDocument.open(bytes) does not exist on installed pypdfium2; API is PdfDocument(bytes) or PdfDocument.from_bytes(). See slice summary.
 
 ## Recent Changelog (last 5)
 - **2026-08-18 (S11-FIX40-Downloader-RetryUX):** Fixed three ModelDownloaderModal bugs: (1) `getErrorMessage()` now handles `version.json not found` → translated `downloader.error.versionJsonMissing` before generic fallback; (2) progress JSX renders single `t('downloader.progressUnknown')` when `total_bytes === 0` instead of doubled interpolation; (3) restart button enters visible retrying state (disabled + "Retry Download") while `POST /api/download/start` is in flight. +3 frontend tests, fix pre-existing regex test. Frontend: 633 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
