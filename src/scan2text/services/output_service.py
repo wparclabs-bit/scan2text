@@ -12,6 +12,16 @@ from scan2text.services.path_service import PathService
 
 logger = logging.getLogger(__name__)
 
+_NO_TEXT_NOTICE = "No text detected / Tidak ada teks terdeteksi\n"
+
+
+def has_no_text(text: str) -> bool:
+    """Return True when *text* has no alphabetic letters (digits/symbols only)."""
+    stripped = text.strip()
+    if not stripped:
+        return True
+    return not any(c.isalpha() for c in stripped)
+
 
 class OutputService:
     """Renders OCRResult into Markdown and writes one file per result.
@@ -43,6 +53,13 @@ class OutputService:
 
     # --- Writing ------------------------------------------------------------
 
+    @staticmethod
+    def _has_raw_text(result: OCRResult) -> bool:
+        """Return True when the raw OCR page texts contain alphabet letters."""
+        if result.pages:
+            return any(has_no_text(page.text) is False for page in result.pages)
+        return not has_no_text(result.full_text or "")
+
     def write(
         self,
         job: OCRJob,
@@ -57,6 +74,8 @@ class OutputService:
         self._paths.ensure_runtime_dirs()
 
         markdown = self.render_markdown(ocr_result)
+        if not self._has_raw_text(ocr_result):
+            markdown = _NO_TEXT_NOTICE
         output_path = self._paths.resolve_output_path(job.file_path, desired_stem)
 
         with open(output_path, "w", encoding="utf-8", newline="\n") as f:
