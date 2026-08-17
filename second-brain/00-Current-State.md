@@ -3,17 +3,18 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX36 GREEN
+- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX37 GREEN
 - Date: 2026-08-18
-- Tauri shell hash: 61B4939F…
+- Tauri shell hash: 1E7E7589…
 - Backend tests: 275 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
-- Backend exe hash: A9C7BF5F…
+- Backend exe hash: 130E9C3E…
 - Frontend tests: 629 green overall, 0 failures
 - Rust tests: 2 passed in debug (validate_output_path validation). Build clean (0 warnings)
 - PRD: v1.12 source of truth in second-brain/04-Product/
-- Next: S11-FIX36 next slice (TBD)
+- Next: CEO packaged re-smoke (manual UI verification)
 
 ## Recent Changelog (last 5)
+- **2026-08-18 (S11-FIX37-Rebuild-Swap-Registry):** Rebuilt backend (PyInstaller exit 0, hash 130E9C3E…) and Tauri shell (--no-bundle exit 0, hash 1E7E7589…). Swapped into D:\Scan2Text portable + repo dist. Three-way hash match confirmed. Boot gate PASS: Uvicorn on 127.0.0.1:47351, zero ModuleNotFoundError, zero Model files not found in current session. No source changes. Status: COMPLETE.
 - **2026-08-18 (S11-FIX36-NoText-Guard):** Added backend no-text guard — when OCR output is empty or contains no alphabet letters (digits-only hallucination), saved .md gets bilingual notice "No text detected / Tidak ada teks terdeteksi\n". Detection on raw page texts (not rendered markdown) to avoid false negatives from page headers. Job status stays DONE. Zero frontend changes. +9 tests. Backend: 275 passed, 1 pre-existing failure. Frontend: 629 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-17 (S11-FIX34b-OpenFolder-EndToEnd):** Wired Open Folder button end-to-end: PreviewPanel.tsx onClick calls getSettings() → invoke('open_output_folder', { path }). Added flex-wrap + min-w-0 to preview header for narrow-width wrap. Rust: registered open_output_folder via invoke_handler(generate_handler![]), extracted validate_output_path into pure fn with 2 debug unit tests. i18n: preview.openFolderFailed in en.json + id.json. +2 Rust tests, +3 frontend tests (replaced 1 no-op test). Frontend: 629 passed, 0 failures. Rust: 2 passed, 0 warnings. Typecheck clean. Build success. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-17 (S11-FIX34a-Settings-EffectiveOutputDir):** Fixed BUG-34 — GET /api/settings now returns EFFECTIVE output_dir: stored value when non-empty after strip, otherwise str(PathService.output_dir). Resolve-on-read only; GET never rewrites settings.json. SettingsService.load() stays raw. +4 tests. Backend: 266 passed, 1 pre-existing failure. Status: READY FOR CEO MANUAL VERIFICATION.
