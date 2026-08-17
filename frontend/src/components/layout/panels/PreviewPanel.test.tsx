@@ -12,8 +12,18 @@ vi.mock('@/stores/scan2text.store', () => ({
   useScan2TextStore: vi.fn(),
 }))
 
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn(),
+}))
+
+vi.mock('@/lib/api', () => ({
+  getSettings: vi.fn(),
+}))
+
 const { useTranslation } = await import('react-i18next')
 const { useScan2TextStore } = await import('@/stores/scan2text.store')
+const { invoke } = await import('@tauri-apps/api/core')
+const { getSettings } = await import('@/lib/api')
 
 describe('PreviewPanel', () => {
   beforeEach(() => {
@@ -35,6 +45,8 @@ describe('PreviewPanel', () => {
             return 'Open Folder'
           case 'toast.copySuccess':
             return 'Markdown copied to clipboard!'
+          case 'preview.openFolderFailed':
+            return 'Failed to open output folder.'
           default:
             return key
         }
@@ -42,6 +54,9 @@ describe('PreviewPanel', () => {
     })
     vi.mocked(toast).success = vi.fn()
     vi.mocked(toast).info = vi.fn()
+    vi.mocked(toast).error = vi.fn()
+    vi.mocked(invoke).mockResolvedValue(undefined)
+    vi.mocked(getSettings).mockResolvedValue({ output_dir: 'C:\\test\\output', max_pdf_pages: 20, cpu_threads: 0 })
   })
 
   function setupStore(selectedJobId: string | null, jobs: Record<string, any>) {
@@ -297,7 +312,7 @@ describe('PreviewPanel', () => {
     expect(toast.success).toHaveBeenCalledWith('Markdown copied to clipboard!')
   })
 
-  it('open folder button click handler is a no-op (final product)', async () => {
+  it('clicks open folder button invokes Tauri command with output_dir from settings', async () => {
     setupStore('job-1', {
       'job-1': {
         id: 'job-1',
@@ -312,8 +327,43 @@ describe('PreviewPanel', () => {
     const openFolderBtn = screen.getByTestId('preview-open-folder-btn')
     await userEvent.click(openFolderBtn)
 
-    // In final product, the handler is a no-op (placeholder for future file system access)
-    expect(toast.info).not.toHaveBeenCalled()
+    expect(getSettings).toHaveBeenCalledOnce()
+    expect(invoke).toHaveBeenCalledWith('open_output_folder', { path: 'C:\\test\\output' })
+    expect(toast.error).not.toHaveBeenCalled()
+  })
+
+  it('open folder button shows error toast when invoke rejects', async () => {
+    vi.mocked(invoke).mockRejectedValueOnce(new Error('Failed to open folder'))
+    setupStore('job-1', {
+      'job-1': {
+        id: 'job-1',
+        fileName: 'test.png',
+        fileType: 'image/png',
+        status: 'completed',
+        resultMarkdown: '# Test',
+      },
+    })
+    render(<PreviewPanel />)
+
+    const openFolderBtn = screen.getByTestId('preview-open-folder-btn')
+    await userEvent.click(openFolderBtn)
+
+    expect(toast.error).toHaveBeenCalledWith('Failed to open output folder.')
+  })
+
+  it('preview header className contains flex-wrap for narrow-width wrap', () => {
+    setupStore('job-1', {
+      'job-1': {
+        id: 'job-1',
+        fileName: 'test.png',
+        fileType: 'image/png',
+        status: 'completed',
+        resultMarkdown: '# Test',
+      },
+    })
+    render(<PreviewPanel />)
+    const header = screen.getByTestId('preview-header') as HTMLElement
+    expect(header.className).toContain('flex-wrap')
   })
 
     it('copy button is borderless with transparent background', () => {

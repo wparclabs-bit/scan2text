@@ -43,6 +43,7 @@
     "openFolderBtn": "Open Folder",
     "processing": "Processing document...",
     "failed": "OCR Failed",
+    "openFolderFailed": "Failed to open output folder.",
     "pdfPlaceholder": "PDF Document",
     "loading": "Processing your file...",
     "error": "Processing failed. Please try again.",

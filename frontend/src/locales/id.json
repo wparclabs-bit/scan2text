@@ -43,6 +43,7 @@
     "openFolderBtn": "Buka Folder",
     "processing": "Memproses dokumen...",
     "failed": "Gagal OCR",
+    "openFolderFailed": "Gagal membuka folder output.",
     "pdfPlaceholder": "Dokumen PDF",
     "loading": "Memproses file Anda...",
     "error": "Pemrosesan gagal. Silakan coba lagi.",
