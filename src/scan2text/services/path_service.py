@@ -81,7 +81,31 @@ class PathService:
 
     @property
     def settings_path(self) -> Path:
+        if getattr(sys, "frozen", False):
+            return self._resolve_portable_root() / "settings" / "settings.json"
         return self.base_dir / "settings" / "settings.json"
+
+    @property
+    def feedback_dir(self) -> Path:
+        if getattr(sys, "frozen", False):
+            return self._resolve_portable_root() / "feedback"
+        return self.base_dir / "feedback"
+
+    @staticmethod
+    def _resolve_portable_root() -> Path:
+        """Resolve portable root for frozen executables.
+
+        Walks up from exe_dir (exe_dir, exe_dir.parent, exe_dir.parent.parent)
+        and returns the first ancestor containing a models/ directory.
+        Falls back to exe_dir if no ancestor contains models/.
+        """
+        exe_dir = Path(sys.executable).parent
+
+        for cand in (exe_dir, exe_dir.parent, exe_dir.parent.parent):
+            if (cand / "models").is_dir():
+                return cand
+
+        return exe_dir
 
     @staticmethod
     def _resolve_output_dir() -> Path:
@@ -108,6 +132,8 @@ class PathService:
 
     @property
     def logs_dir(self) -> Path:
+        if getattr(sys, "frozen", False):
+            return self._resolve_portable_root() / "logs"
         return self.base_dir / "logs"
 
     @property
