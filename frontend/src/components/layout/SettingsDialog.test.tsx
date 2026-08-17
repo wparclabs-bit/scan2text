@@ -1,11 +1,12 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SettingsDialog from './SettingsDialog';
-import { initI18n } from '../../lib/i18n';
+import { initI18n } from '../../i18n';
+import en from '../../locales/en.json';
 
 describe('SettingsDialog', () => {
   beforeEach(() => {
-    initI18n('en');
+    initI18n({ en: { translation: en } });
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any) => {
       if (url.toString().includes('/api/settings')) {
         return new Response(JSON.stringify({
@@ -27,7 +28,7 @@ describe('SettingsDialog', () => {
 
   it('fires PUT with merged payload when save button clicked', async () => {
     const putMock = vi.fn();
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any, options: any) => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url: any, options: any) => {
       if (options?.method === 'PUT') {
         putMock(JSON.parse(options.body));
         return new Response('{"status":"ok"}', { status: 200 });
@@ -52,7 +53,9 @@ describe('SettingsDialog', () => {
   });
 
   it('shows translated success toast on save', async () => {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any, options: any) => {
+    const { toast } = await import('sonner');
+    const successSpy = vi.spyOn(toast, 'success');
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url: any, options: any) => {
       if (options?.method === 'PUT') {
         return new Response('{"status":"ok"}', { status: 200 });
       }
@@ -66,8 +69,9 @@ describe('SettingsDialog', () => {
     await waitFor(() => screen.getByTestId('settings-save-btn'));
     fireEvent.click(screen.getByTestId('settings-save-btn'));
     await waitFor(() => {
-      expect(screen.getByText(/settings.saved/i)).toBeInTheDocument();
+      expect(successSpy).toHaveBeenCalledWith('Settings saved');
     });
+    successSpy.mockRestore();
   });
 
   it('does NOT render language or theme selects', () => {
@@ -78,7 +82,7 @@ describe('SettingsDialog', () => {
 
   it('blocks PUT when max_pdf_pages < 1', async () => {
     const putMock = vi.fn();
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any, options: any) => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url: any, options: any) => {
       if (options?.method === 'PUT') {
         putMock();
         return new Response('{"status":"ok"}', { status: 200 });

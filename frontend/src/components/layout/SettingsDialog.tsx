@@ -1,8 +1,12 @@
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { getSettings, saveSettings } from '@/lib/api'
+import type { SettingsResponse } from '@/lib/api'
 
 interface SettingsDialogProps {
   open: boolean
@@ -11,6 +15,53 @@ interface SettingsDialogProps {
 
 export default function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { t } = useTranslation()
+  const [outputDir, setOutputDir] = useState('')
+  const [maxPdfPages, setMaxPdfPages] = useState('20')
+  const [cpuThreads, setCpuThreads] = useState('0')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setLoading(true)
+    getSettings()
+      .then((settings: SettingsResponse) => {
+        setOutputDir(settings.output_dir ?? '')
+        setMaxPdfPages(String(settings.max_pdf_pages ?? 20))
+        setCpuThreads(String(settings.cpu_threads ?? 0))
+      })
+      .catch(() => {
+        toast.error(t('settings.loadFailed'))
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  const handleSave = async () => {
+    const pages = parseInt(maxPdfPages, 10)
+    const threads = parseInt(cpuThreads, 10)
+
+    if (isNaN(pages) || pages < 1) {
+      toast.error(t('settings.validationPages'))
+      return
+    }
+    if (isNaN(threads) || threads < 0) {
+      toast.error(t('settings.validationThreads'))
+      return
+    }
+
+    try {
+      await saveSettings({
+        output_dir: outputDir,
+        max_pdf_pages: pages,
+        cpu_threads: threads,
+      })
+      toast.success(t('settings.saved'))
+    } catch {
+      toast.error(t('settings.saveFailed'))
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -19,84 +70,53 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
           <DialogTitle>{t('settings.title')}</DialogTitle>
         </DialogHeader>
 
-        {/* General Section */}
-        <div className="space-y-4 py-4 border-b">
-          <h3 className="text-sm font-medium text-muted-foreground">{t('settings.general')}</h3>
-          <div className="grid gap-2">
-            <Label htmlFor="language-select">{t('actions.toggleLanguage')}</Label>
-            <select
-              id="language-select"
-              defaultValue="en"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-            >
-              <option value="en">English</option>
-              <option value="id">Bahasa Indonesia</option>
-            </select>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="theme-select">{t('actions.toggleTheme')}</Label>
-            <select
-              id="theme-select"
-              defaultValue="dark"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-            >
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Processing Section - Enabled in final product */}
+        {/* Processing Section */}
         <div className="space-y-4 py-4 border-b">
           <h3 className="text-sm font-medium text-muted-foreground">{t('settings.processing')}</h3>
           <div className="grid gap-2">
             <Label htmlFor="output-dir">{t('settings.outputDir')}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="output-dir"
-                type="text"
-                value="./output"
-              />
-              <Button variant="outline" size="sm">
-                Browse
-              </Button>
-            </div>
+            <Input
+              id="output-dir"
+              data-testid="settings-output-dir"
+              type="text"
+              value={outputDir}
+              onChange={(e) => setOutputDir(e.target.value)}
+              disabled={loading}
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="max-pdf-pages">{t('settings.maxPdfPages')}</Label>
             <Input
               id="max-pdf-pages"
+              data-testid="settings-max-pdf-pages"
               type="number"
-              value={20}
+              value={maxPdfPages}
+              onChange={(e) => setMaxPdfPages(e.target.value)}
+              disabled={loading}
             />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="cpu-threads">{t('settings.cpuThreads')}</Label>
             <Input
               id="cpu-threads"
+              data-testid="settings-cpu-threads"
               type="number"
-              value={0}
+              value={cpuThreads}
+              onChange={(e) => setCpuThreads(e.target.value)}
+              disabled={loading}
             />
+            <p className="text-xs text-muted-foreground">{t('settings.autoHint')}</p>
           </div>
         </div>
 
-        {/* Re-open Welcome Screen */}
-        <div className="pt-4 border-t">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              onOpenChange(false)
-              window.location.reload()
-            }}
-          >
-            {t('settings.reopenWelcome')}
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="outline" data-testid="settings-close-btn" onClick={() => onOpenChange(false)}>
+            {t('settings.close')}
           </Button>
-        </div>
-
-        {/* Close Button */}
-        <div className="flex justify-end pt-2">
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+          <Button data-testid="settings-save-btn" onClick={handleSave} disabled={loading}>
+            {t('settings.save')}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

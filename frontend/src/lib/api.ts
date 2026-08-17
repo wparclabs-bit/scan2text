@@ -78,6 +78,38 @@ export async function pollTaskStatus(
 
 export const defaultDelay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
+export interface SettingsResponse {
+  output_dir: string
+  max_pdf_pages: number
+  cpu_threads: number
+  [key: string]: unknown
+}
+
+export interface SettingsPatch {
+  output_dir?: string
+  max_pdf_pages?: number
+  cpu_threads?: number
+}
+
+export async function getSettings(): Promise<SettingsResponse> {
+  const response = await fetch(buildApiUrl('/api/settings'))
+  if (!response.ok) {
+    throw new Error(`Settings load failed: ${response.status} ${response.statusText}`)
+  }
+  return response.json() as Promise<SettingsResponse>
+}
+
+export async function saveSettings(patch: SettingsPatch): Promise<void> {
+  const response = await fetch(buildApiUrl('/api/settings'), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  })
+  if (!response.ok) {
+    throw new Error(`Settings save failed: ${response.status} ${response.statusText}`)
+  }
+}
+
 export async function uploadFile(file: File): Promise<UploadResponse> {
   const formData = new FormData()
   formData.append('files', file, file.name)
