@@ -1,7 +1,12 @@
+#![cfg(not(debug_assertions))]
+
 use std::io::{Read, Write};
 use std::net::TcpStream;
+#[cfg(not(debug_assertions))]
 use std::path::PathBuf;
+#[cfg(not(debug_assertions))]
 use std::process::{Command, Stdio};
+#[cfg(not(debug_assertions))]
 use std::time::{Duration, Instant};
 
 fn resolve_backend_path() -> PathBuf {

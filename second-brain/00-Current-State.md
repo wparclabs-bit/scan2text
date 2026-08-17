@@ -9,7 +9,7 @@
 - Backend tests: 262 passed, 1 pre-existing failure (test_health_contract — model loaded=True vs expected False)
 - Backend exe hash: 542AF7FF…
 - Frontend tests: 633 green overall, 0 failures. S11-FIX31: ModelDownloaderModal button now enabled in idle/error states; raw error strings replaced by translated graceful messages; no "0 B of 0 B" when expected size unknown. +3 tests.
-- Rust tests: 6 passed. Build clean (1 dead_code warning).
+- Rust tests: 0 passed in debug (release-only tests gated). Build clean (0 warnings). S11-FIX-Rust-Dev-Mode-Backend-Spawn: Tauri shell skips backend spawn in debug/dev mode via cfg!(debug_assertions); dev.ps1 manages backend on port 8000.
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - Next: CEO new-bug list (next window); bug fixes → closure commit → .gitignore audit → play-GitHub push
 

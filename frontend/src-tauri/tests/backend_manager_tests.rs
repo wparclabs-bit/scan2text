@@ -1,3 +1,5 @@
+#![cfg(not(debug_assertions))]
+
 use app_lib::{boot_backend, force_kill_process_tree, wait_for_health, BackendManager};
 
 const BACKEND_PORT: u16 = 47351;
