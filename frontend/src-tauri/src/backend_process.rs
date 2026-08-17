@@ -1,10 +1,13 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::path::PathBuf;
-use std::process::{Child, Command};
+use std::process::Child;
 use std::time::{Duration, Instant};
 
-#[cfg(windows)]
+#[cfg(not(debug_assertions))]
+use std::path::PathBuf;
+#[cfg(not(debug_assertions))]
+use std::process::Command;
+#[cfg(all(windows, not(debug_assertions)))]
 use std::os::windows::process::CommandExt;
 
 /// Backend port (ADR-008).
@@ -28,19 +31,27 @@ impl BackendManager {
     /// Start the backend executable and store the child process.
     /// Idempotent: if a live child already exists, reuse it.
     /// If a dead child exists, restart it.
-    pub fn start(&mut self, timeout: Duration) -> Result<(), String> {
-        if let Some(ref mut child) = self.child {
-            // Verify existing child is still alive
-            if child.try_wait().ok().flatten().is_some() {
-                // Child has died — fall through to restart
-            } else {
-                return Ok(()); // already running and alive
-            }
+    /// In debug/dev mode, skip spawning — the dev script manages the backend.
+    pub fn start(&mut self, _timeout: Duration) -> Result<(), String> {
+        #[cfg(debug_assertions)]
+        {
+            return Ok(());
         }
-        let exe_path = resolve_backend_path();
-        let child = start_backend(&exe_path);
-        self.child = Some(child);
-        self.wait_for_health(timeout)
+        #[cfg(not(debug_assertions))]
+        {
+            if let Some(ref mut child) = self.child {
+                // Verify existing child is still alive
+                if child.try_wait().ok().flatten().is_some() {
+                    // Child has died — fall through to restart
+                } else {
+                    return Ok(()); // already running and alive
+                }
+            }
+            let exe_path = resolve_backend_path();
+            let child = start_backend(&exe_path);
+            self.child = Some(child);
+            return self.wait_for_health(_timeout);
+        }
     }
 
     /// Stop the backend process cleanly.
@@ -69,14 +80,23 @@ impl BackendManager {
 }
 
 /// Boot the backend: start it and wait for health.
-pub fn boot_backend(manager: &mut BackendManager) -> Result<(), String> {
-    manager.start(Duration::from_secs(30))?;
-    manager.wait_for_health(Duration::from_secs(30))
+/// In debug/dev mode, skip entirely — dev.ps1 manages the backend on port 8000.
+pub fn boot_backend(_manager: &mut BackendManager) -> Result<(), String> {
+    #[cfg(debug_assertions)]
+    {
+        return Ok(());
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        _manager.start(Duration::from_secs(30))?;
+        _manager.wait_for_health(Duration::from_secs(30))
+    }
 }
 
 /// Resolve the backend executable path without hardcoding D:.
 /// Looks relative to CARGO_MANIFEST_DIR (three parent dirs = repo root),
 /// or falls back to locating it alongside the running executable.
+#[cfg(not(debug_assertions))]
 pub fn resolve_backend_path() -> PathBuf {
     if let Ok(manifest) = std::env::var("CARGO_MANIFEST_DIR") {
         let manifest_path = PathBuf::from(manifest);
@@ -156,11 +176,13 @@ pub fn is_port_open(host: &str, port: u16) -> bool {
 
 /// Derive the log file path from the executable's parent directory.
 /// Log path: <exe_dir>/logs/backend-boot.log
+#[cfg(not(debug_assertions))]
 pub fn derive_log_path(exe_dir: &std::path::Path) -> PathBuf {
     exe_dir.join("logs").join("backend-boot.log")
 }
 
 /// Ensure the log directory exists.
+#[cfg(not(debug_assertions))]
 pub fn ensure_log_dir(log_path: &std::path::Path) -> std::io::Result<()> {
     if let Some(dir) = log_path.parent() {
         std::fs::create_dir_all(dir)?;
@@ -170,18 +192,19 @@ pub fn ensure_log_dir(log_path: &std::path::Path) -> std::io::Result<()> {
 
 /// Creation flags for backend process spawn.
 /// On Windows: CREATE_NO_WINDOW (0x08000000) suppresses the black console.
-#[cfg(windows)]
+#[cfg(all(windows, not(debug_assertions)))]
 const BACKEND_CREATION_FLAGS: u32 = 0x08000000;
 
 /// Return the creation flags used when spawning the backend process.
 /// Exposed for testing.
-#[cfg(windows)]
+#[cfg(all(windows, not(debug_assertions)))]
 pub fn spawn_creation_flags() -> u32 {
     BACKEND_CREATION_FLAGS
 }
 
 /// Build a Command that pipes stdout+stderr to the log file.
 /// Creates the log directory if needed.
+#[cfg(not(debug_assertions))]
 pub fn spawn_config(
     exe_path: &std::path::Path,
     log_path: &std::path::Path,
@@ -200,6 +223,7 @@ pub fn spawn_config(
 }
 
 /// Start the backend executable.
+#[cfg(not(debug_assertions))]
 pub fn start_backend(exe_path: &std::path::Path) -> std::process::Child {
     let exe_dir = exe_path
         .parent()
@@ -239,8 +263,10 @@ pub fn wait_for_port_closed(host: &str, port: u16, timeout: Duration) -> Result<
 
 #[cfg(test)]
 mod tests {
+    #[cfg(not(debug_assertions))]
     use super::*;
 
+    #[cfg(not(debug_assertions))]
     #[test]
     fn test_derive_log_path() {
         let exe_dir = std::path::Path::new("/some/path/to/exe");
@@ -251,6 +277,7 @@ mod tests {
         );
     }
 
+    #[cfg(not(debug_assertions))]
     #[test]
     fn test_ensure_log_dir_creates_directory() {
         let temp_dir = std::env::temp_dir();
@@ -264,6 +291,7 @@ mod tests {
         }
     }
 
+    #[cfg(not(debug_assertions))]
     #[test]
     fn test_spawn_config_pipes_to_log() {
         let temp_dir = std::env::temp_dir();
@@ -290,6 +318,7 @@ mod tests {
         }
     }
 
+    #[cfg(not(debug_assertions))]
     #[test]
     fn test_spawn_config_log_captures_stdout() {
         let temp_dir = std::env::temp_dir();
@@ -323,7 +352,7 @@ mod tests {
         }
     }
 
-    #[cfg(windows)]
+    #[cfg(all(windows, not(debug_assertions)))]
     #[test]
     fn test_spawn_creation_flags_no_window_on_windows() {
         // CREATE_NO_WINDOW = 0x08000000
@@ -335,6 +364,7 @@ mod tests {
         );
     }
 
+    #[cfg(not(debug_assertions))]
     #[test]
     fn test_boot_backend_single_live_child() {
         let mut manager = BackendManager::new();
