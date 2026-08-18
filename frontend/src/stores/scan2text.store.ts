@@ -8,6 +8,8 @@ import {
   pollTaskStatus,
 } from '../lib/api'
 import { startProgress, stopProgress } from '../lib/progressManager'
+import { i18n } from '../i18n'
+import { toast } from 'sonner'
 
 const DEFAULT_POLL_OPTIONS = { maxAttempts: 30, intervalMs: 1000 }
 
@@ -441,6 +443,12 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
         return
       }
       if (isTaskFailed(response)) {
+        const errorCode = response.error_code
+        if (errorCode === 'PDF_TOO_COMPLEX') {
+          toast.info(i18n.t('errors.pdfTooComplex'))
+        } else if (errorCode === 'FILE_TOO_COMPLEX') {
+          toast.info(i18n.t('errors.fileTooComplex'))
+        }
         set({
           jobs: {
             ...get().jobs,

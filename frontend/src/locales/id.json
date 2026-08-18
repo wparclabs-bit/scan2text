@@ -29,7 +29,9 @@
     "fileTooLarge": "Ukuran file melebihi batas 50MB",
     "uploadFailed": "Gagal mengunggah",
     "batchSkipped": "{{total}} file dilewati: {{unsupported}} tipe tidak didukung, {{tooLarge}} terlalu besar.",
-    "allInvalid": "Semua file yang dipilih tidak didukung atau terlalu besar."
+    "allInvalid": "Semua file yang dipilih tidak didukung atau terlalu besar.",
+    "pdfTooComplex": "PDF terlalu kompleks untuk batas halaman saat ini. Naikkan batas halaman di Pengaturan lalu coba lagi.",
+    "fileTooComplex": "File terlalu kompleks (maks 20MB)."
   },
   "dropzone": {
     "hint": "PNG · JPG · WEBP · PDF — maks 50MB per file · maks 10 file per batch",

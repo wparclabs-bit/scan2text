@@ -35,6 +35,8 @@ void i18next
             uploadFailed: 'Upload failed',
             batchSkipped: '{{total}} files were skipped: {{unsupported}} unsupported type(s), {{tooLarge}} too large.',
             allInvalid: 'All selected files are unsupported or too large.',
+            pdfTooComplex: 'PDF too complex for the current page limit. Raise the page limit in Settings and retry.',
+            fileTooComplex: 'File too complex (max 20MB).',
           },
           preview: {
             empty: 'Select a job to preview',
@@ -143,6 +145,8 @@ void i18next
             uploadFailed: 'Gagal mengunggah',
             batchSkipped: '{{total}} file dilewati: {{unsupported}} tipe tidak didukung, {{tooLarge}} terlalu besar.',
             allInvalid: 'Semua file yang dipilih tidak didukung atau terlalu besar.',
+            pdfTooComplex: 'PDF terlalu kompleks untuk batas halaman saat ini. Naikkan batas halaman di Pengaturan lalu coba lagi.',
+            fileTooComplex: 'File terlalu kompleks (maks 20MB).',
           },
           preview: {
             empty: 'Pilih pekerjaan untuk pratinjau',
