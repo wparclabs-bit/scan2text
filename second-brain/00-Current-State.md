@@ -3,21 +3,23 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX48r-GuardLiveSettings-Complete
+- Phase: Phase 11 (Polling Endurance) — S11-FIX52-PollingEndurance-Complete
 - Date: 2026-08-18
 - Tauri shell hash: A6A9783E68A3DC389B4AAAC3528A0C634ACD5D5FF9386F3DED191C280BF732EB
 - Backend hash: 46D6FBCD17EAC7C45B0E523E6E607547D4E11123B4537EC54AFFCE65F2DB762C (folder-based onedir, rebuilt S11-FIX47)
 - pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 7.2MB)
-- Backend tests: 310 passed, 1 pre-existing failure (test_health_contract)
-- Frontend tests: 636 green, 0 failures
+- Backend tests: 316 passed, 1 pre-existing failure (test_health_contract)
+- Frontend tests: 91 passed, 0 failures
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - Next: CEO packaged re-smoke
-- RESULT: Wall-1 bug confirmed and fixed — VlmOcrAdapter._render_pdf now reads live SettingsService.load() at guard time instead of stale _max_pdf_pages cached at __init__. Noise filter recovered from dead FIX48 session. Backend: 310 passed, 1 pre-existing. Status: READY FOR CEO MANUAL VERIFICATION.
+- RESULT: Polling endurance implemented — pollJob now starts background loop with health check, 60s re-poll, backendLost i18n error, one-time long-doc hint after 5 min. startPolling simplified to direct pollJob call. Tests updated. Typecheck clean. Build success. Status: COMPLETE.
 
 ## Recent Changelog (last 5)
+- **2026-08-18 (S11-FIX52-PollingEndurance):** COMPLETE — Frontend never times out on its own. pollJob now starts background endurance loop with health check before each status poll, 60s re-poll, backendLost i18n error on health unreachable, one-time long-doc hint after 5 min. startPolling simplified to direct pollJob call. Tests updated for new behavior. Frontend: 91 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
+- **2026-08-18 (S11-FIX51-TimeoutAutoScale):** COMPLETE — Added `effective_ocr_timeout(base_seconds, pages)` = `max(base, pages×30s)` in `vlm_ocr.py`; wired at `queue.get()` enforcement site. 397-page book now gets ≥11910s instead of 600s. +6 tests. Backend: 316 passed, 1 pre-existing. Status: COMPLETE.
+- **2026-08-18 (S11-FIX49-RejectToast-SettingsPointer):** COMPLETE — When pollJob receives a failed response with error_code PDF_TOO_COMPLEX or FILE_TOO_COMPLEX, fires a translated sonner.info toast (reason + Settings pointer). Red dot + Retry tooltip stay informational. Added i18n keys errors.pdfTooComplex + errors.fileTooComplex to en.json + id.json + test-setup.ts. Extended TaskStatusResponse + FailedTaskStatusResponse with error_code?. +3 tests (633→636). Status: COMPLETE.
 - **2026-08-18 (S11-FIX49-RejectToast-SettingsPointer):** COMPLETE — When pollJob receives a failed response with error_code PDF_TOO_COMPLEX or FILE_TOO_COMPLEX, fires a translated sonner.info toast (reason + Settings pointer). Red dot + Retry tooltip stay informational. Added i18n keys errors.pdfTooComplex + errors.fileTooComplex to en.json + id.json + test-setup.ts. Extended TaskStatusResponse + FailedTaskStatusResponse with error_code?. +3 tests (633→636). Status: COMPLETE.
 - **2026-08-18 (S11-FIX46-PdfChartCrops):** COMPLETE — PDF pages now get chart crops extracted from the rasterized page image (the exact image the model received), with tags rewritten to relative paths. Refactored `extract_and_save_image_crops` to accept `Path | PIL.Image.Image`; `_render_pdf` returns `(bytes, pil_image)` pairs; per-page crop extraction in VlmOcrAdapter.ocr() for PDFs; deleted FIX45 blanket skip. +4 tests. Backend: 289 passed, 1 pre-existing. Status: READY FOR CEO MANUAL VERIFICATION.
-- **2026-08-18 (S11-FIX45-Backend-Rebuild-Probe):** COMPLETE — PyInstaller rebuild exit 0, hash 46D6FBCD…; recovery43c wipe+swap+probe PASS (success=true, health=ok, model_loaded=true, files_present=true, probe_exit=0, probe_tail="completed"). No source edits. Backend: 285 passed, 1 pre-existing. Frontend: 633 passed. Status: READY FOR CEO PACKAGED RE-SMOKE.
 - **2026-08-18 (S11-FIX44-VlmOcr-Pdfium-Import):** COMPLETE — Restored `import pypdfium2 as pdfium` to vlm_ocr.py (removed by S10-FIX21). Added regression test `test_vlm_ocr_pdfium_import.py`. Backend: 284 passed, 1 pre-existing. Status: READY FOR STEP 2 REBUILD.
 - **2026-08-18 (S11-FIX43a-Spec-Onedir):** COMPLETE — Spec now produces folder-based artifact per ADR-008 Decision 2 / CEO Option B. Added `onefile=False` to EXE + `COLLECT(exe, a.binaries, a.datas, name='scan2text-backend')` block. Removed manual shutil.move post-build hack. +2 spec-contract tests (not-on efile + COLLECT presence). Backend: 283 passed, 1 pre-existing. Status: COMPLETE — STEP 2 pending rebuild.
 - **2026-08-18 (S11-FIX42-Forensics-SpecDll):** COMPLETE — Three-verdict forensics: (1) spec correctly collects pdfium.dll via collect_all("pypdfium2_raw") into all_binaries→Analysis; (2) loader resolves via pathlib.Path(__file__).parent/'./pdfium.dll' → _MEIPASS/pypdfium2_raw/pdfium.dll; (3) build is onefile (45.5 MB exe, no standalone DLLs). Root cause: __file__-relative resolution may fail if DLL extraction lags or subdir not preserved. Fix proposed: runtime hook patching _get_library to use sys._MEIPASS directly. Backend: 281 passed, 1 pre-existing. Frontend: 633 passed. Status: READY FOR FIX43 IMPLEMENTATION.

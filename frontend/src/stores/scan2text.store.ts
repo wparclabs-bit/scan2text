@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import {
   uploadFile,
   getTaskStatus,
+  getHealth,
   isTaskCompleted,
   isTaskFailed,
   defaultDelay,
@@ -473,58 +474,111 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
         },
       })
     } catch (err) {
-      throw err
+      // Initial poll failure is non-fatal; background loop will retry
     }
-  },
 
-  startPolling: (input) => {
-    let retryCount = 0
-    const maxRetries = 10
-    const pollOnce = async () => {
-      const job = get().jobs[input.jobId]
-      if (!job) return
-      if (job.status === 'completed') return
-      try {
-        await get().pollJob({ jobId: input.jobId })
-      } catch (err) {
-        retryCount++
-        if (retryCount > maxRetries) {
+    // Start background endurance loop without blocking pollJob
+    const startTime = Date.now()
+    let longDocHintFired = false
+
+    ;(async () => {
+      while (true) {
+        const currentJob = get().jobs[input.jobId]
+        if (!currentJob || !currentJob.taskId || currentJob.status === 'completed' || currentJob.status === 'failed') {
+          return
+        }
+
+        // Check health before each status poll
+        try {
+          await getHealth()
+        } catch (e) {
           set((state) => {
             const j = state.jobs[input.jobId]
             if (!j) return state
-            const message = err instanceof Error ? err.message : 'Polling failed'
             return {
               jobs: {
                 ...state.jobs,
                 [input.jobId]: {
                   ...j,
                   status: 'failed',
-                  error: message,
+                  error: i18n.t('errors.backendLost'),
                 },
               },
             }
           })
+          toast.error(i18n.t('errors.backendLost'))
           return
         }
-        const currentJob = get().jobs[input.jobId]
-        if (!currentJob || currentJob.status === 'completed') return
-        globalThis.setTimeout(() => {
-          pollOnce()
-        }, 60_000)
-        return
+
+        // Poll status
+        try {
+          const statusResponse = await getTaskStatus(currentJob.taskId)
+          const j = get().jobs[input.jobId]
+          if (!j) return
+          if (isTaskCompleted(statusResponse)) {
+            const md = statusResponse.result_markdown ?? ''
+            set({
+              jobs: {
+                ...get().jobs,
+                [input.jobId]: {
+                  ...j,
+                  status: 'completed',
+                  resultMarkdown: md,
+                  markdownOutput: md,
+                  error: null,
+                },
+              },
+              selectedJobId: input.jobId,
+            })
+            get().promoteNextPending()
+            return
+          }
+          if (isTaskFailed(statusResponse)) {
+            const errorCode = statusResponse.error_code
+            if (errorCode === 'PDF_TOO_COMPLEX') {
+              toast.info(i18n.t('errors.pdfTooComplex'))
+            } else if (errorCode === 'FILE_TOO_COMPLEX') {
+              toast.info(i18n.t('errors.fileTooComplex'))
+            }
+            set({
+              jobs: {
+                ...get().jobs,
+                [input.jobId]: {
+                  ...j,
+                  status: 'failed',
+                  error: statusResponse.error ?? 'Processing failed',
+                },
+              },
+            })
+            get().promoteNextPending()
+            return
+          }
+          // Still processing
+          set({
+            jobs: {
+              ...get().jobs,
+              [input.jobId]: { ...j, isBackground: true, status: 'processing' },
+            },
+          })
+        } catch (e) {
+          // Transient network error — continue to next iteration
+        }
+
+        // One-time long-doc hint after 5 min
+        const elapsed = Date.now() - startTime
+        if (elapsed >= 5 * 60 * 1000 && !longDocHintFired) {
+          longDocHintFired = true
+          toast.info(i18n.t('queue.longDocHint'))
+        }
+
+        // Wait 60s before next check
+        await new Promise(resolve => setTimeout(resolve, 60_000))
       }
-      const currentJob = get().jobs[input.jobId]
-      if (
-        !currentJob ||
-        currentJob.status === 'completed' ||
-        currentJob.status === 'failed'
-      )
-        return
-      globalThis.setTimeout(() => {
-        pollOnce()
-      }, 60_000)
-    }
-    pollOnce()
+    })()
+  },
+
+  startPolling: (input) => {
+    get().pollJob({ jobId: input.jobId })
   },
 }))
 

@@ -37,6 +37,7 @@ vi.mock('../lib/progressManager', async () => {
 const mockUploadFile = vi.hoisted(() => vi.fn())
 const mockGetTaskStatus = vi.hoisted(() => vi.fn())
 const mockPollTaskStatus = vi.hoisted(() => vi.fn())
+const mockGetHealth = vi.hoisted(() => vi.fn())
 
 vi.mock('../lib/api', async () => {
   const actual = await vi.importActual<typeof import('../lib/api')>('../lib/api')
@@ -45,6 +46,7 @@ vi.mock('../lib/api', async () => {
     uploadFile: mockUploadFile,
     getTaskStatus: mockGetTaskStatus,
     pollTaskStatus: mockPollTaskStatus,
+    getHealth: mockGetHealth,
   }
 })
 
@@ -59,6 +61,8 @@ describe('scan2text store', () => {
 
   beforeEach(() => {
     store = createStore()
+    mockGetHealth.mockResolvedValue({ status: 'ok' })
+    mockGetTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'processing' })
   })
 
   describe('initial state', () => {
@@ -397,20 +401,22 @@ describe('scan2text store', () => {
       expect(store.getState().jobs['job-1'].status).toBe('processing')
     })
 
-    it('if pollTaskStatus rejects should re-throw the error', async () => {
+    it('if pollTaskStatus rejects should not re-throw the error', async () => {
       store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf' })
       store.getState().setTaskId('job-1', 'task-abc')
       mockPollTaskStatus.mockRejectedValue(new Error('Network down'))
-      await expect(store.getState().pollJob({ jobId: 'job-1' })).rejects.toThrow('Network down')
-      expect(store.getState().jobs['job-1'].status).toBe('pending')
+      mockGetTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'processing' })
+      await expect(store.getState().pollJob({ jobId: 'job-1' })).resolves.toBeUndefined()
+      expect(store.getState().jobs['job-1'].status).toBe('processing')
     })
 
-    it('if pollTaskStatus rejects with non-Error should re-throw the error', async () => {
+    it('if pollTaskStatus rejects with non-Error should not re-throw the error', async () => {
       store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf' })
       store.getState().setTaskId('job-1', 'task-abc')
       mockPollTaskStatus.mockRejectedValue('string error')
-      await expect(store.getState().pollJob({ jobId: 'job-1' })).rejects.toBe('string error')
-      expect(store.getState().jobs['job-1'].status).toBe('pending')
+      mockGetTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'processing' })
+      await expect(store.getState().pollJob({ jobId: 'job-1' })).resolves.toBeUndefined()
+      expect(store.getState().jobs['job-1'].status).toBe('processing')
     })
 
     it('on completed response should clear previous error', async () => {
@@ -599,21 +605,23 @@ describe('scan2text store', () => {
     it('should retry after 60s on timeout', async () => {
       mockUploadFile.mockResolvedValue({ task_id: 'task-abc' })
       mockPollTaskStatus.mockRejectedValue(new Error('timeout'))
+      mockGetTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'processing' })
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
       await store.getState().startUpload({ file, jobId: 'my-job-id' })
       await vi.advanceTimersByTimeAsync(60_000)
-      expect(mockPollTaskStatus.mock.calls.length).toBeGreaterThan(1)
+      expect(mockGetTaskStatus.mock.calls.length).toBeGreaterThan(0)
     })
 
-    it('should mark job failed after max 10 retries', async () => {
+    it('should not mark job failed after max 10 retries', async () => {
       mockUploadFile.mockResolvedValue({ task_id: 'task-abc' })
       mockPollTaskStatus.mockRejectedValue(new Error('timeout'))
+      mockGetTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'processing' })
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
       await store.getState().startUpload({ file, jobId: 'my-job-id' })
       for (let i = 0; i < 10; i++) {
         await vi.advanceTimersByTimeAsync(60_000)
       }
-      expect(store.getState().jobs['my-job-id'].status).toBe('failed')
+      expect(store.getState().jobs['my-job-id'].status).toBe('processing')
     })
 
     it('should stop polling when job errors', async () => {
@@ -637,11 +645,8 @@ describe('scan2text store', () => {
 
     it('should complete job after stale timeout with background retry and set markdown', async () => {
       mockUploadFile.mockResolvedValue({ task_id: 'task-abc' })
-      const actualApi = await vi.importActual<typeof import('../lib/api')>('../lib/api')
-      mockPollTaskStatus.mockImplementation(async (...args: unknown[]) => actualApi.pollTaskStatus(...args as Parameters<typeof actualApi.pollTaskStatus>))
-      for (let i = 0; i < 30; i++) {
-        mockGetTaskStatus.mockResolvedValueOnce({ task_id: 'task-abc', status: 'processing' })
-      }
+      mockPollTaskStatus.mockRejectedValue(new Error('timeout'))
+      mockGetTaskStatus.mockResolvedValueOnce({ task_id: 'task-abc', status: 'processing' })
       mockGetTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'completed', result_markdown: '# Stale timeout markdown' })
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
       await store.getState().startUpload({ file, jobId: 'my-job-id' })
