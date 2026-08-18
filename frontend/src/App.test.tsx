@@ -35,6 +35,10 @@ vi.mock('./stores/scan2text.store', () => {
   return { useScan2TextStore: useStore }
 })
 
+vi.mock('@tauri-apps/api/event', () => ({
+  listen: vi.fn(() => Promise.resolve(() => {})),
+}))
+
 describe('Command Center layout', () => {
   beforeEach(() => {
     vi.clearAllMocks()

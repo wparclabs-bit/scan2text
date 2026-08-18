@@ -115,6 +115,9 @@
     },
     "errorGeneric": "Error: {{message}}"
   },
+  "backend": {
+    "bootFailed": "Backend failed to start. Check logs/ for details."
+  },
   "feedback": {
     "tooltip": "Send feedback",
     "title": "Send Feedback",

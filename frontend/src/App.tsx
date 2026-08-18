@@ -5,6 +5,7 @@ import { buildApiUrl } from './lib/apiBase'
 import CommandCenterLayout from './components/layout/CommandCenterLayout'
 import WelcomeModal from './components/layout/WelcomeModal'
 import ModelDownloaderModal from './components/layout/ModelDownloaderModal'
+import { useBackendBootFailedListener } from './hooks/useBackendBootFailedListener'
 import { toast } from 'sonner'
 
 const FEEDBACK_FORM_URL = 'https://placeholder.local/feedback'
@@ -14,6 +15,8 @@ function App() {
   const [hideWelcomeNotice, setHideWelcomeNotice] = useState<boolean | null>(null)
   const [modelReady, setModelReady] = useState<boolean>(false)
   const [showDownloader, setShowDownloader] = useState<boolean>(false)
+
+  useBackendBootFailedListener()
 
   useEffect(() => {
     usePreferenceStore.getState().hydratePreferences(window.localStorage, navigator.language)
