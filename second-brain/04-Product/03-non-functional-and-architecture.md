@@ -362,7 +362,7 @@ Backend (fake OCR engine):
 
 - add valid file to queue; process; one Markdown per valid input; never merge
 - skip unsupported file in batch + log; continue valid files
-- reject oversized PDF (>20 pages) and file (>50MB)
+- reject oversized PDF (>50 pages) and file (>50MB)
 - handle missing output folder; settings persistence
 - POST /process returns task_id; GET /status/{task_id} progression; GET /health worker + RAM
 - queue status slot per status: grey dot (pending), yellow spinner (uploading/processing), glossy green (completed), glossy red (failed); dot-only, no visible text; translated tooltips; retry on failed; absence test asserts NO fake progress bar (deferred v2/v3, v1.8)

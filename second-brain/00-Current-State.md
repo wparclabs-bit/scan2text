@@ -3,7 +3,7 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (Polling Endurance) — S11-FIX54-TwoMinHint-Repeating-Green
+- Phase: Phase 11 (Polling Endurance) — S11-DOC-PRD-50PageLimit-v1.1-Backlog
 - Date: 2026-08-18
 - Tauri shell hash: 18A1BCD247082BAC59AFDD905DF52DD6E3D23DA042AF29312DCAEC49C2968709
 - Backend hash: 10F5C66FF85FAAA2FC84072D37E26E182B92615DA45892FDF50F5F3B2670848D (folder-based onedir, rebuilt S11-FIX53)
@@ -15,6 +15,7 @@
 - RESULT: Rebuild + probe green — backend PyInstaller exit 0, Tauri build exit 0, artifacts swapped to D:\Scan2Text, boot gate PASS (health ok, model.loaded=true, files_present=true, dll_count>0). PDF probe completed with status completed. Status: COMPLETE.
 
 ## Recent Changelog (last 5)
+- **2026-08-18 (S11-DOC-PRD-50PageLimit-v1.1-Backlog):** COMPLETE — Bumped PRD v1.12→v1.13 (01-product-and-scope.md) and v1.11→v1.12 (02-functional-requirements.md). Raised PDF page limit from 20 to 50 pages per CEO decision 2026-08-18. Added v1.1 Backlog section covering internal PDF splitting (51–500 pp), queue cancel, ETA indicator, and auto-select refinement. Doc-only slice; no source changes. Status: COMPLETE.
 - **2026-08-18 (S11-FIX54-TwoMinHint-Repeating-Green):** COMPLETE — Changed long-doc hint from one-time 5-min toast to repeating 2-min toast per CEO decision. Fixed dangling test (moved inside describe block, added toast/i18n imports). Added missing `getHealth()` to api.ts. Frontend: 637 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-18 (S11-FIX53-Rebuild-Probe-Final):** COMPLETE — Pre-gate verified (backend 316 passed + 1 pre-existing, frontend 636 passed). Rebuilt backend + Tauri shell, wiped/swapped to D:\Scan2Text, boot gate PASS (health ok, model.loaded=true, files_present=true, dll_count>0). PDF probe green with status completed. No source edits. Status: COMPLETE.
 - **2026-08-18 (S11-FIX52-PollingEndurance):** COMPLETE — Frontend never times out on its own. pollJob now starts background endurance loop with health check before each status poll, 60s re-poll, backendLost i18n error on health unreachable, one-time long-doc hint after 5 min. startPolling simplified to direct pollJob call. Tests updated for new behavior. Frontend: 91 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.

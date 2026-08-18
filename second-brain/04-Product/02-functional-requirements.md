@@ -2,8 +2,8 @@
 
   
 
-Version: 1.11
-Date: 2026-08-16
+Version: 1.12
+Date: 2026-08-18
 Status: Approved for Implementation
 
   
@@ -35,6 +35,7 @@ Status: Approved for Implementation
 | 1.9 | 2026-08-10 | ADR-006 engine swap; FR-05/FR-06/FR-08 updated for OvisOCR2 and pypdfium2 verification. |
 | 1.10 | 2026-08-10 | ADR-007: Feedback button (Google Form + offline queue) in BottomBar next to Share; CPU auto budget 60% of logical cores; GDrive distribution + in-app first-run model downloader; monthly release cadence |
 | 1.11 | 2026-08-16 | Phase 10 closure: BottomBar telemetry adds CPU%; /api/health returns cpu percent |
+| 1.12 | 2026-08-18 | CEO decision 2026-08-18: PDF page limit raised from 20 to 50 pages in FR-03 and FR-06 |
 
 
 ---
@@ -138,7 +139,7 @@ Acceptance Criteria:
   - Max 50MB per file → error toast, not added to queue.
   - Unsupported type → error toast, not added to queue.
   - Batch cap: max 10 files per drop → first 10 kept, extras skipped with warning toast ("Max 10 files per batch — extra files were skipped." / ID equivalent) and logged.
-- PDF Inspector: before processing, backend checks page count and file size. Hard limits: 20MB max file size, 20 pages max. Files exceeding either limit are rejected with error code FILE_TOO_COMPLEX.
+- PDF Inspector: before processing, backend checks page count and file size. Hard limits: 20MB max file size, 50 pages max. Files exceeding either limit are rejected with error code FILE_TOO_COMPLEX.
 - Error/warning toasts use shadcn toast component.
 - Unsupported files in a batch are skipped, logged, and do not stop valid files.
 - If all dropped files are unsupported, show non-blocking warning toast and log.
@@ -195,97 +196,45 @@ Acceptance Criteria:
   
 
 Description:
-
-  
-
 The app extracts visible text from images and PDFs.
 
-  
-
 Acceptance Criteria:
-
-  
-
 - Each valid input processed separately; never merged.
-
 - Images sent to OCR engine; PDFs rendered to images per page.
-
 - Multi-page PDF = one source document = one Markdown file with page separators.
-
 - Unsupported/invalid files skipped and logged.
-
 - One file failing does not stop remaining valid files where possible.
-
-- PDF Inspector guardrail: reject PDFs >20 pages or >20MB with error code FILE_TOO_COMPLEX. Do not render pixels for rejected files.
-- General file-size guardrail: max 50MB per file (frontend validation); exceeded → error toast, not added to queue.
-
+- PDF Inspector guardrail: reject PDFs >50 pages or >20MB with error code FILE_TOO_COMPLEX. Do not render pixels for rejected files.
+- General file-size guardrail: max 20MB per file (frontend validation); exceeded → error toast, not added to queue.
 - PDF handling: pypdfium2 rasterization verified in production (ADR-006 closes verification).
 
   
 
 ---
-
-  
-
 ### FR-07: Removed
-
-  
-
 Removed by CEO review. No in-app editing in MVP. Final output is Markdown; editing happens outside Scan2Text.
 
-  
-
 ---
-
-  
 
 ### FR-08: Automatic Markdown Output
-
-  
-
 Description:
-
-  
-
 Each valid processed document automatically produces a Markdown file.
-
-  
-
 Acceptance Criteria:
 
-  
-
 - Output `.md`; one per valid input; never merged.
-
 - Auto-saved after OCR; no Save button; default location = user-selected output dir.
-
 - Naming: `{original_stem}_{HHmm}_{yyyyMMdd}.md`; collision suffix `_2`, `_3`, …; never overwrite.
-
 - Guardrails: one input → one .md always; auxiliary asset folder allowed only when source contains charts/figures (ADR-006); timestamp = processing time; privacy-safe logs; no new dependencies.
-
 - Implementation: `datetime.now()` at write; linear collision search; `PathService.resolve_output_path()` single point of naming logic.
-
 - Markdown structure: best-effort text, line breaks, lists, tables (GFM; model HTML tables converted in backend, stdlib only, best-effort merges); chart crops saved to `<output_stem>_files/images/` when present; no invented content; plain text acceptable when uncertain.
-
 - After processing: UI shows saved Markdown file path.
 
-  
-
 ---
-
-  
-
 ### FR-09: Settings
-
-  
 
 Description:
 
-  
-
 Minimal settings for output location, language, theme, update check, and processing defaults.
-
-  
 
 Acceptance Criteria:
 

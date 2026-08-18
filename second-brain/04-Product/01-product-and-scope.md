@@ -1,7 +1,7 @@
 # PRD: Scan2Text — MVP
 
-Version: 1.12
-Date: 2026-08-16
+Version: 1.13
+Date: 2026-08-18
 Status: Approved for Implementation
 Product Owner: CEO
 Technical Owner: CTO
@@ -24,6 +24,7 @@ Engineering Method: AI-Assisted Software Development (AIASD)
 | 1.10    | 2026-08-10 | ADR-007: feedback button (GForm + offline queue) in BottomBar left of Share; first-run expectations screen with don't-show-again; CPU auto = 60% of logical cores; GDrive distribution + in-app model downloader; logs no file names, 1 MB size-based rotation; monthly cadence |
 | 1.11    | 2026-08-13 | DOC-04: aligned §12 with ADR-008; added Tauri v2 desktop shell & packaging line; fixed version drift (header was 1.9) |
 | 1.12    | 2026-08-16 | Phase 10 closure: BottomBar telemetry adds CPU% (CEO-approved 2026-08-16) |
+| 1.13    | 2026-08-18 | CEO decision 2026-08-18: PDF page limit raised from 20 to 50 pages; reject >50 with FILE_TOO_COMPLEX; internal PDF splitting, queue cancel, ETA, and auto-select refinement deferred to v1.1 backlog |
 
 ---
 
@@ -202,6 +203,15 @@ The MVP is not a document editor.
 - Fake progress bar in MVP (removed v1.8 by CEO decision; revisit v2/v3 on user feedback)
 - Legal T&C dialog (replaced by plain expectations notice, ADR-007)
 - Silent auto-send of feedback (opt-in submit only, ADR-007)
+
+### v1.1 Backlog (Deferred from MVP)
+
+The following features were approved by CEO on 2026-08-18 but deferred to v1.1 to keep MVP scope tight:
+
+- **Internal PDF splitting (51–500 pages):** Automatically split oversized PDFs into chunks that the OCR engine can handle, then merge results. Not implemented in MVP; files >50 pages are rejected with FILE_TOO_COMPLEX.
+- **Queue cancel action for in-progress jobs:** Allow users to cancel a job that is currently processing. Requires backend cancel endpoint.
+- **ETA indicator for long-running jobs:** Show estimated time remaining for jobs that exceed the 5-minute threshold.
+- **Auto-select refinement:** Improve the auto-select behavior so the right panel highlights the most recently completed job with clearer visual feedback.
 
 ---
 
