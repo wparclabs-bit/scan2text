@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import WelcomeModal from './WelcomeModal'
 import { buildApiUrl } from '@/lib/apiBase'
+import { initI18n } from '@/i18n'
+import en from '@/locales/en.json'
 
 describe('WelcomeModal', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -10,6 +12,7 @@ describe('WelcomeModal', () => {
     vi.clearAllMocks()
     mockFetch = vi.fn()
     vi.stubGlobal('fetch', mockFetch)
+    initI18n({ en: { translation: en } })
   })
 
   it('renders when hide_welcome_notice is false', async () => {
@@ -34,17 +37,16 @@ describe('WelcomeModal', () => {
     })
   })
 
-  it('renders all 4 bullets with correct i18n keys', async () => {
+  it('renders welcome body with 20MB limit copy', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ hide_welcome_notice: false }),
     })
     render(<WelcomeModal />)
     await waitFor(() => {
-      expect(screen.getByText(/Works fully offline/)).toBeInTheDocument()
-      expect(screen.getByText(/No accounts, no telemetry/)).toBeInTheDocument()
-      expect(screen.getByText(/Big or dense files/)).toBeInTheDocument()
-      expect(screen.getByText(/best-effort Markdown/)).toBeInTheDocument()
+      expect(screen.getByText(/Turn your scanned documents into editable text/)).toBeInTheDocument()
+      expect(screen.getByText(/20MB/)).toBeInTheDocument()
+      expect(screen.getByText(/50 pages/)).toBeInTheDocument()
     })
   })
 

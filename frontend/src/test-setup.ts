@@ -86,10 +86,7 @@ void i18next
           },
           welcome: {
             title: 'Welcome to Scan2Text',
-            bullet1: 'Works fully offline; your files never leave this PC.',
-            bullet2: 'No accounts, no telemetry, no document content or file names in logs.',
-            bullet3: 'Big or dense files can take several minutes; the app stays responsive.',
-            bullet4: 'Output is best-effort Markdown — always double-check important numbers.',
+            body: "Turn your scanned documents into editable text — no internet required. Quick heads-up: Files must be under 20MB (that's about 10-20 photos or a short PDF). PDFs can be up to 50 pages. We accept PNG, JPG, WEBP, and PDF. Ready? Drop your files below!",
             dontShowAgain: "Don't show this again",
             close: 'Get Started',
           },
@@ -196,10 +193,7 @@ void i18next
           },
           welcome: {
             title: 'Selamat datang di Scan2Text',
-            bullet1: 'Bekerja sepenuhnya offline; file Anda tidak pernah meninggalkan PC ini.',
-            bullet2: 'Tanpa akun, tanpa telemetri, tanpa isi dokumen atau nama file di log.',
-            bullet3: 'File besar atau padat bisa memakan waktu beberapa menit; aplikasi tetap responsif.',
-            bullet4: 'Output adalah Markdown sebaik mungkin — selalu periksa kembali angka-angka penting.',
+            body: 'Ubah dokumen hasil scan Anda menjadi teks yang bisa diedit — tanpa internet. Catatan cepat: File harus di bawah 20MB (sekitar 10-20 foto atau PDF pendek). PDF bisa sampai 50 halaman. Kami menerima PNG, JPG, WEBP, dan PDF. Siap? Jatuhkan file Anda di bawah!',
             dontShowAgain: 'Jangan tampilkan lagi',
             close: 'Mulai',
           },

@@ -26,15 +26,16 @@
   },
   "errors": {
     "unsupportedFileType": "Tipe file tidak didukung. Yang didukung: PNG, JPG, JPEG, WEBP, PDF",
-    "fileTooLarge": "Ukuran file melebihi batas 50MB",
+    "fileTooLarge": "Ukuran file melebihi batas 20MB",
     "uploadFailed": "Gagal mengunggah",
     "batchSkipped": "{{total}} file dilewati: {{unsupported}} tipe tidak didukung, {{tooLarge}} terlalu besar.",
     "allInvalid": "Semua file yang dipilih tidak didukung atau terlalu besar.",
     "pdfTooComplex": "PDF terlalu kompleks untuk batas halaman saat ini. Naikkan batas halaman di Pengaturan lalu coba lagi.",
-    "fileTooComplex": "File terlalu kompleks (maks 20MB)."
+    "fileTooComplex": "File terlalu kompleks (maks 20MB).",
+    "fileTooComplexRejected": "File terlalu besar atau kompleks. Silakan coba file yang lebih kecil."
   },
   "dropzone": {
-    "hint": "PNG · JPG · WEBP · PDF — maks 50MB per file · maks 10 file per batch",
+    "hint": "PNG · JPG · WEBP · PDF — maks 20MB per file · maks 10 file per batch",
     "clickLabel": "Klik atau seret file ke sini",
     "dropLabel": "Lepaskan file di sini",
     "maxFilesWarning": "Maksimal 10 file per batch — file tambahan dilewati."
@@ -92,10 +93,7 @@
   },
   "welcome": {
     "title": "Selamat datang di Scan2Text",
-    "bullet1": "Bekerja sepenuhnya offline; file Anda tidak pernah meninggalkan PC ini.",
-    "bullet2": "Tanpa akun, tanpa telemetri, tanpa isi dokumen atau nama file di log.",
-    "bullet3": "File besar atau padat bisa memakan waktu beberapa menit; aplikasi tetap responsif.",
-    "bullet4": "Output adalah Markdown sebaik mungkin — selalu periksa kembali angka-angka penting.",
+    "body": "Ubah dokumen hasil scan Anda menjadi teks yang bisa diedit — tanpa internet. Catatan cepat: File harus di bawah 20MB (sekitar 10-20 foto atau PDF pendek). PDF bisa sampai 50 halaman. Kami menerima PNG, JPG, WEBP, dan PDF. Siap? Jatuhkan file Anda di bawah!",
     "dontShowAgain": "Jangan tampilkan lagi",
     "close": "Mulai"
   },
