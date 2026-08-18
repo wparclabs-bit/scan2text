@@ -479,7 +479,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
 
     // Start background endurance loop without blocking pollJob
     const startTime = Date.now()
-    let longDocHintFired = false
+    let lastlongDocHintAt = 0
 
     ;(async () => {
       while (true) {
@@ -566,8 +566,8 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
 
         // One-time long-doc hint after 5 min
         const elapsed = Date.now() - startTime
-        if (elapsed >= 5 * 60 * 1000 && !longDocHintFired) {
-          longDocHintFired = true
+        if (elapsed - lastlongDocHintAt >= 2 * 60 * 1000) {
+          lastlongDocHintAt = elapsed
           toast.info(i18n.t('queue.longDocHint'))
         }
 

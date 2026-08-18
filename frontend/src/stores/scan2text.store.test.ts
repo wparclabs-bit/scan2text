@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { getTestStore } from './scan2text.store'
+import { toast } from 'sonner'
+import { i18n } from '../i18n'
 
 const mockI18nT = vi.hoisted(() => vi.fn((key: string) => key))
 
@@ -970,6 +972,46 @@ describe('scan2text store', () => {
       await store.getState().startUpload({ file: file2, jobId: 'job-2' })
       expect(store.getState().activeJobId).toBe('job-2')
       expect(store.getState().jobs['job-2'].status).toBe('processing')
+    })
+  })
+
+  describe('long-doc hint', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('should fire long-doc hint every 2 minutes while processing', async () => {
+      mockGetHealth.mockResolvedValue({ status: 'ok' } as any)
+      mockPollTaskStatus.mockResolvedValue({ task_id: 'task-1', status: 'processing' })
+
+      store.getState().addJob({ id: 'job-1', fileName: 'long.pdf' })
+      store.getState().setTaskId('job-1', 'task-1')
+      store.getState().setStatus('job-1', 'processing')
+
+      // Start polling in background
+      store.getState().pollJob({ jobId: 'job-1' })
+
+      // 2 minutes → first hint
+      await vi.advanceTimersByTimeAsync(2 * 60 * 1000)
+      expect(toast.info).toHaveBeenCalledTimes(1)
+      expect(toast.info).toHaveBeenCalledWith(i18n.t('queue.longDocHint'))
+
+      // 3 minutes → still only 1 call (silent)
+      await vi.advanceTimersByTimeAsync(60 * 1000)
+      expect(toast.info).toHaveBeenCalledTimes(1)
+
+      // 4 minutes → second hint (repeats)
+      await vi.advanceTimersByTimeAsync(60 * 1000)
+      expect(toast.info).toHaveBeenCalledTimes(2)
+
+      // 6 minutes → third hint
+      await vi.advanceTimersByTimeAsync(2 * 60 * 1000)
+      expect(toast.info).toHaveBeenCalledTimes(3)
     })
   })
 })

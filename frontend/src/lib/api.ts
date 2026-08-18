@@ -112,6 +112,14 @@ export async function saveSettings(patch: SettingsPatch): Promise<void> {
   }
 }
 
+export async function getHealth(): Promise<{ status: string }> {
+  const response = await fetch(buildApiUrl('/health'))
+  if (!response.ok) {
+    throw new Error(`Health check failed: ${response.status} ${response.statusText}`)
+  }
+  return response.json() as Promise<{ status: string }>
+}
+
 export async function uploadFile(file: File): Promise<UploadResponse> {
   const formData = new FormData()
   formData.append('files', file, file.name)
