@@ -327,3 +327,48 @@ def extract_and_save_image_crops(
     finally:
         if owned:
             pil_img.close()
+
+
+def filter_noise_lines(lines: list[str]) -> list[str]:
+    """Remove maximal runs of >=4 consecutive bare-integer lines whose values
+    are consecutive (each = prev + 1).
+
+    Use case: the OCR engine sometimes emits a vertical list of page numbers
+    or indices (e.g. ``"1\\n2\\n3\\n…\\n16"``) that adds no semantic value.
+    Short runs (<4), non-consecutive numbers, and non-integer lines are kept.
+    """
+    if not lines:
+        return []
+
+    RUN_THRESHOLD = 4
+
+    def _is_bare_int(s: str) -> bool:
+        return bool(s.strip()) and s.strip().isdigit()
+
+    # Phase 1: identify runs of consecutive bare-integer lines
+    runs: list[tuple[int, int]] = []  # (start, end) half-open
+    i = 0
+    while i < len(lines):
+        if _is_bare_int(lines[i]):
+            run_start = i
+            while i + 1 < len(lines) and _is_bare_int(lines[i + 1]):
+                i += 1
+            runs.append((run_start, i + 1))
+        i += 1
+
+    # Phase 2: keep only runs that are NOT >= threshold with consecutive values
+    result: list[str] = []
+    prev_end = 0
+    for start, end in runs:
+        # Append non-run lines before this run
+        result.extend(lines[prev_end:start])
+        run_lines = lines[start:end]
+        # Check if values are consecutive integers
+        vals = [int(l.strip()) for l in run_lines]
+        consecutive = all(vals[j] == vals[j - 1] + 1 for j in range(1, len(vals)))
+        if len(vals) < RUN_THRESHOLD or not consecutive:
+            result.extend(run_lines)
+        prev_end = end
+    # Append trailing non-run lines
+    result.extend(lines[prev_end:])
+    return result

@@ -27,6 +27,7 @@ from scan2text.utils.cpu_budget import calculate_auto_threads
 from scan2text.services.postprocess_service import (
     convert_html_tables_to_gfm,
     extract_and_save_image_crops,
+    filter_noise_lines,
 )
 from scan2text.services.settings_service import SettingsService
 from scan2text.services.pdf_service import detect_file_type
@@ -249,8 +250,9 @@ class VlmOcrAdapter:
         if isinstance(raw, dict):
             return raw
 
-        # Post-process: HTML tables → GFM + extract chart crops
+        # Post-process: HTML tables → GFM → noise filter → extract chart crops
         text = convert_html_tables_to_gfm(raw)
+        text = "\n".join(filter_noise_lines(text.splitlines()))
         source_path = Path(image_path)
         output_md_path = source_path.parent / f"{source_path.stem}.md"
         if file_type == "pdf" and page_views is not None:
@@ -284,7 +286,9 @@ class VlmOcrAdapter:
             check_pdf_size,
         )
 
-        ok, err = check_page_limit(path, self._max_pdf_pages)
+        # Read live settings so user-raised max_pdf_pages (FIX33) is respected.
+        live_settings = self._settings_service.load()
+        ok, err = check_page_limit(path, live_settings.max_pdf_pages)
         if not ok:
             return {
                 "error": PDF_TOO_MANY_PAGES,
