@@ -3,18 +3,19 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (Polling Endurance) — S11-FIX53-Rebuild-Probe-Final
+- Phase: Phase 11 (Polling Endurance) — S11-FIX54-TwoMinHint-Repeating-Green
 - Date: 2026-08-18
 - Tauri shell hash: 18A1BCD247082BAC59AFDD905DF52DD6E3D23DA042AF29312DCAEC49C2968709
 - Backend hash: 10F5C66FF85FAAA2FC84072D37E26E182B92615DA45892FDF50F5F3B2670848D (folder-based onedir, rebuilt S11-FIX53)
 - pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 7.2MB)
 - Backend tests: 316 passed, 1 pre-existing failure (test_health_contract)
-- Frontend tests: 636 passed, 0 failures
+- Frontend tests: 637 passed, 0 failures
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - Next: CEO final re-smoke
-- RESULT: Rebuild + probe green — backend PyInstaller exit 0, Tauri build exit 0, artifacts swapped to D:\Scan2Text, boot gate PASS (health ok, model.loaded=true, files_present=true, dll_count>0), PDF probe completed with status completed. Status: COMPLETE.
+- RESULT: Rebuild + probe green — backend PyInstaller exit 0, Tauri build exit 0, artifacts swapped to D:\Scan2Text, boot gate PASS (health ok, model.loaded=true, files_present=true, dll_count>0). PDF probe completed with status completed. Status: COMPLETE.
 
 ## Recent Changelog (last 5)
+- **2026-08-18 (S11-FIX54-TwoMinHint-Repeating-Green):** COMPLETE — Changed long-doc hint from one-time 5-min toast to repeating 2-min toast per CEO decision. Fixed dangling test (moved inside describe block, added toast/i18n imports). Added missing `getHealth()` to api.ts. Frontend: 637 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-18 (S11-FIX53-Rebuild-Probe-Final):** COMPLETE — Pre-gate verified (backend 316 passed + 1 pre-existing, frontend 636 passed). Rebuilt backend + Tauri shell, wiped/swapped to D:\Scan2Text, boot gate PASS (health ok, model.loaded=true, files_present=true, dll_count>0). PDF probe green with status completed. No source edits. Status: COMPLETE.
 - **2026-08-18 (S11-FIX52-PollingEndurance):** COMPLETE — Frontend never times out on its own. pollJob now starts background endurance loop with health check before each status poll, 60s re-poll, backendLost i18n error on health unreachable, one-time long-doc hint after 5 min. startPolling simplified to direct pollJob call. Tests updated for new behavior. Frontend: 91 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-18 (S11-FIX51-TimeoutAutoScale):** COMPLETE — Added `effective_ocr_timeout(base_seconds, pages)` = `max(base, pages×30s)` in `vlm_ocr.py`; wired at `queue.get()` enforcement site. 397-page book now gets ≥11910s instead of 600s. +6 tests. Backend: 316 passed, 1 pre-existing. Status: COMPLETE.
