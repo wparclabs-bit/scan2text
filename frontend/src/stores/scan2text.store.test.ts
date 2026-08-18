@@ -1,6 +1,25 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { getTestStore } from './scan2text.store'
 
+const mockI18nT = vi.hoisted(() => vi.fn((key: string) => key))
+
+vi.mock('../i18n', () => ({
+  i18n: {
+    t: mockI18nT,
+    language: 'en',
+  },
+}))
+
+vi.mock('sonner', () => ({
+  Toaster: () => null,
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  },
+}))
+
 const mockStopProgress = vi.hoisted(() => vi.fn())
 
 vi.mock('../lib/progressManager', async () => {
@@ -336,6 +355,37 @@ describe('scan2text store', () => {
       mockPollTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'failed' })
       await store.getState().pollJob({ jobId: 'job-1' })
       expect(store.getState().jobs['job-1'].error).toBe('Processing failed')
+    })
+
+    it('on PDF_TOO_COMPLEX should fire translated info toast', async () => {
+      mockI18nT.mockReturnValue('PDF too complex for the current page limit. Raise the page limit in Settings and retry.')
+      store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf' })
+      store.getState().setTaskId('job-1', 'task-abc')
+      mockPollTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'failed', error: 'PDF_TOO_COMPLEX', error_code: 'PDF_TOO_COMPLEX' })
+      await store.getState().pollJob({ jobId: 'job-1' })
+      const { toast } = await import('sonner')
+      expect((toast.info as unknown as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(1)
+      expect((toast.info as unknown as ReturnType<typeof vi.fn>).mock.calls[0]).toEqual(['PDF too complex for the current page limit. Raise the page limit in Settings and retry.'])
+    })
+
+    it('on FILE_TOO_COMPLEX should fire translated info toast', async () => {
+      mockI18nT.mockReturnValue('File too complex (max 20MB).')
+      store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf' })
+      store.getState().setTaskId('job-1', 'task-abc')
+      mockPollTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'failed', error: 'FILE_TOO_COMPLEX', error_code: 'FILE_TOO_COMPLEX' })
+      await store.getState().pollJob({ jobId: 'job-1' })
+      const { toast } = await import('sonner')
+      expect((toast.info as unknown as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(1)
+      expect((toast.info as unknown as ReturnType<typeof vi.fn>).mock.calls[0]).toEqual(['File too complex (max 20MB).'])
+    })
+
+    it('on other error_code should not fire a new toast', async () => {
+      store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf' })
+      store.getState().setTaskId('job-1', 'task-abc')
+      mockPollTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'failed', error: 'OCR error', error_code: 'UNKNOWN_ERROR' })
+      await store.getState().pollJob({ jobId: 'job-1' })
+      const { toast } = await import('sonner')
+      expect((toast.info as unknown as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(0)
     })
 
     it('if polling finishes with non-final status should set isBackground to true', async () => {

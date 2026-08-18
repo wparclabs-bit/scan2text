@@ -9,6 +9,7 @@ export interface TaskStatusResponse {
   status: string
   result_markdown?: string
   error?: string
+  error_code?: string
 }
 
 export interface CompletedTaskStatusResponse {
@@ -22,6 +23,7 @@ export interface FailedTaskStatusResponse {
   task_id: string
   status: 'failed'
   error?: string
+  error_code?: string
 }
 
 export function isTaskCompleted(
