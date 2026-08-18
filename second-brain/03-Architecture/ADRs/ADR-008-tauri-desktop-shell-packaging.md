@@ -9,7 +9,7 @@ PRD-03 section 11 and section 12 specified pywebview for the desktop window and 
 ## Decisions
 
 1. Desktop shell = Tauri v2 (Rust). NOT pywebview, NOT Electron. Tauri provides the native window and bundles the built React frontend.
-2. Backend = PyInstaller FOLDER-BASED standalone artifact at dist/scan2text-backend/scan2text-backend.exe. NOT one-file PyInstaller.
+2. Backend = PyInstaller FOLDER-BASED standalone artifact at dist/backend/scan2text-backend.exe. NOT one-file PyInstaller.
 3. Backend lifecycle is owned by Tauri: process handle stored in Tauri-managed state; explicit shutdown hook on app exit; kill + bounded wait + port-47351 verification + Windows process-tree kill escalation. NOT Drop/RAII-only cleanup.
 4. Production backend binds 127.0.0.1:47351 (host 127.0.0.1, port 47351). NOT port 8000.
 5. Frontend-to-backend transport: dev uses the Vite proxy (/api); production calls http://127.0.0.1:47351/api directly via the apiBase resolver.
@@ -25,7 +25,7 @@ PRD-03 section 11 and section 12 specified pywebview for the desktop window and 
 
 ## Open / Pending
 
-- Final Tauri production bundling method (how dist/scan2text-backend/ is packaged into the final Scan2Text.exe bundle) is NOT locked. Capture in a follow-up ADR or amendment once decided.
+- Final Tauri production bundling method (how dist/backend/ is packaged into the final Scan2Text.exe bundle) is NOT locked. Capture in a follow-up ADR or amendment once decided.
 
 ## Supersedes
 

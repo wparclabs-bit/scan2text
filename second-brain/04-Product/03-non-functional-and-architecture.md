@@ -1,6 +1,6 @@
 # Non-Functional Requirements & Architecture — Scan2Text MVP
 
-Version: 1.14
+Version: 1.15
 Date: 2026-08-16
 Status: Approved for Implementation
 Format: clean non-table (CEO instruction)
@@ -22,6 +22,7 @@ Format: clean non-table (CEO instruction)
 - 1.12 — 2026-08-13 — DOC-02: aligned with ADR-008; pywebview replaced by Tauri v2; runtime folder + tech stack updated; stale /api/health note removed.
 - 1.13 — 2026-08-13 — DOC-05: folded PRD-04 §19 Testing Strategy into PRD-03 as §19 (trimmed historical QA run records per CEO Option A); PRD-04 dissolution step 1 of 4.
 - 1.14 — 2026-08-16 — Phase 10 closure: BottomBar telemetry adds CPU%; GET /api/health returns cpu percent; loopback-CORS note points to ADR-008 addendum.
+- 1.15 — 2026-08-18 — Renamed portable root backend folder from scan2text-backend/ to backend/ per CEO decision 2026-08-18; updated §11 and §13 paths accordingly.
 
 ---
 
@@ -99,7 +100,7 @@ Local-first modular monolith. No cloud services, no external database, no micros
 
 ### Runtime Approach
 
-Portable desktop app with local web UI: a Tauri v2 shell (Rust, ADR-008) bundles the built React frontend and spawns the PyInstaller folder-based backend artifact (dist/scan2text-backend/scan2text-backend.exe) as a child process; the WebView2-backed native window presents the UI. Backend binds 127.0.0.1:47351 in production.
+Portable desktop app with local web UI: a Tauri v2 shell (Rust, ADR-008) bundles the built React frontend and spawns the PyInstaller folder-based backend artifact (dist/backend/scan2text-backend.exe) as a child process; the WebView2-backed native window presents the UI. Backend binds 127.0.0.1:47351 in production.
 
 ### Frontend-Backend Communication
 
@@ -154,7 +155,7 @@ Portable desktop app with local web UI: a Tauri v2 shell (Rust, ADR-008) bundles
 ```text
 Scan2Text/
 ├── Scan2Text.exe                  # Tauri v2 shell (ADR-008); bundles built React frontend
-├── scan2text-backend/             # PyInstaller folder-based artifact (ADR-008)
+    ├── backend/                     # PyInstaller folder-based artifact (ADR-008)
 │   └── scan2text-backend.exe      # FastAPI backend; binds 127.0.0.1:47351 in prod
 ├── models/                        # EXTERNAL — not bundled; downloaded at runtime (ADR-008)
 │   ├── vlm.gguf          # OvisOCR2 0.9B language model (ADR-006)

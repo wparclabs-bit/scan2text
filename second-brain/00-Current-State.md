@@ -3,18 +3,20 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (Polling Endurance) — S11-DOC-PRD-50PageLimit-v1.1-Backlog
+- Phase: Phase 11 (Polling Endurance) — S11-FIX56-Final-Rebuild-Swap-Probe
 - Date: 2026-08-18
-- Tauri shell hash: 18A1BCD247082BAC59AFDD905DF52DD6E3D23DA042AF29312DCAEC49C2968709
-- Backend hash: 10F5C66FF85FAAA2FC84072D37E26E182B92615DA45892FDF50F5F3B2670848D (folder-based onedir, rebuilt S11-FIX53)
+- Tauri shell hash: 0B0F8371C408C1A865042D593AA6E2546F530850DBFC98B84B3AAF79DE806EBB
+- Backend hash: 4EBD872A6563E3DE199D50A69A4DB904E0864D6F28A74C3D34B343C7DDA5F216 (folder-based onedir, rebuilt S11-FIX56)
 - pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 7.2MB)
 - Backend tests: 316 passed, 1 pre-existing failure (test_health_contract)
 - Frontend tests: 637 passed, 0 failures
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - Next: CEO final re-smoke
-- RESULT: Rebuild + probe green — backend PyInstaller exit 0, Tauri build exit 0, artifacts swapped to D:\Scan2Text, boot gate PASS (health ok, model.loaded=true, files_present=true, dll_count>0). PDF probe completed with status completed. Status: COMPLETE.
+- RESULT: Rebuild + probe green — backend PyInstaller exit 0, Tauri build exit 0, artifacts swapped to D:\Scan2Text, boot gate PASS (health ok, model.loaded=true, files_present=true, dll_count=19). PDF probe completed with status completed. Status: COMPLETE.
 
 ## Recent Changelog (last 5)
+- **2026-08-18 (S11-DOC-Rename-Backend-Folder):** COMPLETE — Renamed portable root backend folder from scan2text-backend/ to backend/ in ADR-008 and 03-non-functional-and-architecture.md (v1.14→v1.15, §11 + §13). Doc-only slice; no source changes. Status: COMPLETE.
+- **2026-08-18 (S11-FIX56-Final-Rebuild-Swap-Probe):** COMPLETE — Rebuilt PyInstaller backend + Tauri shell with 50-page limit code from S11-FIX55. Wiped/swapped to D:\Scan2Text (preserved models/, output/, settings/, logs/, feedback/). Boot gate PASS (health ok, model.loaded=true, files_present=true, dll_count=19). PDF probe green (status completed). Backend hash: 4EBD872A… Tauri hash: 0B0F8371…. No source edits. Status: COMPLETE.
 - **2026-08-18 (S11-FIX55-Enforce50PageLimit):** COMPLETE — Changed hardcoded 20-page limits to 50 across backend and frontend. `MAX_PDF_PAGES_DEFAULT`, `AppSettings.max_pdf_pages` default, `QueueService.process_batch` default, and `SettingsDialog` initial state all updated from 20→50. All related tests updated. Backend: 316 passed, 1 pre-existing. Frontend: 637 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-18 (S11-DOC-PRD-50PageLimit-v1.1-Backlog):** COMPLETE — Bumped PRD v1.12→v1.13 (01-product-and-scope.md) and v1.11→v1.12 (02-functional-requirements.md). Raised PDF page limit from 20 to 50 pages per CEO decision 2026-08-18. Added v1.1 Backlog section covering internal PDF splitting (51–500 pp), queue cancel, ETA indicator, and auto-select refinement. Doc-only slice; no source changes. Status: COMPLETE.
 - **2026-08-18 (S11-FIX54-TwoMinHint-Repeating-Green):** COMPLETE — Changed long-doc hint from one-time 5-min toast to repeating 2-min toast per CEO decision. Fixed dangling test (moved inside describe block, added toast/i18n imports). Added missing `getHealth()` to api.ts. Frontend: 637 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
