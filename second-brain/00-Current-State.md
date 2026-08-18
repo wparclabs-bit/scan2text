@@ -3,18 +3,19 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX44 VlmOcr-Pdfium-Import
+- Phase: Phase 11 (SettingsDialog API Integration) — S11-FIX45 Backend-Rebuild-Probe
 - Date: 2026-08-18
-- Tauri shell hash: A6A9783E68A3DC389B4AAAC3528A0C634ACD5D5FF9386F3DED191C280BF732EB (same, copied from repo dist)
-- Backend hash: 3F76DAE3C79367D590E8B70113F7873A56473C15A118E359DEE50B95F2662CA3 (folder-based onedir)
+- Tauri shell hash: A6A9783E68A3DC389B4AAAC3528A0C634ACD5D5FF9386F3DED191C280BF732EB
+- Backend hash: 46D6FBCD17EAC7C45B0E523E6E607547D4E11123B4537EC54AFFCE65F2DB762C (folder-based onedir)
 - pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 7.2MB)
-- Backend tests: 284 passed, 1 pre-existing failure (test_health_contract)
+- Backend tests: 285 passed, 1 pre-existing failure (test_health_contract)
 - Frontend tests: 633 green, 0 failures
 - PRD: v1.12 source of truth in second-brain/04-Product/
-- Next: STEP 2 rebuild + swap; FIX44 source fix applied (import restored, regression test added)
-- RESULT: success=true — Source fix applied. Restored `import pypdfium2 as pdfium` to vlm_ocr.py; added regression test. Backend: 284 passed, 1 pre-existing. STEP 2 rebuild pending.
+- Next: CEO re-smoke (manual verification)
+- RESULT: success=true — PDF probe PASS (probe_exit=0, status=completed). Fixed extract_and_save_image_crops called on PDF source path causing PIL "cannot identify image file". Backend: 285 passed, 1 pre-existing.
 
 ## Recent Changelog (last 5)
+- **2026-08-18 (S11-FIX45-Backend-Rebuild-Probe):** COMPLETE — Rebuilt backend, swapped to portable, boot gate PASS. PDF probe PASS (probe_exit=0, status=completed). Root cause: `extract_and_save_image_crops()` called with PDF source path → PIL "cannot identify image file". Fix: skip crop extraction when `file_type == "pdf"`. +1 regression test. Backend: 285 passed, 1 pre-existing. Frontend: 633 passed. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-18 (S11-FIX44-VlmOcr-Pdfium-Import):** COMPLETE — Restored `import pypdfium2 as pdfium` to vlm_ocr.py (removed by S10-FIX21). Added regression test `test_vlm_ocr_pdfium_import.py`. Backend: 284 passed, 1 pre-existing. Status: READY FOR STEP 2 REBUILD.
 - **2026-08-18 (S11-FIX43a-Spec-Onedir):** COMPLETE — Spec now produces folder-based artifact per ADR-008 Decision 2 / CEO Option B. Added `onefile=False` to EXE + `COLLECT(exe, a.binaries, a.datas, name='scan2text-backend')` block. Removed manual shutil.move post-build hack. +2 spec-contract tests (not-on efile + COLLECT presence). Backend: 283 passed, 1 pre-existing. Status: COMPLETE — STEP 2 pending rebuild.
 - **2026-08-18 (S11-FIX42-Forensics-SpecDll):** COMPLETE — Three-verdict forensics: (1) spec correctly collects pdfium.dll via collect_all("pypdfium2_raw") into all_binaries→Analysis; (2) loader resolves via pathlib.Path(__file__).parent/'./pdfium.dll' → _MEIPASS/pypdfium2_raw/pdfium.dll; (3) build is onefile (45.5 MB exe, no standalone DLLs). Root cause: __file__-relative resolution may fail if DLL extraction lags or subdir not preserved. Fix proposed: runtime hook patching _get_library to use sys._MEIPASS directly. Backend: 281 passed, 1 pre-existing. Frontend: 633 passed. Status: READY FOR FIX43 IMPLEMENTATION.

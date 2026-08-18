@@ -250,7 +250,8 @@ class VlmOcrAdapter:
         text = convert_html_tables_to_gfm(raw)
         source_path = Path(image_path)
         output_md_path = source_path.parent / f"{source_path.stem}.md"
-        text = extract_and_save_image_crops(text, source_path, output_md_path)
+        if file_type != "pdf":
+            text = extract_and_save_image_crops(text, source_path, output_md_path)
         return text
 
     def _render_pdf(self, path: Path) -> List[bytes] | dict[str, Any]:
