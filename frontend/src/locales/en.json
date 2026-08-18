@@ -26,15 +26,16 @@
   },
   "errors": {
     "unsupportedFileType": "Unsupported file type. Allowed: PNG, JPG, JPEG, WEBP, PDF",
-    "fileTooLarge": "File exceeds 50MB limit",
+    "fileTooLarge": "File exceeds 20MB limit",
     "uploadFailed": "Upload failed",
     "batchSkipped": "{{total}} files were skipped: {{unsupported}} unsupported type(s), {{tooLarge}} too large.",
     "allInvalid": "All selected files are unsupported or too large.",
     "pdfTooComplex": "PDF too complex for the current page limit. Raise the page limit in Settings and retry.",
-    "fileTooComplex": "File too complex (max 20MB)."
+    "fileTooComplex": "File too complex (max 20MB).",
+    "fileTooComplexRejected": "File too large or complex. Please try a smaller file."
   },
   "dropzone": {
-    "hint": "PNG · JPG · WEBP · PDF — max 50MB per file · max 10 files per batch",
+    "hint": "PNG · JPG · WEBP · PDF — max 20MB per file · max 10 files per batch",
     "clickLabel": "Click or drag files here",
     "dropLabel": "Drop files here",
     "maxFilesWarning": "Max 10 files per batch — extra files were skipped."
@@ -92,10 +93,7 @@
   },
   "welcome": {
     "title": "Welcome to Scan2Text",
-    "bullet1": "Works fully offline; your files never leave this PC.",
-    "bullet2": "No accounts, no telemetry, no document content or file names in logs.",
-    "bullet3": "Big or dense files can take several minutes; the app stays responsive.",
-    "bullet4": "Output is best-effort Markdown — always double-check important numbers.",
+    "body": "Turn your scanned documents into editable text — no internet required. Quick heads-up: Files must be under 20MB (that's about 10-20 photos or a short PDF). PDFs can be up to 50 pages. We accept PNG, JPG, WEBP, and PDF. Ready? Drop your files below!",
     "dontShowAgain": "Don't show this again",
     "close": "Get Started"
   },

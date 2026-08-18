@@ -3,7 +3,7 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (WSOD Fix) — S11-FIX59-Align-Error-Codes-BlackDot-20MB
+- Phase: Phase 11 (WSOD Fix) — S11-FIX60-Welcome-Screen-GFM-Verify
 - Date: 2026-08-19
 - Tauri shell hash: 8FB86C5243204CEE4960061ACE548860B1C73C7E1CE819F6331BDC642E66EF2E
 - Backend hash: 4EBD872A6563E3DE199D50A69A4DB904E0864D6F28A74C3D34B343C7DDA5F216 (folder-based onedir, S11-FIX56)
@@ -12,9 +12,10 @@
 - Frontend tests: 637 passed, 0 failures
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - Next: CEO manual verification
-- RESULT: S11-FIX59 complete. Backend error code aligned to FILE_TOO_COMPLEX, frontend max file size 20MB, Black Dot UI for non-retryable rejections implemented. Typecheck clean, tests green. Status: READY FOR CEO MANUAL VERIFICATION.
+- RESULT: S11-FIX60 complete. Welcome screen updated with friendly 20MB limit copy. Verified remark-gfm configuration in MarkdownPreview. Typecheck clean, tests green. Status: READY FOR FINAL REBUILD & CEO SMOKE TEST.
 
 ## Recent Changelog (last 5)
+- **2026-08-19 (S11-FIX60-Welcome-Screen-GFM-Verify):** COMPLETE — Updated Welcome screen with friendly 20MB limit copy. Verified remark-gfm configuration in MarkdownPreview. Status: READY FOR FINAL REBUILD & CEO SMOKE TEST.
 - **2026-08-19 (S11-DOC-Update-CTO-Manual-PreRead):** COMPLETE — Locked MANDATORY PRE-READ block into AGENTS-CTO.md Section 7 template. All future Kilo prompts will now force context loading. Status: COMPLETE.
 - **2026-08-19 (S11-FIX59-Align-Error-Codes-BlackDot-20MB):** COMPLETE — Backend error code PDF_TOO_MANY_PAGES → FILE_TOO_COMPLEX; frontend MAX_FILE_SIZE 20MB; dropzone hint updated; errorCode field added to ScanJob; Black Dot UI for FILE_TOO_COMPLEX with tooltip, retry hidden. Tests updated, typecheck clean, 637 passed. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-19 (S11-FIX58-Final-Rebuild-Swap-Smoke):** COMPLETE — Rebuilt Tauri shell with aligned backend/ paths. Swapped to D:\Scan2Text. PowerShell smoke test confirms WSOD is dead (shell and backend processes stay alive, backend-boot.log shows health 200 OK, no panic! errors). Status: READY FOR CEO MANUAL RE-SMOKE.

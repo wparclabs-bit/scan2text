@@ -56,12 +56,7 @@ export default function WelcomeModal({ open: controlledOpen, onOpenChange }: Wel
         <DialogHeader>
           <DialogTitle>{t('welcome.title')}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3 py-4">
-          <p className="text-sm text-muted-foreground">{t('welcome.bullet1')}</p>
-          <p className="text-sm text-muted-foreground">{t('welcome.bullet2')}</p>
-          <p className="text-sm text-muted-foreground">{t('welcome.bullet3')}</p>
-          <p className="text-sm text-muted-foreground">{t('welcome.bullet4')}</p>
-        </div>
+        <p className="text-sm text-muted-foreground py-4">{t('welcome.body')}</p>
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
