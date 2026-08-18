@@ -9,12 +9,13 @@
 - Backend hash: 46D6FBCD17EAC7C45B0E523E6E607547D4E11123B4537EC54AFFCE65F2DB762C (folder-based onedir, rebuilt S11-FIX47)
 - pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 7.2MB)
 - Backend tests: 310 passed, 1 pre-existing failure (test_health_contract)
-- Frontend tests: 633 green, 0 failures
+- Frontend tests: 636 green, 0 failures
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - Next: CEO packaged re-smoke
 - RESULT: Wall-1 bug confirmed and fixed — VlmOcrAdapter._render_pdf now reads live SettingsService.load() at guard time instead of stale _max_pdf_pages cached at __init__. Noise filter recovered from dead FIX48 session. Backend: 310 passed, 1 pre-existing. Status: READY FOR CEO MANUAL VERIFICATION.
 
 ## Recent Changelog (last 5)
+- **2026-08-18 (S11-FIX49-RejectToast-SettingsPointer):** COMPLETE — When pollJob receives a failed response with error_code PDF_TOO_COMPLEX or FILE_TOO_COMPLEX, fires a translated sonner.info toast (reason + Settings pointer). Red dot + Retry tooltip stay informational. Added i18n keys errors.pdfTooComplex + errors.fileTooComplex to en.json + id.json + test-setup.ts. Extended TaskStatusResponse + FailedTaskStatusResponse with error_code?. +3 tests (633→636). Status: COMPLETE.
 - **2026-08-18 (S11-FIX46-PdfChartCrops):** COMPLETE — PDF pages now get chart crops extracted from the rasterized page image (the exact image the model received), with tags rewritten to relative paths. Refactored `extract_and_save_image_crops` to accept `Path | PIL.Image.Image`; `_render_pdf` returns `(bytes, pil_image)` pairs; per-page crop extraction in VlmOcrAdapter.ocr() for PDFs; deleted FIX45 blanket skip. +4 tests. Backend: 289 passed, 1 pre-existing. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-18 (S11-FIX45-Backend-Rebuild-Probe):** COMPLETE — PyInstaller rebuild exit 0, hash 46D6FBCD…; recovery43c wipe+swap+probe PASS (success=true, health=ok, model_loaded=true, files_present=true, probe_exit=0, probe_tail="completed"). No source edits. Backend: 285 passed, 1 pre-existing. Frontend: 633 passed. Status: READY FOR CEO PACKAGED RE-SMOKE.
 - **2026-08-18 (S11-FIX44-VlmOcr-Pdfium-Import):** COMPLETE — Restored `import pypdfium2 as pdfium` to vlm_ocr.py (removed by S10-FIX21). Added regression test `test_vlm_ocr_pdfium_import.py`. Backend: 284 passed, 1 pre-existing. Status: READY FOR STEP 2 REBUILD.
