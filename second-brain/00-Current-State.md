@@ -3,18 +3,19 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (WSOD Fix) — S11-FIX61-Final-Rebuild-Swap-Smoke
+- Phase: Phase 11 (WSOD Fix) — S11-FIX62-Backend-Lifecycle
 - Date: 2026-08-19
 - Tauri shell hash: BFA7535715C23FF830F375BFC1CCA6F27A386CCC82BFB32B013E7D38A2B4DF50
 - Backend hash: 4EBD872A6563E3DE199D50A69A4DB904E0864D6F28A74C3D34B343C7DDA5F216 (folder-based onedir, S11-FIX56)
 - pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 7.2MB)
-- Backend tests: 316 passed, 1 pre-existing failure (test_health_contract)
-- Frontend tests: 637 passed, 0 failures
+- Backend tests: 320 passed, 1 pre-existing failure (test_health_contract)
+- Frontend tests: 640 passed, 0 failures
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - Next: CEO manual kitchen sink QA
-- RESULT: S11-FIX61 complete. Rebuilt Tauri shell with 20MB limit, Black Dot UI, and updated Welcome screen. Swapped to D:\Scan2Text. PowerShell smoke test confirms clean boot. Status: READY FOR CEO MANUAL KITCHEN SINK QA.
+- RESULT: S11-FIX62 complete. Backend lifecycle: boot guard, kill-on-exit, boot-failed toast. +4 backend tests, +3 frontend tests. Typecheck clean, build success. Status: READY FOR CEO MANUAL KITCHEN SINK QA.
 
 ## Recent Changelog (last 5)
+- **2026-08-19 (S11-FIX62-Backend-Lifecycle):** COMPLETE — Backend lifecycle: boot guard (boot_guard.py), kill-on-exit (backend_process.rs), boot-failed toast (useBackendBootFailedListener). +4 backend tests, +3 frontend tests. Typecheck clean, build success. Status: READY FOR CEO MANUAL KITCHEN SINK QA.
 - **2026-08-19 (S11-FIX61-Final-Rebuild-Swap-Smoke):** COMPLETE — Rebuilt Tauri shell with 20MB limit, Black Dot UI, and updated Welcome screen. Swapped to D:\Scan2Text. PowerShell smoke test confirms clean boot. Status: READY FOR CEO MANUAL KITCHEN SINK QA.
 - **2026-08-19 (S11-FIX60-Welcome-Screen-GFM-Verify):** COMPLETE — Updated Welcome screen with friendly 20MB limit copy. Verified remark-gfm configuration in MarkdownPreview. Status: READY FOR FINAL REBUILD & CEO SMOKE TEST.
 - **2026-08-19 (S11-DOC-Update-CTO-Manual-PreRead):** COMPLETE — Locked MANDATORY PRE-READ block into AGENTS-CTO.md Section 7 template. All future Kilo prompts will now force context loading. Status: COMPLETE.
