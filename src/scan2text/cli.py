@@ -21,6 +21,8 @@ def main() -> None:
     host = get_host()
     port = get_port()
     logger.info("Starting Scan2Text backend on %s:%d", host, port)
+    from scan2text.boot_guard import boot_guard
+    boot_guard(port)
     uvicorn.run(app, host=host, port=port, log_level="info")
 
 

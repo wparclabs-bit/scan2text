@@ -115,6 +115,9 @@
     },
     "errorGeneric": "Kesalahan: {{message}}"
   },
+  "backend": {
+    "bootFailed": "Backend gagal dimulai. Periksa logs/ untuk detail."
+  },
   "feedback": {
     "tooltip": "Kirim masukan",
     "title": "Kirim Masukan",

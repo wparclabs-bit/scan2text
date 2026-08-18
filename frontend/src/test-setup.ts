@@ -88,10 +88,13 @@ void i18next
             title: 'Welcome to Scan2Text',
             body: "Turn your scanned documents into editable text — no internet required. Quick heads-up: Files must be under 20MB (that's about 10-20 photos or a short PDF). PDFs can be up to 50 pages. We accept PNG, JPG, WEBP, and PDF. Ready? Drop your files below!",
             dontShowAgain: "Don't show this again",
-            close: 'Get Started',
-          },
-          feedback: {
-            tooltip: 'Send feedback',
+             close: 'Get Started',
+           },
+           backend: {
+             bootFailed: 'Backend failed to start. Check logs/ for details.',
+           },
+           feedback: {
+             tooltip: 'Send feedback',
             title: 'Send Feedback',
             messageLabel: 'Your feedback',
             messagePlaceholder: 'Tell us what you think...',
@@ -196,6 +199,9 @@ void i18next
             body: 'Ubah dokumen hasil scan Anda menjadi teks yang bisa diedit — tanpa internet. Catatan cepat: File harus di bawah 20MB (sekitar 10-20 foto atau PDF pendek). PDF bisa sampai 50 halaman. Kami menerima PNG, JPG, WEBP, dan PDF. Siap? Jatuhkan file Anda di bawah!',
             dontShowAgain: 'Jangan tampilkan lagi',
             close: 'Mulai',
+          },
+          backend: {
+            bootFailed: 'Backend gagal dimulai. Periksa logs/ untuk detail.',
           },
           feedback: {
             tooltip: 'Kirim masukan',

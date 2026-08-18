@@ -3,25 +3,23 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: Phase 11 (WSOD Fix) — S11-FIX60-Welcome-Screen-GFM-Verify
+- Phase: Phase 11 (WSOD Fix) — S11-FIX61-Final-Rebuild-Swap-Smoke
 - Date: 2026-08-19
-- Tauri shell hash: 8FB86C5243204CEE4960061ACE548860B1C73C7E1CE819F6331BDC642E66EF2E
+- Tauri shell hash: BFA7535715C23FF830F375BFC1CCA6F27A386CCC82BFB32B013E7D38A2B4DF50
 - Backend hash: 4EBD872A6563E3DE199D50A69A4DB904E0864D6F28A74C3D34B343C7DDA5F216 (folder-based onedir, S11-FIX56)
 - pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 7.2MB)
 - Backend tests: 316 passed, 1 pre-existing failure (test_health_contract)
 - Frontend tests: 637 passed, 0 failures
 - PRD: v1.12 source of truth in second-brain/04-Product/
-- Next: CEO manual verification
-- RESULT: S11-FIX60 complete. Welcome screen updated with friendly 20MB limit copy. Verified remark-gfm configuration in MarkdownPreview. Typecheck clean, tests green. Status: READY FOR FINAL REBUILD & CEO SMOKE TEST.
+- Next: CEO manual kitchen sink QA
+- RESULT: S11-FIX61 complete. Rebuilt Tauri shell with 20MB limit, Black Dot UI, and updated Welcome screen. Swapped to D:\Scan2Text. PowerShell smoke test confirms clean boot. Status: READY FOR CEO MANUAL KITCHEN SINK QA.
 
 ## Recent Changelog (last 5)
+- **2026-08-19 (S11-FIX61-Final-Rebuild-Swap-Smoke):** COMPLETE — Rebuilt Tauri shell with 20MB limit, Black Dot UI, and updated Welcome screen. Swapped to D:\Scan2Text. PowerShell smoke test confirms clean boot. Status: READY FOR CEO MANUAL KITCHEN SINK QA.
 - **2026-08-19 (S11-FIX60-Welcome-Screen-GFM-Verify):** COMPLETE — Updated Welcome screen with friendly 20MB limit copy. Verified remark-gfm configuration in MarkdownPreview. Status: READY FOR FINAL REBUILD & CEO SMOKE TEST.
 - **2026-08-19 (S11-DOC-Update-CTO-Manual-PreRead):** COMPLETE — Locked MANDATORY PRE-READ block into AGENTS-CTO.md Section 7 template. All future Kilo prompts will now force context loading. Status: COMPLETE.
 - **2026-08-19 (S11-FIX59-Align-Error-Codes-BlackDot-20MB):** COMPLETE — Backend error code PDF_TOO_MANY_PAGES → FILE_TOO_COMPLEX; frontend MAX_FILE_SIZE 20MB; dropzone hint updated; errorCode field added to ScanJob; Black Dot UI for FILE_TOO_COMPLEX with tooltip, retry hidden. Tests updated, typecheck clean, 637 passed. Status: READY FOR CEO MANUAL VERIFICATION.
 - **2026-08-19 (S11-FIX58-Final-Rebuild-Swap-Smoke):** COMPLETE — Rebuilt Tauri shell with aligned backend/ paths. Swapped to D:\Scan2Text. PowerShell smoke test confirms WSOD is dead (shell and backend processes stay alive, backend-boot.log shows health 200 OK, no panic! errors). Status: READY FOR CEO MANUAL RE-SMOKE.
-- **2026-08-19 (S11-FIX57-Align-Backend-Paths):** COMPLETE — Fixed Rust spawn paths to backend/ (resolves WSOD). Status: READY FOR REBUILD.
-- **2026-08-19 (S11-DOC-Shorten-Agents-Lock-Structure):** COMPLETE — Rewrote and shortened AGENTS.md to enforce MCP tools and lock portable backend/ structure. Status: READY FOR FINAL REBUILD.
-- **2026-08-18 (S11-FIX55-Enforce50PageLimit):** COMPLETE — Changed hardcoded 20-page limits to 50 across backend and frontend. `MAX_PDF_PAGES_DEFAULT`, `AppSettings.max_pdf_pages` default, `QueueService.process_batch` default, and `SettingsDialog` initial state all updated from 20→50. All related tests updated. Backend: 316 passed, 1 pre-existing. Frontend: 637 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-18 (S11-DOC-PRD-50PageLimit-v1.1-Backlog):** COMPLETE — Bumped PRD v1.12→v1.13 (01-product-and-scope.md) and v1.11→v1.12 (02-functional-requirements.md). Raised PDF page limit from 20 to 50 pages per CEO decision 2026-08-18. Added v1.1 Backlog section covering internal PDF splitting (51–500 pp), queue cancel, ETA indicator, and auto-select refinement. Doc-only slice; no source changes. Status: COMPLETE.
 - **2026-08-18 (S11-FIX54-TwoMinHint-Repeating-Green):** COMPLETE — Changed long-doc hint from one-time 5-min toast to repeating 2-min toast per CEO decision. Fixed dangling test (moved inside describe block, added toast/i18n imports). Added missing `getHealth()` to api.ts. Frontend: 637 passed, 0 failures. Typecheck clean. Build success. Status: COMPLETE.
 - **2026-08-18 (S11-FIX53-Rebuild-Probe-Final):** COMPLETE — Pre-gate verified (backend 316 passed + 1 pre-existing, frontend 636 passed). Rebuilt backend + Tauri shell, wiped/swapped to D:\Scan2Text, boot gate PASS (health ok, model.loaded=true, files_present=true, dll_count>0). PDF probe green with status completed. No source edits. Status: COMPLETE.

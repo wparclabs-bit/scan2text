@@ -33,6 +33,7 @@ export interface ScanJob {
   resultMarkdown: string | null
   markdownOutput: string
   error: string | null
+  errorCode: string | null
   file: File | null
   progress: number
 }
@@ -96,6 +97,7 @@ function createDefaultJob(
     resultMarkdown: null,
     markdownOutput: '',
     error: null,
+    errorCode: null,
     file: null,
     progress: 0,
   }
@@ -346,6 +348,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
           resultMarkdown: null,
           markdownOutput: '',
           error: null,
+          errorCode: null,
           file: input.file,
           progress: 0,
         },
@@ -457,6 +460,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
               ...j,
               status: 'failed',
               error: response.error ?? 'Processing failed',
+              errorCode: errorCode ?? null,
             },
           },
         })
@@ -547,6 +551,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
                   ...j,
                   status: 'failed',
                   error: statusResponse.error ?? 'Processing failed',
+                  errorCode: errorCode ?? null,
                 },
               },
             })

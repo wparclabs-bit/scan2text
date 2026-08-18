@@ -13,10 +13,16 @@ use std::os::windows::process::CommandExt;
 /// Backend port (ADR-008).
 const BACKEND_PORT: u16 = 47351;
 
+/// Time window after spawn during which an early exit triggers a boot-failed event.
+#[cfg(not(debug_assertions))]
+const BOOT_FAIL_WINDOW: Duration = Duration::from_secs(5);
+
 /// Manages the lifecycle of the Python backend process.
 pub struct BackendManager {
     child: Option<Child>,
     port: u16,
+    /// Cloned AppHandle for emitting events from watcher threads.
+    app_handle: Option<tauri::AppHandle>,
 }
 
 impl BackendManager {
@@ -25,13 +31,21 @@ impl BackendManager {
         Self {
             child: None,
             port: BACKEND_PORT,
+            app_handle: None,
         }
+    }
+
+    /// Attach the Tauri AppHandle so watcher threads can emit events.
+    pub fn set_app_handle(&mut self, handle: tauri::AppHandle) {
+        self.app_handle = Some(handle);
     }
 
     /// Start the backend executable and store the child process.
     /// Idempotent: if a live child already exists, reuse it.
     /// If a dead child exists, restart it.
     /// In debug/dev mode, skip spawning — the dev script manages the backend.
+    /// Spawns a background watcher that emits `backend-boot-failed` if the
+    /// child exits within BOOT_FAIL_WINDOW of spawn.
     pub fn start(&mut self, _timeout: Duration) -> Result<(), String> {
         #[cfg(debug_assertions)]
         {
@@ -49,9 +63,40 @@ impl BackendManager {
             }
             let exe_path = resolve_backend_path();
             let child = start_backend(&exe_path);
+            let spawn_time = Instant::now();
+            // Clone the child handle for the watcher thread before storing the original.
+            let watcher_child = child.try_clone().expect("failed to clone child handle");
             self.child = Some(child);
+            self.watch_for_early_exit(spawn_time, watcher_child);
             return self.wait_for_health(_timeout);
         }
+    }
+
+    /// Spawn a watcher thread: if the child exits within BOOT_FAIL_WINDOW,
+    /// emit a `backend-boot-failed` event to the frontend.
+    #[cfg(not(debug_assertions))]
+    fn watch_for_early_exit(&self, spawn_time: Instant, mut child: Child) {
+        let Some(app_handle) = self.app_handle.clone() else {
+            return;
+        };
+        std::thread::spawn(move || {
+            use tauri::Emitter;
+            // Wait for the child to exit (with a generous timeout so we don't block forever).
+            let wait_start = Instant::now();
+            let wait_timeout = Duration::from_secs(30);
+            while wait_start.elapsed() < wait_timeout {
+                if child.try_wait().unwrap_or(None).is_some() {
+                    if spawn_time.elapsed() <= BOOT_FAIL_WINDOW {
+                        let _ = app_handle.emit(
+                            "backend-boot-failed",
+                            "Backend exited within 5s of spawn — check logs/",
+                        );
+                    }
+                    return;
+                }
+                std::thread::sleep(Duration::from_millis(100));
+            }
+        });
     }
 
     /// Stop the backend process cleanly.

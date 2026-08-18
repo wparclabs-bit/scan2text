@@ -379,6 +379,7 @@ pub fn run() {
 
             {
                 let mut mgr = manager.lock().unwrap();
+                mgr.set_app_handle(app.handle().clone());
                 if let Err(e) = boot_backend(&mut mgr) {
                     log::error!("Failed to boot backend: {}", e);
                     return Err(e.into());
@@ -392,6 +393,19 @@ pub fn run() {
         .expect("error while building tauri application")
         .run(move |app: &tauri::AppHandle, event: RunEvent| {
             match event {
+                RunEvent::WindowEvent { label, event, .. } => {
+                    // Kill backend child when the user closes the window.
+                    if let tauri::WindowEvent::CloseRequested { .. } = event {
+                        log::info!("Window close requested ({label}) — stopping backend");
+                        let state = app.state::<AppState>();
+                        let mut guard = state.0.lock().unwrap();
+                        if let Err(e) = guard.stop() {
+                            log::warn!("Backend stop on window close failed: {}", e);
+                        } else {
+                            log::info!("Backend stopped cleanly on window close");
+                        }
+                    }
+                }
                 RunEvent::ExitRequested { .. } | RunEvent::Exit => {
                     let state = app.state::<AppState>();
                     let mut guard = state.0.lock().unwrap();
