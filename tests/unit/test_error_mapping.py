@@ -19,7 +19,7 @@ class TestErrorMapping:
             "MODEL_LOAD_FAILED",
             "UNSUPPORTED_FILE",
             "FILE_TOO_LARGE",
-            "PDF_TOO_MANY_PAGES",
+            "FILE_TOO_COMPLEX",
             "PDF_TOO_COMPLEX",
             "OCR_FAILED",
             "OUTPUT_DIR_NOT_WRITABLE",

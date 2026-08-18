@@ -38,7 +38,7 @@ _VLM_PROMPT = '''\nExtract all readable content from the image in natural human 
 OCR_TIMEOUT = "OCR_TIMEOUT"
 MODEL_NOT_FOUND = "MODEL_NOT_FOUND"
 OCR_FAILED = "OCR_FAILED"
-PDF_TOO_MANY_PAGES = "PDF_TOO_MANY_PAGES"
+FILE_TOO_COMPLEX = "FILE_TOO_COMPLEX"
 
 _MAX_IMAGE_EDGE = 2880
 _MAX_PIXELS = 4_000_000   # context budget: image tokens ≈ px/1024; keep image + 4096 output within n_ctx 8192
@@ -301,13 +301,13 @@ class VlmOcrAdapter:
         ok, err = check_page_limit(path, live_settings.max_pdf_pages)
         if not ok:
             return {
-                "error": PDF_TOO_MANY_PAGES,
+                "error": FILE_TOO_COMPLEX,
                 "message": err,
             }
         ok, err = check_pdf_size(path)
         if not ok:
             return {
-                "error": "PDF_TOO_COMPLEX",
+                "error": FILE_TOO_COMPLEX,
                 "message": err,
             }
         pages: List[tuple[bytes, Image.Image]] = []

@@ -18,10 +18,10 @@ const { useScan2TextStore } = realStore
 
 function createTestJobs() {
   return {
-    'job-queued': { id: 'job-queued', fileName: 'queued.png', fileSize: 500, fileType: 'image/png', status: 'pending' as const, createdAt: 1000, taskId: null, isBackground: false, resultMarkdown: null, markdownOutput: '', error: null, file: null, progress: 0 },
-    'job-processing': { id: 'job-processing', fileName: 'processing.png', fileSize: 600, fileType: 'image/png', status: 'processing' as const, createdAt: 2000, taskId: 'task-1', isBackground: false, resultMarkdown: null, markdownOutput: '', error: null, file: null, progress: 45 },
-    'job-completed': { id: 'job-completed', fileName: 'done.pdf', fileSize: 700, fileType: 'application/pdf', status: 'completed' as const, createdAt: 3000, taskId: 'task-2', isBackground: true, resultMarkdown: '# Done', markdownOutput: '# Done', error: null, file: null, progress: 100 },
-    'job-failed': { id: 'job-failed', fileName: 'failed.png', fileSize: 800, fileType: 'image/png', status: 'failed' as const, createdAt: 4000, taskId: 'task-3', isBackground: false, resultMarkdown: null, markdownOutput: '', error: 'OCR error', file: null, progress: 0 },
+    'job-queued': { id: 'job-queued', fileName: 'queued.png', fileSize: 500, fileType: 'image/png', status: 'pending' as const, createdAt: 1000, taskId: null, isBackground: false, resultMarkdown: null, markdownOutput: '', error: null, errorCode: null, file: null, progress: 0 },
+    'job-processing': { id: 'job-processing', fileName: 'processing.png', fileSize: 600, fileType: 'image/png', status: 'processing' as const, createdAt: 2000, taskId: 'task-1', isBackground: false, resultMarkdown: null, markdownOutput: '', error: null, errorCode: null, file: null, progress: 45 },
+    'job-completed': { id: 'job-completed', fileName: 'done.pdf', fileSize: 700, fileType: 'application/pdf', status: 'completed' as const, createdAt: 3000, taskId: 'task-2', isBackground: true, resultMarkdown: '# Done', markdownOutput: '# Done', error: null, errorCode: null, file: null, progress: 100 },
+    'job-failed': { id: 'job-failed', fileName: 'failed.png', fileSize: 800, fileType: 'image/png', status: 'failed' as const, createdAt: 4000, taskId: 'task-3', isBackground: false, resultMarkdown: null, markdownOutput: '', error: 'OCR error', errorCode: null, file: null, progress: 0 },
   }
 }
 
@@ -76,6 +76,7 @@ describe('Queue row click selects job in preview (FR-02/FR-04)', () => {
         resultMarkdown: '# First Document\n\nPage one content.',
         markdownOutput: '# First Document\n\nPage one content.',
         error: null,
+        errorCode: null,
         file: null,
         progress: 100,
       },
@@ -91,6 +92,7 @@ describe('Queue row click selects job in preview (FR-02/FR-04)', () => {
         resultMarkdown: '# Second Document\n\nPage two content.',
         markdownOutput: '# Second Document\n\nPage two content.',
         error: null,
+        errorCode: null,
         file: null,
         progress: 100,
       },
@@ -138,6 +140,7 @@ describe('Queue row click selects job in preview (FR-02/FR-04)', () => {
         resultMarkdown: null,
         markdownOutput: '',
         error: 'OCR error',
+        errorCode: null,
         file: { name: 'failed.png' } as File,
         progress: 0,
       },

@@ -1,4 +1,4 @@
-const MAX_FILE_SIZE = 50 * 1024 * 1024
+const MAX_FILE_SIZE = 20 * 1024 * 1024
 
 const ALLOWED_MIME_TYPES = [
   'image/png',
@@ -46,7 +46,7 @@ export function validateFile(file: File): ValidationResult {
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    return { valid: false, error: 'File exceeds 50MB limit', reason: 'tooLarge' }
+    return { valid: false, error: 'File exceeds 20MB limit', reason: 'tooLarge' }
   }
 
   return { valid: true }

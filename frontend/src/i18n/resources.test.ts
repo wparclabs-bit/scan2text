@@ -74,7 +74,7 @@ describe('en.json translation resources', () => {
   })
 
   it('has errors.fileTooLarge', () => {
-    expect(enResources.errors.fileTooLarge).toBe('File exceeds 50MB limit')
+    expect(enResources.errors.fileTooLarge).toBe('File exceeds 20MB limit')
   })
 
   it('has errors.uploadFailed', () => {

@@ -27,15 +27,15 @@ describe('validateFile', () => {
     expect(validateFile(file).valid).toBe(true)
   })
 
-  it('should accept a file exactly 50MB', () => {
-    const bytes = 50 * 1024 * 1024
+  it('should accept a file exactly 20MB', () => {
+    const bytes = 20 * 1024 * 1024
     const file = new File([new ArrayBuffer(bytes)], 'big.png', { type: 'image/png' })
     Object.defineProperty(file, 'size', { value: bytes })
     expect(validateFile(file).valid).toBe(true)
   })
 
-  it('should reject a file larger than 50MB', () => {
-    const bytes = 50 * 1024 * 1024 + 1
+  it('should reject a file larger than 20MB', () => {
+    const bytes = 20 * 1024 * 1024 + 1
     const file = new File([new ArrayBuffer(bytes)], 'big.png', { type: 'image/png' })
     Object.defineProperty(file, 'size', { value: bytes })
     expect(validateFile(file).valid).toBe(false)
@@ -59,7 +59,7 @@ describe('validateFile', () => {
   })
 
   it('should return an error message for oversized files', () => {
-    const bytes = 50 * 1024 * 1024 + 1
+    const bytes = 20 * 1024 * 1024 + 1
     const file = new File([new ArrayBuffer(bytes)], 'big.png', { type: 'image/png' })
     Object.defineProperty(file, 'size', { value: bytes })
     const result = validateFile(file)
@@ -96,7 +96,7 @@ describe('validateFile', () => {
   })
 
   it('should return reason "tooLarge" when file exceeds size limit', () => {
-    const bytes = 50 * 1024 * 1024 + 1
+    const bytes = 20 * 1024 * 1024 + 1
     const file = new File([new ArrayBuffer(bytes)], 'big.png', { type: 'image/png' })
     Object.defineProperty(file, 'size', { value: bytes })
     const result = validateFile(file)
@@ -105,7 +105,7 @@ describe('validateFile', () => {
   })
 
   it('should check type before size for unsupported oversized files', () => {
-    const bytes = 50 * 1024 * 1024 + 1
+    const bytes = 20 * 1024 * 1024 + 1
     const file = new File([new ArrayBuffer(bytes)], 'test.txt', { type: 'text/plain' })
     Object.defineProperty(file, 'size', { value: bytes })
     const result = validateFile(file)
@@ -139,8 +139,8 @@ describe('validateFilesBatch', () => {
     expect(result.skippedFiles[1].reason).toBe('unsupported')
   })
 
-  it('should reject files over 50MB', () => {
-    const bytes = 50 * 1024 * 1024 + 1
+  it('should reject files over 20MB', () => {
+    const bytes = 20 * 1024 * 1024 + 1
     const bigFile = new File([new ArrayBuffer(bytes)], 'big.png', { type: 'image/png' })
     Object.defineProperty(bigFile, 'size', { value: bytes })
     const result = validateFilesBatch([bigFile])
@@ -153,7 +153,7 @@ describe('validateFilesBatch', () => {
     const validPng = new File(['a'], 'valid.png', { type: 'image/png' })
     const invalidTxt = new File(['b'], 'invalid.txt', { type: 'text/plain' })
     const validPdf = new File(['c'], 'valid.pdf', { type: 'application/pdf' })
-    const bytes = 50 * 1024 * 1024 + 1
+    const bytes = 20 * 1024 * 1024 + 1
     const bigFile = new File([new ArrayBuffer(bytes)], 'big.jpg', { type: 'image/jpeg' })
     Object.defineProperty(bigFile, 'size', { value: bytes })
 
