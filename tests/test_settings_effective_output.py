@@ -55,7 +55,7 @@ class TestEffectiveOutputDir:
         assert r.status_code == 200
         body = r.json()
         assert body["output_dir"] == expected_output
-        assert body["max_pdf_pages"] == 20
+        assert body["max_pdf_pages"] == 50
 
     def test_whitespace_stored_output_dir_returns_pathservice_fallback(self, app, tmp_path):
         """When stored output_dir is all whitespace, GET returns PathService.output_dir."""

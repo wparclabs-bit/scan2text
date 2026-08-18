@@ -78,18 +78,18 @@ class TestCheckPageLimitDirect:
 
     def test_at_limit_passes(self, tmp_path):
         pdf = tmp_path / "exact.pdf"
-        pdf.write_bytes(_build_minimal_pdf(20))
-        ok, err = check_page_limit(pdf, max_pages=20)
+        pdf.write_bytes(_build_minimal_pdf(50))
+        ok, err = check_page_limit(pdf, max_pages=50)
         assert ok is True
         assert err == ""
 
     def test_over_limit_fails(self, tmp_path):
         pdf = tmp_path / "big.pdf"
-        pdf.write_bytes(_build_minimal_pdf(25))
-        ok, err = check_page_limit(pdf, max_pages=20)
+        pdf.write_bytes(_build_minimal_pdf(51))
+        ok, err = check_page_limit(pdf, max_pages=50)
         assert ok is False
-        assert "25 pages" in err
-        assert "maximum allowed is 20" in err
+        assert "51 pages" in err
+        assert "maximum allowed is 50" in err
 
     def test_custom_max_passes(self, tmp_path):
         """25-page PDF with max_pages=400 must pass — proves the parameter works."""
@@ -147,11 +147,12 @@ class TestVlmOcrAdapterLiveSettings:
 
     def test_guard_reads_live_settings_not_stale_cache(self, tmp_scan2text):
         """CEO raised max_pdf_pages to 400. A 25-page PDF must be accepted
-        even though the adapter was initialised with default max_pdf_pages=20.
+        even though the adapter was initialised with default max_pdf_pages=50.
         The guard must read live settings (SettingsService.load()) at call time,
         not the stale _max_pdf_pages cached at __init__ time."""
-        # Build adapter with DEFAULT settings (max_pdf_pages=20)
-        adapter = self._make_adapter(20, tmp_scan2text)
+        # Build adapter with DEFAULT settings (max_pdf_pages=50)
+        adapter = self._make_adapter(50, tmp_scan2text)
+
 
         # Build a 25-page PDF (exceeds init-time default of 20)
         pdf = tmp_scan2text / "big.pdf"
@@ -159,7 +160,7 @@ class TestVlmOcrAdapterLiveSettings:
 
         # Monkeypatch SettingsService so a FRESH load returns max_pdf_pages=400.
         # If the guard reads live settings, the PDF should pass.
-        # If it uses the cached _max_pdf_pages=20, it will fail.
+        # If it uses the cached _max_pdf_pages=50, it will fail.
         from scan2text.models.settings import AppSettings
         live_settings = AppSettings(
             output_dir="", max_pdf_pages=400, cpu_threads=0,
@@ -195,7 +196,7 @@ class TestVlmOcrAdapterLiveSettings:
             result = adapter._render_pdf(pdf)
 
         # EXPECTED: guard reads live settings → list of pages (success)
-        # CURRENT BUG: guard uses stale _max_pdf_pages=20 → error dict
+        # CURRENT BUG: guard uses stale _max_pdf_pages=50 → error dict
         assert isinstance(result, list), (
             "LIVE_SETTINGS_VERDICT:FAIL — guard uses stale _max_pdf_pages "
             f"instead of live settings. Result: {result}"

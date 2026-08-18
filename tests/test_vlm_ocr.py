@@ -18,7 +18,7 @@ def settings_with_model(tmp_path):
     (tmp_path / "settings").mkdir(parents=True, exist_ok=True)
     data = {
         "output_dir": str(tmp_path / "output"),
-        "max_pdf_pages": 20,
+        "max_pdf_pages": 50,
         "cpu_threads": 0,
         "check_updates_on_startup": True,
         "model_path": str(tmp_path / "models" / "llava.gguf"),
@@ -33,7 +33,7 @@ class TestVlmOcrPersistentWorkerSpawn:
         and its priority is set via psutil.Process."""
         settings_data = {
             "output_dir": "",
-            "max_pdf_pages": 20,
+            "max_pdf_pages": 50,
             "cpu_threads": 0,
             "check_updates_on_startup": True,
             "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
@@ -76,7 +76,7 @@ class TestVlmOcrPersistentWorkerQueues:
         and receives results from output_queue — no new processes spawned."""
         settings_data = {
             "output_dir": "",
-            "max_pdf_pages": 20,
+            "max_pdf_pages": 50,
             "cpu_threads": 0,
             "check_updates_on_startup": True,
             "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
@@ -143,7 +143,7 @@ class TestVlmOcrTimeoutHandling:
         catch it, do NOT kill the worker, and return the OCR_TIMEOUT error dict."""
         settings_data = {
             "output_dir": "",
-            "max_pdf_pages": 20,
+            "max_pdf_pages": 50,
             "cpu_threads": 0,
             "check_updates_on_startup": True,
             "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
@@ -202,7 +202,7 @@ def test_ocr_pdf_uses_rendered_pages(tmp_scan2text):
     (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
     settings_data = {
         "output_dir": "",
-        "max_pdf_pages": 20,
+        "max_pdf_pages": 50,
         "cpu_threads": 0,
         "check_updates_on_startup": True,
         "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
@@ -244,7 +244,7 @@ def test_ocr_returns_model_not_found_when_files_missing(tmp_scan2text):
 
     settings_data = {
         "output_dir": "",
-        "max_pdf_pages": 20,
+        "max_pdf_pages": 50,
         "cpu_threads": 0,
         "check_updates_on_startup": True,
         "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
@@ -319,7 +319,7 @@ def test_worker_is_daemon_so_parent_can_exit(tmp_scan2text):
     (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
     settings_data = {
         "output_dir": "",
-        "max_pdf_pages": 20,
+        "max_pdf_pages": 50,
         "cpu_threads": 0,
         "check_updates_on_startup": True,
         "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
@@ -353,7 +353,7 @@ class TestVlmOcrCpuBudgetIntegration:
         (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
         settings_data = {
             "output_dir": "",
-            "max_pdf_pages": 20,
+            "max_pdf_pages": 50,
             "cpu_threads": 0,
             "n_threads": 0,
             "check_updates_on_startup": True,
@@ -391,7 +391,7 @@ class TestVlmOcrCpuBudgetIntegration:
         (tmp_scan2text / "models" / "mmproj.gguf").write_bytes(b"fake-mmproj")
         settings_data = {
             "output_dir": "",
-            "max_pdf_pages": 20,
+            "max_pdf_pages": 50,
             "cpu_threads": 6,
             "n_threads": 0,
             "check_updates_on_startup": True,
@@ -426,7 +426,7 @@ class TestVlmOcrMissingModelFiles:
         """When vlm.gguf does not exist, adapter.loaded must be False."""
         settings_data = {
             "output_dir": "",
-            "max_pdf_pages": 20,
+            "max_pdf_pages": 50,
             "cpu_threads": 0,
             "check_updates_on_startup": True,
             "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
@@ -459,7 +459,7 @@ class TestVlmOcrMissingModelFiles:
 
         settings_data = {
             "output_dir": "",
-            "max_pdf_pages": 20,
+            "max_pdf_pages": 50,
             "cpu_threads": 0,
             "check_updates_on_startup": True,
             "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),
@@ -492,7 +492,7 @@ class TestVlmOcrMissingModelFiles:
 
         settings_data = {
             "output_dir": "",
-            "max_pdf_pages": 20,
+            "max_pdf_pages": 50,
             "cpu_threads": 0,
             "check_updates_on_startup": True,
             "model_path": str(tmp_scan2text / "models" / "vlm.gguf"),

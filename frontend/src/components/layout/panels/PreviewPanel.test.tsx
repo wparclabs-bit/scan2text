@@ -56,7 +56,7 @@ describe('PreviewPanel', () => {
     vi.mocked(toast).info = vi.fn()
     vi.mocked(toast).error = vi.fn()
     vi.mocked(invoke).mockResolvedValue(undefined)
-    vi.mocked(getSettings).mockResolvedValue({ output_dir: 'C:\\test\\output', max_pdf_pages: 20, cpu_threads: 0 })
+    vi.mocked(getSettings).mockResolvedValue({ output_dir: 'C:\\test\\output', max_pdf_pages: 50, cpu_threads: 0 })
   })
 
   function setupStore(selectedJobId: string | null, jobs: Record<string, any>) {

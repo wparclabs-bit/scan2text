@@ -75,7 +75,7 @@ class TestVlmOcrPdfChartCrops:
         pil_page = Image.new("RGB", (1000, 1000), color="blue")
 
         adapter = self._build_adapter()
-        adapter._max_pdf_pages = 20
+        adapter._max_pdf_pages = 50
 
         def mock_render_pdf(p):
             # Return list of (png_bytes, pil_image) tuples — one per page view.
