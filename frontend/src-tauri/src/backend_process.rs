@@ -101,7 +101,7 @@ pub fn resolve_backend_path() -> PathBuf {
     if let Ok(manifest) = std::env::var("CARGO_MANIFEST_DIR") {
         let manifest_path = PathBuf::from(manifest);
         if let Some(root) = manifest_path.parent().and_then(|p| p.parent()).and_then(|p| p.parent()) {
-            let exe = root.join("dist").join("scan2text-backend").join("scan2text-backend.exe");
+            let exe = root.join("backend").join("scan2text-backend.exe");
             if exe.exists() {
                 return exe;
             }
@@ -115,7 +115,7 @@ pub fn resolve_backend_path() -> PathBuf {
         };
         for _ in 0..10 {
             path = path.parent().unwrap_or(&path).to_path_buf();
-            let candidate = path.join("dist").join("scan2text-backend").join("scan2text-backend.exe");
+            let candidate = path.join("backend").join("scan2text-backend.exe");
             if candidate.exists() {
                 return candidate;
             }
@@ -123,7 +123,7 @@ pub fn resolve_backend_path() -> PathBuf {
     }
 
     panic!(
-        "Backend executable not found. Expected dist/scan2text-backend/scan2text-backend.exe \
+        "Backend executable not found. Expected backend/scan2text-backend.exe \
          relative to repo root."
     )
 }
