@@ -176,3 +176,32 @@ class TestVlmOcrAdapterRealRouting:
                 adapter.ocr(str(path))
 
         assert len(pil_open_calls) == 0, "PIL must not be called for .pdf file"
+
+    def test_real_adapter_skips_crop_extraction_for_pdf(self, tmp_path):
+        """Real VlmOcrAdapter: PDF must skip extract_and_save_image_crops
+        because PIL cannot open PDFs. The OCR should complete successfully
+        without calling the crop extractor with a PDF source path."""
+        path = tmp_path / "document.pdf"
+        path.write_bytes(_PDF_MAGIC)
+
+        adapter = self._build_adapter()
+        adapter._max_pdf_pages = 20
+        # Mock _render_pdf to return valid page bytes so OCR proceeds past routing.
+        adapter._render_pdf = lambda p: [b"page1"]
+
+        crop_calls = []
+
+        def tracking_crop(md, src, out):
+            crop_calls.append(src)
+            return md
+
+        with patch(
+            "scan2text.adapters.vlm_ocr.extract_and_save_image_crops",
+            side_effect=tracking_crop,
+        ):
+            result = adapter.ocr(str(path))
+
+        assert result == "# OCR result"
+        assert len(crop_calls) == 0, (
+            "extract_and_save_image_crops must not be called for PDF source"
+        )
