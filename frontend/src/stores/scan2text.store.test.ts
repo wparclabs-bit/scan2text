@@ -385,6 +385,18 @@ describe('scan2text store', () => {
       expect((toast.info as unknown as ReturnType<typeof vi.fn>).mock.calls[0]).toEqual(['File too complex (max 20MB).'])
     })
 
+    it('on MODEL_NOT_FOUND should open downloader modal', async () => {
+      mockI18nT.mockReturnValue('AI engine files are missing. Downloading the model now…')
+      store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf' })
+      store.getState().setTaskId('job-1', 'task-abc')
+      mockPollTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'failed', error: 'Model files not found', error_code: 'MODEL_NOT_FOUND' })
+      await store.getState().pollJob({ jobId: 'job-1' })
+      expect(store.getState().showDownloader).toBe(true)
+      const { toast } = await import('sonner')
+      expect((toast.info as unknown as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(1)
+      expect((toast.info as unknown as ReturnType<typeof vi.fn>).mock.calls[0]).toEqual(['AI engine files are missing. Downloading the model now…'])
+    })
+
     it('on other error_code should not fire a new toast', async () => {
       store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf' })
       store.getState().setTaskId('job-1', 'task-abc')

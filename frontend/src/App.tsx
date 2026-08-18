@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePreferenceStore } from './stores/preferencesStore'
+import { useScan2TextStore } from './stores/scan2text.store'
 import { buildApiUrl } from './lib/apiBase'
 import CommandCenterLayout from './components/layout/CommandCenterLayout'
 import WelcomeModal from './components/layout/WelcomeModal'
@@ -14,7 +15,8 @@ function App() {
   const { t } = useTranslation()
   const [hideWelcomeNotice, setHideWelcomeNotice] = useState<boolean | null>(null)
   const [modelReady, setModelReady] = useState<boolean>(false)
-  const [showDownloader, setShowDownloader] = useState<boolean>(false)
+  const showDownloader = useScan2TextStore((s) => s.showDownloader)
+  const setShowDownloader = useScan2TextStore((s) => s.setShowDownloader)
 
   useBackendBootFailedListener()
 
