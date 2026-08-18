@@ -218,10 +218,13 @@ class VlmOcrAdapter:
             }
         path = Path(image_path)
         file_type = detect_file_type(path)
+        page_views: List[tuple[bytes, "Image.Image"]] | None = None
         if file_type == "pdf":
-            images = self._render_pdf(path)
-            if isinstance(images, dict):
-                return images
+            page_views_result = self._render_pdf(path)
+            if isinstance(page_views_result, dict):
+                return page_views_result
+            page_views = page_views_result
+            images = [pv[0] for pv in page_views]
         else:
             from PIL import Image
 
@@ -250,12 +253,31 @@ class VlmOcrAdapter:
         text = convert_html_tables_to_gfm(raw)
         source_path = Path(image_path)
         output_md_path = source_path.parent / f"{source_path.stem}.md"
-        if file_type != "pdf":
+        if file_type == "pdf" and page_views is not None:
+            # Per-page crop extraction using the exact rasterized page image.
+            page_texts = text.split("\n\n---\n\n")
+            processed_pages: list[str] = []
+            for i, page_text in enumerate(page_texts):
+                if i < len(page_views):
+                    _, pil_img = page_views[i]
+                    page_text = extract_and_save_image_crops(
+                        page_text, pil_img, output_md_path,
+                    )
+                processed_pages.append(page_text)
+            text = "\n\n---\n\n".join(processed_pages)
+        else:
             text = extract_and_save_image_crops(text, source_path, output_md_path)
         return text
 
-    def _render_pdf(self, path: Path) -> List[bytes] | dict[str, Any]:
-        """Render PDF pages to PNG bytes via pdf_service (FR-06: pixels, not raw PDF)."""
+    def _render_pdf(
+        self, path: Path,
+    ) -> List[tuple[bytes, "Image.Image"]] | dict[str, Any]:
+        """Render PDF pages to PNG bytes, returning (bytes, pil_image) pairs.
+
+        The pil_image is the exact image fed to the model so bbox geometry
+        matches the rasterized page (L9: rasterize-then-crop).
+        """
+        from PIL import Image
         from scan2text.services.pdf_service import (
             MAX_PDF_SIZE_BYTES,
             check_page_limit,
@@ -274,9 +296,11 @@ class VlmOcrAdapter:
                 "error": "PDF_TOO_COMPLEX",
                 "message": err,
             }
-        pages: List[bytes] = []
+        pages: List[tuple[bytes, Image.Image]] = []
         with pdfium.PdfDocument(str(path)) as pdf:
             for index in range(len(pdf)):
                 bitmap = pdf[index].render(scale=_PDF_RENDER_SCALE)
-                pages.extend(_prepare_views(bitmap.to_pil().convert("RGB")))
+                pil_img = bitmap.to_pil().convert("RGB")
+                for png_bytes in _prepare_views(pil_img):
+                    pages.append((png_bytes, pil_img))
         return pages

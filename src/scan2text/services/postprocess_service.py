@@ -240,10 +240,14 @@ def _strip_tags(html: str) -> str:
 
 def extract_and_save_image_crops(
     markdown: str,
-    source_image_path: Path,
+    source_image: Path | Image.Image,
     output_md_path: Path,
 ) -> str:
-    """Extract <img> crops from *source_image_path* and rewrite markdown srcs.
+    """Extract <img> crops from *source_image* and rewrite markdown srcs.
+
+    *source_image* may be a :class:`pathlib.Path` (opened via PIL) or a
+    :class:`PIL.Image.Image` (used directly — required for PDF pages where
+    the rasterized page image is already in memory).
 
     Looks for tags of the form::
 
@@ -270,7 +274,13 @@ def extract_and_save_image_crops(
     crop_dir = output_md_path.parent / f"{stem}_files" / "images"
     crop_dir.mkdir(parents=True, exist_ok=True)
 
-    with Image.open(source_image_path) as pil_img:
+    if isinstance(source_image, Path):
+        pil_img = Image.open(source_image)
+        owned = True
+    else:
+        pil_img = source_image
+        owned = False
+    try:
         w, h = pil_img.size
 
         def _replace_img(match: re.Match[str]) -> str:
@@ -314,3 +324,6 @@ def extract_and_save_image_crops(
             return f'<img src="{rel_src}" />'
 
         return img_pattern.sub(_replace_img, markdown)
+    finally:
+        if owned:
+            pil_img.close()

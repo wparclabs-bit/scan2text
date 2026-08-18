@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from PIL import Image
 from scan2text.models.settings import AppSettings
 
 
@@ -221,7 +222,10 @@ def test_ocr_pdf_uses_rendered_pages(tmp_scan2text):
         from scan2text.adapters.vlm_ocr import VlmOcrAdapter
 
         adapter = VlmOcrAdapter()
-        adapter._render_pdf = lambda p: [b"png1", b"png2"]
+        adapter._render_pdf = lambda p: [
+            (b"png1", Image.new("RGB", (100, 100))),
+            (b"png2", Image.new("RGB", (100, 100))),
+        ]
         adapter._input_queue = MagicMock()
         adapter._output_queue = MagicMock()
         adapter._output_queue.get.return_value = "# md"
