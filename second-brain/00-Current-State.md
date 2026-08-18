@@ -24,6 +24,8 @@
 - RESULT: Rebuild + probe green — backend PyInstaller exit 0, Tauri build exit 0, artifacts swapped to D:\Scan2Text, boot gate PASS (health ok, model.loaded=true, files_present=true, dll_count=19). PDF probe completed with status completed. Status: COMPLETE.
 
 ## Recent Changelog (last 5)
+- **2026-08-19 (S11-FIX57-Align-Backend-Paths):** COMPLETE — Fixed Rust spawn paths to backend/ (resolves WSOD). Status: READY FOR REBUILD.
+- **2026-08-19 (S11-DOC-Shorten-Agents-Lock-Structure):** COMPLETE — Rewrote and shortened AGENTS.md to enforce MCP tools and lock portable backend/ structure. Status: READY FOR FINAL REBUILD.
 - **2026-08-18 (S11-FIX57-Align-Backend-Paths):** COMPLETE — Updated Rust spawn paths and tauri.conf.json resources to target `backend/` instead of `dist/`. Resolves WSOD root cause. Created junction `backend/` → `dist/scan2text-backend`. cargo check passes. Status: READY FOR REBUILD.
 - **2026-08-18 (S11-DOC-Rename-Backend-Folder):** COMPLETE — Renamed portable root backend folder from scan2text-backend/ to backend/ in ADR-008 and 03-non-functional-and-architecture.md (v1.14→v1.15, §11 + §13). Doc-only slice; no source changes. Status: COMPLETE.
 - **2026-08-18 (S11-FIX56-Final-Rebuild-Swap-Probe):** COMPLETE — Rebuilt PyInstaller backend + Tauri shell with 50-page limit code from S11-FIX55. Wiped/swapped to D:\Scan2Text (preserved models/, output/, settings/, logs/, feedback/). Boot gate PASS (health ok, model.loaded=true, files_present=true, dll_count=19). PDF probe green (status completed). Backend hash: 4EBD872A… Tauri hash: 0B0F8371…. No source edits. Status: COMPLETE.
