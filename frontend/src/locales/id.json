@@ -32,7 +32,8 @@
     "allInvalid": "Semua file yang dipilih tidak didukung atau terlalu besar.",
     "pdfTooComplex": "PDF terlalu kompleks untuk batas halaman saat ini. Naikkan batas halaman di Pengaturan lalu coba lagi.",
     "fileTooComplex": "File terlalu kompleks (maks 20MB).",
-    "fileTooComplexRejected": "File terlalu besar atau kompleks. Silakan coba file yang lebih kecil."
+    "fileTooComplexRejected": "File terlalu besar atau kompleks. Silakan coba file yang lebih kecil.",
+    "modelNotFound": "File mesin AI tidak ditemukan. Mengunduh model sekarang…"
   },
   "dropzone": {
     "hint": "PNG · JPG · WEBP · PDF — maks 20MB per file · maks 10 file per batch",

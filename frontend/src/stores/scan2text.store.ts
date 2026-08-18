@@ -43,6 +43,7 @@ export interface Scan2TextState {
   activeJobId: string | null
   selectedJobId: string | null
   jobOrder: string[]
+  showDownloader: boolean
   registerJob: (id: string) => void
   addJob: (input: {
     id: string
@@ -60,6 +61,7 @@ export interface Scan2TextState {
   removeJob: (id: string) => void
   retryJob: (id: string) => Promise<string>
   reset: () => void
+  setShowDownloader: (value: boolean) => void
   startUpload: (input: {
     file: File
     jobId?: string
@@ -76,6 +78,7 @@ const initialState = {
   activeJobId: null as string | null,
   selectedJobId: null as string | null,
   jobOrder: [] as string[],
+  showDownloader: false,
 }
 
 function createDefaultJob(
@@ -323,6 +326,10 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
     set({ ...initialState })
   },
 
+  setShowDownloader: (value: boolean) => {
+    set({ showDownloader: value })
+  },
+
   startUpload: async (input) => {
     const id =
       input.jobId ??
@@ -452,6 +459,9 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
           toast.info(i18n.t('errors.pdfTooComplex'))
         } else if (errorCode === 'FILE_TOO_COMPLEX') {
           toast.info(i18n.t('errors.fileTooComplex'))
+        } else if (errorCode === 'MODEL_NOT_FOUND') {
+          toast.info(i18n.t('errors.modelNotFound'))
+          get().setShowDownloader(true)
         }
         set({
           jobs: {
@@ -543,6 +553,9 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
               toast.info(i18n.t('errors.pdfTooComplex'))
             } else if (errorCode === 'FILE_TOO_COMPLEX') {
               toast.info(i18n.t('errors.fileTooComplex'))
+            } else if (errorCode === 'MODEL_NOT_FOUND') {
+              toast.info(i18n.t('errors.modelNotFound'))
+              get().setShowDownloader(true)
             }
             set({
               jobs: {

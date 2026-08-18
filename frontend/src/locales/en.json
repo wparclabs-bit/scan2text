@@ -32,7 +32,8 @@
     "allInvalid": "All selected files are unsupported or too large.",
     "pdfTooComplex": "PDF too complex for the current page limit. Raise the page limit in Settings and retry.",
     "fileTooComplex": "File too complex (max 20MB).",
-    "fileTooComplexRejected": "File too large or complex. Please try a smaller file."
+    "fileTooComplexRejected": "File too large or complex. Please try a smaller file.",
+    "modelNotFound": "AI engine files are missing. Downloading the model now…"
   },
   "dropzone": {
     "hint": "PNG · JPG · WEBP · PDF — max 20MB per file · max 10 files per batch",

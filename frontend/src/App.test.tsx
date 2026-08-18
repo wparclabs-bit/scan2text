@@ -25,9 +25,11 @@ vi.mock('./stores/preferencesStore', () => {
   return { usePreferenceStore: useStore }
 })
 
+let _mockScan2TextStoreState = { jobs: {}, showDownloader: false }
+const mockSetShowDownloader = vi.fn()
 vi.mock('./stores/scan2text.store', () => {
   const store = {
-    getState: () => ({ jobs: {} }),
+    getState: () => ({ ..._mockScan2TextStoreState, setShowDownloader: mockSetShowDownloader }),
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const useStore = (selector: any) => selector(store.getState())
@@ -337,6 +339,29 @@ describe('Command Center layout', () => {
       vi.unstubAllEnvs()
     })
 
+    it('shows model-downloader-modal when first health response has files_present=false', async () => {
+      vi.stubEnv('PROD', true)
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      mockFetch.mockImplementation((url: string, init?: RequestInit) => {
+        if (url === buildApiUrl('/api/settings')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: true }) })
+        }
+        if (url.startsWith(buildApiUrl('/api/health')) && url.includes('?t=')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ model: { files_present: false } }) })
+        }
+        if (url === buildApiUrl('/api/download/start') && init?.method === 'POST') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      const modal = document.querySelector('[data-testid="model-downloader-modal"]')
+      expect(modal).toBeInTheDocument()
+      vi.unstubAllEnvs()
+    })
+
     it('does NOT show downloader modal when health reports files_present=true', async () => {
       vi.stubEnv('PROD', true)
       const mockFetch = vi.fn()
@@ -403,6 +428,16 @@ describe('Command Center layout', () => {
       await new Promise((r) => setTimeout(r, 50))
       expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/feedback/pending-count'))
       vi.unstubAllEnvs()
+    })
+  })
+
+  describe('reactive MODEL_NOT_FOUND modal', () => {
+    it('shows model-downloader-modal when store.showDownloader is true', async () => {
+      _mockScan2TextStoreState = { jobs: {}, showDownloader: true }
+      render(<App />)
+      await new Promise((r) => setTimeout(r, 50))
+      const modal = document.querySelector('[data-testid="model-downloader-modal"]')
+      expect(modal).toBeInTheDocument()
     })
   })
 })

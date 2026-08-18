@@ -37,6 +37,7 @@ void i18next
             allInvalid: 'All selected files are unsupported or too large.',
             pdfTooComplex: 'PDF too complex for the current page limit. Raise the page limit in Settings and retry.',
             fileTooComplex: 'File too complex (max 20MB).',
+            modelNotFound: 'AI engine files are missing. Downloading the model now…',
           },
           preview: {
             empty: 'Select a job to preview',
@@ -147,6 +148,7 @@ void i18next
             allInvalid: 'Semua file yang dipilih tidak didukung atau terlalu besar.',
             pdfTooComplex: 'PDF terlalu kompleks untuk batas halaman saat ini. Naikkan batas halaman di Pengaturan lalu coba lagi.',
             fileTooComplex: 'File terlalu kompleks (maks 20MB).',
+            modelNotFound: 'File mesin AI tidak ditemukan. Mengunduh model sekarang…',
           },
           preview: {
             empty: 'Pilih pekerjaan untuk pratinjau',
