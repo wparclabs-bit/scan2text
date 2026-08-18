@@ -112,7 +112,23 @@ export default function QueuePanel() {
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {job.status === 'failed' && (
+                {job.status === 'failed' && job.errorCode === 'FILE_TOO_COMPLEX' && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          data-testid="queue-item-status-dot"
+                          className="w-2.5 h-2.5 rounded-full shrink-0 block"
+                          style={{ background: '#3F3F46' }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="translate-y-[-2px]">
+                        <p>{t('errors.fileTooComplexRejected')}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {job.status === 'failed' && job.errorCode !== 'FILE_TOO_COMPLEX' && (
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -153,7 +169,7 @@ export default function QueuePanel() {
                   </TooltipProvider>
                 )}
               </div>
-              {job.status === 'failed' && (
+              {job.status === 'failed' && job.errorCode !== 'FILE_TOO_COMPLEX' && (
                 <button
                   data-testid="queue-item-retry"
                   onClick={(e) => {
