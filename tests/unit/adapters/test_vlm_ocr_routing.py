@@ -161,7 +161,7 @@ class TestVlmOcrAdapterRealRouting:
         path.write_bytes(_PDF_MAGIC)
 
         adapter = self._build_adapter()
-        adapter._max_pdf_pages = 20
+        adapter._max_pdf_pages = 50
 
         pil_open_calls = []
 
@@ -185,7 +185,7 @@ class TestVlmOcrAdapterRealRouting:
         path.write_bytes(_PDF_MAGIC)
 
         adapter = self._build_adapter()
-        adapter._max_pdf_pages = 20
+        adapter._max_pdf_pages = 50
         # Mock _render_pdf to return valid (bytes, pil_image) pairs.
         pil_page = Image.new("RGB", (100, 100), color="blue")
         adapter._render_pdf = lambda p: [(b"page1", pil_page)]

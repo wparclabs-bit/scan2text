@@ -11,7 +11,7 @@ from scan2text.services.settings_service import SettingsService
 class TestAppSettingsValidation:
     def test_defaults(self):
         s = AppSettings()
-        assert s.max_pdf_pages == 20
+        assert s.max_pdf_pages == 50
         assert s.cpu_threads == 0
         assert s.check_updates_on_startup is True
 

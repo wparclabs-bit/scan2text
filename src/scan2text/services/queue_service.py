@@ -76,7 +76,7 @@ class QueueService:
     def process_batch(
         self,
         input_paths: List[str | Path],
-        max_pdf_pages: int = 20,
+        max_pdf_pages: int = 50,
     ) -> BatchSummary:
         """Process a batch of files through the full pipeline.
 

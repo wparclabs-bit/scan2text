@@ -11,7 +11,7 @@ describe('SettingsDialog', () => {
       if (url.toString().includes('/api/settings')) {
         return new Response(JSON.stringify({
           output_dir: 'C:\\test\\output',
-          max_pdf_pages: 20,
+          max_pdf_pages: 50,
           cpu_threads: 0,
         }), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
@@ -35,7 +35,7 @@ describe('SettingsDialog', () => {
       }
       return new Response(JSON.stringify({
         output_dir: 'C:\\test\\output',
-        max_pdf_pages: 20,
+        max_pdf_pages: 50,
         cpu_threads: 0,
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
@@ -61,7 +61,7 @@ describe('SettingsDialog', () => {
       }
       return new Response(JSON.stringify({
         output_dir: 'C:\\test\\output',
-        max_pdf_pages: 20,
+        max_pdf_pages: 50,
         cpu_threads: 0,
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
@@ -89,7 +89,7 @@ describe('SettingsDialog', () => {
       }
       return new Response(JSON.stringify({
         output_dir: 'C:\\test\\output',
-        max_pdf_pages: 20,
+        max_pdf_pages: 50,
         cpu_threads: 0,
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });

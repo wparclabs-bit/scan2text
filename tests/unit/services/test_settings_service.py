@@ -20,7 +20,7 @@ class TestSettingsMissingFile:
         settings = svc.load()
         assert isinstance(settings, AppSettings)
         assert settings.output_dir == ""
-        assert settings.max_pdf_pages == 20
+        assert settings.max_pdf_pages == 50
 
 
 class TestSettingsRoundtrip:

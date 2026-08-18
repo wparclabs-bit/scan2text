@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 class AppSettings(BaseModel):
     # Core (PRD 15)
     output_dir: str = ""
-    max_pdf_pages: int = Field(default=20, ge=1)
+    max_pdf_pages: int = Field(default=50, ge=1)
     cpu_threads: int = Field(default=0, ge=0)
     check_updates_on_startup: bool = True
     language: str = "auto"

@@ -16,7 +16,7 @@ interface SettingsDialogProps {
 export default function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const { t } = useTranslation()
   const [outputDir, setOutputDir] = useState('')
-  const [maxPdfPages, setMaxPdfPages] = useState('20')
+  const [maxPdfPages, setMaxPdfPages] = useState('50')
   const [cpuThreads, setCpuThreads] = useState('0')
   const [loading, setLoading] = useState(false)
 
@@ -26,7 +26,7 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
     getSettings()
       .then((settings: SettingsResponse) => {
         setOutputDir(settings.output_dir ?? '')
-        setMaxPdfPages(String(settings.max_pdf_pages ?? 20))
+        setMaxPdfPages(String(settings.max_pdf_pages ?? 50))
         setCpuThreads(String(settings.cpu_threads ?? 0))
       })
       .catch(() => {

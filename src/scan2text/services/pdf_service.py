@@ -4,7 +4,7 @@ import pypdfium2 as pdfium
 from pathlib import Path
 from typing import List
 
-MAX_PDF_PAGES_DEFAULT = 20
+MAX_PDF_PAGES_DEFAULT = 50
 MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
 
 # Magic-byte signatures for real-type detection.
