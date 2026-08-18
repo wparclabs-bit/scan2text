@@ -43,12 +43,21 @@ PDF_TOO_MANY_PAGES = "PDF_TOO_MANY_PAGES"
 _MAX_IMAGE_EDGE = 2880
 _MAX_PIXELS = 4_000_000   # context budget: image tokens ≈ px/1024; keep image + 4096 output within n_ctx 8192
 _PDF_RENDER_SCALE = 2.0
+_PAGES_PER_SECOND = 30    # S11-FIX51: autoscale budget per rasterized page
 
 _PRIORITY_ATTR = {
     "below_normal": "BELOW_NORMAL_PRIORITY_CLASS",
     "normal": "NORMAL_PRIORITY_CLASS",
     "idle": "IDLE_PRIORITY_CLASS",
 }
+
+
+def effective_ocr_timeout(base_seconds: int, pages: int) -> int:
+    """Return the effective timeout: max(base, pages × 30s).
+
+    Short docs keep the base cap; long PDFs automatically get the hours they need.
+    """
+    return max(base_seconds, pages * _PAGES_PER_SECOND)
 
 
 def _prepare_views(img) -> List[bytes]:
@@ -233,17 +242,18 @@ class VlmOcrAdapter:
                 images = _prepare_views(pil_img.convert("RGB"))
 
         self._input_queue.put({"action": "ocr", "images": images, "max_tokens": 4096})
+        effective_timeout = effective_ocr_timeout(self._timeout, len(images))
         try:
-            raw = self._output_queue.get(timeout=self._timeout)
+            raw = self._output_queue.get(timeout=effective_timeout)
         except queue.Empty:
             logger.warning(
                 "OCR_TIMEOUT: worker did not return result within %ss for %s",
-                self._timeout,
+                effective_timeout,
                 image_path,
             )
             return {
                 "error": OCR_TIMEOUT,
-                "message": f"OCR exceeded {self._timeout}s timeout for {image_path}",
+                "message": f"OCR exceeded {effective_timeout}s timeout for {image_path}",
                 "image_path": image_path,
             }
 
