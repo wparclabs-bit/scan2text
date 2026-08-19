@@ -26,13 +26,27 @@ vi.mock('./stores/preferencesStore', () => {
 })
 
 let _mockScan2TextStoreState = { jobs: {}, showDownloader: false }
-const mockSetShowDownloader = vi.fn()
-vi.mock('./stores/scan2text.store', () => {
+vi.mock('./stores/scan2text.store', async () => {
+  const React = await import('react')
+  const listeners = new Set<() => void>()
+  const notify = () => listeners.forEach((l) => l())
+  // Mutates the shared mock state and notifies subscribers, mirroring a real Zustand store.
+  const mockSetShowDownloader = vi.fn((val: boolean) => {
+    _mockScan2TextStoreState.showDownloader = val
+    notify()
+  })
   const store = {
     getState: () => ({ ..._mockScan2TextStoreState, setShowDownloader: mockSetShowDownloader }),
   }
+  const subscribe = (listener: () => void) => {
+    listeners.add(listener)
+    return () => {
+      listeners.delete(listener)
+    }
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const useStore = (selector: any) => selector(store.getState())
+  const useStore = (selector: any) =>
+    React.useSyncExternalStore(subscribe, () => selector(store.getState()))
   useStore.getState = store.getState.bind(store)
   return { useScan2TextStore: useStore }
 })
@@ -45,6 +59,7 @@ describe('Command Center layout', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     document.documentElement.className = ''
+    _mockScan2TextStoreState = { jobs: {}, showDownloader: false }
     mockState = {
       theme: 'dark',
       language: 'en',
