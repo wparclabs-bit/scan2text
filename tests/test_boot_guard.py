@@ -8,6 +8,7 @@ Scenario matrix for boot_guard(port):
 
 from __future__ import annotations
 
+import os
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -116,3 +117,25 @@ class TestBootGuard:
         # Should not raise — protected PIDs are skipped gracefully
         result = boot_guard(47351)
         assert result is None
+
+    @patch("scan2text.boot_guard.psutil")
+    def test_boot_guard_never_kills_itself(self, mock_psutil):
+        """The current process must NEVER be classified or killed by boot_guard.
+
+        The frozen backend exe's own process name matches _BACKEND_EXE_NAMES,
+        so a process scan that yields os.getpid() would previously append the
+        live PID to ours_pids and then kill itself (exit 15). boot_guard must
+        skip the current process in every process-scan loop.
+        """
+        own = _make_proc(FAKE_BACKEND_EXE, pid=os.getpid())
+        mock_psutil.process_iter.return_value = [own]
+        mock_psutil.net_connections.return_value = []
+        # The kill loop resolves psutil.Process(pid) -> the own-PID fake so a
+        # self-kill would land on it and be caught by the assertion below.
+        mock_psutil.Process.return_value = own
+
+        from scan2text.boot_guard import boot_guard
+
+        result = boot_guard(47351)
+        assert result is None
+        own.kill.assert_not_called()
