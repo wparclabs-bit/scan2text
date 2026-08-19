@@ -421,6 +421,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
           },
         }
       })
+      get().startNextPendingJob()
       return
     }
 
@@ -521,6 +522,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
             }
           })
           toast.error(i18n.t('errors.backendLost'))
+          get().promoteNextPending()
           return
         }
 
