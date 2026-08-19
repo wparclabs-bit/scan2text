@@ -10,6 +10,7 @@ Rules (ADR-008):
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -36,6 +37,11 @@ def boot_guard(port: int) -> None:
     foreign: psutil.Process | None = None
 
     for proc in psutil.process_iter(["pid", "exe", "name", "status"]):
+        # Never classify or kill the current process. The frozen backend exe's
+        # own process name matches _BACKEND_EXE_NAMES, so a bare scan would add
+        # os.getpid() to ours_pids and then kill the live process (exit 15).
+        if proc.pid == os.getpid():
+            continue
         try:
             if proc.status() == psutil.STATUS_ZOMBIE:
                 continue
