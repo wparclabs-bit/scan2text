@@ -1037,7 +1037,35 @@ describe('scan2text store', () => {
       vi.useRealTimers()
     })
 
-    it('should promote next pending job when background health check fails', async () => {
+    it('should stay background (not failed) after ONE getHealth rejection', async () => {
+      mockGetHealth.mockResolvedValue({ status: 'ok' } as any)
+      mockPollTaskStatus.mockResolvedValue({ task_id: 'task-1', status: 'processing' })
+
+      const file1 = new File(['a'], 'first.png', { type: 'image/png' })
+      await store.getState().startUpload({ file: file1, jobId: 'job-1' })
+      store.getState().startPolling({ jobId: 'job-1' })
+
+      // 60s → first background health check
+      await vi.advanceTimersByTimeAsync(60_000)
+
+      // Now fail the health check
+      mockGetHealth.mockRejectedValueOnce(new Error('ECONNREFUSED'))
+      // 60s → health check rejection
+      await vi.advanceTimersByTimeAsync(60_000)
+
+      // Job should NOT be failed after a single health rejection
+      expect(store.getState().jobs['job-1'].status).toBe('processing')
+
+      // The next health check (60s later) should succeed and keep job alive
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(store.getState().jobs['job-1'].status).toBe('processing')
+
+      // No error toast should have been fired
+      const { toast } = await import('sonner')
+      expect(toast.error).not.toHaveBeenCalled()
+    })
+
+    it('should fail job, show backendLost toast, and call promoteNextPending after 3 consecutive health rejections', async () => {
       mockGetHealth.mockResolvedValue({ status: 'ok' } as any)
       mockPollTaskStatus.mockResolvedValue({ task_id: 'task-1', status: 'processing' })
 
@@ -1054,27 +1082,28 @@ describe('scan2text store', () => {
       expect(store.getState().jobs['job-2'].status).toBe('pending')
       expect(store.getState().jobs['job-2'].taskId).toBe('task-2')
 
-      // Advance past initial poll, then fail health check
-      mockPollTaskStatus.mockResolvedValue({ task_id: 'task-1', status: 'processing' })
       store.getState().startPolling({ jobId: 'job-1' })
 
-      // Advance to 60s mark (first background health check)
-      await vi.advanceTimersByTimeAsync(60_000)
-      expect(store.getState().jobs['job-1'].status).toBe('processing')
-
-      // Now fail the health check
-      mockGetHealth.mockRejectedValueOnce(new Error('ECONNREFUSED'))
-      await vi.advanceTimersByTimeAsync(60_000)
+      // 3 consecutive health rejections (3 × 60s intervals)
+      mockGetHealth.mockRejectedValue(new Error('ECONNREFUSED'))
+      await vi.advanceTimersByTimeAsync(60_000) // health check 1 → fail
+      await vi.advanceTimersByTimeAsync(60_000) // health check 2 → fail
+      await vi.advanceTimersByTimeAsync(60_000) // health check 3 → FAIL JOB
 
       // Job 1 should be failed
       expect(store.getState().jobs['job-1'].status).toBe('failed')
+      expect(store.getState().jobs['job-1'].error).toBe('errors.backendLost')
 
-      // Job 2 should have been promoted (active + processing)
+      // promoteNextPending should have set activeJobId (promotion happened)
       expect(store.getState().activeJobId).toBe('job-2')
-      expect(store.getState().jobs['job-2'].status).toBe('processing')
+
+      // backendLost toast should have been fired at least once
+      const errorCalls = (toast.error as unknown as ReturnType<typeof vi.fn>).mock.calls
+      expect(errorCalls.length).toBeGreaterThanOrEqual(1)
+      expect(errorCalls.some((c) => c[0] === i18n.t('errors.backendLost'))).toBe(true)
     })
 
-    it('should show error toast when health check fails', async () => {
+    it('should show error toast when health check fails (single rejection legacy test)', async () => {
       mockGetHealth.mockResolvedValue({ status: 'ok' } as any)
       mockPollTaskStatus.mockResolvedValue({ task_id: 'task-1', status: 'processing' })
 
@@ -1084,12 +1113,16 @@ describe('scan2text store', () => {
 
       await vi.advanceTimersByTimeAsync(60_000)
 
-      mockGetHealth.mockRejectedValueOnce(new Error('ECONNREFUSED'))
-      await vi.advanceTimersByTimeAsync(60_000)
+      // 3 consecutive health failures to trigger the toast
+      mockGetHealth.mockRejectedValue(new Error('ECONNREFUSED'))
+      await vi.advanceTimersByTimeAsync(60_000) // health check 1 → fail
+      await vi.advanceTimersByTimeAsync(60_000) // health check 2 → fail
+      await vi.advanceTimersByTimeAsync(60_000) // health check 3 → trigger toast
 
-      const { toast } = await import('sonner')
-      expect(toast.error).toHaveBeenCalledTimes(1)
-      expect(toast.error).toHaveBeenCalledWith(i18n.t('errors.backendLost'))
+      // backendLost toast should have been fired at least once
+      const errorCalls = (toast.error as unknown as ReturnType<typeof vi.fn>).mock.calls
+      expect(errorCalls.length).toBeGreaterThanOrEqual(1)
+      expect(errorCalls.some((c) => c[0] === i18n.t('errors.backendLost'))).toBe(true)
     })
   })
 

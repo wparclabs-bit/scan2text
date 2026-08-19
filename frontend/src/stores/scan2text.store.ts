@@ -36,6 +36,7 @@ export interface ScanJob {
   errorCode: string | null
   file: File | null
   progress: number
+  consecutiveHealthFailures: number
 }
 
 export interface Scan2TextState {
@@ -103,6 +104,7 @@ function createDefaultJob(
     errorCode: null,
     file: null,
     progress: 0,
+    consecutiveHealthFailures: 0,
   }
 }
 
@@ -344,20 +346,17 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
       jobs: {
         ...state.jobs,
         [id]: {
-          id,
-          fileName: input.file.name,
-          fileSize: input.file.size,
-          fileType: input.file.type || 'application/octet-stream',
+          ...createDefaultJob(
+            id,
+            input.file.name,
+            input.file.size,
+            input.file.type || 'application/octet-stream',
+            input.createdAt ?? Date.now(),
+          ),
           taskId: null,
           status: shouldActivate ? 'uploading' : 'pending',
           isBackground: false,
-          createdAt: input.createdAt ?? Date.now(),
-          resultMarkdown: null,
-          markdownOutput: '',
-          error: null,
-          errorCode: null,
           file: input.file,
-          progress: 0,
         },
       },
       jobOrder: state.jobOrder.includes(id)
@@ -506,24 +505,47 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
         // Check health before each status poll
         try {
           await getHealth()
-        } catch (e) {
-          set((state) => {
-            const j = state.jobs[input.jobId]
-            if (!j) return state
-            return {
+          // Health OK — reset consecutive failure counter
+          const current = get().jobs[input.jobId]
+          if (current && current.consecutiveHealthFailures > 0) {
+            set({
               jobs: {
-                ...state.jobs,
-                [input.jobId]: {
-                  ...j,
-                  status: 'failed',
-                  error: i18n.t('errors.backendLost'),
-                },
+                ...get().jobs,
+                [input.jobId]: { ...current, consecutiveHealthFailures: 0 },
               },
-            }
+            })
+          }
+        } catch (e) {
+          // Increment consecutive health failure counter
+          const current = get().jobs[input.jobId]
+          if (!current) return
+          const newCount = (current.consecutiveHealthFailures ?? 0) + 1
+          set({
+            jobs: {
+              ...get().jobs,
+              [input.jobId]: { ...current, consecutiveHealthFailures: newCount },
+            },
           })
-          toast.error(i18n.t('errors.backendLost'))
-          get().promoteNextPending()
-          return
+          // Only fail after 3 consecutive health probe failures
+          if (newCount >= 3) {
+            set((state) => {
+              const j = state.jobs[input.jobId]
+              if (!j) return state
+              return {
+                jobs: {
+                  ...state.jobs,
+                  [input.jobId]: {
+                    ...j,
+                    status: 'failed',
+                    error: i18n.t('errors.backendLost'),
+                  },
+                },
+              }
+            })
+            toast.error(i18n.t('errors.backendLost'))
+            get().promoteNextPending()
+            return
+          }
         }
 
         // Poll status
