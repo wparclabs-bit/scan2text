@@ -64,28 +64,26 @@ impl BackendManager {
             let exe_path = resolve_backend_path();
             let child = start_backend(&exe_path);
             let spawn_time = Instant::now();
-            // Clone the child handle for the watcher thread before storing the original.
-            let watcher_child = child.try_clone().expect("failed to clone child handle");
             self.child = Some(child);
-            self.watch_for_early_exit(spawn_time, watcher_child);
+            self.watch_for_early_exit(spawn_time);
             return self.wait_for_health(_timeout);
         }
     }
 
-    /// Spawn a watcher thread: if the child exits within BOOT_FAIL_WINDOW,
+    /// Spawn a watcher thread: if the backend port closes within BOOT_FAIL_WINDOW,
     /// emit a `backend-boot-failed` event to the frontend.
     #[cfg(not(debug_assertions))]
-    fn watch_for_early_exit(&self, spawn_time: Instant, mut child: Child) {
+    fn watch_for_early_exit(&self, spawn_time: Instant) {
         let Some(app_handle) = self.app_handle.clone() else {
             return;
         };
+        let port = self.port;
         std::thread::spawn(move || {
             use tauri::Emitter;
-            // Wait for the child to exit (with a generous timeout so we don't block forever).
             let wait_start = Instant::now();
             let wait_timeout = Duration::from_secs(30);
             while wait_start.elapsed() < wait_timeout {
-                if child.try_wait().unwrap_or(None).is_some() {
+                if !is_port_open("127.0.0.1", port) {
                     if spawn_time.elapsed() <= BOOT_FAIL_WINDOW {
                         let _ = app_handle.emit(
                             "backend-boot-failed",
