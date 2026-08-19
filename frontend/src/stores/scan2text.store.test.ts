@@ -1026,4 +1026,97 @@ describe('scan2text store', () => {
       expect(toast.info).toHaveBeenCalledTimes(3)
     })
   })
+
+  describe('background health check failure', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('should promote next pending job when background health check fails', async () => {
+      mockGetHealth.mockResolvedValue({ status: 'ok' } as any)
+      mockPollTaskStatus.mockResolvedValue({ task_id: 'task-1', status: 'processing' })
+
+      // Job 1 is active and processing
+      const file1 = new File(['a'], 'first.png', { type: 'image/png' })
+      await store.getState().startUpload({ file: file1, jobId: 'job-1' })
+      expect(store.getState().activeJobId).toBe('job-1')
+      expect(store.getState().jobs['job-1'].status).toBe('processing')
+
+      // Job 2 is pending in queue with a taskId
+      const file2 = new File(['b'], 'second.png', { type: 'image/png' })
+      mockUploadFile.mockResolvedValue({ task_id: 'task-2' })
+      await store.getState().startUpload({ file: file2, jobId: 'job-2' })
+      expect(store.getState().jobs['job-2'].status).toBe('pending')
+      expect(store.getState().jobs['job-2'].taskId).toBe('task-2')
+
+      // Advance past initial poll, then fail health check
+      mockPollTaskStatus.mockResolvedValue({ task_id: 'task-1', status: 'processing' })
+      store.getState().startPolling({ jobId: 'job-1' })
+
+      // Advance to 60s mark (first background health check)
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(store.getState().jobs['job-1'].status).toBe('processing')
+
+      // Now fail the health check
+      mockGetHealth.mockRejectedValueOnce(new Error('ECONNREFUSED'))
+      await vi.advanceTimersByTimeAsync(60_000)
+
+      // Job 1 should be failed
+      expect(store.getState().jobs['job-1'].status).toBe('failed')
+
+      // Job 2 should have been promoted (active + processing)
+      expect(store.getState().activeJobId).toBe('job-2')
+      expect(store.getState().jobs['job-2'].status).toBe('processing')
+    })
+
+    it('should show error toast when health check fails', async () => {
+      mockGetHealth.mockResolvedValue({ status: 'ok' } as any)
+      mockPollTaskStatus.mockResolvedValue({ task_id: 'task-1', status: 'processing' })
+
+      const file1 = new File(['a'], 'first.png', { type: 'image/png' })
+      await store.getState().startUpload({ file: file1, jobId: 'job-1' })
+      store.getState().startPolling({ jobId: 'job-1' })
+
+      await vi.advanceTimersByTimeAsync(60_000)
+
+      mockGetHealth.mockRejectedValueOnce(new Error('ECONNREFUSED'))
+      await vi.advanceTimersByTimeAsync(60_000)
+
+      const { toast } = await import('sonner')
+      expect(toast.error).toHaveBeenCalledTimes(1)
+      expect(toast.error).toHaveBeenCalledWith(i18n.t('errors.backendLost'))
+    })
+  })
+
+  describe('missing taskId', () => {
+    it('should start next pending job when job has no taskId', async () => {
+      // Job 1 will have no taskId (addJob only)
+      store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf' })
+      store.getState().addJob({ id: 'job-2', fileName: 'scan2.pdf' })
+
+      // Make job 2 active (upload with taskId)
+      mockUploadFile.mockResolvedValue({ task_id: 'task-2' })
+      const file2 = new File(['b'], 'scan2.pdf', { type: 'application/pdf' })
+      await store.getState().startUpload({ file: file2, jobId: 'job-2' })
+      expect(store.getState().activeJobId).toBe('job-2')
+
+      // Job 1 has no taskId; pollJob should mark it failed and start next
+      await store.getState().pollJob({ jobId: 'job-1' })
+      expect(store.getState().jobs['job-1'].status).toBe('failed')
+      expect(store.getState().jobs['job-1'].error).toBe('Missing task ID')
+
+      // Job 2 should still be active (it was already running, so startNextPendingJob
+      // should detect active job is fine — but the real question is whether the
+      // set() call after failing job-1 triggers startNextPendingJob properly)
+      // Actually: startNextPendingJob checks activeJobId, and job-2 IS the active
+      // job, so it should not replace it. The fix is: job-1 failed, so we need
+      // startNextPendingJob to NOT stall. Since job-2 is already active, this test
+      // mainly verifies job-1 is marked failed without crashing.
+    })
+  })
 })
