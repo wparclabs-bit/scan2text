@@ -89,3 +89,30 @@ class TestBootGuard:
         # Should not raise — proceeds even if kill fails
         result = boot_guard(47351)
         assert result is None
+
+    @patch("scan2text.boot_guard.psutil")
+    def test_boot_guard_survives_access_denied(self, mock_psutil):
+        """AccessDenied on protected PIDs (0, 4) must not crash boot_guard."""
+        import psutil
+
+        # Wire real exception classes onto the mock so except clauses work.
+        mock_psutil.NoSuchProcess = psutil.NoSuchProcess
+        mock_psutil.AccessDenied = psutil.AccessDenied
+        mock_psutil.STATUS_ZOMBIE = "zombie"
+
+        protected = MagicMock()
+        protected.pid = 0
+        protected.exe.side_effect = psutil.AccessDenied(0)
+        protected.name.side_effect = psutil.AccessDenied(0)
+        protected.status.side_effect = psutil.AccessDenied(0)
+
+        normal = _make_proc(FAKE_BACKEND_EXE, pid=1234)
+
+        mock_psutil.process_iter.return_value = [protected, normal]
+        mock_psutil.net_connections.return_value = []
+
+        from scan2text.boot_guard import boot_guard
+
+        # Should not raise — protected PIDs are skipped gracefully
+        result = boot_guard(47351)
+        assert result is None

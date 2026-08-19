@@ -39,10 +39,13 @@ def boot_guard(port: int) -> None:
         try:
             if proc.status() == psutil.STATUS_ZOMBIE:
                 continue
-        except psutil.NoSuchProcess:
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
 
-        exe = proc.exe() or ""
+        try:
+            exe = proc.exe() or ""
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
         if not _is_ours(exe):
             continue
 
@@ -67,11 +70,15 @@ def boot_guard(port: int) -> None:
         logger.warning("boot_guard: access denied reading net_connections")
 
     if foreign is not None:
+        try:
+            foreign_exe = foreign.exe() or ""
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            foreign_exe = "<access-denied>"
         logger.error(
             "Port %d is held by foreign process %s (PID %d). "
             "Cannot start Scan2Text backend.",
             port,
-            foreign.exe(),
+            foreign_exe,
             foreign.pid,
         )
         sys.exit(1)
