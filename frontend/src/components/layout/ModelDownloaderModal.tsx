@@ -12,9 +12,18 @@ interface DownloadState {
 interface ModelDownloaderModalProps {
   open: boolean
   onClose: () => void
+  modelsMissing?: boolean
+  isOnline?: boolean
+  versionJsonExists?: boolean
 }
 
-export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderModalProps) {
+export default function ModelDownloaderModal({
+  open,
+  onClose,
+  modelsMissing = true,
+  isOnline = true,
+  versionJsonExists = true,
+}: ModelDownloaderModalProps) {
   const { t } = useTranslation()
   const [state, setState] = useState<DownloadState>({
     status: 'idle',
@@ -24,7 +33,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
   const [retrying, setRetrying] = useState(false)
 
   useEffect(() => {
-    if (!open) return
+    if (!open || !modelsMissing) return
 
     let intervalId: ReturnType<typeof setInterval> | null = null
 
@@ -38,7 +47,6 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
           if (intervalId) clearInterval(intervalId)
           onClose()
         } else if (data.status === 'failed' || data.status === 'cancelled') {
-          // Keep polling briefly then stop — user sees restart button.
           if (intervalId) clearInterval(intervalId)
         }
       } catch (err) {
@@ -53,7 +61,7 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
     return () => {
       if (intervalId) clearInterval(intervalId)
     }
-  }, [open, onClose])
+  }, [open, onClose, modelsMissing])
 
   const handleCancel = async () => {
     try {
@@ -78,6 +86,14 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
     await handleRestart()
   }
 
+  const handleDownloadStart = async () => {
+    try {
+      await fetch(buildApiUrl('/api/download/start'), { method: 'POST' })
+    } catch (err) {
+      console.error('Downloader error:', err);
+    }
+  }
+
   const getErrorMessage = (): string => {
     if (!state.error_message) return ''
     if (state.error_message === 'network_error') return t('downloader.error.network')
@@ -90,6 +106,44 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
 
   if (!open) return null
 
+  // Scenario 4: models not missing — no modal needed
+  if (!modelsMissing) return null
+
+  // Scenario 3: version.json missing — configuration error
+  if (!versionJsonExists) {
+    return (
+      <div
+        data-testid="model-downloader-modal"
+        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"
+      >
+        <div className="bg-[#1F150C] dark:bg-[#1F150C] light:bg-[#C9B59C] rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
+          <h2 className="text-lg font-bold text-[#F2EBDD] mb-2">{t('downloader.title')}</h2>
+          <p className="text-sm text-red-400 mb-6">
+            {t('downloader.versionJsonMissing')}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Scenario 2: offline — cannot download
+  if (!isOnline) {
+    return (
+      <div
+        data-testid="model-downloader-modal"
+        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"
+      >
+        <div className="bg-[#1F150C] dark:bg-[#1F150C] light:bg-[#C9B59C] rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
+          <h2 className="text-lg font-bold text-[#F2EBDD] mb-2">{t('downloader.title')}</h2>
+          <p className="text-sm text-[#F2EBDD]/70 mb-6">
+            {t('downloader.offlineWarning')}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Scenario 1: standard download UI
   const percentage = state.total_bytes > 0
     ? Math.round((state.bytes_downloaded / state.total_bytes) * 100)
     : 0
@@ -151,12 +205,16 @@ export default function ModelDownloaderModal({ open, onClose }: ModelDownloaderM
           )}
           {(state.status === 'idle' || state.status === 'failed' || state.status === 'cancelled') && (
             <button
-              data-testid="download-restart-btn"
-              onClick={handleRetry}
+              data-testid="download-button"
+              onClick={state.status === 'idle' ? handleDownloadStart : handleRetry}
               disabled={retrying}
               className="flex-1 py-2 px-4 rounded-lg text-sm font-medium bg-[#E3A55F] text-[#1F150C] hover:bg-[#d4944e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {retrying ? t('downloader.retry') : t('downloader.restart')}
+              {state.status === 'idle'
+                ? t('downloader.downloadButton')
+                : retrying
+                  ? t('downloader.retry')
+                  : t('downloader.restart')}
             </button>
           )}
         </div>

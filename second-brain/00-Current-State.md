@@ -3,7 +3,7 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: GATE4 (Tauri Rebuild — bundle FIX75 + FIX76) — S11-GATE4-TAURI-REBUILD-DEPLOY
+- Phase: GATE5 (Frontend — 4-scenario downloader modal matrix + i18n) — S12-FRONTEND-DOWNLOADER-MODAL-MATRIX
 - Date: 2026-08-20
 - Tauri shell hash: 7120B6375022E5FB692FA4DE7AED625679994981904841EEE9A1CE0A4143474F (supersedes 6B56B7310BAF98AC10753AAFCCAC8A5ED287C016468E5D6A227D3F2BD66622FE)
 - Backend hash: DAEEFBCCC0A9084B3C4B05BE59628FC76BECFF50E462BC470947FA0CA437DC8D (GATE3-RETRY, up-to-date)
@@ -11,11 +11,12 @@
 - pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 6.88MB)
 - _internal: 707 files (actual GATE3-RETRY build), all DLLs present (python312.dll, llama.dll, pdfium.dll, 4 VC++ runtime DLLs)
 - Backend tests: 331 passed + 1 pre-existing failure (test_health_contract). Full gate GREEN except pre-existing.
-- Frontend tests: 649 passed, 0 failures (new baseline — 37 test files; FIX75 added 2 tests)
+- Frontend tests: 669 passed, 0 failures (new baseline — 20 ModelDownloaderModal tests; S12 added 4 scenario matrix tests + fixed 6 data-testid references)
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - RESULT: S11-GATE4 COMPLETE. Doc-only rebuild slice: Tauri shell rebuilt from current frontend (bundles FIX75 health404-typo fix + FIX76 Rust orphan kill). Frontend gate: 649 passed, 0 failed, typecheck clean. Deployed to D:\Scan2Text\Scan2Text.exe. Boot proof: health ok, OvisOCR2 0.9B loaded (model.loaded true), worker idle, version 0.1.0. Orphan proof: Scan2Text.exe stop → taskkill /F /T kills entire Python multiprocessing tree; port 47351 clears (TimeWait only). Zero source edits.
 
 ## Recent Changelog
+- **2026-08-20 (S12-FRONTEND-DOWNLOADER-MODAL-MATRIX):** COMPLETE — Implemented the 4-scenario downloader modal messaging matrix with i18n. Added `downloader.versionJsonMissing`, `downloader.offlineWarning`, and `downloader.downloadButton` keys to en.json + id.json + test-setup.ts. Updated ModelDownloaderModal to accept `modelsMissing`, `isOnline`, `versionJsonExists` props and render the correct message per scenario matrix. Added 4 Vitest tests (all passing). Fixed 6 existing tests that referenced old `download-restart-btn` data-testid (renamed to `download-button`). Wired new props in App.tsx. Frontend: 20/20 ModelDownloaderModal tests pass, typecheck clean.
 - **2026-08-20 (S12-FIX-DOWNLOADER-PATH-TARGETS):** FIX — **download router injects PathService.app_root**. Root cause #1 from S11-DIAG fixed: `ModelDownloaderService` singleton at `download.py` now created with `app_root=PathService().app_root` instead of falling back to `Path.cwd()`. Target filenames already fixed (`vlm.gguf`/`mmproj.gguf` regardless of URL extension). SHA256 comparison already lowercase-compatible. 4 new tests added (16/16 downloader tests pass). Zero frontend/Rust edits.
 - **2026-08-20 (S12-PREP-VERSION-JSON-GITHUB):** PREP — **version.json rewritten to GitHub Release URLs**. Replaced dead GDrive `uc?export=download&confirm=t&id=` URLs with GitHub Release zip-aliased assets: vlm = `vlm.zip` (SHA256 `3fba6d…`, 811843498 B), mmproj = `mmproj.zip` (SHA256 `7e3717…`, 204987079 B). Schema: exactly 6 keys (`vlm_download_url`, `vlm_sha256`, `vlm_size_bytes`, `mmproj_download_url`, `mmproj_sha256`, `mmproj_size_bytes`). Both repo root and portable root updated. AGENTS.md Section 8 locked-decision line updated. Hashes converted to lowercase. Zero source edits. No downloads.
 - **2026-08-20 (S11-PREP-GDRIVE-TEST-AND-VERSION-JSON):** PREP — **version.json rewritten with CEO-provided GDrive IDs and disk-truth hashes**. Replaced stale/placeholder URLs and hashes with live values: vlm = `1K5jfXMnYvc4bHNwxJDKcq8onTB_QRu1A` (SHA256 `3FBA6D…`, 811843498 B), mmproj = `1Ql4VjslRZpAK0_9sgVVTeyQQcqtEj9jO` (SHA256 `7E3717…`, 204987079 B). Schema: exactly 6 keys (`vlm_download_url`, `vlm_sha256`, `vlm_size_bytes`, `mmproj_download_url`, `mmproj_sha256`, `mmproj_size_bytes`). URLs use `uc?export=download&confirm=t&id=` form. QA script authored at `second-brain/02-QA/qa-gdrive-download-test.ps1` (CEO-executed, mmproj-only, 3 URL probes). Zero source edits. No downloads by Kilo.

@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ModelDownloaderModal from './ModelDownloaderModal'
 import { buildApiUrl } from '@/lib/apiBase'
+import { initI18n } from '@/i18n'
+import en from '@/locales/en.json'
 
 describe('ModelDownloaderModal', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -95,9 +97,9 @@ describe('ModelDownloaderModal', () => {
       })
     render(<ModelDownloaderModal open={true} onClose={() => {}} />)
     await waitFor(() => {
-      expect(screen.getByTestId('download-restart-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('download-button')).toBeInTheDocument()
     })
-    const restartButton = screen.getByTestId('download-restart-btn')
+    const restartButton = screen.getByTestId('download-button')
     fireEvent.click(restartButton)
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -174,9 +176,9 @@ describe('ModelDownloaderModal', () => {
       })
     render(<ModelDownloaderModal open={true} onClose={() => {}} />)
     await waitFor(() => {
-      expect(screen.getByTestId('download-restart-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('download-button')).toBeInTheDocument()
     })
-    const restartButton = screen.getByTestId('download-restart-btn')
+    const restartButton = screen.getByTestId('download-button')
     fireEvent.click(restartButton)
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -191,7 +193,7 @@ describe('ModelDownloaderModal', () => {
     mockFetch.mockRejectedValue(new Error('Network Error'))
     render(<ModelDownloaderModal open={true} onClose={() => {}} />)
     await waitFor(() => {
-      expect(screen.getByTestId('download-restart-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('download-button')).toBeInTheDocument()
     })
     expect(screen.getByText('Network connection failed. Please check your connection and try again.')).toBeInTheDocument()
   })
@@ -205,9 +207,9 @@ describe('ModelDownloaderModal', () => {
       })
     render(<ModelDownloaderModal open={true} onClose={() => {}} />)
     await waitFor(() => {
-      expect(screen.getByTestId('download-restart-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('download-button')).toBeInTheDocument()
     })
-    const retryButton = screen.getByTestId('download-restart-btn')
+    const retryButton = screen.getByTestId('download-button')
     fireEvent.click(retryButton)
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledTimes(2)
@@ -233,7 +235,7 @@ describe('ModelDownloaderModal', () => {
     })
     render(<ModelDownloaderModal open={true} onClose={() => {}} />)
     await waitFor(() => {
-      expect(screen.getByTestId('download-restart-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('download-button')).toBeInTheDocument()
     })
     const errorText = screen.getByText(/Model manifest not found/).textContent
     expect(errorText).toBe('Model manifest not found. Restart download to fetch it.')
@@ -272,9 +274,9 @@ describe('ModelDownloaderModal', () => {
       })
     render(<ModelDownloaderModal open={true} onClose={() => {}} />)
     await waitFor(() => {
-      expect(screen.getByTestId('download-restart-btn')).toBeInTheDocument()
+      expect(screen.getByTestId('download-button')).toBeInTheDocument()
     })
-    const restartButton = screen.getByTestId('download-restart-btn')
+    const restartButton = screen.getByTestId('download-button')
     fireEvent.click(restartButton)
     await waitFor(() => {
       expect(restartButton).toBeDisabled()
@@ -283,6 +285,58 @@ describe('ModelDownloaderModal', () => {
     await startPromise
     await waitFor(() => {
       expect(restartButton).not.toBeDisabled()
+    })
+  })
+
+  describe('4-scenario matrix', () => {
+    beforeEach(() => {
+      initI18n({ en: { translation: en } })
+    })
+
+    it('Scenario 1: modelsMissing=true, isOnline=true, versionJsonExists=true renders standard download UI with download button', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ status: 'idle', bytes_downloaded: 0, total_bytes: 0 }),
+      })
+      render(<ModelDownloaderModal open={true} onClose={() => {}} modelsMissing={true} isOnline={true} versionJsonExists={true} />)
+      await waitFor(() => {
+        expect(screen.getByText('Downloading AI Engine')).toBeInTheDocument()
+      })
+      const downloadBtn = screen.getByTestId('download-button')
+      expect(downloadBtn).toBeInTheDocument()
+      expect(downloadBtn).toHaveTextContent('Download Models')
+    })
+
+    it('Scenario 2: modelsMissing=true, isOnline=false, versionJsonExists=true renders offlineWarning', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ status: 'idle', bytes_downloaded: 0, total_bytes: 0 }),
+      })
+      render(<ModelDownloaderModal open={true} onClose={() => {}} modelsMissing={true} isOnline={false} versionJsonExists={true} />)
+      await waitFor(() => {
+        expect(screen.getByText('You are offline. Connect to the internet to download required models.')).toBeInTheDocument()
+      })
+      expect(screen.queryByTestId('download-button')).not.toBeInTheDocument()
+    })
+
+    it('Scenario 3: modelsMissing=true, versionJsonExists=false renders versionJsonMissing regardless of online status', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ status: 'idle', bytes_downloaded: 0, total_bytes: 0 }),
+      })
+      render(<ModelDownloaderModal open={true} onClose={() => {}} modelsMissing={true} isOnline={true} versionJsonExists={false} />)
+      await waitFor(() => {
+        expect(screen.getByText('Configuration file missing. Please reinstall or contact support.')).toBeInTheDocument()
+      })
+      expect(screen.queryByTestId('download-button')).not.toBeInTheDocument()
+    })
+
+    it('Scenario 4: modelsMissing=false returns null and does not render', async () => {
+      const { container } = render(<ModelDownloaderModal open={true} onClose={() => {}} modelsMissing={false} isOnline={true} versionJsonExists={true} />)
+      await waitFor(() => {
+        expect(container.firstChild).toBeNull()
+      })
+      expect(screen.queryByTestId('model-downloader-modal')).not.toBeInTheDocument()
     })
   })
 })

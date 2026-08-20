@@ -109,11 +109,15 @@
     "retry": "Coba Lagi Unduhan",
     "failed": "Unduhan gagal atau dibatalkan.",
     "verifying": "Memverifikasi integritas file...",
+    "versionJsonMissing": "File konfigurasi hilang. Silakan instal ulang atau hubungi dukungan.",
+    "offlineWarning": "Anda sedang offline. Hubungkan ke internet untuk mengunduh model yang diperlukan.",
+    "downloadButton": "Unduh Model",
     "error": {
       "network": "Koneksi jaringan gagal. Periksa koneksi Anda dan coba lagi.",
       "sizeMismatch": "Ukuran file yang diunduh tidak sesuai dengan ukuran yang diharapkan.",
       "diskFull": "Ruang disk tidak cukup untuk menyelesaikan unduhan.",
-      "userCancelled": "Unduhan dibatalkan."
+      "userCancelled": "Unduhan dibatalkan.",
+      "versionJsonMissing": "Manifes model tidak ditemukan. Mulai ulang unduhan untuk mengambilnya."
     },
     "errorGeneric": "Kesalahan: {{message}}"
   },
