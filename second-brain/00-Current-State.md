@@ -3,19 +3,20 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: S15 (Diagnosis — backend test_health_contract root cause) — S15-DIAG-BACKEND-HEALTH-CONTRACT
+- Phase: S16 (Fix — backend test_health_contract hermetic) — S16-FIX-HEALTH-CONTRACT-TEST
 - Date: 2026-08-21
 - Tauri shell hash: 7120B6375022E5FB692FA4DE7AED625679994981904841EEE9A1CE0A4143474F (supersedes 6B56B7310BAF98AC10753AAFCCAC8A5ED287C016468E5D6A227D3F2BD66622FE)
 - Backend hash: DAEEFBCCC0A9084B3C4B05BE59628FC76BECFF50E462BC470947FA0CA437DC8D (GATE3-RETRY, up-to-date)
 - UPX: NOT installed on build machine — upx=False
 - pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 6.88MB)
 - _internal: 707 files (actual GATE3-RETRY build), all DLLs present (python312.dll, llama.dll, pdfium.dll, 4 VC++ runtime DLLs)
-- Backend tests: 335 passed + 1 pre-existing failure (test_health_contract). Full gate GREEN except pre-existing.
+- Backend tests: 336 passed + 0 failures. Full gate GREEN.
 - Frontend tests: 666 passed, 0 failed (S14 fix: added fetch mock for /api/health in App.test.tsx reactive modal test). Full suite GREEN.
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - RESULT: S11-GATE4 COMPLETE. Doc-only rebuild slice: Tauri shell rebuilt from current frontend (bundles FIX75 health404-typo fix + FIX76 Rust orphan kill). Frontend gate: 649 passed, 0 failed, typecheck clean. Deployed to D:\Scan2Text\Scan2Text.exe. Boot proof: health ok, OvisOCR2 0.9B loaded (model.loaded true), worker idle, version 0.1.0. Orphan proof: Scan2Text.exe stop → taskkill /F /T kills entire Python multiprocessing tree; port 47351 clears (TimeWait only). Zero source edits.
 
 ## Recent Changelog
+- **2026-08-21 (S16-FIX-HEALTH-CONTRACT-TEST):** FIX — **Made test_health_contract hermetic and deterministic**. Root cause: `SCAN2TEXT_HOME` env var does NOT control `PathService.models_dir`; only `SCAN2TEXT_MODELS_DIR` does. Fix: added `(tmp_path / "models").mkdir()` + `monkeypatch.setenv("SCAN2TEXT_MODELS_DIR", str(tmp_path))` to force health endpoint to observe an empty model location, returning `loaded=False`. Backend tests: 336 passed + 0 failures. Full gate GREEN.
 - **2026-08-21 (S15-DIAG-BACKEND-HEALTH-CONTRACT):** DIAG — **ROOT CAUSE: STALE_TEST_EXPECTING_BARE_HEALTH**. Failing test: `tests\test_health.py > test_health_contract > Line 25: assert model["loaded"] is False`. Error: `assert True is False`. Root cause: test asserts `model["loaded"] is False` but workspace has both `models/vlm.gguf` and `models/mmproj.gguf` present. Health endpoint's `_get_adapter_state()` fallback checks file existence when no adapter available → returns `{"loaded": True}`. Test expectation codified a transient condition (no model files). Full diagnosis: `second-brain/01-Agent-Memory/Phase-11/diag-S15-BACKEND-HEALTH-CONTRACT.md`. Recommended next slice: S16-FIX-HEALTH-CONTRACT-TEST — update test to assert `loaded is True` or use monkeypatch SCAN2TEXT_HOME.
 - **2026-08-21 (S14-FIX-MOCK-HEALTH-FLIP):** FIX — **Added missing fetch mock for /api/health in App.test.tsx**. Root cause: test sets `showDownloader:true` but unmocked `/api/health?t=...` fetch throws in jsdom → catch block sets `modelReady=true` → `modelsMissing=false` → modal hidden. Fix: added `vi.stubGlobal('fetch', ...)` mock returning `{model:{files_present:false}}` with cache-buster URL matching (`startsWith` + `includes('?t=')`). Frontend: 31/31 App.test.tsx tests pass, typecheck clean. Full suite: 666 passed, 0 failed.
 - **2026-08-21 (S13-DIAG-FRONTEND-MODELREADY-TEST):** DIAG — **ROOT CAUSE IDENTIFIED: TEST_MOCK_MISSING_MODELREADY**. Failing test: `frontend/src/App.test.tsx > reactive MODEL_NOT_FOUND modal > shows model-downloader-modal when store.showDownloader is true`. Test sets `showDownloader:true` but has no fetch mock → `/api/health` throws in jsdom → catch block sets `modelReady=true` → `modelsMissing=!true=false` → `ModelDownloaderModal` returns null at line 110. Full diagnosis: `second-brain/01-Agent-Memory/Phase-11/diag-S13-FRONTEND-MODELREADY-TEST.md`. Recommended next slice: S14-FIX-MOCK-HEALTH-FLIP — add fetch mock returning `{model:{files_present:false}}` to keep `modelReady=false`.
