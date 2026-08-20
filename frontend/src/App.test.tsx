@@ -449,10 +449,22 @@ describe('Command Center layout', () => {
   describe('reactive MODEL_NOT_FOUND modal', () => {
     it('shows model-downloader-modal when store.showDownloader is true', async () => {
       _mockScan2TextStoreState = { jobs: {}, showDownloader: true }
+      const mockFetch = vi.fn()
+      vi.stubGlobal('fetch', mockFetch)
+      mockFetch.mockImplementation((url: string) => {
+        if (url === buildApiUrl('/api/settings')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ hide_welcome_notice: true }) })
+        }
+        if (url.startsWith(buildApiUrl('/api/health')) && url.includes('?t=')) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ model: { files_present: false } }) })
+        }
+        return Promise.resolve({ ok: false })
+      })
       render(<App />)
       await new Promise((r) => setTimeout(r, 50))
       const modal = document.querySelector('[data-testid="model-downloader-modal"]')
       expect(modal).toBeInTheDocument()
+      vi.unstubAllEnvs()
     })
   })
 })
