@@ -10,7 +10,10 @@ app.include_router(health_router)
 client = TestClient(app)
 
 
-def test_health_contract():
+def test_health_contract(tmp_path, monkeypatch):
+    """Health endpoint returns loaded=False when no model files are visible."""
+    (tmp_path / "models").mkdir()
+    monkeypatch.setenv("SCAN2TEXT_MODELS_DIR", str(tmp_path))
     r = client.get("/api/health")
     assert r.status_code == 200
     body = r.json()
