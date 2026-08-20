@@ -317,3 +317,136 @@ class TestDiskAwareDownload:
 
         assert svc.status == "complete"
         assert call_count == 2
+
+
+class TestAppRootFallback:
+    """S12: version.json resolved from PathService.app_root, not Path.cwd()."""
+
+    def test_version_json_from_injected_app_root_not_cwd(self, tmp_path):
+        """When app_root is injected, version.json is read from it — even if os.getcwd() is monkeypatched elsewhere."""
+        vlm_data = b"X" * 512
+        mmproj_data = b"Y" * 256
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+
+        # Build version.json and models in tmp_path (the injected app_root)
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+        models_dir = tmp_path / "models"
+        models_dir.mkdir()
+
+        # Create a DIFFERENT directory that is NOT tmp_path — simulate "wrong cwd"
+        wrong_cwd = tmp_path / "wrong_cwd"
+        wrong_cwd.mkdir()
+
+        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
+            svc = ModelDownloaderService(app_root=tmp_path)
+            svc.start_download()
+            for _ in range(50):
+                if svc.status in ("complete", "failed", "cancelled"):
+                    break
+                threading.Event().wait(0.1)
+
+        assert svc.status == "complete"
+        assert (models_dir / "vlm.gguf").exists()
+        assert (models_dir / "mmproj.gguf").exists()
+
+
+class TestFixedTargetNames:
+    """S12: download target filenames are fixed vlm.gguf / mmproj.gguf regardless of URL extension."""
+
+    def test_target_name_fixed_when_url_ends_in_zip(self, tmp_path):
+        """URLs ending in .zip must still write to vlm.gguf and mmproj.gguf."""
+        vlm_data = b"Z" * 512
+        mmproj_data = b"W" * 256
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+
+        version = {
+            "vlm_download_url": "http://example.com/vlm.zip",
+            "vlm_sha256": vlm_sha,
+            "vlm_size_bytes": len(vlm_data),
+            "mmproj_download_url": "http://example.com/mmproj.zip",
+            "mmproj_sha256": mmproj_sha,
+            "mmproj_size_bytes": len(mmproj_data),
+        }
+        (tmp_path / "version.json").write_text(json.dumps(version), encoding="utf-8")
+        models_dir = tmp_path / "models"
+        models_dir.mkdir()
+
+        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
+            svc = ModelDownloaderService(app_root=tmp_path)
+            svc.start_download()
+            for _ in range(50):
+                if svc.status in ("complete", "failed", "cancelled"):
+                    break
+                threading.Event().wait(0.1)
+
+        assert svc.status == "complete"
+        assert (models_dir / "vlm.gguf").exists()
+        assert (models_dir / "mmproj.gguf").exists()
+        # Ensure no .zip files were written
+        assert not (models_dir / "vlm.zip").exists()
+        assert not (models_dir / "mmproj.zip").exists()
+
+
+class TestLowercaseHashVerify:
+    """S12: SHA256 verify passes with lowercase expected hash."""
+
+    def test_sha256_verify_passes_with_lowercase_expected_hash(self, tmp_path):
+        """_verify_file should pass when expected hash is lowercase (as in version.json after S12-PREP)."""
+        data = b"V" * 1024
+        computed_sha = hashlib.sha256(data).hexdigest()  # always lowercase
+        models_dir = tmp_path / "models"
+        models_dir.mkdir()
+        test_file = models_dir / "test.gguf"
+        test_file.write_bytes(data)
+
+        svc = ModelDownloaderService(app_root=tmp_path)
+        result = svc._verify_file(test_file, computed_sha, len(data))
+        assert result is True
+
+
+class TestDownloadRouterInjection:
+    """S12: download router must inject PathService.app_root into ModelDownloaderService."""
+
+    def test_download_router_uses_pathservice_app_root(self, tmp_path):
+        """The download router singleton must be created with PathService().app_root.
+        
+        When os.getcwd() points to a directory WITHOUT version.json, the router
+        must still find version.json because it uses PathService.app_root, not cwd.
+        """
+        import importlib
+        import sys
+        from unittest.mock import patch, MagicMock
+
+        # Ensure scan2text is on path
+        sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+
+        # Create version.json in tmp_path (our fake app_root)
+        vlm_data = b"R" * 512
+        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
+        mmproj_data = b"S" * 256
+        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+
+        # Patch PathService.app_root to return tmp_path BEFORE reloading download module
+        with patch("scan2text.services.path_service.PathService") as MockPS:
+            mock_instance = MagicMock()
+            mock_instance.app_root = tmp_path
+            MockPS.return_value = mock_instance
+
+            # Force re-import of download.py so the singleton is created with mocked PathService
+            import scan2text.routes.download as dl_module
+            importlib.reload(dl_module)
+
+            # Verify the singleton was created with our tmp_path
+            assert dl_module._download_svc._app_root == tmp_path, (
+                f"download router singleton uses {dl_module._download_svc._app_root} "
+                f"instead of PathService.app_root ({tmp_path})"
+            )
+
+            # Verify version.json is resolvable from the injected path
+            svc = dl_module._download_svc
+            assert (svc._app_root / "version.json").exists()

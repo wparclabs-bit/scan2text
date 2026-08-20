@@ -7,11 +7,12 @@ from typing import Any, Dict
 from fastapi import APIRouter, HTTPException, Response
 
 from scan2text.services.model_downloader_service import ModelDownloaderService
+from scan2text.services.path_service import PathService
 
 router = APIRouter()
 
-# Module-level singleton so the same instance serves all requests.
-_download_svc = ModelDownloaderService()
+# Module-level singleton — app_root injected from PathService.
+_download_svc = ModelDownloaderService(app_root=PathService().app_root)
 
 
 @router.post("/api/download/start")
