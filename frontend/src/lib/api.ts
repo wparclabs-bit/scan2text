@@ -91,6 +91,8 @@ export interface SettingsPatch {
   output_dir?: string
   max_pdf_pages?: number
   cpu_threads?: number
+  theme?: string
+  language?: string
 }
 
 export async function getSettings(): Promise<SettingsResponse> {
