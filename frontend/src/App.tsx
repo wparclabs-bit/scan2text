@@ -29,6 +29,13 @@ function App() {
       .then((res) => res.json())
       .then((data) => {
         setHideWelcomeNotice(!!data.hide_welcome_notice)
+        // Boot fallback: apply theme/language from settings.json when localStorage lacks them
+        const storage = window.localStorage
+        const storedTheme = storage.getItem('scan2text:theme')
+        const storedLang = storage.getItem('scan2text:language')
+        if ((storedTheme === null && data.theme !== undefined) || (storedLang === null && data.language !== undefined)) {
+          usePreferenceStore.getState().applySettingsFromResponse({ theme: data.theme, language: data.language })
+        }
       })
       .catch(() => {
         setHideWelcomeNotice(false)
