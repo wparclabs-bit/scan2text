@@ -91,7 +91,7 @@ function App() {
   return (
     <>
       <CommandCenterLayout />
-      <ModelDownloaderModal open={showDownloader} onClose={handleDownloaderClose} />
+      <ModelDownloaderModal open={showDownloader} onClose={handleDownloaderClose} modelsMissing={!modelReady} isOnline={!!navigator.onLine} versionJsonExists={true} />
       {modelReady && !hideWelcomeNotice && <WelcomeModal />}
     </>
   )
