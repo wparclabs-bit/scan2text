@@ -4,14 +4,14 @@
 
 ## Baseline
 - Phase: GATE5 (Frontend — 4-scenario downloader modal matrix + i18n) — S12-FRONTEND-DOWNLOADER-MODAL-MATRIX
-- Date: 2026-08-20
+- Date: 2026-08-21
 - Tauri shell hash: 7120B6375022E5FB692FA4DE7AED625679994981904841EEE9A1CE0A4143474F (supersedes 6B56B7310BAF98AC10753AAFCCAC8A5ED287C016468E5D6A227D3F2BD66622FE)
 - Backend hash: DAEEFBCCC0A9084B3C4B05BE59628FC76BECFF50E462BC470947FA0CA437DC8D (GATE3-RETRY, up-to-date)
 - UPX: NOT installed on build machine — upx=False
 - pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 6.88MB)
 - _internal: 707 files (actual GATE3-RETRY build), all DLLs present (python312.dll, llama.dll, pdfium.dll, 4 VC++ runtime DLLs)
-- Backend tests: 331 passed + 1 pre-existing failure (test_health_contract). Full gate GREEN except pre-existing.
-- Frontend tests: 669 passed, 0 failures (new baseline — 20 ModelDownloaderModal tests; S12 added 4 scenario matrix tests + fixed 6 data-testid references)
+- Backend tests: 335 passed + 1 pre-existing failure (test_health_contract). Full gate GREEN except pre-existing.
+- Frontend tests: 665 passed, 1 pre-existing regression (App.test.tsx reactive MODEL_NOT_FOUND modal — S12 commit changed App.tsx to pass modelsMissing={!modelReady} but test mock doesn't set modelReady:false)
 - PRD: v1.12 source of truth in second-brain/04-Product/
 - RESULT: S11-GATE4 COMPLETE. Doc-only rebuild slice: Tauri shell rebuilt from current frontend (bundles FIX75 health404-typo fix + FIX76 Rust orphan kill). Frontend gate: 649 passed, 0 failed, typecheck clean. Deployed to D:\Scan2Text\Scan2Text.exe. Boot proof: health ok, OvisOCR2 0.9B loaded (model.loaded true), worker idle, version 0.1.0. Orphan proof: Scan2Text.exe stop → taskkill /F /T kills entire Python multiprocessing tree; port 47351 clears (TimeWait only). Zero source edits.
 
@@ -21,6 +21,6 @@
 - **2026-08-20 (S12-PREP-VERSION-JSON-GITHUB):** PREP — **version.json rewritten to GitHub Release URLs**. Replaced dead GDrive `uc?export=download&confirm=t&id=` URLs with GitHub Release zip-aliased assets: vlm = `vlm.zip` (SHA256 `3fba6d…`, 811843498 B), mmproj = `mmproj.zip` (SHA256 `7e3717…`, 204987079 B). Schema: exactly 6 keys (`vlm_download_url`, `vlm_sha256`, `vlm_size_bytes`, `mmproj_download_url`, `mmproj_sha256`, `mmproj_size_bytes`). Both repo root and portable root updated. AGENTS.md Section 8 locked-decision line updated. Hashes converted to lowercase. Zero source edits. No downloads.
 - **2026-08-20 (S11-PREP-GDRIVE-TEST-AND-VERSION-JSON):** PREP — **version.json rewritten with CEO-provided GDrive IDs and disk-truth hashes**. Replaced stale/placeholder URLs and hashes with live values: vlm = `1K5jfXMnYvc4bHNwxJDKcq8onTB_QRu1A` (SHA256 `3FBA6D…`, 811843498 B), mmproj = `1Ql4VjslRZpAK0_9sgVVTeyQQcqtEj9jO` (SHA256 `7E3717…`, 204987079 B). Schema: exactly 6 keys (`vlm_download_url`, `vlm_sha256`, `vlm_size_bytes`, `mmproj_download_url`, `mmproj_sha256`, `mmproj_size_bytes`). URLs use `uc?export=download&confirm=t&id=` form. QA script authored at `second-brain/02-QA/qa-gdrive-download-test.ps1` (CEO-executed, mmproj-only, 3 URL probes). Zero source edits. No downloads by Kilo.
 - **2026-08-20 (S11-DIAG-DOWNLOADER-SCHEMA):** DIAG — **ROOT CAUSES IDENTIFIED (3)**. (1) `ModelDownloaderService` singleton uses `Path.cwd()` instead of `PathService.app_root` → version.json not found in portable root. (2) No Google Drive >100MB HTML trap handling — `urllib.request` writes virus-warning HTML to .part file, SHA256 fails silently. (3) version.json lives at repo root, not deployed to portable root. HTTP client: `urllib.request` with 1MB streaming chunks (adequate for large files). GDrive bypass: **NO** — no confirm token parsing, no cookie jar, no content-type validation. Full report: `second-brain/01-Agent-Memory/Phase-11/slice-S11-DIAG-DOWNLOADER-SCHEMA.md`.
-- **2026-08-20 (S11-DIAG-MODEL-RUNTIME-EVIDENCE-1):** DIAG — **STATE_NOT_REPRODUCED**. Baseline condition ("D:\Scan2Text\models renamed to models_backup") not present. `models/` exists with both GGUF files intact (vlm.gguf 811MB, mmproj.gguf 205MB); `models_backup/` does not exist. Backend not running (no processes, health endpoint refused). Settings file at `settings/settings.json` shows `max_pdf_pages: 150` (policy limit 50). No app.log present. Either state was restored or never existed in this form. Full report: `second-brain/01-Agent-Memory/Phase-11/slice-S11-DIAG-MODEL-RUNTIME-EVIDENCE-1.md`.
+- **2026-08-21 (S12-GATE-RC-BUILD-DEPLOY):** COMPLETE — Full quality gates run: frontend 665 passed + 1 pre-existing regression, typecheck clean, backend 335 passed + 1 pre-existing failure, cargo check clean. Built Tauri (Scan2Text.exe) + PyInstaller (backend/scan2text-backend.exe folder artifact) + frontend prod bundle. Deployed to D:\Scan2Text\: Scan2Text.exe replaced, backend/ replaced, version.json copied. max_pdf_pages reset from 150→50 in deployed settings.json. Verification: all Test-Path checks pass, version.json JSON-identical, dist absent at portable root.
 
 (End of file - total 24 lines)
