@@ -267,15 +267,35 @@ class VlmOcrAdapter:
         output_md_path = source_path.parent / f"{source_path.stem}.md"
         if file_type == "pdf" and page_views is not None:
             # Per-page crop extraction using the exact rasterized page image.
+            # FIX74: per-page resilience — a single bad page (post-processing or
+            # engine error) is skipped with a privacy-safe log entry so the rest
+            # of the PDF still produces ONE Markdown file (FR-06). The PDF fails
+            # only when every page fails.
             page_texts = text.split("\n\n---\n\n")
             processed_pages: list[str] = []
             for i, page_text in enumerate(page_texts):
                 if i < len(page_views):
-                    _, pil_img = page_views[i]
-                    page_text = extract_and_save_image_crops(
-                        page_text, pil_img, output_md_path,
-                    )
+                    try:
+                        _, pil_img = page_views[i]
+                        page_text = extract_and_save_image_crops(
+                            page_text, pil_img, output_md_path,
+                        )
+                    except Exception:
+                        # Privacy-safe (NFR-02): log only page index + error code.
+                        # No filename, no document content.
+                        logger.warning(
+                            "PDF page OCR failed: index=%s code=%s",
+                            i,
+                            OCR_FAILED,
+                        )
+                        continue
                 processed_pages.append(page_text)
+            if not processed_pages:
+                return {
+                    "error": OCR_FAILED,
+                    "message": f"All {len(page_texts)} PDF pages failed to process",
+                    "image_path": image_path,
+                }
             text = "\n\n---\n\n".join(processed_pages)
         else:
             text = extract_and_save_image_crops(text, source_path, output_md_path)
