@@ -66,7 +66,7 @@ class PathService:
         if env_home:
             return Path(env_home).resolve()
         if getattr(sys, "frozen", False):
-            return Path(sys.executable).parent
+            return PathService._resolve_portable_root()
         return Path.cwd()
 
     # --- Properties --------------------------------------------------------
