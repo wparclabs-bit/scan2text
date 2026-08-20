@@ -24,6 +24,7 @@ class TestErrorMapping:
             "OCR_FAILED",
             "OUTPUT_DIR_NOT_WRITABLE",
             "SETTINGS_INVALID",
+            "PARTIAL_FAILURE",
             "UPDATE_CHECK_FAILED",
             "UNKNOWN_ERROR",
         }
