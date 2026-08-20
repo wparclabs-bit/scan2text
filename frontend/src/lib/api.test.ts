@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { uploadFile, getTaskStatus, isTaskCompleted, isTaskFailed, pollTaskStatus, defaultDelay } from './api'
+import { uploadFile, getTaskStatus, isTaskCompleted, isTaskFailed, pollTaskStatus, defaultDelay, getHealth } from './api'
 import { buildApiUrl } from './apiBase'
 
 describe('uploadFile', () => {
@@ -312,5 +312,36 @@ describe('pollTaskStatus', () => {
     await expect(pollTaskStatus('t1', options, deps)).rejects.toThrow('Polling timeout: max attempts reached')
     expect(mockGetStatus).toHaveBeenCalledTimes(3)
     expect(mockDelay).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('getHealth', () => {
+  let mockFetch: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    mockFetch = vi.fn()
+    vi.stubGlobal('fetch', mockFetch)
+  })
+
+  it('should call fetch with the canonical /api/health path', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ status: 'ok' }),
+    })
+
+    await getHealth()
+
+    expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/health'))
+  })
+
+  it('should throw on non-2xx response', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+    })
+
+    await expect(getHealth()).rejects.toThrow('Health check failed: 404 Not Found')
   })
 })

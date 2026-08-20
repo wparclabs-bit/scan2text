@@ -113,7 +113,7 @@ export async function saveSettings(patch: SettingsPatch): Promise<void> {
 }
 
 export async function getHealth(): Promise<{ status: string }> {
-  const response = await fetch(buildApiUrl('/health'))
+  const response = await fetch(buildApiUrl('/api/health'))
   if (!response.ok) {
     throw new Error(`Health check failed: ${response.status} ${response.statusText}`)
   }
