@@ -3,7 +3,7 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: S18 (Gate — lean quality gate, ZERO source edits) — S18-GATE-LEAN-FINAL
+- Phase: S20 (Fix — PathService packaged app_root resolution) — S20-FIX-PATHSERVICE-APP-ROOT-PACKAGED
 - Date: 2026-08-22
 - Tauri shell hash: 7120B6375022E5FB692FA4DE7AED625679994981904841EEE9A1CE0A4143474F (unchanged from S17)
 - Backend hash: DAEEFBCCC0A9084B3C4B05BE59628FC76BECFF50E462BC470947FA0CA437DC8D (unchanged from S17)
@@ -13,9 +13,10 @@
 - Backend tests: 336 passed + 0 failures. Full gate GREEN.
 - Frontend tests: 666 passed, 0 failed. Full suite GREEN.
 - PRD: v1.12 source of truth in second-brain/04-Product/
-- RESULT: S18-GATE-LEAN-FINAL COMPLETE. All automated gates GREEN with ZERO source edits. Frontend: 666/666 passed, typecheck clean (tsc -b exit 0), build success (5.72s, 599KB JS). Backend: 336/336 passed in 21.27s. Rust: cargo check finished with 0 errors. Binaries from S12 remain current and verified.
+- RESULT: S20-FIX-PATHSERVICE-APP-ROOT-PACKAGED COMPLETE. Fixed `PathService._resolve_app_root()` to use `_resolve_portable_root()` in frozen mode, so `app_root` correctly resolves to the portable root (first ancestor with `models/`) instead of `backend/`. 13/13 frozen tests pass, 31/31 other path_service tests pass. Commit: `37109b0`.
 
 ## Recent Changelog
+- **2026-08-22 (S20-FIX-PATHSERVICE-APP-ROOT-PACKAGED):** FIX — **`_resolve_app_root()` now returns portable root in frozen mode**. Root cause from S19: `PathService._resolve_app_root()` returned `exe_dir.parent` for frozen executables, but `version.json` lives at the portable root (first ancestor containing `models/`). Fix: changed line 69 of `path_service.py` from `return Path(sys.executable).parent` to `return PathService._resolve_portable_root()`. The existing `_resolve_portable_root()` method walks up from exe_dir looking for a `models/` directory and returns the first match. 13/13 frozen tests pass, 31/31 other path_service tests pass. Commit: `37109b0`.
 - **2026-08-22 (S19-DIAG-MANIFEST-NOT-FOUND-PACKAGED):** DIAG — **ROOT CAUSE: PACKAGED_APP_ROOT_MISRESOLUTION**. Deployed binary is current (hash match). `PathService._resolve_app_root()` returns `D:\Scan2Text\backend\` for frozen executables, but `version.json` lives at `D:\Scan2Text\` (portable root). `ModelDownloaderService.start_download()` checks `app_root / "version.json"` → `D:\Scan2Text\backend\version.json` → NOT FOUND. Frontend maps `"version.json not found"` to "Model manifest not found". The correct resolution logic (`_resolve_portable_root()`) already exists in PathService but is not used for `app_root`. Recommended fix: change line 69 of path_service.py from `Path(sys.executable).parent` to `self._resolve_portable_root()`. Full report: `second-brain/01-Agent-Memory/Phase-11/diag-S19-MANIFEST-NOT-FOUND-PACKAGED.md`.
 - **2026-08-22 (S18-GATE-LEAN-FINAL):** GATE — **All automated quality gates GREEN with ZERO source edits**. Frontend full suite: 666 passed, 0 failed (38 test files). Typecheck: tsc -b exit 0 (zero errors). Build: vite build success in 5.72s (599KB JS, 51KB CSS). Backend pytest: 336 passed, 0 failures in 21.27s. Rust cargo check: finished with 0 errors. All binaries from S12 remain current and verified. This is the final lean quality gate baseline confirming repo stability.
 - **2026-08-22 (S17-CLEANUP-DEBUG-GHOSTS):** CLEANUP — **Verified and removed debug ghost files**. Forensics: `Select-String` across entire repo returned zero consumers for `_debug_health`. Files `_debug_health.py`, `_debug_health2.py`, `_debug_health3.py` confirmed absent from disk (already cleaned by prior slice). No git changes to commit. Repo tree clean.
