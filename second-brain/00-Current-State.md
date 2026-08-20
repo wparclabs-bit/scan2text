@@ -3,19 +3,20 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: S17 (Cleanup — debug ghost removal) — S17-CLEANUP-DEBUG-GHOSTS
-- Date: 2026-08-21
-- Tauri shell hash: 7120B6375022E5FB692FA4DE7AED625679994981904841EEE9A1CE0A4143474F (supersedes 6B56B7310BAF98AC10753AAFCCAC8A5ED287C016468E5D6A227D3F2BD66622FE)
-- Backend hash: DAEEFBCCC0A9084B3C4B05BE59628FC76BECFF50E462BC470947FA0CA437DC8D (GATE3-RETRY, up-to-date)
+- Phase: S18 (Gate — lean quality gate, ZERO source edits) — S18-GATE-LEAN-FINAL
+- Date: 2026-08-22
+- Tauri shell hash: 7120B6375022E5FB692FA4DE7AED625679994981904841EEE9A1CE0A4143474F (unchanged from S17)
+- Backend hash: DAEEFBCCC0A9084B3C4B05BE59628FC76BECFF50E462BC470947FA0CA437DC8D (unchanged from S17)
 - UPX: NOT installed on build machine — upx=False
 - pdfium.dll: present in portable dist (_internal/pypdfium2_raw/pdfium.dll, 6.88MB)
 - _internal: 707 files (actual GATE3-RETRY build), all DLLs present (python312.dll, llama.dll, pdfium.dll, 4 VC++ runtime DLLs)
 - Backend tests: 336 passed + 0 failures. Full gate GREEN.
-- Frontend tests: 666 passed, 0 failed (S14 fix: added fetch mock for /api/health in App.test.tsx reactive modal test). Full suite GREEN.
+- Frontend tests: 666 passed, 0 failed. Full suite GREEN.
 - PRD: v1.12 source of truth in second-brain/04-Product/
-- RESULT: S11-GATE4 COMPLETE. Doc-only rebuild slice: Tauri shell rebuilt from current frontend (bundles FIX75 health404-typo fix + FIX76 Rust orphan kill). Frontend gate: 649 passed, 0 failed, typecheck clean. Deployed to D:\Scan2Text\Scan2Text.exe. Boot proof: health ok, OvisOCR2 0.9B loaded (model.loaded true), worker idle, version 0.1.0. Orphan proof: Scan2Text.exe stop → taskkill /F /T kills entire Python multiprocessing tree; port 47351 clears (TimeWait only). Zero source edits.
+- RESULT: S18-GATE-LEAN-FINAL COMPLETE. All automated gates GREEN with ZERO source edits. Frontend: 666/666 passed, typecheck clean (tsc -b exit 0), build success (5.72s, 599KB JS). Backend: 336/336 passed in 21.27s. Rust: cargo check finished with 0 errors. Binaries from S12 remain current and verified.
 
 ## Recent Changelog
+- **2026-08-22 (S18-GATE-LEAN-FINAL):** GATE — **All automated quality gates GREEN with ZERO source edits**. Frontend full suite: 666 passed, 0 failed (38 test files). Typecheck: tsc -b exit 0 (zero errors). Build: vite build success in 5.72s (599KB JS, 51KB CSS). Backend pytest: 336 passed, 0 failures in 21.27s. Rust cargo check: finished with 0 errors. All binaries from S12 remain current and verified. This is the final lean quality gate baseline confirming repo stability.
 - **2026-08-22 (S17-CLEANUP-DEBUG-GHOSTS):** CLEANUP — **Verified and removed debug ghost files**. Forensics: `Select-String` across entire repo returned zero consumers for `_debug_health`. Files `_debug_health.py`, `_debug_health2.py`, `_debug_health3.py` confirmed absent from disk (already cleaned by prior slice). No git changes to commit. Repo tree clean.
 - **2026-08-21 (S16-FIX-HEALTH-CONTRACT-TEST):** FIX — **Made test_health_contract hermetic and deterministic**. Root cause: `SCAN2TEXT_HOME` env var does NOT control `PathService.models_dir`; only `SCAN2TEXT_MODELS_DIR` does. Fix: added `(tmp_path / "models").mkdir()` + `monkeypatch.setenv("SCAN2TEXT_MODELS_DIR", str(tmp_path))` to force health endpoint to observe an empty model location, returning `loaded=False`. Backend tests: 336 passed + 0 failures. Full gate GREEN.
 - **2026-08-21 (S15-DIAG-BACKEND-HEALTH-CONTRACT):** DIAG — **ROOT CAUSE: STALE_TEST_EXPECTING_BARE_HEALTH**. Failing test: `tests\test_health.py > test_health_contract > Line 25: assert model["loaded"] is False`. Error: `assert True is False`. Root cause: test asserts `model["loaded"] is False` but workspace has both `models/vlm.gguf` and `models/mmproj.gguf` present. Health endpoint's `_get_adapter_state()` fallback checks file existence when no adapter available → returns `{"loaded": True}`. Test expectation codified a transient condition (no model files). Full diagnosis: `second-brain/01-Agent-Memory/Phase-11/diag-S15-BACKEND-HEALTH-CONTRACT.md`. Recommended next slice: S16-FIX-HEALTH-CONTRACT-TEST — update test to assert `loaded is True` or use monkeypatch SCAN2TEXT_HOME.
