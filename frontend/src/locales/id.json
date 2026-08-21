@@ -33,6 +33,7 @@
     "pdfTooComplex": "PDF terlalu kompleks untuk batas halaman saat ini. Naikkan batas halaman di Pengaturan lalu coba lagi.",
     "fileTooComplex": "File terlalu kompleks (maks 20MB).",
     "fileTooComplexRejected": "File terlalu besar atau kompleks. Silakan coba file yang lebih kecil.",
+    "fileTooComplexLocked": "File terlalu besar atau kompleks. Batas: 20 MB per file · 50 halaman per PDF. Pecah PDF besar lalu coba lagi.",
     "modelNotFound": "File mesin AI tidak ditemukan. Mengunduh model sekarang…",
     "backendLost": "Koneksi backend terputus"
   },
@@ -61,6 +62,7 @@
   "queue": {
     "empty": "Tidak ada file dalam antrian",
     "emptyFriendly": "🙈 Masih belum ada file tuh! Coba upload di atas!",
+    "longDocHint": "Masih diproses — mohon bersabar.",
     "retry": "Ulangi",
     "status": {
       "pending": "Menunggu",
@@ -95,7 +97,10 @@
   },
   "welcome": {
     "title": "Selamat datang di Scan2Text",
-    "body": "Ubah dokumen hasil scan Anda menjadi teks yang bisa diedit — tanpa internet. Catatan cepat: File harus di bawah 20MB (sekitar 10-20 foto atau PDF pendek). PDF bisa sampai 50 halaman. Kami menerima PNG, JPG, WEBP, dan PDF. Siap? Jatuhkan file Anda di bawah!",
+    "bullet1": "Ubah dokumen hasil scan Anda menjadi teks yang bisa diedit — tanpa internet.",
+    "bullet2": "File harus di bawah 20MB (sekitar 10-20 foto atau PDF pendek).",
+    "bullet3": "PDF bisa sampai 50 halaman.",
+    "bullet4": "Kami menerima PNG, JPG, WEBP, dan PDF.",
     "dontShowAgain": "Jangan tampilkan lagi",
     "close": "Mulai"
   },

@@ -123,7 +123,7 @@ export default function QueuePanel() {
                         />
                       </TooltipTrigger>
                       <TooltipContent side="top" className="translate-y-[-2px]">
-                        <p>{t('errors.fileTooComplexRejected')}</p>
+                        <p>{t('errors.fileTooComplexLocked')}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
