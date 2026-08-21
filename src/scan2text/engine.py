@@ -6,7 +6,6 @@ from pathlib import Path
 
 import click
 import uvicorn
-import webview
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -54,7 +53,7 @@ def create_app(ocr_engine: OCREngine | None = None) -> FastAPI:
 
         # Pre-load model in background if configured
         if isinstance(_ocr_engine, OCREngine):
-            model_path = paths.models_dir / "ovisocr2-q8.gguf"
+            model_path = paths.models_dir / "vlm.gguf"
             mmproj = paths.models_dir / "mmproj.gguf"
             if not model_path.exists():
                 logger.warning("Model not found at %s — OCR will fail until provided.", model_path)
@@ -62,35 +61,16 @@ def create_app(ocr_engine: OCREngine | None = None) -> FastAPI:
     return app
 
 
-def launch_app(port: int = 8765, headless: bool = False) -> None:
-    """Start the FastAPI server and open a native window."""
+def launch_app(port: int = 8765) -> None:
+    """Start the FastAPI server in headless mode."""
     app = create_app(FakeOCR())  # default to FakeOCR; swap for real engine later.
-
-    uvicorn_task = asyncio.create_task(uvicorn.APSGIRunner(app, "0.0.0.0", port).serve())
-
-    if not headless:
-        # Start uvicorn in background thread; pywebview runs on main thread.
-        import threading
-        server_thread = threading.Thread(target=lambda: uvicorn.run(app, host="0.0.0.0", port=port), daemon=True)
-        server_thread.start()
-        webview.create_window(
-            title="Scan2Text",
-            url=f"http://localhost:{port}",
-            width=960,
-            height=640,
-            min_size=(800, 500),
-        )
-        webview.start()
-    else:
-        loop = asyncio.new_event_loop()
-        loop.run_until_complete(uvicorn_task)
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 @click.command()
 @click.option("--port", default=8765, help="HTTP port for the local server.")
-@click.option("--headless", is_flag=True, help="Run without opening a window (for CI).")
-def cli(port: int, headless: bool) -> None:
-    launch_app(port=port, headless=headless)
+def cli(port: int) -> None:
+    launch_app(port=port)
 
 
 if __name__ == "__main__":
