@@ -1,13 +1,8 @@
 {
-  "app_version": "1.0.0",
-  "app_download_url": "https://drive.google.com/uc?export=download&id=PLACEHOLDER_APP_ID",
-  "vlm_download_url": "https://drive.google.com/uc?export=download&id=15oefDp7U_VMj2cdJ7xiOP9WlCwN2_lEl",
-  "vlm_sha256": "c036cbb7553a909f8b8877d4461924307f27ecb66cff928eeeafd569c3887e29",
-  "vlm_size_bytes": 5242880,
-  "mmproj_download_url": "https://drive.google.com/uc?export=download&id=1YOj0m9PzYKdPtACrZuQLtcZQZjxf3DMz",
-  "mmproj_sha256": "5647f05ec18958947d32874eeb788fa396a05d0bab7c1b71f112ceb7e9b31eee",
-  "mmproj_size_bytes": 2097152,
-  "release_notes": [
-    "Live-fire dummy"
-  ]
+  "vlm_download_url": "https://github.com/wPAILabs/scan2text/releases/download/OCR/vlm.zip",
+  "vlm_sha256": "9facc171eb7b5cd58ef48c3c1e0814b9da911100ab9088757d1f1269d1e09925",
+  "vlm_size_bytes": 772878446,
+  "mmproj_download_url": "https://github.com/wPAILabs/scan2text/releases/download/OCR/mmproj.zip",
+  "mmproj_sha256": "d63a90a1f1594ce9ecc83f2e1894f9bd7b38605bb00daf59b2fdf7b1b42b0530",
+  "mmproj_size_bytes": 156370919
 }

@@ -49,12 +49,22 @@ class _FakeResponse:
         pass
 
 
+def _make_zip_bytes(content: bytes, name: str = "model.gguf") -> bytes:
+    """Wrap raw content in a real in-memory zip archive containing a .gguf entry."""
+    import io
+    import zipfile as _zf
+    buf = io.BytesIO()
+    with _zf.ZipFile(buf, "w", _zf.ZIP_DEFLATED) as zf:
+        zf.writestr(name, content)
+    return buf.getvalue()
+
+
 def _make_version_json(tmp_path, vlm_sha="abc123", vlm_size=1024, mmproj_sha="def456", mmproj_size=512):
     version = {
-        "vlm_download_url": "http://example.com/vlm.gguf",
+        "vlm_download_url": "http://example.com/vlm.zip",
         "vlm_sha256": vlm_sha,
         "vlm_size_bytes": vlm_size,
-        "mmproj_download_url": "http://example.com/mmproj.gguf",
+        "mmproj_download_url": "http://example.com/mmproj.zip",
         "mmproj_sha256": mmproj_sha,
         "mmproj_size_bytes": mmproj_size,
     }
@@ -66,11 +76,13 @@ class TestStartDownload:
     def test_reads_version_json_and_sets_downloading_status(self, tmp_path):
         vlm_data = b"x" * 1024
         mmproj_data = b"y" * 512
-        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
-        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
-        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+        vlm_zip = _make_zip_bytes(vlm_data)
+        mmproj_zip = _make_zip_bytes(mmproj_data)
+        vlm_sha = hashlib.sha256(vlm_zip).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_zip).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_zip), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_zip))
 
-        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        responses = [_FakeResponse([vlm_zip], len(vlm_zip)), _FakeResponse([mmproj_zip], len(mmproj_zip))]
         with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
@@ -83,14 +95,16 @@ class TestStartDownload:
 
     def test_successful_download_creates_both_gguf_files(self, tmp_path):
         vlm_data = b"A" * 1024
-        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
         mmproj_data = b"B" * 512
-        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
-        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+        vlm_zip = _make_zip_bytes(vlm_data)
+        mmproj_zip = _make_zip_bytes(mmproj_data)
+        vlm_sha = hashlib.sha256(vlm_zip).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_zip).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_zip), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_zip))
         models_dir = tmp_path / "models"
         models_dir.mkdir()
 
-        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        responses = [_FakeResponse([vlm_zip], len(vlm_zip)), _FakeResponse([mmproj_zip], len(mmproj_zip))]
         with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
@@ -104,6 +118,8 @@ class TestStartDownload:
         assert (models_dir / "mmproj.gguf").exists()
         assert not (models_dir / "vlm.gguf.part").exists()
         assert not (models_dir / "mmproj.gguf.part").exists()
+        assert not (models_dir / "vlm.zip").exists()
+        assert not (models_dir / "mmproj.zip").exists()
 
     def test_cancellation_deletes_part_files(self, tmp_path):
         vlm_data = b"x" * (500 * 1024)
@@ -206,11 +222,13 @@ class TestGetProgress:
     def test_state_updates_during_download(self, tmp_path):
         vlm_data = b"C" * 1024
         mmproj_data = b"D" * 512
-        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
-        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
-        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+        vlm_zip = _make_zip_bytes(vlm_data)
+        mmproj_zip = _make_zip_bytes(mmproj_data)
+        vlm_sha = hashlib.sha256(vlm_zip).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_zip).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_zip), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_zip))
 
-        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        responses = [_FakeResponse([vlm_zip], len(vlm_zip)), _FakeResponse([mmproj_zip], len(mmproj_zip))]
         with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
@@ -221,17 +239,19 @@ class TestGetProgress:
 
         state = svc.get_progress()
         assert state["status"] == "complete"
-        assert state["bytes_downloaded"] == 1536
-        assert state["total_bytes"] == 1536
+        assert state["bytes_downloaded"] == len(vlm_zip) + len(mmproj_zip)
+        assert state["total_bytes"] == len(vlm_zip) + len(mmproj_zip)
 
     def test_aggregated_progress_during_dual_download(self, tmp_path):
         vlm_data = b"E" * 1024
         mmproj_data = b"F" * 1024
-        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
-        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
-        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+        vlm_zip = _make_zip_bytes(vlm_data)
+        mmproj_zip = _make_zip_bytes(mmproj_data)
+        vlm_sha = hashlib.sha256(vlm_zip).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_zip).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_zip), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_zip))
 
-        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        responses = [_FakeResponse([vlm_zip], len(vlm_zip)), _FakeResponse([mmproj_zip], len(mmproj_zip))]
         with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
@@ -242,23 +262,25 @@ class TestGetProgress:
 
         state = svc.get_progress()
         assert state["status"] == "complete"
-        assert state["bytes_downloaded"] == 2048
-        assert state["total_bytes"] == 2048
+        assert state["bytes_downloaded"] == len(vlm_zip) + len(mmproj_zip)
+        assert state["total_bytes"] == len(vlm_zip) + len(mmproj_zip)
 
 
 class TestDiskAwareDownload:
     def test_precreated_vlm_with_correct_sha_skips_download_and_no_rename_error(self, tmp_path):
         """Bug 1: Windows WinError 183 when vlm.gguf already exists at rename step."""
         vlm_data = b"Z" * 1024
-        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
         mmproj_data = b"W" * 512
-        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
-        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+        vlm_zip = _make_zip_bytes(vlm_data)
+        mmproj_zip = _make_zip_bytes(mmproj_data)
+        vlm_sha = hashlib.sha256(vlm_zip).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_zip).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_zip), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_zip))
         models_dir = tmp_path / "models"
         models_dir.mkdir()
         (models_dir / "vlm.gguf").write_bytes(vlm_data)
 
-        responses = [_FakeResponse([mmproj_data], len(mmproj_data))]
+        responses = [_FakeResponse([mmproj_zip], len(mmproj_zip))]
         with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
@@ -290,20 +312,21 @@ class TestDiskAwareDownload:
     def test_concurrent_start_calls_do_not_run_two_downloads(self, tmp_path):
         """Guard against concurrent duplicate starts spawning two download threads."""
         vlm_data = b"R" * 1024
-        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
         mmproj_data = b"S" * 512
-        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
-        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+        vlm_zip = _make_zip_bytes(vlm_data)
+        mmproj_zip = _make_zip_bytes(mmproj_data)
+        vlm_sha = hashlib.sha256(vlm_zip).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_zip).hexdigest()
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_zip), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_zip))
         models_dir = tmp_path / "models"
         models_dir.mkdir()
 
         call_count = 0
-        original_urlopen = None
 
         def counting_urlopen(*args, **kwargs):
             nonlocal call_count
             call_count += 1
-            return _FakeResponse([vlm_data if call_count % 2 == 1 else mmproj_data], 1024 if call_count % 2 == 1 else 512)
+            return _FakeResponse([vlm_zip if call_count % 2 == 1 else mmproj_zip], len(vlm_zip) if call_count % 2 == 1 else len(mmproj_zip))
 
         import scan2text.services.model_downloader_service as mds
         with patch.object(mds, "urlopen", side_effect=counting_urlopen):
@@ -326,11 +349,13 @@ class TestAppRootFallback:
         """When app_root is injected, version.json is read from it — even if os.getcwd() is monkeypatched elsewhere."""
         vlm_data = b"X" * 512
         mmproj_data = b"Y" * 256
-        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
-        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        vlm_zip = _make_zip_bytes(vlm_data)
+        mmproj_zip = _make_zip_bytes(mmproj_data)
+        vlm_sha = hashlib.sha256(vlm_zip).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_zip).hexdigest()
 
         # Build version.json and models in tmp_path (the injected app_root)
-        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_data), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_data))
+        _make_version_json(tmp_path, vlm_sha=vlm_sha, vlm_size=len(vlm_zip), mmproj_sha=mmproj_sha, mmproj_size=len(mmproj_zip))
         models_dir = tmp_path / "models"
         models_dir.mkdir()
 
@@ -338,7 +363,7 @@ class TestAppRootFallback:
         wrong_cwd = tmp_path / "wrong_cwd"
         wrong_cwd.mkdir()
 
-        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        responses = [_FakeResponse([vlm_zip], len(vlm_zip)), _FakeResponse([mmproj_zip], len(mmproj_zip))]
         with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
@@ -359,22 +384,24 @@ class TestFixedTargetNames:
         """URLs ending in .zip must still write to vlm.gguf and mmproj.gguf."""
         vlm_data = b"Z" * 512
         mmproj_data = b"W" * 256
-        vlm_sha = hashlib.sha256(vlm_data).hexdigest()
-        mmproj_sha = hashlib.sha256(mmproj_data).hexdigest()
+        vlm_zip = _make_zip_bytes(vlm_data)
+        mmproj_zip = _make_zip_bytes(mmproj_data)
+        vlm_sha = hashlib.sha256(vlm_zip).hexdigest()
+        mmproj_sha = hashlib.sha256(mmproj_zip).hexdigest()
 
         version = {
             "vlm_download_url": "http://example.com/vlm.zip",
             "vlm_sha256": vlm_sha,
-            "vlm_size_bytes": len(vlm_data),
+            "vlm_size_bytes": len(vlm_zip),
             "mmproj_download_url": "http://example.com/mmproj.zip",
             "mmproj_sha256": mmproj_sha,
-            "mmproj_size_bytes": len(mmproj_data),
+            "mmproj_size_bytes": len(mmproj_zip),
         }
         (tmp_path / "version.json").write_text(json.dumps(version), encoding="utf-8")
         models_dir = tmp_path / "models"
         models_dir.mkdir()
 
-        responses = [_FakeResponse([vlm_data], len(vlm_data)), _FakeResponse([mmproj_data], len(mmproj_data))]
+        responses = [_FakeResponse([vlm_zip], len(vlm_zip)), _FakeResponse([mmproj_zip], len(mmproj_zip))]
         with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
             svc = ModelDownloaderService(app_root=tmp_path)
             svc.start_download()
@@ -389,6 +416,65 @@ class TestFixedTargetNames:
         # Ensure no .zip files were written
         assert not (models_dir / "vlm.zip").exists()
         assert not (models_dir / "mmproj.zip").exists()
+
+
+class TestZipExtraction:
+    """S28: downloader downloads .zip archives, extracts .gguf, verifies and cleans up."""
+
+    def test_downloads_zip_extracts_gguf_deletes_zip_no_part(self, tmp_path):
+        """Mocked download returns a synthetic zip containing dummy.gguf; assert final models
+        file begins with GGUF magic bytes, the .zip is deleted after extraction, and no .part remains."""
+        import io
+        import zipfile
+
+        # Build a real zip in memory containing a single .gguf entry with GGUF magic.
+        gguf_content = b"GGUF\x03\x00\x00\x00" + b"\x00" * 64
+        zip_buf = io.BytesIO()
+        with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("model.gguf", gguf_content)
+        zip_bytes = zip_buf.getvalue()
+
+        zip_sha = hashlib.sha256(zip_bytes).hexdigest()
+
+        version = {
+            "vlm_download_url": "http://example.com/vlm.zip",
+            "vlm_sha256": zip_sha,
+            "vlm_size_bytes": len(zip_bytes),
+            "mmproj_download_url": "http://example.com/mmproj.zip",
+            "mmproj_sha256": zip_sha,
+            "mmproj_size_bytes": len(zip_bytes),
+        }
+        (tmp_path / "version.json").write_text(json.dumps(version), encoding="utf-8")
+        models_dir = tmp_path / "models"
+        models_dir.mkdir()
+
+        responses = [
+            _FakeResponse([zip_bytes], len(zip_bytes)),
+            _FakeResponse([zip_bytes], len(zip_bytes)),
+        ]
+        with patch("scan2text.services.model_downloader_service.urlopen", side_effect=responses):
+            svc = ModelDownloaderService(app_root=tmp_path)
+            svc.start_download()
+            for _ in range(50):
+                if svc.status in ("complete", "failed", "cancelled"):
+                    break
+                threading.Event().wait(0.1)
+
+        assert svc.status == "complete"
+        # Extracted .gguf must begin with GGUF magic.
+        vlm_gguf = models_dir / "vlm.gguf"
+        mmproj_gguf = models_dir / "mmproj.gguf"
+        assert vlm_gguf.exists()
+        assert mmproj_gguf.exists()
+        assert vlm_gguf.read_bytes()[:4] == b"GGUF"
+        assert mmproj_gguf.read_bytes()[:4] == b"GGUF"
+        # Zip and part files must be cleaned up.
+        assert not (models_dir / "vlm.zip").exists()
+        assert not (models_dir / "mmproj.zip").exists()
+        assert not (models_dir / "vlm.gguf.part").exists()
+        assert not (models_dir / "mmproj.gguf.part").exists()
+        assert not (models_dir / "vlm.zip.part").exists()
+        assert not (models_dir / "mmproj.zip.part").exists()
 
 
 class TestLowercaseHashVerify:

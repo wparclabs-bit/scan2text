@@ -8,6 +8,7 @@ import logging
 import os
 import threading
 import urllib.request
+import zipfile
 from urllib.request import urlopen
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -157,9 +158,11 @@ class ModelDownloaderService:
         models_dir = self._app_root / "models"
         models_dir.mkdir(parents=True, exist_ok=True)
 
-        # Clean stale .part files safely at start.
+        # Clean stale .part and .zip files safely at start.
         for model_cfg in models_config:
             (models_dir / f"{model_cfg['filename']}.part").unlink(missing_ok=True)
+            (models_dir / f"{model_cfg['filename']}.zip").unlink(missing_ok=True)
+            (models_dir / f"{model_cfg['filename']}.zip.part").unlink(missing_ok=True)
 
         def _download() -> None:
             total_declared = sum(m["declared_size"] for m in models_config)
@@ -178,14 +181,15 @@ class ModelDownloaderService:
                     declared_size = model_cfg["declared_size"]
                     final_path = models_dir / filename
 
-                    # Skip files that already verify on disk.
-                    if self._verify_file(final_path, expected_sha256, declared_size):
+                    # Skip files that already exist on disk.
+                    if final_path.exists():
                         downloaded_so_far += declared_size
                         with self._lock:
                             self._bytes_downloaded = downloaded_so_far
                         continue
 
-                    part_path = models_dir / f"{filename}.part"
+                    zip_part_path = models_dir / f"{filename}.zip.part"
+                    zip_path = models_dir / f"{filename}.zip"
 
                     try:
                         req = urllib.request.Request(url)
@@ -196,7 +200,7 @@ class ModelDownloaderService:
                             with self._lock:
                                 self._total_bytes = total_declared
 
-                            with open(part_path, "wb") as f:
+                            with open(zip_part_path, "wb") as f:
                                 while True:
                                     if self._cancel_event.is_set():
                                         with self._lock:
@@ -206,20 +210,32 @@ class ModelDownloaderService:
                                     if not chunk:
                                         break
                                     f.write(chunk)
-                                    downloaded_so_far = part_path.stat().st_size
+                                    downloaded_so_far = zip_part_path.stat().st_size
                                     with self._lock:
                                         self._bytes_downloaded = downloaded_so_far
 
                         if self._cancel_event.is_set():
-                            part_path.unlink(missing_ok=True)
+                            zip_part_path.unlink(missing_ok=True)
                             return
 
-                        # Verify SHA256
+                        # Atomic rename .zip.part → .zip
+                        os.replace(zip_part_path, zip_path)
+
+                        # Verify zip size and SHA256 against version.json.
+                        actual_size = zip_path.stat().st_size
+                        if actual_size != declared_size:
+                            logger.error("Size mismatch for %s.zip: expected %d, got %d", filename, declared_size, actual_size)
+                            zip_path.unlink(missing_ok=True)
+                            with self._lock:
+                                self._status = "failed"
+                                self._error_message = f"Size mismatch for {filename}"
+                            return
+
                         sha = hashlib.sha256()
-                        with open(part_path, "rb") as f:
+                        with open(zip_path, "rb") as f:
                             while True:
                                 if self._cancel_event.is_set():
-                                    part_path.unlink(missing_ok=True)
+                                    zip_path.unlink(missing_ok=True)
                                     with self._lock:
                                         self._status = "cancelled"
                                     return
@@ -230,20 +246,33 @@ class ModelDownloaderService:
 
                         computed = sha.hexdigest()
                         if computed != expected_sha256:
-                            logger.error("SHA256 mismatch for %s: expected %s, got %s", filename, expected_sha256, computed)
-                            part_path.unlink(missing_ok=True)
+                            logger.error("SHA256 mismatch for %s.zip: expected %s, got %s", filename, expected_sha256, computed)
+                            zip_path.unlink(missing_ok=True)
                             with self._lock:
                                 self._status = "failed"
                                 self._error_message = f"Hash mismatch for {filename}"
                             return
 
-                        # Windows-safe atomic rename: os.replace overwrites existing target.
-                        os.replace(part_path, final_path)
+                        # Extract first .gguf entry from the zip.
+                        with zipfile.ZipFile(zip_path, "r") as zf:
+                            gguf_names = [n for n in zf.namelist() if n.endswith(".gguf")]
+                            if not gguf_names:
+                                raise ValueError(f"No .gguf entry found in {filename}.zip")
+                            with zf.open(gguf_names[0]) as src, open(final_path, "wb") as dst:
+                                while True:
+                                    chunk = src.read(_CHUNK_SIZE)
+                                    if not chunk:
+                                        break
+                                    dst.write(chunk)
+
+                        # Delete the zip after successful extraction.
+                        zip_path.unlink(missing_ok=True)
                         downloaded_so_far += total
 
                     except Exception as exc:
                         logger.error("Download failed for %s: %s", filename, exc)
-                        part_path.unlink(missing_ok=True)
+                        zip_part_path.unlink(missing_ok=True)
+                        zip_path.unlink(missing_ok=True)
                         with self._lock:
                             self._status = "failed"
                             self._error_message = str(exc)
@@ -255,9 +284,11 @@ class ModelDownloaderService:
 
             except Exception as exc:
                 logger.error("Download failed: %s", exc)
-                # Clean up any leftover part files.
+                # Clean up any leftover part or zip files.
                 for model_cfg in models_config:
                     (models_dir / f"{model_cfg['filename']}.part").unlink(missing_ok=True)
+                    (models_dir / f"{model_cfg['filename']}.zip").unlink(missing_ok=True)
+                    (models_dir / f"{model_cfg['filename']}.zip.part").unlink(missing_ok=True)
                 with self._lock:
                     self._status = "failed"
                     self._error_message = str(exc)
