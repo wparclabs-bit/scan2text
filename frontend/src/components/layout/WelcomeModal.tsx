@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogOverlay } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { buildApiUrl } from '@/lib/apiBase'
 
@@ -50,13 +50,29 @@ export default function WelcomeModal({ open: controlledOpen, onOpenChange }: Wel
   const dialogOpen = controlledOpen !== undefined ? controlledOpen : modalOpen
   const dialogOnOpenChange = controlledOpen !== undefined ? onOpenChange : setModalOpen
 
+  const bullets = ['bullet1', 'bullet2', 'bullet3', 'bullet4'] as const
+
   return (
     <Dialog open={dialogOpen} onOpenChange={dialogOnOpenChange}>
+      <DialogOverlay className="bg-black/50" />
       <DialogContent data-testid="welcome-modal" className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t('welcome.title')}</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground py-4">{t('welcome.body')}</p>
+        <ul className="text-sm text-muted-foreground py-4 space-y-1.5 text-left">
+          {bullets.map((bullet) => (
+            <li key={bullet} className="flex items-start gap-2">
+              <span className="shrink-0 mt-0.5">·</span>
+              <span>{t(`welcome.${bullet}`)}</span>
+            </li>
+          ))}
+          {bullets.map((bullet) => (
+            <li key={`${bullet}-id`} className="flex items-start gap-2 text-muted-foreground/70">
+              <span className="shrink-0 mt-0.5">·</span>
+              <span>{t(`welcome.${bullet}`, { lng: 'id' })}</span>
+            </li>
+          ))}
+        </ul>
         <div className="flex items-center gap-2">
           <input
             type="checkbox"

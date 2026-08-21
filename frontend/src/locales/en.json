@@ -33,6 +33,7 @@
     "pdfTooComplex": "PDF too complex for the current page limit. Raise the page limit in Settings and retry.",
     "fileTooComplex": "File too complex (max 20MB).",
     "fileTooComplexRejected": "File too large or complex. Please try a smaller file.",
+    "fileTooComplexLocked": "File too large or complex. Limits: 20 MB per file · 50 pages per PDF. Split bigger PDFs and retry.",
     "modelNotFound": "AI engine files are missing. Downloading the model now…",
     "backendLost": "Backend connection lost"
   },
@@ -61,6 +62,7 @@
   "queue": {
     "empty": "No files in queue",
     "emptyFriendly": " Nothing here yet. Drop something tasty!",
+    "longDocHint": "Still processing — please be patient.",
     "retry": "Retry",
     "status": {
       "pending": "Pending",
@@ -95,7 +97,10 @@
   },
   "welcome": {
     "title": "Welcome to Scan2Text",
-    "body": "Turn your scanned documents into editable text — no internet required. Quick heads-up: Files must be under 20MB (that's about 10-20 photos or a short PDF). PDFs can be up to 50 pages. We accept PNG, JPG, WEBP, and PDF. Ready? Drop your files below!",
+    "bullet1": "Turn your scanned documents into editable text — no internet required.",
+    "bullet2": "Files must be under 20MB (that's about 10-20 photos or a short PDF).",
+    "bullet3": "PDFs can be up to 50 pages.",
+    "bullet4": "We accept PNG, JPG, WEBP, and PDF.",
     "dontShowAgain": "Don't show this again",
     "close": "Get Started"
   },
