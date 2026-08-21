@@ -3,7 +3,7 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: S34-FRONTEND-POLISH (COMPLETE)
+- Phase: S35-FIX-STALE-WELCOMEMODAL-TEST (COMPLETE)
 - Date: 2026-08-24
 - Status: Three UI polish items implemented with TDD RED→GREEN cycle. Welcome modal now renders dual-language bullet lists with left-align and 50% black backdrop. queue.longDocHint i18n key wired to toast in store. FILE_TOO_COMPLEX red-dot tooltip uses locked copy key. Targeted test: 9 passed, 0 failed. Full suite deferred to S35 GATE. Typecheck clean (0 errors).
 - Status: Backend rebuild with S36 logging fixes deployed. PyInstaller spec unmodified (`packaging/scan2text-backend.spec`). New exe deployed to D:\Scan2Text\backend\scan2text-backend.exe (45,594,717 bytes, timestamp 2026-08-22 00:36:18). Boot proof: D:\Scan2Text\logs\app.log created and populated with startup entries. Zero source edits.

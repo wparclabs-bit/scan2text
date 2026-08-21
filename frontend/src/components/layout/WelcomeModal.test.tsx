@@ -44,9 +44,11 @@ describe('WelcomeModal', () => {
     })
     render(<WelcomeModal />)
     await waitFor(() => {
-      expect(screen.getByText(/Turn your scanned documents into editable text/)).toBeInTheDocument()
-      expect(screen.getByText(/20MB/)).toBeInTheDocument()
-      expect(screen.getByText(/50 pages/)).toBeInTheDocument()
+      const modal = document.querySelector('[data-testid="welcome-modal"]') as HTMLElement | null
+      expect(modal).toBeInTheDocument()
+      expect(modal!.textContent).toContain('Turn your scanned documents')
+      expect(modal!.textContent).toContain('20MB')
+      expect(modal!.textContent).toContain('50 pages')
     })
   })
 
