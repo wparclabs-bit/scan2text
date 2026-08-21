@@ -65,8 +65,10 @@ class PathService:
         env_home = os.environ.get("SCAN2TEXT_HOME")
         if env_home:
             return Path(env_home).resolve()
+        # Locked layout: Scan2Text.exe and backend/ sit side-by-side in the portable root.
+        # sys.executable points to backend/scan2text-backend.exe → parent.parent = portable root.
         if getattr(sys, "frozen", False):
-            return PathService._resolve_portable_root()
+            return Path(sys.executable).parent.parent
         return Path.cwd()
 
     # --- Properties --------------------------------------------------------

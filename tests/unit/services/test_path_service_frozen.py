@@ -16,7 +16,32 @@ class TestPathServiceFrozen:
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(fake_exe), create=True):
             svc = PathService()
-            assert svc.app_root == Path("C:/apps/scan2text-backend")
+            assert svc.app_root == Path("C:/apps")
+
+    def test_frozen_app_root_resolves_to_portable_root_without_models_dir(self, tmp_path):
+        """Frozen: app_root must be portable root (exe_dir.parent) even when models/ is absent.
+
+        The locked layout guarantees Scan2Text.exe and backend/ sit side-by-side.
+        PathService._resolve_portable_root() anchors on models/ presence; without it,
+        the fallback to exe_dir causes version.json lookups to fail.
+
+        Layout:
+          tmp_path/backend/scan2text-backend.exe   (exe)
+          (NO models/ directory — first-run or Delta QA 1.3 scenario)
+
+        Expected fix: app_root = tmp_path (parent of backend/), NOT tmp_path/backend.
+        """
+        from scan2text.services.path_service import PathService
+
+        exe_dir = tmp_path / "backend"
+        exe_dir.mkdir()
+        fake_exe = exe_dir / "scan2text-backend.exe"
+
+        with patch.object(sys, "frozen", True, create=True), \
+             patch.object(sys, "executable", str(fake_exe), create=True):
+            svc = PathService()
+            # app_root must be the portable root (tmp_path), NOT exe_dir
+            assert svc.app_root == tmp_path
 
     def test_frozen_base_dir_is_exe_parent(self):
         from scan2text.services.path_service import PathService
