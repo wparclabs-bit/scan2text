@@ -54,7 +54,7 @@ describe('S34 frontend polish — welcome modal, longDocHint, FILE_TOO_COMPLEX t
   })
 
   describe('WelcomeModal polish', () => {
-    it('renders each bullet with BOTH EN and ID text in container', async () => {
+    it('renders bullets in active language only (EN by default)', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ hide_welcome_notice: false }),
@@ -64,7 +64,7 @@ describe('S34 frontend polish — welcome modal, longDocHint, FILE_TOO_COMPLEX t
         const modal = document.querySelector('[data-testid="welcome-modal"]') as HTMLElement | null
         expect(modal).toBeInTheDocument()
         expect(modal!.textContent).toContain('Turn your scanned documents into editable text')
-        expect(modal!.textContent).toContain('Ubah dokumen hasil scan Anda menjadi teks yang bisa diedit')
+        expect(modal!.textContent).not.toContain('Ubah dokumen hasil scan Anda menjadi teks yang bisa diedit')
       })
     })
 
@@ -81,7 +81,7 @@ describe('S34 frontend polish — welcome modal, longDocHint, FILE_TOO_COMPLEX t
       })
     })
 
-    it('overlay/backdrop carries bg-black/50 className', async () => {
+    it('overlay/backdrop carries bg-black/60 className', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ hide_welcome_notice: false }),
@@ -89,7 +89,7 @@ describe('S34 frontend polish — welcome modal, longDocHint, FILE_TOO_COMPLEX t
       render(<WelcomeModal />)
       await waitFor(() => {
         const overlay = Array.from(document.querySelectorAll('div')).find(
-          (d) => d.classList.contains('bg-black/50'),
+          (d) => d.classList.contains('bg-black/60'),
         ) as HTMLElement | undefined
         expect(overlay).toBeInTheDocument()
       })

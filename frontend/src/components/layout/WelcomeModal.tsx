@@ -54,8 +54,8 @@ export default function WelcomeModal({ open: controlledOpen, onOpenChange }: Wel
 
   return (
     <Dialog open={dialogOpen} onOpenChange={dialogOnOpenChange}>
-      <DialogOverlay className="bg-black/50" />
-      <DialogContent data-testid="welcome-modal" className="sm:max-w-md">
+      <DialogOverlay className="bg-black/60" />
+      <DialogContent data-testid="welcome-modal" className="sm:max-w-md bg-[#F9F8F6] text-[#1F150C] dark:bg-[#080502] dark:text-[#F2EBDD]">
         <DialogHeader>
           <DialogTitle>{t('welcome.title')}</DialogTitle>
         </DialogHeader>
@@ -64,12 +64,6 @@ export default function WelcomeModal({ open: controlledOpen, onOpenChange }: Wel
             <li key={bullet} className="flex items-start gap-2">
               <span className="shrink-0 mt-0.5">·</span>
               <span>{t(`welcome.${bullet}`)}</span>
-            </li>
-          ))}
-          {bullets.map((bullet) => (
-            <li key={`${bullet}-id`} className="flex items-start gap-2 text-muted-foreground/70">
-              <span className="shrink-0 mt-0.5">·</span>
-              <span>{t(`welcome.${bullet}`, { lng: 'id' })}</span>
             </li>
           ))}
         </ul>
