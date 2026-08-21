@@ -4,7 +4,7 @@ import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from scan2text.models.errors import ErrorCode, ErrorDetail, ErrorEnvelope
