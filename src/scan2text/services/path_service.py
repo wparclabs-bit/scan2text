@@ -82,6 +82,11 @@ class PathService:
         return self._app_root
 
     @property
+    def exe_root(self) -> Path:
+        """Alias for app_root — the portable root containing Scan2Text.exe."""
+        return self._app_root
+
+    @property
     def settings_path(self) -> Path:
         if getattr(sys, "frozen", False):
             return self._resolve_portable_root() / "settings" / "settings.json"
@@ -97,13 +102,13 @@ class PathService:
     def _resolve_portable_root() -> Path:
         """Resolve portable root for frozen executables.
 
-        Walks up from exe_dir (exe_dir, exe_dir.parent, exe_dir.parent.parent)
+        Walks up from exe_dir (exe_dir.parent.parent, exe_dir.parent, exe_dir)
         and returns the first ancestor containing a models/ directory.
         Falls back to exe_dir if no ancestor contains models/.
         """
         exe_dir = Path(sys.executable).parent
 
-        for cand in (exe_dir, exe_dir.parent, exe_dir.parent.parent):
+        for cand in (exe_dir.parent.parent, exe_dir.parent, exe_dir):
             if (cand / "models").is_dir():
                 return cand
 
@@ -138,11 +143,11 @@ class PathService:
     def _resolve_models_dir() -> Path:
         """Resolve models directory by priority.
 
+        Delegates to _resolve_portable_root() for frozen executables.
         Priority:
           1. env SCAN2TEXT_MODELS_DIR if set
-          2. frozen: grandparent when models/ exists there
-          3. frozen: parent when models/ exists there
-          4. dev root (cwd)
+          2. frozen: portable root (grandparent → parent → exe_dir)
+          3. dev root (cwd)
         """
         # Priority 1: env var
         env = os.environ.get("SCAN2TEXT_MODELS_DIR")
@@ -152,25 +157,8 @@ class PathService:
         frozen = getattr(sys, "frozen", False)
 
         if frozen:
-            exe_dir = Path(sys.executable).parent
+            return PathService._resolve_portable_root()
 
-            # Priority 2: true grandparent (two levels up) if models/ exists there
-            project_root = exe_dir.parent.parent
-            if (project_root / "models").is_dir():
-                return project_root
-
-            # Priority 3: parent (one level up) if models/ exists there
-            parent = exe_dir.parent
-            if (parent / "models").is_dir():
-                return parent
-
-            # Priority 4: exe-adjacent if models/ exists there
-            if (exe_dir / "models").is_dir():
-                return exe_dir
-
-        # Priority 4: dev root (cwd, same as original app_root behavior)
-        if frozen:
-            return Path(sys.executable).parent
         return Path.cwd()
 
     @property

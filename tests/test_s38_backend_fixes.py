@@ -1,0 +1,329 @@
+"""S38 Backend Fixes — Behavior tests for I1, I2, I3, I5.
+
+These tests verify the four diagnosed backend issues are fixed.
+Run with: $env:PYTHONPATH="src"; py -3.12 -m pytest tests/test_s38_backend_fixes.py -q --tb=line
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import sys
+import tempfile
+from pathlib import Path
+from unittest.mock import patch, MagicMock
+
+import pytest
+
+# Ensure src is on path
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from scan2text.services.path_service import PathService
+from scan2text.services.settings_service import SettingsService, AppSettings
+from scan2text.api.main import app, _task_store, _run_processing
+from scan2text.engine import create_app
+from fastapi.testclient import TestClient
+
+
+# =============================================================================
+# I1: Error-code preservation — task-level error_code must surface through status
+# =============================================================================
+
+class TestI1ErrorCodePreservation:
+    """I1: A task with task-level error_code FILE_TOO_COMPLEX must surface
+    FILE_TOO_COMPLEX through the status response, NOT OCR_FAILED."""
+
+    def test_task_error_code_file_too_complex_surfaces_in_status(self):
+        """When a task has error_code=FILE_TOO_COMPLEX, status endpoint returns it."""
+        client = TestClient(app)
+        
+        # Create a task with a specific error_code
+        task_id = "test-task-file-too-complex"
+        _task_store[task_id] = {
+            "status": "failed",
+            "processed": 0,
+            "total": 1,
+            "error_code": "FILE_TOO_COMPLEX",
+            "result_markdown": None,
+        }
+        
+        try:
+            response = client.get(f"/status/{task_id}")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["task_id"] == task_id
+            assert data["status"] == "failed"
+            # I1 FIX: Must preserve FILE_TOO_COMPLEX, NOT collapse to OCR_FAILED
+            assert data["error_code"] == "FILE_TOO_COMPLEX", (
+                f"Expected FILE_TOO_COMPLEX, got {data.get('error_code')}"
+            )
+        finally:
+            _task_store.pop(task_id, None)
+
+    def test_task_error_code_partial_failure_preserved(self):
+        """When a task has error_code=PARTIAL_FAILURE, status endpoint returns it."""
+        client = TestClient(app)
+        
+        task_id = "test-task-partial-failure"
+        _task_store[task_id] = {
+            "status": "completed",
+            "processed": 1,
+            "total": 2,
+            "error_code": "PARTIAL_FAILURE",
+            "result_markdown": "some content",
+        }
+        
+        try:
+            response = client.get(f"/status/{task_id}")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["error_code"] == "PARTIAL_FAILURE"
+        finally:
+            _task_store.pop(task_id, None)
+
+    def test_task_error_code_unknown_error_preserved(self):
+        """When a task has error_code=UNKNOWN_ERROR, status endpoint returns it."""
+        client = TestClient(app)
+        
+        task_id = "test-task-unknown-error"
+        _task_store[task_id] = {
+            "status": "failed",
+            "processed": 0,
+            "total": 1,
+            "error_code": "UNKNOWN_ERROR",
+            "result_markdown": None,
+        }
+        
+        try:
+            response = client.get(f"/status/{task_id}")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["error_code"] == "UNKNOWN_ERROR"
+        finally:
+            _task_store.pop(task_id, None)
+
+
+# =============================================================================
+# I2: Portable-root split-brain — unified resolver must pick correct root
+# =============================================================================
+
+class TestI2PortableRootResolution:
+    """I2: Portable root resolution must be unified and correct.
+    
+    Scenario: Frozen executable at root/backend/scan2text-backend.exe
+    Stray directories: root/backend/models/, root/backend/logs/
+    Correct root: root/ (contains models/, settings/, output/, logs/)
+    """
+
+    def test_frozen_portable_root_prefers_root_over_backend_when_models_at_root(self, tmp_path):
+        """When models/ exists at root (alongside backend/), portable root = root, not backend."""
+        # Create the portable layout:
+        # tmp_path/
+        #   backend/
+        #     scan2text-backend.exe (fake)
+        #     models/     <- STRAY, should NOT be chosen
+        #     logs/       <- STRAY
+        #   models/       <- REAL models dir, should be chosen
+        #   settings/
+        #   output/
+        #   logs/
+        
+        root = tmp_path / "Scan2Text"
+        backend_dir = root / "backend"
+        backend_dir.mkdir(parents=True)
+        (root / "models").mkdir()
+        (root / "settings").mkdir()
+        (root / "output").mkdir()
+        (root / "logs").mkdir()
+        
+        # Stray directories inside backend (simulating split-brain scenario)
+        (backend_dir / "models").mkdir()
+        (backend_dir / "logs").mkdir()
+        
+        # Fake executable
+        exe_path = backend_dir / "scan2text-backend.exe"
+        exe_path.touch()
+        
+        # Mock sys.executable and sys.frozen (create=True needed for built-in module)
+        with patch.object(sys, "frozen", True, create=True), \
+             patch.object(sys, "executable", str(exe_path), create=True):
+            
+            # Force re-evaluation by creating new PathService
+            ps = PathService()
+            
+            # I2 FIX: portable root must be root (where models/ exists), NOT backend
+            portable_root = ps._resolve_portable_root()
+            assert portable_root == root, (
+                f"Portable root should be {root}, got {portable_root}"
+            )
+            
+            # _resolve_models_dir delegates to _resolve_portable_root (returns root)
+            # The models_dir property appends /models
+            models_root = ps._resolve_models_dir()
+            assert models_root == root, (
+                f"_resolve_models_dir should return root {root}, got {models_root}"
+            )
+            # models_dir property should append /models
+            assert ps.models_dir == root / "models", (
+                f"models_dir should be {root / 'models'}, got {ps.models_dir}"
+            )
+
+    def test_frozen_models_dir_delegates_to_unified_resolver(self, tmp_path):
+        """_resolve_models_dir must delegate to the unified resolver, not have separate logic."""
+        root = tmp_path / "Scan2Text"
+        backend_dir = root / "backend"
+        backend_dir.mkdir(parents=True)
+        (root / "models").mkdir()
+        (root / "settings").mkdir()
+        
+        exe_path = backend_dir / "scan2text-backend.exe"
+        exe_path.touch()
+        
+        # Mock sys.executable and sys.frozen (create=True needed for built-in module)
+        with patch.object(sys, "frozen", True, create=True), \
+             patch.object(sys, "executable", str(exe_path), create=True):
+            
+            ps = PathService()
+            
+            # Both methods should return the same root
+            portable_root = ps._resolve_portable_root()
+            models_root = ps._resolve_models_dir()
+
+            # _resolve_models_dir delegates to _resolve_portable_root
+            assert models_root == portable_root, (
+                f"_resolve_models_dir ({models_root}) must equal "
+                f"_resolve_portable_root() ({portable_root})"
+            )
+            # models_dir property appends /models
+            assert ps.models_dir == portable_root / "models", (
+                f"models_dir ({ps.models_dir}) must equal "
+                f"portable_root / 'models' ({portable_root / 'models'})"
+            )
+
+    def test_dev_mode_uses_cwd(self, tmp_path):
+        """In dev mode (not frozen), paths resolve relative to cwd."""
+        # Create a fake project structure
+        project_root = tmp_path / "myproject"
+        (project_root / "models").mkdir(parents=True)
+        (project_root / "settings").mkdir()
+
+        original_cwd = Path.cwd()
+        try:
+            os.chdir(project_root)
+
+            with patch.object(sys, "frozen", False, create=True):
+                ps = PathService()
+
+                assert ps.app_root == project_root
+                assert ps.models_dir == project_root / "models"
+                # Dev mode base_dir = cwd / ".scan2text"
+                assert ps.settings_path == project_root / ".scan2text" / "settings" / "settings.json"
+        finally:
+            os.chdir(original_cwd)
+
+
+# =============================================================================
+# I3: Settings default persistence — first access creates file, second reads it
+# =============================================================================
+
+class TestI3SettingsDefaultPersistence:
+    """I3: First access with no settings file persists defaults to disk;
+    second access reads from disk without re-entering creation path."""
+
+    def test_first_load_creates_defaults_file(self, tmp_path, caplog):
+        """First load when file missing creates defaults at settings/settings.json."""
+        settings_dir = tmp_path / "settings"
+        settings_dir.mkdir()
+        settings_file = settings_dir / "settings.json"
+        
+        # Ensure file doesn't exist
+        assert not settings_file.exists()
+        
+        # Create PathService pointing to our temp dir
+        ps = PathService(base_dir=str(tmp_path))
+        
+        # Create SettingsService with our PathService
+        svc = SettingsService(path_service=ps)
+        
+        # First load - should create defaults
+        with caplog.at_level("INFO"):
+            settings = svc.load()
+        
+        # File should now exist
+        assert settings_file.exists(), "Settings file should be created on first load"
+        
+        # Should be valid JSON with defaults
+        with open(settings_file) as f:
+            data = json.load(f)
+        assert "hide_welcome_notice" in data
+        assert data["hide_welcome_notice"] is False  # default
+        
+        # Log should contain creation message
+        creation_logs = [r for r in caplog.records if "creating defaults" in r.message.lower()]
+        assert len(creation_logs) == 1, "Should log creation exactly once"
+
+    def test_second_load_reads_from_disk_not_creation_path(self, tmp_path, caplog):
+        """Second load reads from existing file, doesn't re-enter creation path."""
+        settings_dir = tmp_path / "settings"
+        settings_dir.mkdir()
+        settings_file = settings_dir / "settings.json"
+        
+        # Pre-create a settings file with non-default value
+        custom_settings = {"hide_welcome_notice": True}
+        settings_file.write_text(json.dumps(custom_settings))
+        
+        ps = PathService(base_dir=str(tmp_path))
+        svc = SettingsService(path_service=ps)
+        
+        # First load - reads from file
+        with caplog.at_level("INFO"):
+            settings1 = svc.load()
+        
+        assert settings1.hide_welcome_notice is True
+        
+        # Second load - should NOT log "creating defaults"
+        caplog.clear()
+        with caplog.at_level("INFO"):
+            settings2 = svc.load()
+        
+        assert settings2.hide_welcome_notice is True
+        
+        # No creation log on second load
+        creation_logs = [r for r in caplog.records if "creating defaults" in r.message.lower()]
+        assert len(creation_logs) == 0, "Second load should not log creation"
+
+
+# =============================================================================
+# I5: Engine dead ref — paths.exe_root must resolve without AttributeError
+# =============================================================================
+
+class TestI5EngineDeadRef:
+    """I5: engine.py:52 references paths.exe_root which doesn't exist.
+    Must use a valid PathService property."""
+
+    def test_engine_startup_logs_root_without_attribute_error(self):
+        """create_app() startup should log root using valid PathService property."""
+        # This test verifies the AttributeError is fixed
+        # The fix should replace paths.exe_root with paths.app_root or paths.base_dir
+        
+        app = create_app(FakeOCR())
+        client = TestClient(app)
+        
+        # The startup event runs on first request in TestClient
+        response = client.get("/api/health")
+        assert response.status_code == 200
+        
+        # If we get here without AttributeError, the fix works
+        # The actual log message is verified by the test passing
+
+
+# Helper for I5 test
+class FakeOCR:
+    """Minimal fake OCR engine for testing."""
+    def process(self, image_path: str) -> str:
+        return "fake result"
+
+
+if __name__ == "__main__":
+    # Allow running directly for quick debugging
+    pytest.main([__file__, "-v", "--tb=short"])

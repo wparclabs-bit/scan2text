@@ -122,7 +122,8 @@ async def _run_processing(
         task["total"] = summary.total_inputs
         if summary.succeeded == 0 and summary.failed > 0:
             task["status"] = "failed"
-            task["error_code"] = "OCR_FAILED"
+            if not task.get("error_code"):
+                task["error_code"] = "OCR_FAILED"
         elif summary.succeeded > 0 and summary.failed > 0:
             task["status"] = "completed"
             task["error_code"] = "PARTIAL_FAILURE"

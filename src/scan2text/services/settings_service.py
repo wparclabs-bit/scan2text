@@ -41,7 +41,9 @@ class SettingsService:
     def load(self) -> AppSettings:
         if not self._paths.settings_path.exists():
             logger.info("Settings file missing — creating defaults at %s", self._paths.settings_path)
-            return self.create_default()
+            defaults = self.create_default()
+            self.save(defaults)
+            return defaults
 
         try:
             with open(self._paths.settings_path, "r", encoding="utf-8") as f:
