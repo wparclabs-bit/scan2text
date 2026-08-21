@@ -3,9 +3,9 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: S32b-ENGINE-MODELNAME-WEBVIEW-REMOVAL (COMPLETE — TDD RED→GREEN, 2/3 tests green)
+- Phase: S32-FIX-IMPORT-CHAIN (COMPLETE)
 - Date: 2026-08-23
-- Status: S32a done. S32b done: `engine.py` webview import + headless=False branch removed; model filename pinned to `vlm.gguf`; 3 new targeted tests added (filename pin GREEN, absence test GREEN, import test RED by pre-existing `save_markdown` missing from `output_service.py` — out of scope). Remaining S31 bugs open: (3) feedback_service.py:24 `base_dir`→`feedback_dir`, plus source/binary divergence and two others per diag-S31.
+- Status: FIXED. Both import bombs resolved: (1) `save_markdown()` added to `output_service.py` (~14 lines); (2) `Depends` imported in `jobs.py:7`. `test_import_engine_succeeds` GREEN, `test_save_markdown_writes_md` GREEN. 207 unit tests pass.
 - Tauri shell: STALE on disk (8.54MB, timestamp 2026-08-21 15:30:23) — not rebuilt this slice (NON-GOAL)
 - Backend hash: freshly rebuilt with PyInstaller — deployed to D:\Scan2Text\backend\scan2text-backend.exe (43.51MB / 45,591,824 bytes)
 - UPX: NOT installed on build machine — upx=False

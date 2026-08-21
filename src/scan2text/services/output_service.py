@@ -95,3 +95,19 @@ class OutputService:
             len(markdown),
         )
         return output_path
+
+
+def save_markdown(
+    job: "OCRJob",
+    full_text: str,
+    pages: "list[OCRPage]",
+) -> Path:
+    """Save OCR markdown for a job. Convenience wrapper around OutputService.write()."""
+    result = OCRResult(
+        job_id=job.id,
+        source_file=job.file_path,
+        pages=pages,
+        full_text=full_text,
+    )
+    svc = OutputService()
+    return svc.write(job, result)
