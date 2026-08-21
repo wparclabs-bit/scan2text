@@ -279,29 +279,50 @@ pub fn start_backend(exe_path: &std::path::Path) -> std::process::Child {
         .expect("Failed to start backend executable")
 }
 
-/// Stop the backend process tree via Windows taskkill /F /T /PID <pid>.
+/// Build a Windows taskkill command that targets the backend by image name.
+/// Uses `/IM scan2text-backend.exe /T` instead of `/PID` because the Python
+/// backend daemonizes — the outer PID dies immediately, so /PID-targeted kill
+/// fails silently and the inner Uvicorn daemon survives as a zombie.
+///
+/// CEO locked: taskkill /F /IM scan2text-backend.exe /T
+pub fn build_kill_command(_pid: u32) -> Command {
+    let mut cmd = Command::new("taskkill");
+    #[cfg(windows)]
+    {
+        cmd.args(["/F", "/IM", "scan2text-backend.exe", "/T"]);
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    cmd
+}
+
+/// Stop the backend process tree via Windows taskkill /F /IM scan2text-backend.exe /T.
 /// Falls back to native child.kill() if taskkill fails.
 /// Then waits for port 47351 to close (up to 5 seconds).
 pub fn stop_backend(pid: u32, child: &mut Child) -> Result<(), String> {
     #[cfg(windows)]
     {
-        log::debug!("Attempting taskkill /F /T /PID {} for backend", pid);
-        let mut taskkill = Command::new("taskkill")
-            .args(["/F", "/T", "/PID", &pid.to_string()])
-            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+        log::debug!("Attempting taskkill /F /IM scan2text-backend.exe /T for backend");
+        let mut taskkill = build_kill_command(pid)
             .spawn()
             .map_err(|e| format!("Failed to spawn taskkill: {}", e))?;
 
         let taskkill_status = taskkill.wait().map_err(|e| {
-            format!("taskkill wait failed for PID {}: {}", pid, e)
+            format!("taskkill wait failed for image scan2text-backend.exe: {}", e)
         })?;
 
         if !taskkill_status.success() {
-            log::warn!(
-                "taskkill /F /T /PID {} returned non-zero ({}), falling back to native kill",
-                pid,
+            #[cfg(debug_assertions)]
+            log::error!(
+                "taskkill /F /IM scan2text-backend.exe returned non-zero ({}), falling back to native kill",
                 taskkill_status.code().map(|c| c.to_string()).unwrap_or_else(|| "unknown".into())
             );
+            #[cfg(not(debug_assertions))]
+            {
+                eprintln!(
+                    "[ERROR] taskkill /F /IM scan2text-backend.exe returned non-zero ({}), falling back to native kill",
+                    taskkill_status.code().map(|c| c.to_string()).unwrap_or_else(|| "unknown".into())
+                );
+            }
         }
     }
 
@@ -315,7 +336,10 @@ pub fn stop_backend(pid: u32, child: &mut Child) -> Result<(), String> {
 
     // Fallback: always attempt native kill as last resort
     if let Err(e) = child.kill() {
-        log::warn!("Native child.kill() also failed for PID {}: {}", pid, e);
+        #[cfg(debug_assertions)]
+        log::error!("Native child.kill() also failed for PID {}: {}", pid, e);
+        #[cfg(not(debug_assertions))]
+        eprintln!("[ERROR] Native child.kill() also failed for PID {}: {}", pid, e);
     }
     let _ = child.wait();
 
@@ -446,6 +470,45 @@ mod tests {
             (flags & 0x08000000) != 0,
             "spawn_creation_flags must include CREATE_NO_WINDOW (0x08000000) on Windows, got: {:#x}",
             flags
+        );
+    }
+
+    /// FIX7: Verify kill command uses image name (/IM) not PID (/PID).
+    /// The Python backend daemonizes — outer PID dies immediately,
+    /// so /PID-targeted taskkill fails silently and the inner Uvicorn
+    /// daemon survives as a zombie. Must use /IM scan2text-backend.exe.
+    #[cfg(windows)]
+    #[test]
+    fn test_kill_command_uses_image_name_not_pid() {
+        let cmd = super::build_kill_command(12345u32);
+        let args: Vec<String> = cmd.get_args().into_iter().map(|a| a.to_string_lossy().into_owned()).collect();
+
+        // Must use /IM (image name), NOT /PID
+        assert!(
+            args.contains(&"/IM".to_string()),
+            "kill command must include /IM flag, got: {:?}",
+            args
+        );
+        assert!(
+            args.contains(&"scan2text-backend.exe".to_string()),
+            "kill command must target scan2text-backend.exe image, got: {:?}",
+            args
+        );
+        assert!(
+            args.contains(&"/T".to_string()),
+            "kill command must include /T (tree) flag, got: {:?}",
+            args
+        );
+        assert!(
+            args.contains(&"/F".to_string()),
+            "kill command must include /F (force) flag, got: {:?}",
+            args
+        );
+        // Must NOT contain /PID — that's the bug we're fixing
+        assert!(
+            !args.iter().any(|a| a.starts_with("/PID")),
+            "kill command must NOT use /PID (daemonized inner survives), got: {:?}",
+            args
         );
     }
 
