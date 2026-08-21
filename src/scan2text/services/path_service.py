@@ -298,3 +298,12 @@ class PathService:
 
 # Module-level default instance (used by tests via patch).
 _default_instance = PathService()
+
+
+def get_paths() -> PathService:
+    """Return the module-level default PathService singleton."""
+    return _default_instance
+
+
+# Alias required by engine.py; delegates to ensure_runtime_dirs().
+ensure_dirs = PathService.ensure_runtime_dirs

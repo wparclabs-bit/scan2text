@@ -150,3 +150,24 @@ class TestPathServiceOutputNaming:
         now = datetime.now()
         expected_stem = f"my_report_{now.strftime('%H%M')}_{now.strftime('%Y%m%d')}"
         assert path.name == f"{expected_stem}.md"
+
+
+class TestGetPathsAccessor:
+    def test_get_paths_returns_default_instance(self):
+        from scan2text.services.path_service import get_paths
+        paths = get_paths()
+        assert isinstance(paths, PathService)
+
+    def test_get_paths_returns_singleton(self):
+        from scan2text.services.path_service import get_paths, _default_instance
+        assert get_paths() is _default_instance
+
+
+class TestEnsureDirsAlias:
+    def test_ensure_dirs_exists_and_is_callable(self):
+        from scan2text.services.path_service import ensure_dirs
+        assert callable(ensure_dirs)
+
+    def test_ensure_dirs_is_alias_of_ensure_runtime_dirs(self):
+        from scan2text.services.path_service import ensure_dirs, PathService
+        assert ensure_dirs is PathService.ensure_runtime_dirs
