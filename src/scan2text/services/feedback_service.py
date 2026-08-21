@@ -21,9 +21,9 @@ class FeedbackService:
 
     def _ensure_feedback_dirs(self) -> tuple[Path, Path]:
         """Create feedback/pending/ and feedback/sent/ if missing."""
-        base = self._paths.base_dir
-        pending = base / "feedback" / "pending"
-        sent = base / "feedback" / "sent"
+        feedback_root = self._paths.feedback_dir
+        pending = feedback_root / "pending"
+        sent = feedback_root / "sent"
         pending.mkdir(parents=True, exist_ok=True)
         sent.mkdir(parents=True, exist_ok=True)
         return pending, sent
