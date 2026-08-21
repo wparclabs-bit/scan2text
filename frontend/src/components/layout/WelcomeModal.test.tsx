@@ -4,6 +4,7 @@ import WelcomeModal from './WelcomeModal'
 import { buildApiUrl } from '@/lib/apiBase'
 import { initI18n } from '@/i18n'
 import en from '@/locales/en.json'
+import id from '@/locales/id.json'
 
 describe('WelcomeModal', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -118,5 +119,119 @@ describe('WelcomeModal', () => {
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('127.0.0.1:47351'))
     })
     vi.unstubAllEnvs()
+  })
+
+  describe('Option B: solid theme-aware panel', () => {
+    it('light theme: panel className carries light bg and ink tokens', async () => {
+      document.documentElement.classList.remove('dark')
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ hide_welcome_notice: false }),
+      })
+      render(<WelcomeModal />)
+      await waitFor(() => {
+        const panel = document.querySelector('[data-testid="welcome-modal"]') as HTMLElement | null
+        expect(panel).toBeInTheDocument()
+        expect(panel!.className).toContain('bg-[#F9F8F6]')
+        expect(panel!.className).toContain('text-[#1F150C]')
+      })
+    })
+
+    it('dark theme: panel className carries dark styling unchanged', async () => {
+      document.documentElement.classList.add('dark')
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ hide_welcome_notice: false }),
+      })
+      render(<WelcomeModal />)
+      await waitFor(() => {
+        const panel = document.querySelector('[data-testid="welcome-modal"]') as HTMLElement | null
+        expect(panel).toBeInTheDocument()
+        expect(panel!.className).toContain('dark:bg-[#080502]')
+        expect(panel!.className).toContain('dark:text-[#F2EBDD]')
+      })
+    })
+  })
+
+  describe('Option B: 60% backdrop', () => {
+    it('backdrop carries bg-black/60 className', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ hide_welcome_notice: false }),
+      })
+      render(<WelcomeModal />)
+      await waitFor(() => {
+        const overlay = Array.from(document.querySelectorAll('div')).find(
+          (d) => d.classList.contains('bg-black/60'),
+        ) as HTMLElement | undefined
+        expect(overlay).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe('Option B: active-language-only bullets', () => {
+    it('EN active: EN bullets present, ID bullet text absent from container', async () => {
+      initI18n({ en: { translation: en }, id: { translation: id } })
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ hide_welcome_notice: false }),
+      })
+      render(<WelcomeModal />)
+      await waitFor(() => {
+        const modal = document.querySelector('[data-testid="welcome-modal"]') as HTMLElement | null
+        expect(modal).toBeInTheDocument()
+        expect(modal!.textContent).toContain('Turn your scanned documents into editable text')
+        expect(modal!.textContent).not.toContain('Ubah dokumen hasil scan Anda menjadi teks yang bisa diedit')
+      })
+    })
+
+    it('ID active: ID bullets present, EN bullet text absent from container', async () => {
+      initI18n({ en: { translation: en }, id: { translation: id } })
+      const i18next = await import('i18next')
+      await i18next.default.changeLanguage('id')
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ hide_welcome_notice: false }),
+      })
+      render(<WelcomeModal />)
+      await waitFor(() => {
+        const modal = document.querySelector('[data-testid="welcome-modal"]') as HTMLElement | null
+        expect(modal).toBeInTheDocument()
+        expect(modal!.textContent).toContain('Ubah dokumen hasil scan Anda menjadi teks yang bisa diedit')
+        expect(modal!.textContent).not.toContain('Turn your scanned documents into editable text')
+      })
+    })
+  })
+
+  describe('Option B: left-align + bullet styling preserved', () => {
+    it('bullet list carries text-left className', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ hide_welcome_notice: false }),
+      })
+      render(<WelcomeModal />)
+      await waitFor(() => {
+        const list = document.querySelector('ul')
+        expect(list).toBeInTheDocument()
+        expect(list).toHaveClass('text-left')
+      })
+    })
+
+    it('bullet items carry flex items-start gap-2 className', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ hide_welcome_notice: false }),
+      })
+      render(<WelcomeModal />)
+      await waitFor(() => {
+        const items = document.querySelectorAll('li')
+        expect(items.length).toBeGreaterThan(0)
+        items.forEach((item) => {
+          expect(item).toHaveClass('flex')
+          expect(item).toHaveClass('items-start')
+          expect(item).toHaveClass('gap-2')
+        })
+      })
+    })
   })
 })
