@@ -37,4 +37,11 @@ uploads/
 graphify-out/
 src/graphify-out/
 .kilo/
-*.log.txt
+*.log.txtbackend/
+settings.json
+feedback/
+tmp-test2/
+.dsh/
+GRAPHIFY_MAP.md
+*.exe
+*.bin

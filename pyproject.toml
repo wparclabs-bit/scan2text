@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scan2text"
-version = "0.1.0"
+version = "1.0.0"
 description = "Portable offline OCR tool — converts images & PDFs to Markdown locally."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { text = "Apache-2.0" }
 authors = [
     { name = "Scan2Text Contributors" },
 ]
@@ -21,7 +21,6 @@ dependencies = [
     "llama-cpp-python>=0.3.7,<0.4",
     "pypdfium2>=4.30",
     "pillow>=10.0",
-    "pywebview>=5.2",
     "requests>=2.32",
     "click>=8.1",
     "psutil>=6.0",

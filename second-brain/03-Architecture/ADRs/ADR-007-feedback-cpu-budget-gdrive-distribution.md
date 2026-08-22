@@ -1,6 +1,6 @@
 # ADR-007 — Feedback channel, CPU budget, GDrive distribution
 
-Status: APPROVED (CEO signed 2026-08-10) · Phase: 7
+Status: SUPERSEDED — absorbed into ADR-007-feedback-cpu-welcome-distribution-log-privacy.md (same date, strict superset)
 
 ## Context
 
