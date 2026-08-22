@@ -12,12 +12,16 @@ import multiprocessing
 import uvicorn
 
 from scan2text.api.main import app
+from scan2text.services.logging_service import setup_logging
+from scan2text.services.path_service import get_paths
 from scan2text.utils.prod_runtime import get_host, get_port
 
 logger = logging.getLogger("scan2text.prod")
 
 
 def main() -> None:
+    setup_logging()
+    get_paths().ensure_runtime_dirs()
     host = get_host()
     port = get_port()
     logger.info("Starting Scan2Text backend on %s:%d", host, port)
