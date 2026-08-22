@@ -75,3 +75,5 @@ See [docs/UPDATE.md](docs/UPDATE.md) for instructions on how to update Scan2Text
 ## License
 
 MIT
+
+For third-party components and model attributions, see [NOTICE.md](./NOTICE.md).
