@@ -4,7 +4,7 @@
 **Date:** 2026-08-23  
 **Baseline:** v1.0.0 GO (commit c65b606, known issue S41 deferred to app v1.1)  
 **Scope:** Read-only evidence for external analyst audit — no repo access required.  
-**Constraints:** Zero deletions, zero source edits, zero dependency installs. Excludes: models/, output/, logs/, feedback/, settings files, D:\Scan2Text runtime tree, node_modules, target, __pycache__, .gguf, user documents.
+**Constraints:** Zero deletions, zero source edits, zero dependency installs. Excludes: models/, output/, logs/, feedback/, settings files, portable runtime tree, node_modules, target, __pycache__, .gguf, user documents.
 
 ---
 
