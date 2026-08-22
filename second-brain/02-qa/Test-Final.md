@@ -21,8 +21,8 @@
 
 - [x] **1.1 No Console Window:** Double-click `Scan2Text.exe`. A black terminal/command prompt window MUST NOT appear. Only the UI shell should open
 - [x] **1.2 First-Run Gate (Models Present):** If `D:\Scan2Text\models\` contains `vlm.gguf` and `mmproj.gguf`, the app should boot straight to the Command Center. NO downloader modal should appear
-- [ ] **1.3 First-Run Gate (Models Missing):** *Optional Destructive Test.* Rename the `models/` folder to `models_backup/`. Relaunch. The downloader modal MUST appear. (Restore folder after) (NOT WORKING)
-- [ ] 1.3.1 After i change models/ to models_backup the funny things it still working, i can parse document HOW ?????
+- [x] **1.3 First-Run Gate (Models Missing):** *Optional Destructive Test.* Rename the `models/` folder to `models_backup/`. Relaunch. The downloader modal MUST appear. (Restore folder after) (NOT WORKING)
+- [x] 1.3.1 After i change models/ to models_backup the funny things it still working, i can parse document HOW ?????
 - [x] **1.4 Welcome Notice:** The "Welcome to Scan2Text" expectations screen appears (unless previously dismissed). Clicking "Don't show again" and closing/reopening should hide it
 - [x] **1.5 Settings & Folder Structure:** Check `D:\Scan2Text\settings\settings.json`. It should exist. Verify the folder structure: `D:\Scan2Text\backend\scan2text-backend.exe` MUST exist. There should be NO `dist/` 
 - [x] **1.6 Backend Boot:** Open Task Manager. `scan2text-backend.exe` MUST be running in the background. Check `D:\Scan2Text\logs\app.log` exists and has recent entries
@@ -81,7 +81,8 @@
 
 - [x] **5.1 Theme Toggle:** Click the sun/moon icon in TopBar. UI instantly flips between Dark (coffee/paper) and Light themes. No unthemed white/black boxes
 - [x] **5.2 Language Toggle:** Switch to Indonesian (ID). Queue empty state, toasts, and tooltips MUST translate. The center brand image alt-text remains "Scan2Text"
-- [ ] **5.3 Persistence:** Close the app and reopen. Theme and Language choices must be remembered FAILED
+- [x] **5.3 Persistence:** Close the app and reopen. Theme and Language choices must be remembered FAILED
+- [ ] 5.3.1 the welcome modal should be transparent 30% only
 - [x] **5.4 Dark mode and Light Mode Tooltip:** Verify tooltips switch languages correctly
 - [x] **5.5 Settings Persistence:** Open Settings, change CPU threads or output dir, save, close app, reopen. Settings MUST be remembered
 - [x] **5.6 Demo Badge Removal:** Verify there are NO "DEMO" badges anywhere in the UI (TopBar, BottomBar, etc.)
@@ -90,11 +91,11 @@
 
 ## Section 6: Edge Cases & Stress Tests (The "What Ifs")
 
-- [ ] **6.1 50-Page Boundary (Exact Limit):** Drop a PDF with exactly 50 pages. **EXPECTED:** Processes successfully. Drop a PDF with 51 pages. **EXPECTED:** Rejected with `FILE_TOO_COMPLEX`
+- [x] **6.1 50-Page Boundary (Exact Limit):** Drop a PDF with exactly 50 pages. **EXPECTED:** Processes successfully. Drop a PDF with 51 pages. **EXPECTED:** Rejected with `FILE_TOO_COMPLEX`
 - [x] **6.2 Rapid Toggling Under Load:** While a heavy PDF is processing (yellow spinner), rapidly click the Theme and Language toggles 10+ times. **EXPECTED:** App does not crash, freeze, or corrupt the UI state
 - [x] **6.3 Zero-Byte & Fake Extensions:** Drop a 0-byte `.jpg` and a `.txt` file renamed to `.png`. **EXPECTED:** Both fail gracefully with red dots. Backend does not crash. Queue continues
-- [ ] **6.4 Massive File Names:** Drop an image with a 200-character filename. **EXPECTED:** Filename is truncated/sanitized in the queue UI (no UI breakage), and output `.md` is generated with a sanitized name
-- [ ] **6.5 Output Folder Permissions:** Close the app. Right-click `D:\Scan2Text\output\` → Properties → Check "Read-only". Reopen app and drop a valid image. **EXPECTED:** Job fails with a clear "output not writable" error. App does not crash. (Restore permissions after)
+- [x] **6.4 Massive File Names:** Drop an image with a 200-character filename. **EXPECTED:** Filename is truncated/sanitized in the queue UI (no UI breakage), and output `.md` is generated with a sanitized name
+- [x] **6.5 Output Folder Permissions:** Close the app. Right-click `D:\Scan2Text\output\` → Properties → Check "Read-only". Reopen app and drop a valid image. **EXPECTED:** Job fails with a clear "output not writable" error. App does not crash. (Restore permissions after)
 - [x] **6.6 Concurrent Batch Drops:** Drop 10 files. While they are processing, immediately drop 5 more files. **EXPECTED:** The second drop is rejected with the batch cap warning. The first 10 continue processing
 
 ---
