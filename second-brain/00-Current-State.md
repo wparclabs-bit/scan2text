@@ -3,17 +3,17 @@
 <!-- MAINTENANCE PROTOCOL: Keep only the Baseline block + last 5 changelog entries here. When you add a new entry, move the oldest entry to second-brain/01-Agent-Memory/Archive/state-history.md. This protects the 45k token cap (AGENTS.md 3.2). -->
 
 ## Baseline
-- Phase: S41-PRD-V1-KNOWN-ISSUE (IN PROGRESS)
-- Date: 2026-08-22
-- Status: v1.0.0 GO by CEO — one known issue deferred to app v1.1 (FILE_TOO_COMPLEX queue tooltip). GitHub prep next.
+- Phase: S42a-FACT-PACK (COMPLETE)
+- Date: 2026-08-23
+- Status: v1.0.0 GO by CEO — one known issue deferred to app v1.1 (FILE_TOO_COMPLEX queue tooltip). GitHub prep next. External audit fact pack produced.
 - Backend: 361 tests green · Frontend: 682 tests green · Typecheck: 0 · Build: success · Cargo: pass
 - CEO manual retest: R1 welcome PASS, R3 settings PASS, R4 logs PASS; R2 tooltip FAIL (deferred to app v1.1)
 - Portable artifacts: fresh and smoke green
 - PRD doc: v2.1
-- RESULT: S40 complete. v1.0.0 released GO with known issue deferred.
+- RESULT: S40 complete. v1.0.0 released GO with known issue deferred. S42a fact pack created at second-brain/03-Architecture/Repo-Audit/s42a-fact-pack.md (571 tracked files, 6 large, 7 dup names, graphify 2173 nodes/3292 edges).
 
 ## Recent Changelog
-- **2026-08-22 (S41-PRD-V1-KNOWN-ISSUE):** DOC — **v1.0.0 release decision documented. CEO approved GO despite R2 tooltip failure. PRD doc advanced to v2.1, app follow-up target set to v1.1 for FILE_TOO_COMPLEX queue red-dot tooltip mapping. Release decision doc created under 02-qa/. Current-State.md updated with S41 entry.** Zero source edits. Commit: pending.
+- **2026-08-23 (S42a-FACT-PACK):** DOC — **Read-only external audit evidence pack produced. 571 tracked files inventoried. 6 files >100KB identified. 7 duplicate basenames cataloged. Frontend: 21 prod + 16 dev deps mapped. Backend: 11 prod + 4 dev deps (pip freeze resolved). Graphify AST: 2173 nodes, 3292 edges, 193 communities. 92 test files counted. Folder casing verified (02-qa lowercase). No source edits, no deletions, no dependency installs. Fact pack at second-brain/03-Architecture/Repo-Audit/s42a-fact-pack.md (~45KB). Commit: docs only.**
 - **2026-08-23 (S40-GATE-REBUILD-BOTH):** BUILD — **Full gates + PyInstaller rebuild/deploy + Tauri rebuild/deploy + settings migration + stray cleanup + smoke verification.** Gates: 361 backend passed, 682 frontend passed, 0 typecheck errors, build success, cargo pass (1 benign dead_code warning). Backend rebuilt via `py -3.12 -m PyInstaller packaging/scan2text-backend.spec --noconfirm`, deployed to D:\Scan2Text\backend\ (45,593,779 bytes @ 06:22:06). Shell rebuilt via `npm run tauri -- build`, deployed to D:\Scan2Text\Scan2Text.exe (8,976,896 bytes @ 06:25:13). Migration: root settings\settings.json already existed → skipped copy per NO OVERWRITE policy; backend logs/settings/output/models/feedback stray dirs removed. Smoke: health 200 ok, "Settings file missing" count = 0 in fresh app.log, zero stray recreation. I1 forensic: main.py:126 preserves task error_code (OCR_FAILED is default fallback only). Zero source edits. Commit: docs only.
 - **2026-08-23 (S39-FRONTEND-WELCOME):** FEATURE — **WelcomeModal reworked to Option B: solid theme-aware panel + 60% backdrop + active-language-only bullets.** TDD RED→GREEN: 7 new tests in `WelcomeModal.test.tsx` (theme-aware panel, 60% backdrop, single-language EN/ID bullets, left-align + bullet styling). Updated 2 pre-existing tests in `s34-frontend-polish.test.tsx`. Component changes: `bg-black/50`→`bg-black/60`, added `bg-[#F9F8F6] text-[#1F150C] dark:bg-[#080502] dark:text-[#F2EBDD]` to DialogContent, removed dual-language second `.map()`. Full suite: 682 passed (675 + 7), 0 failures. Typecheck clean. Build success. Shell + backend deployed artifacts STALE pending S40 rebuild. Commit: pending.
 - **2026-08-23 (S38-BACKEND-FIXES):** FIX — **Fixed I1 (error-code preservation), I2 (portable-root split-brain), I3 (settings default persistence), I5 (engine dead ref).** TDD RED→GREEN: 9 new tests in `tests/test_s38_backend_fixes.py`. Fixes: `api/main.py:123-128` preserves task error_code; `path_service.py` reverses walk order + unifies resolver + adds `exe_root` property; `settings_service.py:42-44` persists defaults on first creation; `engine.py:52` uses valid `paths.exe_root`. Full suite: 361 passed (352 + 9), 0 failures. Backend exe STALE pending S40 rebuild. Commit: pending.
