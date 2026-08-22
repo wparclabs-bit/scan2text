@@ -1,468 +1,222 @@
-# Functional Requirements — Scan2Text MVP
-
-  
-
-Version: 1.12
-Date: 2026-08-18
-Status: Approved for Implementation
-
-  
-
-## Change Log
-
-  
-
-| Version | Date | Changes |
-
-| --- | --- | --- |
-
-| 1.0 | 2026-06-22 | Initial functional requirements |
-
-| 1.1 | 2026-06-22 | Minor clarifications |
-
-| 1.2 | 2026-06-22 | Removed in-app editing (FR-07), updated output naming |
-
-| 1.3 | 2026-08-06 | Integrated output naming addendum into FR-08. FR-02 Command Center layout. WEBP added. 50MB cap. File validation with toast. Fake progress, auto-select, background re-poll. FR-13 (i18n) + FR-14 (Theme). Model GLM-OCR 0.9B |
-
-| 1.4 | 2026-08-07 | Beautify deltas: ratios → 20/20/60; full-width Markdown preview; queue Remove removed; status indicators refined; file types locked PNG/JPG/JPEG/WEBP/PDF |
-
-| 1.5 | 2026-08-07 | Coffee & paper identity finalized; no panel borders; depth recipe; top bar logo chip + live-text wordmark + DEMO badge |
-
-| 1.6 | 2026-08-07 | Phase 6 Finale: layout → 34/60 + 2% gutters; left work column (Dropzone ~38% + Queue flex); viewport-locked shell; always-visible warm scrollbars; literal TopBar wordmark; BottomBar share + centered telemetry; Dropzone personality; inline longhand card depth; Queue radiant rays; share placeholder; queue row regression contract |
-
-| 1.7 | 2026-08-07 | Hotfix finale (CEO-approved): shell = fixed inset-0 (absolute viewport lock; fractions decide, content never resizes panels); TopBar 34px with CENTER brand image text.png 153×34 alt="Scan2Text" + static glow, left = logo chip + DEMO intact (no literal text wordmark), all items vertically centered; Share moved to BottomBar RIGHT (click = soft toast, no navigation); BottomBar left empty, center telemetry (Worker Idle/Busy · RAM "—" until /health · version), pinned at any window size; Dropzone: dashed area fills card, bg image 15% opacity single-value size centered, header + footer bold ink, footer adds "max 10 files per batch", Dropzone ScrollArea removed; 10-file batch cap enforced; queue fixed 14px dot-only status slot (grey/yellow-spinner/green/red) with translated tooltips; depth = visible-subtle gradation; Preview header buttons borderless transparent with caramel hover; Radix ScrollArea tray neutralized via CSS override |
-| 1.8 | 2026-08-08 | Phase 6 closure deltas: fake progress bar deferred to v2/v3 (CEO 2026-08-08); 1vh TopBar gutter; pathological short-window accepted edge; queue empty-state final copy with per-locale icons; QA gate passed — Phase 6 COMPLETE |
-| 1.9 | 2026-08-10 | ADR-006 engine swap; FR-05/FR-06/FR-08 updated for OvisOCR2 and pypdfium2 verification. |
-| 1.10 | 2026-08-10 | ADR-007: Feedback button (Google Form + offline queue) in BottomBar next to Share; CPU auto budget 60% of logical cores; GDrive distribution + in-app first-run model downloader; monthly release cadence |
-| 1.11 | 2026-08-16 | Phase 10 closure: BottomBar telemetry adds CPU%; /api/health returns cpu percent |
-| 1.12 | 2026-08-18 | CEO decision 2026-08-18: PDF page limit raised from 20 to 50 pages in FR-03 and FR-06 |
-
 
 ---
 
-## 9. Functional Requirements
+# Scan2Text — Architecture & Quality (Living Spec)
 
-  
+| | |
+|---|---|
+| Version | 2.0 |
+| Date | 2026-08-20 |
+| Status | Release Candidate — pending CEO review |
+| Audience | CTO + Kilo + engineers — the HOW, contracts, quality |
+| Supersedes | `03-non-functional-and-architecture.md` v1.15 + `04-testing-and-engineering-rules.md` v1.10 + product-level parts of old 01/02 |
+| Companion docs | `01-product-and-requirements.md` (product intent, guardrails limits, success metrics) · `Archive/product-history.md` |
 
-### FR-01: First-Run Setup
+> **Reading rule:** measurable contracts live ONCE here. Guardrail *limits* (20MB/50 pages/10 files) are owned by 01 §6; FRs below reference them. Execution rules (CSS law, palette mirror, slice discipline) live in `AGENTS.md`; this doc never duplicates them. ADRs live in `second-brain/03-Architecture/ADRs/`.
 
-Description:
-- On first launch, if no settings exist, the app must guide the user through minimal setup.
+## 1. Non-Functional Requirements
+- **NFR-01 Offline-First:** fully offline after initial download; no processing requires internet; update check optional, non-blocking.
+- **NFR-02 Privacy:** content stays local; no telemetry/analytics/cloud upload; logs contain no file names, no content, no OCR text; feedback never auto-sent.
+- **NFR-03 Performance:** accuracy over speed; long-running ops show progress; UI never freezes; CPU-only; decorative UI static (zero-CPU); internal scroll never page-scrolls; auto threads = 60% logical cores (floor 1).
+- **NFR-04 Accuracy:** ~95% visible text on approved samples, judged by human review; best-effort lists/tables; known model defects in ADR-006 register.
+- **NFR-05 Reliability:** one bad file never crashes app; one failed item never stops valid items unless fatal; unsupported skipped + logged; graceful recovery from missing settings; **clean exit: closing the shell terminates the entire backend process tree within 5s and frees port 47351**.
+- **NFR-06 Portability:** folder/zip distribution (~1.5 GB with models); no installer.
+- **NFR-07 Compatibility:** Windows 10/11 x86_64; min 8 GB RAM (16 rec); ≥5 GB disk; desktop-only.
+- **NFR-08 Shell Stability:** viewport-locked shell; no window/body scroll; BottomBar always visible; fraction-sized panels; scrollbars as affordances (Queue + Preview); depth on all cards; 1vh TopBar gutter; pathological short windows = accepted edge. CSS law in `AGENTS.md` §5.
 
-Acceptance Criteria:
-- First-run is a two-step wizard: expectations notice (ADR-007 decision 3) then output folder picker; notice re-shown every launch until hide_welcome_notice is set; re-openable from Settings.
-- If `settings/settings.json` does not exist, show first-run setup screen.
-- Ask user to choose default output directory.
-- Default suggestion may be portable `output/` or `Documents/Scan2Text`.
-- Create required folders if missing: `output/`, `settings/`, `logs/`.
-- Create `settings/settings.json` with default values.
-- After setup, app opens main screen.
-- App must work without admin rights.
+## 2. Technical Architecture
+- **Style:** local-first modular monolith. No cloud, no external DB, no microservices.
+- **Runtime:** Tauri v2 shell (Rust, source `frontend/src-tauri/`, ADR-008) bundles built React frontend; spawns PyInstaller folder artifact `backend/scan2text-backend.exe` as child; backend binds **127.0.0.1:47351**.
+- **Lifecycle (locked intent, FIX77):** Tauri owns spawn AND kill — on exit, whole backend process tree killed (`taskkill /F /IM scan2text-backend.exe /T`, hidden window, port-wait ≤5s); at boot, stale holder of 47351 killed before spawn (self-heal). Single running instance assumed.
+- **Communication:** HTTP polling (WebSockets deferred). `POST /process` → `{task_id}`; `GET /status/{task_id}` 15×2000ms = 30s, then background re-poll 60s × 10.
 
----
-### FR-02: Main Application Layout (Command Center v1.7)
+## 3. Approved Tech Stack
+- **Backend:** Python 3.12 (`py -3.12` locked); FastAPI; Pydantic; llama-cpp-python; OvisOCR2 0.9B (`vlm.gguf` Q8_0 + `mmproj.gguf` f16, ADR-006); pypdfium2; JSON settings; rotating logs.
+- **Frontend:** Vite + React + TS; Tailwind v3 + shadcn/ui; Zustand (memory-only jobs); react-markdown + remark-gfm; react-i18next (en+id); Tauri v2; PyInstaller (backend artifact only).
+- **Key decisions:** no router; dark default + light toggle; jobs never persist; validation per 01 §6; palette/depth/typography tokens in FR-14.
 
-Description:
-The app uses a viewport-locked Command Center shell pinned to the screen: `fixed inset-0 flex flex-col overflow-hidden`. The screen is the only sizing authority: no window/body scroll at any window width or height; panels are sized by fractions (`fr` tracks), never by content.
+## 4. Runtime & Repo Structure
+```
+Scan2Text/
+├── Scan2Text.exe            # Tauri shell
+├── backend/                 # PyInstaller folder artifact
+│   ├── scan2text-backend.exe
+│   └── _internal/
+├── models/                  # EXTERNAL, runtime download
+├── output/  ├── settings/settings.json  ├── feedback/pending|sent/  └── logs/app.log
+```
+```
+scan2text/
+├── src/scan2text/           # api/ routes/ adapters/ services/ models/
+├── tests/
+├── frontend/
+│   ├── src/ (components/ stores/ lib/ i18n/ hooks/)
+│   ├── src-tauri/           # Rust shell (backend_process.rs, lib.rs)
+│   └── Images/
+└── second-brain/ (00..05)
+```
 
-Layout Structure:
+## 5. Local Application Contract
+| Endpoint | Purpose |
+|---|---|
+| `POST /process` | multipart → `{task_id}` |
+| `GET /status/{task_id}` | six statuses + `result_markdown` on completion |
+| `GET /api/health` | worker, RAM%, CPU%, model loaded (canonical; no bare `/health`) |
+| `GET/PUT /api/settings` | AppSettings read/patch (incl. theme, language) |
+| `GET /api/feedback/pending-count` | launch reminder trigger |
+Future: `POST /cancel/{task_id}`; `POST /api/output/open`. Share = frontend-only placeholder. Loopback CORS `*` safe (127.0.0.1-only, ADR-008 addendum). `/api/jobs` legacy, unused.
 
-  
+## 6. Core Data Contracts
+`AppSettings`: output_dir, max_pdf_pages, cpu_threads (0=auto), check_updates_on_startup, language ("auto"|"en"|"id"), theme ("dark"|"light"), hide_welcome_notice.
+`JobStatus`: pending/uploading/processing/completed/failed/background.
+`OCRJob` (backend): id, file_name, file_path, file_size, status, created_at, updated_at, output_path, error_code, error_message.
+`ScanJob` (frontend): id, fileName, fileSize, taskId, status, isBackground, createdAt, resultMarkdown, error.
+`OCRResult`, `ProgressEvent` (future WS), `UpdateInfo` (current/latest/download_url/notes/model_version).
 
-| Region | Space | Content |
+## 7. Global Error Envelope
+```json
+{ "error": { "code": "MODEL_NOT_FOUND", "message": "…", "details": {} } }
+```
+Codes: MODEL_NOT_FOUND · MODEL_LOAD_FAILED · UNSUPPORTED_TYPE · FILE_TOO_LARGE · PDF_TOO_MANY_PAGES · FILE_TOO_COMPLEX · OCR_FAILED · OUTPUT_NOT_WRITABLE · INVALID_SETTINGS · DOWNLOAD_FAILED · SIZE_MISMATCH · **PARTIAL_FAILURE (log-only, never user-facing status)**. No raw stack traces; i18n-mapped messages; unknown codes shown as-is English.
 
-| --- | --- | --- |
+## 8. Update Mechanism & Logging
+- **Update:** GitHub `version.json`; binaries on GDrive; launch-only if enabled; non-blocking; silent offline; manual download, no self-update; monthly cadence.
+- **Logging:** `logs/app.log`, 1 MB rotation ×1. Events: start, settings, model load, job start/complete/skip/fail, output saved, update result, batch-cap skips. Fields: extension + bytes + pages + duration + code + model version + timestamp. Never names/content/OCR text.
 
-| Top Bar | Full width, 34px tall | LEFT: logo chip + DEMO badge (intact). CENTER: brand image text.png 153×34 alt="Scan2Text" + static glow. RIGHT: theme/language/settings icon-only with translated tooltips. All vertically centered |
+## 9. Functional Requirements (FR-01…FR-17)
+**FR-01 First-Run:** two-step wizard (notice → folder picker); notice re-shown until `hide_welcome_notice`; re-openable from Settings; creates folders + defaults; no admin rights.
 
-| Main Content | 34/60 + ~2% gutters (grid-cols-[34fr_60fr] gap-[2%]) | Left work column + right preview column |
+**FR-02 Layout (Command Center):** shell per NFR-08 + AGENTS.md §5. TopBar 34px: LEFT logo chip only (DEMO removed); CENTER brand image 153×34 `alt="Scan2Text"` + static glow; RIGHT icon-only toggles. Dropzone: dashed fill, bg `bacground-left-top-panel.jpg` 15%, bold ink header/footer, footer "PNG · JPG · WEBP · PDF — max 20MB per file · max 10 files per batch", no ScrollArea, drag glow + click-browse. Queue: warm always-visible scrollbar, static rays, row = icon + truncated name + size + 14px dot-only slot + tooltip + retry; empty states EN "📭 Nothing here yet. Drop something tasty!" / ID "🙈 Masih belum ada file tuh! Coba upload di atas!". Preview: full-width read-only Markdown; borderless Copy Markdown/Open Folder (caramel hover); empty ✨ "Select a completed job to preview the magic."; auto-select. BottomBar: LEFT empty; CENTER Worker·RAM·CPU%·version from `/api/health`; RIGHT icon-only Share.
 
-| Left Work Column | ~34% | Dropzone (minmax(0,38fr)) + Queue (minmax(0,62fr)) |
+**FR-03 File Input:** types + dnd + picker; pre-upload validation per 01 §6 (20MB/type/cap-10) with toasts; **PDF Inspector (backend, pre-render): >20MB or >50 pages → FILE_TOO_COMPLEX, pixels never rendered**; all-unsupported → non-blocking warning + log.
 
-| Right Preview Column | ~60% | Live Preview (rendered Markdown full-width, read-only, internal scroll) |
+**FR-04 Queue:** FIFO; six statuses; dot colors (grey `#A8A29E`/`#78716C`; spinner `#FACC15`; green/red glossy radial gradients); translated tooltips; retry; background >30s → 60s×10; one failure never stops batch; **partial success: ≥1 succeeded → completed; failed only when zero succeeded; PARTIAL_FAILURE logged only**; **2-min long-running hint toast, repeats every 2 min**; no fake progress bar (v2/v3).
 
-| Bottom Bar | Full width, pinned (shrink-0) | LEFT: empty. CENTER: Worker Idle/Busy · RAM · CPU% · version. RIGHT: icon-only Share |
+**FR-05 Model Loading:** on demand with progress; stays loaded; missing/corrupt → actionable error; offline after first download; OvisOCR2 0.9B, temp 0.1.
 
-  
+**FR-06 OCR & PDF Resilience:** separate processing, never merged; PDF per-page rasterized; one `.md` per PDF with page separators; **per-page resilience: failed page skipped + privacy-log; `.md` from successful pages in order; PDF fails only if ALL pages fail**; pypdfium2.
 
-Acceptance Criteria:
-- Main uses `flex-1 min-h-0` and fraction tracks; left column rows `minmax(0,38fr)/minmax(0,62fr)`. Content can never stretch a panel (dropzone size constant regardless of job count).
-- Desktop-only for MVP. Panel widths fixed, not resizable.
-- Shell is fixed inset-0 flex flex-col overflow-hidden; BottomBar visible at any window size. A 1vh vertical gutter separates TopBar and main (v1.8). Pathological short windows (< ~200px height) are a CEO-accepted edge (v1.8); normal short windows fully supported.
+**FR-07 Removed** (no in-app editing).
 
-Top Bar requirements:
-- Height exactly 34px; logo, brand image, and buttons vertically centered.
-- LEFT: logo pictogram chip (`frontend/Images/logo.png`) + DEMO badge kept intact (DEMO removed after final product). No literal text wordmark on the left.
-- CENTER: brand image `frontend/Images/text.png` at 153×34 with `alt="Scan2Text"` and a static radial glow behind (CSS-only, zero CPU, subtle).
-- RIGHT: theme toggle, language toggle, settings — icon-only with translated tooltips.
+**FR-08 Output:** one `.md` per input; auto-save; `{original_stem}_{HHmm}_{yyyyMMdd}.md`; collisions `_2`,`_3`; never overwrite/merge; chart crops → `<stem>_files/images/` only when present; best-effort GFM; UI shows saved path.
 
-Dropzone (top-left) requirements:
-- Dashed upload area fills the card between header and footer (flex-1 min-h-0).
-- Background image `bacground-left-top-panel.jpg` (exact filename) at 15% opacity, single-value `background-size: 100%`, centered, no-repeat, pointer-events none.
-- Header text and footer hint: bold, ink #1F150C, both themes.
-- Footer hint: "PNG · JPG · WEBP · PDF — max 50MB per file · max 10 files per batch" (translated).
-- No ScrollArea in Dropzone (v1.7; nothing scrolls there).
-- Glowing/highlighted state when files are dragged over; click to browse fallback.
+**FR-09 Settings:** fields per §6; persist `settings.json`; **theme/language semantics: localStorage written immediately on toggle + debounced (~800ms) mirror to settings.json; boot hydrates localStorage first; if absent, falls back to settings.json (theme class + i18n applied)**; graceful recovery.
 
-Queue (bottom-left) requirements:
-- Internal scroll with always-visible warm scrollbar (thin, rounded; caramel thumb/translucent track dark; coffee thumb light).
-- Radiant rays decoration (static, zero CPU).
-- Row contract: file type icon + file name (truncate with ellipsis) + file size + fixed 14px status slot (dot-only) + translated tooltip + retry button on failed. Fake progress bar DEFERRED to v2/v3 (v1.8 CEO decision).
-- Empty state (centered; per-locale icon inside string, v1.8): EN "📭 Nothing here yet. Drop something tasty!" / ID "🙈 Masih belum ada file tuh! Coba upload di atas!"
+**FR-10 Update Check:** per §8.
 
-Right Preview Column requirements:
-- Rendered Markdown full-width, read-only; internal scroll.
-- Header actions: Copy Markdown + Open Folder as real borderless buttons (transparent bg = panel color, no border, caramel hover tint, focus-visible ring, icon + translated label).
-- Empty state: ✨ "Select a completed job to preview the magic."
-- Auto-select: when a job completes, the right panel automatically shows its result.
+**FR-11 Error Handling:** per §7 + skip/log non-blocking + i18n keys + `FILE_TOO_COMPLEX` → "File too large or complex to process. Please try a smaller file."
 
-Bottom Bar requirements:
-- Pinned (shrink-0), always visible; vertically centered content; center group via grid 1fr auto 1fr.
-- CENTER: Worker Idle/Busy (derived from queue state) · RAM · CPU% · version constant. Data sourced from backend GET /api/health (returns cpu percent via psutil.cpu_percent()).
-- RIGHT: icon-only Share button, translated tooltip, no text label.
-- LEFT: empty.
+**FR-12 Portable Runtime:** user-writable folder; no admin; no hardcoded machine paths; external output dir allowed.
 
-Theme requirements:
-- Dark mode DEFAULT; light mode via toggle; persisted; instant apply.
+**FR-13 i18n:** react-i18next; en+id; auto-detect, English fallback; all strings keys; brand image alt exempt; persistence per FR-09.
 
----
-### FR-03: File Input
+**FR-14 Theme & Visual Tokens:** dark default, instant; DARK bg `#080502`, Dropzone `#E1DCC9` (ink `#1F150C`), Queue `#412D15` (cream `#F2EBDD`), Preview `#1F150C`, accent `#E3A55F`; LIGHT bg `#F9F8F6`, `#EFE9E3`/`#D9CFC7`/`#C9B59C`, accent `#92400E`; green/red dots retained; depth = visible-subtle gradation, no borders/flat/purple; warm scrollbars Queue+Preview only; Quantico display + swap-friendly body (one CSS variable); static rays.
 
-Description:
+**FR-15 Share Placeholder:** icon-only RIGHT; `https://placeholder.local`; click = toast ("Sharing coming soon." / "Berbagi segera hadir."), no nav; swapped post-GitHub.
 
-Users add files by drag-and-drop or file picker. Files are validated before upload. Batches are capped at 10 files.
+**FR-16 Feedback:** next to Share; online → Google Form; offline → dialog saved to `feedback/pending/`; launch reminder moves to `sent/`; no silent upload; i18n.
 
-Acceptance Criteria:
-- Accept file types: `.jpg`, `.jpeg`, `.png`, `.webp`, `.pdf`.
-- Drag-and-drop into Dropzone; click-to-browse fallback; multiple files supported.
-- Validation before upload:
-  - Max 50MB per file → error toast, not added to queue.
-  - Unsupported type → error toast, not added to queue.
-  - Batch cap: max 10 files per drop → first 10 kept, extras skipped with warning toast ("Max 10 files per batch — extra files were skipped." / ID equivalent) and logged.
-- PDF Inspector: before processing, backend checks page count and file size. Hard limits: 20MB max file size, 50 pages max. Files exceeding either limit are rejected with error code FILE_TOO_COMPLEX.
-- Error/warning toasts use shadcn toast component.
-- Unsupported files in a batch are skipped, logged, and do not stop valid files.
-- If all dropped files are unsupported, show non-blocking warning toast and log.
+**FR-17 Model Auto-Download:** trigger missing GGUFs; `.part` + atomic rename; size verify; progress + cancel; translated errors; proceeds after success; URL from `version.json`.
 
-  
+## 10. Testing Strategy
+Pyramid 70/20/10 (integration/unit/manual). AIASD behavior testing; TDD RED→GREEN mandatory.
+- **Unit:** naming + collisions; sanitization; settings validation; version compare; error mapping; guardrails (20MB, 50 pages, cap 10); type whitelist; i18n keys; size formatting.
+- **Integration (backend, FakeOCR):** one .md per input, never merge; skip unsupported + log; **reject >50 pages / >20MB pre-render**; missing output folder; settings persistence; /process → /status progression; /api/health telemetry; status-slot contract + absence test (NO fake progress bar).
+- **Integration (frontend):** store addJob/updateJob/pollJob; FIFO; auto-select; background re-poll; cap-12→10 jobs + toast; markdown render; i18n; theme+language persistence incl. settings.json fallback; visual-contract renders (brand alt, 34px TopBar, fixed shell, BottomBar grid, Dropzone no-ScrollArea, borderless preview buttons, Radix tray override, 0-vs-10 structural constancy).
+- **Manual/E2E:** against real model; `second-brain/02-QA/` scripts CEO-executed; accuracy = CEO human review vs originals.
+- No concrete test counts in this doc (counts live in `00-Current-State.md`).
 
----
-### FR-04: Processing Queue
+## 11. Definition of Done
+Portable launch, no admin; Command Center renders per contract; coffee & paper depth; cap-10 enforced; dot-only slots + tooltips + retry; borderless preview buttons; i18n complete except brand alt; preferences persist (restart + PC-move); offline OCR image+PDF; collision-safe naming; errors translated, non-blocking; Share/Feedback placeholders; automated gates green; QA script run; CEO screenshot acceptance; PRD v2.0 docs committed as source of truth.
 
-Description:
-
-Valid files process in FIFO order with real-time visual feedback via the fixed status slot.
-
-Acceptance Criteria:
-- FIFO order; queue maintains insertion order.
-- Status values: `pending`, `uploading`, `processing`, `completed`, `failed`, `background`.
-- Fixed 14px status slot after the file name, ALWAYS rendered, dot-only, no visible text:
-  - pending: warm grey dot (#A8A29E dark / #78716C light)
-  - uploading/processing: bright yellow spinner (#FACC15)
-  - completed: glossy green dot (radial-gradient(circle at 30% 30%, #86EFAC, #16A34A 60%, #14532D))
-  - failed: glossy red dot (radial-gradient(circle at 30% 30%, #FCA5A5, #DC2626 60%, #7F1D1D))
-- Translated tooltip per status (title/aria equivalent).
-- Fake progress bar: DEFERRED to v2/v3 (v1.8, CEO decision 2026-08-08). MVP affordance = single status indicator in the right 14px slot; revisit on user feedback.
-- File names truncate with ellipsis; status slot stays visible at row right (Radix tray neutralized via CSS override).
-- Auto-select: completed job shown in right panel and highlighted in queue; user can click other jobs.
-- Background: polling > 30s → `background`; re-poll every 60s, max 10; then timeout.
-- Queue actions: no Remove button in MVP; Cancel future; retry button on failed rows.
-- If one file fails, remaining queue continues unless fatal.
-- UI shows which file is currently processing.
-
----
-### FR-05: Model Loading
-
-Description:
-
-The OCR model loads only when needed.
-
-Acceptance Criteria:
-- Model loads when processing starts and model not loaded.
-- Loading state with progress indicator.
-- Model remains loaded for subsequent jobs where practical.
-- Missing/corrupt model → actionable error.
-- No internet required after initial download.
-- Model: OvisOCR2 0.9B (`vlm.gguf` + `mmproj.gguf`); runner llama-cpp-python; CPU-only; official single prompt verbatim; temp 0.1 (ADR-006).
-
-  
+## 12. Version Notes
+v2.0 (2026-08-20): 20MB/50-pages unified; DEMO purged; partial-success + per-page resilience + persistence semantics + 2-min hint + clean-exit NFR + lifecycle kill-tree + `frontend/src-tauri/` + feedback endpoint added; fake-progress stale lines purged (absence test kept); engineering rules de-duplicated to AGENTS.md. Supersedes 03 v1.15 + 04 v1.10. History: `Archive/product-history.md`.
 
 ---
 
-  
+--
 
-### FR-06: OCR Processing
+## 13. Update Mechanism
 
-  
-
-Description:
-The app extracts visible text from images and PDFs.
-
-Acceptance Criteria:
-- Each valid input processed separately; never merged.
-- Images sent to OCR engine; PDFs rendered to images per page.
-- Multi-page PDF = one source document = one Markdown file with page separators.
-- Unsupported/invalid files skipped and logged.
-- One file failing does not stop remaining valid files where possible.
-- PDF Inspector guardrail: reject PDFs >50 pages or >20MB with error code FILE_TOO_COMPLEX. Do not render pixels for rejected files.
-- General file-size guardrail: max 20MB per file (frontend validation); exceeded → error toast, not added to queue.
-- PDF handling: pypdfium2 rasterization verified in production (ADR-006 closes verification).
-
-  
-
----
-### FR-07: Removed
-Removed by CEO review. No in-app editing in MVP. Final output is Markdown; editing happens outside Scan2Text.
+- Source: GitHub-hosted version.json; binaries (app zip + models) hosted on Google Drive; download_url points to GDrive. First run: in-app model downloader (progress + cancel + size verify) or manual zip replacement (ADR-007).
+- Flow: launch → if enabled + online, fetch → if newer, notify in top bar → user downloads zip manually → replaces app files preserving settings/, output/, logs/.
+- Manual process; no self-updating executable.
 
 ---
 
-### FR-08: Automatic Markdown Output
-Description:
-Each valid processed document automatically produces a Markdown file.
-Acceptance Criteria:
+## 14. Logging Requirements
 
-- Output `.md`; one per valid input; never merged.
-- Auto-saved after OCR; no Save button; default location = user-selected output dir.
-- Naming: `{original_stem}_{HHmm}_{yyyyMMdd}.md`; collision suffix `_2`, `_3`, …; never overwrite.
-- Guardrails: one input → one .md always; auxiliary asset folder allowed only when source contains charts/figures (ADR-006); timestamp = processing time; privacy-safe logs; no new dependencies.
-- Implementation: `datetime.now()` at write; linear collision search; `PathService.resolve_output_path()` single point of naming logic.
-- Markdown structure: best-effort text, line breaks, lists, tables (GFM; model HTML tables converted in backend, stdlib only, best-effort merges); chart crops saved to `<output_stem>_files/images/` when present; no invented content; plain text acceptable when uncertain.
-- After processing: UI shows saved Markdown file path.
-
----
-### FR-09: Settings
-
-Description:
-
-Minimal settings for output location, language, theme, update check, and processing defaults.
-
-Acceptance Criteria:
-
-  
-
-- Settings screen accessible from TopBar.
-
-- Settings: output_dir, max_pdf_pages, cpu_threads (0 = auto = 60% of logical cores, ADR-007), check_updates_on_startup, language ("auto" default), theme, hide_welcome_notice: bool (default false).
-
-- Persist to `settings/settings.json`; theme/language also to localStorage.
-
-- Graceful recovery from missing/corrupt settings (recreate defaults).
-
-- Both themes supported; strings translated.
-
-  
+- Location: logs/app.log; size-based rotation: maxBytes 1 MB, backupCount 1.
+- Log: app start, settings loaded, model load started/completed, job started/completed/skipped/failed, output saved, update check result, batch-cap skips (extension + byte count + page count only; no file names; no content).
+- Fields: extension + byte count + page count + duration + error/warning code + model version + timestamp.
+- Never log extracted OCR text or full document contents by default.
 
 ---
 
-  
-
-### FR-10: Update Check
-
-  
-
-Description:
-
-  
-
-Update check via GitHub-hosted `version.json`.
-
-  
-
-Acceptance Criteria:
-
-  
-
-- On launch only if enabled; non-blocking; silent fail offline.
-
-- Newer version → notification in top bar; no auto-install; manual download.
-- download_url may point to Google Drive (ADR-007).
-
-  
-
----
-
-  
-
-### FR-11: Error Handling
-
-  
-
-Description:
-
-  
-
-Errors clear, logged, non-blocking for batches, internationalized.
-
-  
-
-Acceptance Criteria:
-
-  
-
-- Unsupported/invalid files skipped + logged; do not stop valid files.
-
-- Fatal errors shown; non-fatal shown as status/skipped/failed.
-
-- No raw stack traces; errors logged; OCR text never logged.
-
-- i18n: all UI error strings via keys; known backend codes mapped to translations; unknown shown as-is English.
-
-- Toasts for validation errors (type, size) and batch cap warning.
-
-- Error code mapping: `FILE_TOO_COMPLEX` → "File too large or complex to process. Please try a smaller file."
-- Example cases: model not found, model load failed, unsupported type, file too large, PDF too many pages, FILE_TOO_COMPLEX, OCR failed, output not writable, invalid settings, model download failed or size mismatch.
-
-  
-
----
-
-  
-
-### FR-12: Portable Runtime
-
-  
-
-Description:
-
-  
-
-App runs from a portable folder.
-
-  
-
-Acceptance Criteria:
-
-  
-
-- User-writable folder; no admin rights; no Program Files requirement.
-
-- Portable path resolution; external output dir allowed; no machine-specific hardcoded paths.
-
-  
-
----
-
-  
-
-### FR-13: Internationalization (i18n)
-
-  
-
-Description:
-
-  
-
-English + Indonesian; auto-detect with English fallback.
-
-  
-
-Acceptance Criteria:
-
-  
-
-- react-i18next; toggle in TopBar showing EN/ID; persisted to localStorage.
-
-- All UI strings via translation keys (buttons, statuses, empty states, tooltips, toasts, errors).
-
-- Files: `en.json`, `id.json`; AI-drafted, CEO-reviewed; friendly casual tone.
-
-- Brand exception (v1.7): the center brand IMAGE with `alt="Scan2Text"` is i18n-exempt (supersedes literal text wordmark exception).
-
-  
-
----
-
-  
-
-### FR-14: Theme
-
-  
-
-Description:
-
-  
-
-Dark default + light toggle; coffee & paper identity.
-
-  
-
-Acceptance Criteria:
-
-  
-
-- Dark default; light available; persisted; instant apply; all components themed.
-
-- Palettes: DARK bg #080502; Dropzone #E1DCC9 ink #1F150C; Queue #412D15 cream #F2EBDD; Preview #1F150C cream; accent #E3A55F. LIGHT bg #F9F8F6; #EFE9E3 / #D9CFC7 / #C9B59C; accent #92400E. Purple retired; DEMO amber retained; green/red dots retained.
-
-- Depth (v1.7): visible-subtle gradation on ALL cards via theme-aware inline longhand styles (gradient + inset top highlight + soft shadow + warm glow). No flat cards. No borders.
-
-- Scrollbars: always-visible warm on Queue + Preview only (v1.7: Dropzone excluded).
-
-- Typography: Quantico display + readable swap-friendly body font (single CSS variable; final choice open).
-
-- TopBar identity (v1.7): logo chip + DEMO left; center brand image alt="Scan2Text" + static glow; icon-only buttons with translated tooltips.
-
-- Queue card radiant rays: static, zero CPU.
-
-  
-
----
-
-  
-
-### FR-15: Share Placeholder Button
-
-  
-
-Description:
-
-  
-
-BottomBar includes the MVP Share placeholder; final destination swapped post-GitHub.
-
-  
-
-Acceptance Criteria:
-
-  
-
-- Icon-only button in BottomBar RIGHT zone; no text label; translated tooltip.
-
-- Placeholder target constant: `https://placeholder.local`.
-
-- Click performs NO navigation; shows soft translated toast ("Sharing coming soon." / "Berbagi segera hadir.").
-
-- Themed for dark + light; does not shift centered telemetry.
-
-- Production share URL out of scope until post-GitHub swap.
-
----
-
-### FR-16: Feedback Button (Google Form + Offline Queue)
-
-Description:
-BottomBar includes a feedback button next to Share; online click opens Google Form, offline click saves to local pending queue.
-
-Acceptance Criteria:
-- Icon-only button in BottomBar RIGHT zone immediately next to Share; no text label; translated tooltip.
-- Online: click opens FEEDBACK_FORM_URL in default browser (placeholder URL until CEO provides).
-- Offline: click opens in-app dialog with textarea (feedback message) + optional contact field; submit saves timestamped file to feedback/pending/.
-- On launch: if online and feedback/pending/ contains files, show toast with action that opens pre-filled form URL and moves file to feedback/sent/.
-- No silent auto-upload (NFR-02); user must explicitly trigger the form open action.
-- Dialog strings fully internationalized (EN + ID).
-
----
-
-### FR-17: In-App First-Run Model Auto-Download
-
-Description:
-On first run when models/ is missing or incomplete, the app streams model GGUFs from the download_url (GDrive) into models/ with progress, cancel, and size verification.
-
-Acceptance Criteria:
-- Trigger: models/ directory missing expected GGUF files on first run.
-- Download target: streaming write to models/ via .part file then atomic rename on completion.
-- Expected-size verification: compare downloaded bytes against Content-Length / expected size; abort and show translated error on mismatch.
-- Progress indicator visible in UI; cancel button stops download and cleans up .part file.
-- Translated error messages for network failure, size mismatch, disk full, user-cancelled.
-- After successful download, app proceeds to normal startup.
-- download_url sourced from GitHub-hosted version.json (ADR-007).
+## 15. Testing Strategy
+
+Testing must follow AIASD-friendly behavior testing.
+
+### Test Pyramid
+
+- 70% integration tests
+- 20% unit tests
+- 10% end-to/manual tests
+
+### Unit Tests
+
+- output file naming (timestamp + collision resolution)
+- file-name sanitization
+- settings validation
+- version comparison
+- error mapping (backend code → translated UI message)
+- guardrail checks (50MB size, 20-page PDF limit, 10-file batch cap)
+- file type validation (PNG/JPG/JPEG/WEBP/PDF)
+- i18n key resolution
+- fake progress easing function (0→90% over 30s)
+- file-size formatting for queue rows
+
+### Integration Tests
+
+Backend (fake OCR engine):
+
+- add valid file to queue; process; one Markdown per valid input; never merge
+- skip unsupported file in batch + log; continue valid files
+- reject oversized PDF (>50 pages) and file (>50MB)
+- handle missing output folder; settings persistence
+- POST /process returns task_id; GET /status/{task_id} progression; GET /health worker + RAM
+- queue status slot per status: grey dot (pending), yellow spinner (uploading/processing), glossy green (completed), glossy red (failed); dot-only, no visible text; translated tooltips; retry on failed; absence test asserts NO fake progress bar (deferred v2/v3, v1.8)
+
+Frontend:
+
+- Zustand store: addJob, updateJob, startUpload, pollJob; FIFO order; auto-select; background re-poll (60s × 10)
+- fake progress transitions; file validation toasts
+- 10-file cap: dropping 12 valid files creates exactly 10 jobs + warning toast + logged skips
+- queue status slot per status: grey dot (pending), yellow spinner (uploading/processing), glossy green (completed), glossy red (failed); dot-only, no visible text; translated tooltips; thin fake progress bar while active; retry on failed
+- react-markdown + remark-gfm rendering; i18n EN/ID; theme + language persistence
+
+Frontend v1.7 visual-contract (real <App /> render):
+
+- brand image with alt="Scan2Text" present in live TopBar + logo chip left
+- TopBar 34px; items vertically centered
+- shell has fixed inset-0 + flex-col + overflow-hidden; main flex-1 min-h-0; left column grid-rows minmax(0,38fr)/minmax(0,62fr)
+- BottomBar: shrink-0; grid 1fr auto 1fr; center telemetry (Worker/RAM/version); Share icon-only RIGHT; no text label
+- Dropzone: dashed area flex-1 min-h-0; NO ScrollArea; bg layer opacity 0.15 + single-value background-size; header + hint bold ink
+- Preview header: two real <button> elements, borderless, transparent bg, translated labels
+- index.css contains the Radix tray override selector
+- structural constancy: render with 0 jobs vs 10 jobs — same panel structure
+
+### Manual/E2E Tests
+
+Run against real model and real samples:
+
+- launch app; first-run setup; drag-and-drop + picker
+- drop image / PDF → fake progress + Markdown in right panel; auto-select
+- mixed batch with unsupported → skipped + logged; oversized → toast
+- drop 11 files → first 10 processed + warning toast; dropzone size unchanged
+- wide window (2560px) + short window → BottomBar always visible; no page scroll
+- queue: names truncate with ellipsis; status dots visible at row right; warm always-visible scrollbar on queue + preview
+- TopBar: brand image + glow; logo chip + DEMO; icon-only tooltips translated
+- language + theme toggles persist; restart persistence
+- bottom bar telemetry centered; Share right with toast on click
+- drop image / PDF → status spinner + Markdown in right panel; auto-select
