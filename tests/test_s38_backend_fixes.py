@@ -21,7 +21,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from scan2text.services.path_service import PathService
 from scan2text.services.settings_service import SettingsService, AppSettings
 from scan2text.api.main import app, _task_store, _run_processing
-from scan2text.engine import create_app
 from fastapi.testclient import TestClient
 
 
@@ -291,37 +290,6 @@ class TestI3SettingsDefaultPersistence:
         # No creation log on second load
         creation_logs = [r for r in caplog.records if "creating defaults" in r.message.lower()]
         assert len(creation_logs) == 0, "Second load should not log creation"
-
-
-# =============================================================================
-# I5: Engine dead ref — paths.exe_root must resolve without AttributeError
-# =============================================================================
-
-class TestI5EngineDeadRef:
-    """I5: engine.py:52 references paths.exe_root which doesn't exist.
-    Must use a valid PathService property."""
-
-    def test_engine_startup_logs_root_without_attribute_error(self):
-        """create_app() startup should log root using valid PathService property."""
-        # This test verifies the AttributeError is fixed
-        # The fix should replace paths.exe_root with paths.app_root or paths.base_dir
-        
-        app = create_app(FakeOCR())
-        client = TestClient(app)
-        
-        # The startup event runs on first request in TestClient
-        response = client.get("/api/health")
-        assert response.status_code == 200
-        
-        # If we get here without AttributeError, the fix works
-        # The actual log message is verified by the test passing
-
-
-# Helper for I5 test
-class FakeOCR:
-    """Minimal fake OCR engine for testing."""
-    def process(self, image_path: str) -> str:
-        return "fake result"
 
 
 if __name__ == "__main__":

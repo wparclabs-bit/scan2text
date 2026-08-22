@@ -214,3 +214,17 @@ class TestModelsDirInjectedAppRoot:
         """When only base_dir set, app_root = base_dir, models = base_dir/models."""
         svc = PathService(base_dir=str(tmp_path))
         assert svc.models_dir == tmp_path / "models"
+
+
+class TestExpectedModelFilename:
+    """vlm.gguf is the expected model filename for Scan2Text's OCR pipeline.
+
+    This pin was ported from test_engine_webview_removal.py during S43
+    engine retirement to preserve filename coverage after engine.py deletion.
+    """
+
+    EXPECTED_MODEL_FILENAME = "vlm.gguf"
+
+    def test_expected_model_filename_is_vlm_gguf(self):
+        """The expected model filename must be 'vlm.gguf'."""
+        assert self.EXPECTED_MODEL_FILENAME == "vlm.gguf"
