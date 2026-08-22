@@ -82,11 +82,6 @@ class PathService:
         return self._app_root
 
     @property
-    def exe_root(self) -> Path:
-        """Alias for app_root — the portable root containing Scan2Text.exe."""
-        return self._app_root
-
-    @property
     def settings_path(self) -> Path:
         if getattr(sys, "frozen", False):
             return self._resolve_portable_root() / "settings" / "settings.json"
