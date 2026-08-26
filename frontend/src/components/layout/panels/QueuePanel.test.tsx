@@ -1,6 +1,10 @@
+import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import QueuePanel from './QueuePanel'
+import { initI18n } from '@/i18n'
+import en from '@/locales/en.json'
+import id from '@/locales/id.json'
 
 vi.mock('@/stores/scan2text.store', () => ({
   useScan2TextStore: vi.fn(),
@@ -10,11 +14,34 @@ vi.mock('@/lib/cleanupObjectURLs', () => ({
   cleanupObjectURLs: vi.fn(),
 }))
 
+// Mock TooltipContent to capture tooltip text for assertion
+const capturedTooltips: Array<{ text: string }> = []
+vi.mock('@/components/ui/tooltip', async (original) => {
+  const actual = await original<typeof import('@/components/ui/tooltip')>()
+  const TooltipContentSpy = vi.fn((props: { children?: React.ReactNode }) => {
+    // Extract text content from children (handles React elements and strings)
+    const children = props.children
+    let text = ''
+    if (typeof children === 'string') {
+      text = children
+    } else if (React.isValidElement(children)) {
+      text = String((children as React.ReactElement<{ children?: React.ReactNode }>).props.children ?? '')
+    }
+    capturedTooltips.push({ text: String(text) })
+    return <actual.TooltipContent {...props} />
+  })
+  return {
+    ...actual,
+    TooltipContent: TooltipContentSpy,
+  }
+})
+
 const { useScan2TextStore } = await import('@/stores/scan2text.store')
 
 describe('QueuePanel status dots and retry', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    initI18n({ en: { translation: en }, id: { translation: id } })
   })
 
   function setupStore(jobs: Record<string, any>, selectedJobId: string | null = null) {
@@ -474,5 +501,57 @@ describe('QueuePanel status dots and retry', () => {
     expect(redDot).toBeInTheDocument()
     const style = window.getComputedStyle(redDot!)
     expect(style.backgroundImage).toContain('radial-gradient')
+  })
+
+  it('FILE_TOO_COMPLEX failed job shows specific i18n tooltip, not generic Failed', () => {
+    capturedTooltips.length = 0
+    setupStore({
+      'job-1': {
+        id: 'job-1',
+        fileName: 'big.pdf',
+        fileSize: 25000000,
+        status: 'failed',
+        errorCode: 'FILE_TOO_COMPLEX',
+        createdAt: 1000,
+      },
+    })
+    render(<QueuePanel />)
+    // FILE_TOO_COMPLEX uses grey dot, not red gradient
+    const dot = screen.getByTestId('queue-item-status-dot') as HTMLElement
+    // jsdom converts hex to rgb, so check for rgb(63, 63, 70) which is #3F3F46
+    expect(dot.style.background).toMatch(/rgb\(63,\s*63,\s*70\)/)
+    // No retry button for FILE_TOO_COMPLEX
+    expect(screen.queryByTestId('queue-item-retry')).not.toBeInTheDocument()
+    // Tooltip should show the specific i18n key text, not generic "Failed"
+    expect(capturedTooltips.length).toBeGreaterThan(0)
+    const tooltipText = capturedTooltips.map((t) => t.text).join(' ')
+    expect(tooltipText).not.toContain('Failed')
+    expect(tooltipText).toContain('File too large or complex')
+  })
+
+  it('generic failed job shows "Failed" tooltip, not FILE_TOO_COMPLEX text', () => {
+    capturedTooltips.length = 0
+    setupStore({
+      'job-1': {
+        id: 'job-1',
+        fileName: 'test.png',
+        fileSize: 500,
+        status: 'failed',
+        errorCode: 'SOME_OTHER_ERROR',
+        createdAt: 1000,
+      },
+    })
+    render(<QueuePanel />)
+    // Generic failed uses red gradient
+    const dots = Array.from(document.querySelectorAll('[data-testid="queue-item-status-dot"]')) as HTMLElement[]
+    const redDot = dots.find((d) => d.style.background?.includes('rgb(220, 38, 38)'))
+    expect(redDot).toBeInTheDocument()
+    // Retry button should be visible for generic failed
+    expect(screen.getByTestId('queue-item-retry')).toBeInTheDocument()
+    // Tooltip should show generic "Failed"
+    expect(capturedTooltips.length).toBeGreaterThan(0)
+    const tooltipText = capturedTooltips.map((t) => t.text).join(' ')
+    expect(tooltipText).toContain('Failed')
+    expect(tooltipText).not.toContain('File too large or complex')
   })
 })
