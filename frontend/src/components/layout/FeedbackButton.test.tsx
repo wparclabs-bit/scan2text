@@ -2,7 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import FeedbackButton from './FeedbackButton'
 
-const mockOpen = vi.fn()
+const mockShellOpen = vi.fn()
+
+vi.mock('@tauri-apps/plugin-shell', () => ({
+  open: vi.fn((url: string) => mockShellOpen(url)),
+}))
+
+const FEEDBACK_FORM_URL = 'https://forms.gle/dJ2tLYzuffp31mHE7'
 
 describe('FeedbackButton', () => {
   beforeEach(() => {
@@ -18,26 +24,18 @@ describe('FeedbackButton', () => {
     expect(screen.getByTestId('feedback-button')).toBeInTheDocument()
   })
 
-  it('opens browser when online', () => {
+  it('calls shell.open with Google Form URL when online', () => {
     Object.defineProperty(window, 'navigator', {
       value: { onLine: true },
       writable: true,
     })
-    Object.defineProperty(window, 'open', {
-      value: mockOpen,
-      writable: true,
-      configurable: true,
-    })
     render(<FeedbackButton onOfflineOpen={() => {}} />)
     const btn = screen.getByTestId('feedback-button') as HTMLButtonElement
     btn.click()
-    expect(mockOpen).toHaveBeenCalledWith(
-      'https://placeholder.local/feedback',
-      '_blank'
-    )
+    expect(mockShellOpen).toHaveBeenCalledWith(FEEDBACK_FORM_URL)
   })
 
-  it('calls onOfflineOpen when offline', () => {
+  it('calls onOfflineOpen when offline and does not call shell.open', () => {
     Object.defineProperty(window, 'navigator', {
       value: { onLine: false },
       writable: true,
@@ -47,5 +45,6 @@ describe('FeedbackButton', () => {
     const btn = screen.getByTestId('feedback-button') as HTMLButtonElement
     btn.click()
     expect(mockOfflineOpen).toHaveBeenCalled()
+    expect(mockShellOpen).not.toHaveBeenCalled()
   })
 })

@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { MessageSquare } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { open } from '@tauri-apps/plugin-shell'
 
-const FEEDBACK_FORM_URL = 'https://placeholder.local/feedback'
+const FEEDBACK_FORM_URL = 'https://forms.gle/dJ2tLYzuffp31mHE7'
 
 interface FeedbackButtonProps {
   onOfflineOpen: () => void
@@ -11,9 +12,9 @@ interface FeedbackButtonProps {
 export default function FeedbackButton({ onOfflineOpen }: FeedbackButtonProps) {
   const { t } = useTranslation()
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (navigator.onLine) {
-      void window.open(FEEDBACK_FORM_URL, '_blank')
+      await open(FEEDBACK_FORM_URL)
     } else {
       onOfflineOpen()
     }
