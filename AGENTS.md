@@ -125,7 +125,7 @@ If folder names differ, discover via `Get-ChildItem` before writing; never guess
 - Feedback = GForm button left of Share + offline queue, no silent send (ADR-007).
 - CPU auto = 60% of logical cores (ADR-007).
 - Welcome expectations screen every launch until dismissed (ADR-007).
-- Binaries on GDrive, version.json on GitHub (ADR-007).
+- Binaries on GitHub Releases, version.json on GitHub (ADR-007).
 - Monthly release cadence (ADR-007).
 - Logs: no filenames, no content; 1 MB rotation (ADR-007).
 - i18n EN + ID for all UI strings; brand image `alt="Scan2Text"` is the only i18n-exempt element.

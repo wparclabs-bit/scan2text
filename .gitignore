@@ -45,3 +45,12 @@ tmp-test2/
 GRAPHIFY_MAP.md
 *.exe
 *.bin
+
+# local-only hygiene
+backend/_internal/
+pastes/
+Lesson-Learned.md
+_check_structure.py
+deploy-fix65d.ps1
+verify-fix65d.ps1
+AGENTS-CTO.md

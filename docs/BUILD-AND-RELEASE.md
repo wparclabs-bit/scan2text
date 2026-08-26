@@ -54,7 +54,7 @@ and `feedback/` folders created by the app on first run. Zip the root **without*
 ## Release flow
 
 1. Tag the release; cut application ZIP and the two model files.
-2. Upload to Google Drive: the application ZIP, `vlm.gguf` (811 MB), and `mmproj.gguf` (205 MB).
+2. Upload to GitHub Releases: the application ZIP, `vlm.gguf` (811 MB), and `mmproj.gguf` (205 MB).
    Models total roughly 1 GB and are **never committed** — `/models/` and `*.gguf` are gitignored,
    and models ship exclusively as external release assets.
 3. Publish `version.json` to GitHub with the update contract fields (`current`, `latest`,
@@ -64,7 +64,7 @@ and `feedback/` folders created by the app on first run. Zip the root **without*
 4. Releases follow a monthly cadence; the in-app check is launch-only, optional, and never
    self-updates — users download manually.
 
-**Google Drive caveat:** files above the virus-scan threshold trigger Google Drive's
+**GitHub Releases note:** GitHub Releases handles 1GB+ GGUF files without the 100MB HTML warning page issue that affected Google Drive.
 "This file is large — download anyway" interstitial, and naive "direct download" URL forms can
 break for large binaries. Validate the exact `download_url` format stored in `version.json`
 against the interstitial before publishing. [VERIFY: confirmed working URL format per release]
