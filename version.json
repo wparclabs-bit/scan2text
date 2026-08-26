@@ -1,9 +1,8 @@
 {
-  "version": "1.0.0",
-  "vlm_download_url": "https://github.com/wparclabs-bit/scan2text/releases/download/v1.0.0/vlm.zip",
-  "vlm_sha256": "3bf7aefb9ca601f5cfea09720de896ad37d4300c32a416f858ce8568d9be3925",
+  "vlm_download_url": "https://github.com/wPAILabs/scan2text/releases/download/OCR/vlm.zip",
+  "vlm_sha256": "9facc171eb7b5cd58ef48c3c1e0814b9da911100ab9088757d1f1269d1e09925",
   "vlm_size_bytes": 772878446,
-  "mmproj_download_url": "https://github.com/wparclabs-bit/scan2text/releases/download/v1.0.0/mmproj.zip",
-  "mmproj_sha256": "81f0684efa2a3d5154b942b67f8e872d92c660aa05415ed042de022a6810e9a4",
+  "mmproj_download_url": "https://github.com/wPAILabs/scan2text/releases/download/OCR/mmproj.zip",
+  "mmproj_sha256": "d63a90a1f1594ce9ecc83f2e1894f9bd7b38605bb00daf59b2fdf7b1b42b0530",
   "mmproj_size_bytes": 156370919
 }
