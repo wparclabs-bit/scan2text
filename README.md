@@ -18,12 +18,18 @@ llama-cpp-python on the CPU. No GPU, no account, no cloud service.
 
 ## Install
 
-1. Download the portable ZIP from the Scan2Text GitHub Releases page. [VERIFY: public download URL]
+Two portable ZIPs are available on the Scan2Text GitHub Releases page:
+
+| Package | Size | Description |
+|---|---|---|
+| **Thin** (`Scan2Text-v1.1-Portable.zip`) | ~81 MB | Fast download. Downloads models (~1 GB) on first run. |
+| **Full** (`Scan2Text-v1.1-Portable-Full.zip`) | ~1.1 GB | Models included. Works offline immediately after unzip. |
+
+1. Download the ZIP that suits your needs.
 2. Unzip it to any user-writable folder.
 3. Run `Scan2Text.exe`.
 
-There is no installer and no admin rights requirement. Plan for roughly 1.5 GB unpacked with
-models, 8 GB RAM minimum (16 GB recommended), and at least 5 GB free disk space.
+There is no installer and no admin rights requirement. Plan for 8 GB RAM minimum (16 GB recommended) and at least 5 GB free disk space.
 
 ## Quick start
 
