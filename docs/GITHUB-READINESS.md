@@ -21,7 +21,7 @@ app v1.1. The partial-ship strategy remains a future option if desired.
 | 6 | Git history review | Optional | ~246 commits scanned; matches for credential-like keywords are i18n variable names, not secrets. If strategy-sensitive material is excluded (item 3), a fresh repo is planned anyway (see item 3 note). |
 | 7 | Tooling hygiene | Pending | Confirm `.dsh/` remains untracked (`git log -- .dsh/` returns nothing) and keep it ignored in any public state. |
 
-## Public launch plan
+## Public launch plan (Option A — CEO locked 2026-08-24)
 
 - **Create fresh private repo NOW** under new username, push clean history.
 - **Develop v1.1 there** — after the FILE_TOO_COMPLEX tooltip fix and any additional polish.

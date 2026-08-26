@@ -39,6 +39,7 @@ src/graphify-out/
 .kilo/
 *.log.txtbackend/
 settings.json
+AGENTS-CTO.md
 feedback/
 tmp-test2/
 .dsh/
