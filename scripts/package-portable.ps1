@@ -20,10 +20,6 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Load System.IO.Compression upfront — PowerShell parses the entire script
-# before executing, so forward type references fail without this.
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-
 $RepoRoot = Split-Path $PSScriptRoot -Parent
 $StagingDir = Join-Path $RepoRoot ".staging-portable"
 $ThinZipName = "Scan2Text-${Version}-Portable.zip"
@@ -125,8 +121,9 @@ if (Test-Path $ThinZipPath) {
 }
 
 # Use .NET ZipFile to create ZIP without models/
-$ThinZipUri = "file:///$($ThinZipPath.Replace('\', '/'))"
-$ThinZip = [System.IO.Compression.ZipFile]::Open($ThinZipPath, [System.IO.Compression.ZipArchiveMode]::Create)
+# Note: Use integer literals (1=Create, 0=Optimal) to avoid PowerShell parsing
+# issues with forward enum type references.
+$ThinZip = [System.IO.Compression.ZipFile]::Open($ThinZipPath, 1)
 
 $thinCount = 0
 # Include directories first
@@ -152,8 +149,7 @@ Get-ChildItem -Path $StagingDir -Recurse -File | Where-Object {
         $relativePath = $relativePath.Substring(1)
     }
     [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
-        $ThinZip, $_.FullName, $relativePath,
-        [System.IO.Compression.CompressionLevel]::Optimal
+        $ThinZip, $_.FullName, $relativePath, 0
     ) | Out-Null
     $thinCount++
 }
@@ -172,7 +168,7 @@ if (Test-Path $FullZipPath) {
     Remove-Item -LiteralPath $FullZipPath -Force
 }
 
-$FullZip = [System.IO.Compression.ZipFile]::Open($FullZipPath, [System.IO.Compression.ZipArchiveMode]::Create)
+$FullZip = [System.IO.Compression.ZipFile]::Open($FullZipPath, 1)
 
 $fullCount = 0
 # Include directories first
@@ -194,8 +190,7 @@ Get-ChildItem -Path $StagingDir -Recurse -File | ForEach-Object {
         $relativePath = $relativePath.Substring(1)
     }
     [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
-        $FullZip, $_.FullName, $relativePath,
-        [System.IO.Compression.CompressionLevel]::Optimal
+        $FullZip, $_.FullName, $relativePath, 0
     ) | Out-Null
     $fullCount++
 }
