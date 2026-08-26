@@ -20,31 +20,50 @@ describe('FeedbackButton', () => {
       value: { onLine: true },
       writable: true,
     })
-    render(<FeedbackButton onOfflineOpen={() => {}} />)
+    render(<FeedbackButton />)
     expect(screen.getByTestId('feedback-button')).toBeInTheDocument()
   })
 
-  it('calls shell.open with Google Form URL when online', () => {
+  it('calls shell.open with Google Form URL when online', async () => {
     Object.defineProperty(window, 'navigator', {
       value: { onLine: true },
       writable: true,
     })
-    render(<FeedbackButton onOfflineOpen={() => {}} />)
+    render(<FeedbackButton />)
     const btn = screen.getByTestId('feedback-button') as HTMLButtonElement
     btn.click()
-    expect(mockShellOpen).toHaveBeenCalledWith(FEEDBACK_FORM_URL)
+    await vi.waitFor(() => {
+      expect(mockShellOpen).toHaveBeenCalledWith(FEEDBACK_FORM_URL)
+    })
   })
 
-  it('calls onOfflineOpen when offline and does not call shell.open', () => {
+  it('shows offline toast when clicked while offline', async () => {
     Object.defineProperty(window, 'navigator', {
       value: { onLine: false },
       writable: true,
     })
-    const mockOfflineOpen = vi.fn()
-    render(<FeedbackButton onOfflineOpen={mockOfflineOpen} />)
+    const { toast } = await import('sonner')
+    render(<FeedbackButton />)
     const btn = screen.getByTestId('feedback-button') as HTMLButtonElement
     btn.click()
-    expect(mockOfflineOpen).toHaveBeenCalled()
+    await vi.waitFor(() => {
+      expect(toast.info).toHaveBeenCalledWith(expect.stringContaining('offline'))
+    })
     expect(mockShellOpen).not.toHaveBeenCalled()
+  })
+
+  it('shows error toast when shell.open rejects', async () => {
+    Object.defineProperty(window, 'navigator', {
+      value: { onLine: true },
+      writable: true,
+    })
+    mockShellOpen.mockRejectedValueOnce(new Error('Failed to open'))
+    const { toast } = await import('sonner')
+    render(<FeedbackButton />)
+    const btn = screen.getByTestId('feedback-button') as HTMLButtonElement
+    btn.click()
+    await vi.waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Failed to open'))
+    })
   })
 })

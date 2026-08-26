@@ -107,6 +107,12 @@ void i18next
             pendingAction: 'Send now',
             formUrl: 'https://placeholder.local/feedback',
           },
+          toast: {
+            copySuccess: 'Markdown copied to clipboard!',
+            shareComingSoon: 'Sharing coming soon.',
+            feedbackOffline: 'You are offline. Please connect to the internet to send feedback.',
+            feedbackError: 'Failed to open feedback form: {{message}}',
+          },
           downloader: {
             title: 'Downloading AI Engine',
             description: 'Please wait while we prepare the offline AI model...',
@@ -220,6 +226,12 @@ void i18next
             pendingToast: 'Anda memiliki masukan tertunda.',
             pendingAction: 'Kirim sekarang',
             formUrl: 'https://placeholder.local/feedback',
+          },
+          toast: {
+            copySuccess: 'Markdown disalin ke clipboard!',
+            shareComingSoon: 'Berbagi segera hadir.',
+            feedbackOffline: 'Anda sedang offline. Hubungkan ke internet untuk mengirim masukan.',
+            feedbackError: 'Gagal membuka formulir masukan: {{message}}',
           },
           downloader: {
             title: 'Mengunduh Mesin AI',

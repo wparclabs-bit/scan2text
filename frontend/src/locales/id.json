@@ -57,7 +57,9 @@
   },
   "toast": {
     "copySuccess": "Markdown disalin ke clipboard!",
-    "shareComingSoon": "Berbagi segera hadir."
+    "shareComingSoon": "Berbagi segera hadir.",
+    "feedbackOffline": "Anda sedang offline. Hubungkan ke internet untuk mengirim masukan.",
+    "feedbackError": "Gagal membuka formulir masukan: {{message}}"
   },
   "queue": {
     "empty": "Tidak ada file dalam antrian",

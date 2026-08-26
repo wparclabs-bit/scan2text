@@ -372,6 +372,8 @@ pub fn run() {
                 )?;
             }
 
+            app.handle().plugin(tauri_plugin_shell::init())?;
+
             let manager = {
                 let state = app.state::<AppState>();
                 Arc::clone(&state.0)

@@ -2,21 +2,23 @@ import { useTranslation } from 'react-i18next'
 import { MessageSquare } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { open } from '@tauri-apps/plugin-shell'
+import { toast } from 'sonner'
 
 const FEEDBACK_FORM_URL = 'https://forms.gle/dJ2tLYzuffp31mHE7'
 
-interface FeedbackButtonProps {
-  onOfflineOpen: () => void
-}
-
-export default function FeedbackButton({ onOfflineOpen }: FeedbackButtonProps) {
+export default function FeedbackButton() {
   const { t } = useTranslation()
 
   const handleClick = async () => {
-    if (navigator.onLine) {
+    if (!navigator.onLine) {
+      toast.info(t('toast.feedbackOffline'))
+      return
+    }
+    try {
       await open(FEEDBACK_FORM_URL)
-    } else {
-      onOfflineOpen()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to open feedback form'
+      toast.error(t('toast.feedbackError', { message }))
     }
   }
 

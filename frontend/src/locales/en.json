@@ -57,7 +57,9 @@
   },
   "toast": {
     "copySuccess": "Markdown copied to clipboard!",
-    "shareComingSoon": "Sharing coming soon."
+    "shareComingSoon": "Sharing coming soon.",
+    "feedbackOffline": "You are offline. Please connect to the internet to send feedback.",
+    "feedbackError": "Failed to open feedback form: {{message}}"
   },
   "queue": {
     "empty": "No files in queue",

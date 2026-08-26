@@ -66,7 +66,7 @@ export default function BottomStatusBar() {
           <span>{VERSION}</span>
         </div>
         <div className="flex items-center justify-end gap-2">
-          <FeedbackButton onOfflineOpen={() => {}} />
+          <FeedbackButton />
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
