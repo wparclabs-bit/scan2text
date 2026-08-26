@@ -120,40 +120,46 @@ if (Test-Path $ThinZipPath) {
     Remove-Item -LiteralPath $ThinZipPath -Force
 }
 
-# Use .NET ZipFile to create ZIP without models/
-# Note: Use integer literals (1=Create, 0=Optimal) to avoid PowerShell parsing
-# issues with forward enum type references.
-$ThinZip = [System.IO.Compression.ZipFile]::Open($ThinZipPath, 1)
+# Use Compress-Archive (PowerShell built-in, no type references needed)
+# Create temp dir, copy excluding models/, compress, cleanup
+$ThinTempDir = Join-Path $RepoRoot ".staging-thin-temp"
+if (Test-Path $ThinTempDir) {
+    Remove-Item -LiteralPath $ThinTempDir -Recurse -Force
+}
+New-Item -ItemType Directory -Path $ThinTempDir -Force | Out-Null
 
-$thinCount = 0
-# Include directories first
-Get-ChildItem -Path $StagingDir -Recurse -Directory | Where-Object {
+# Copy everything except models/
+Get-ChildItem -Path $StagingDir -Recurse | Where-Object {
     -not $_.FullName.Contains("\models\")
 } | ForEach-Object {
-    $relativePath = $_.FullName.Substring($StagingDir.Length).Replace('\', '/')
-    if ($relativePath.StartsWith('/')) {
-        $relativePath = $relativePath.Substring(1)
+    if ($_.PSIsContainer) {
+        $relativePath = $_.FullName.Substring($StagingDir.Length).Replace('\', '/')
+        if ($relativePath.StartsWith('/')) {
+            $relativePath = $relativePath.Substring(1)
+        }
+        $newPath = Join-Path $ThinTempDir $relativePath
+        New-Item -ItemType Directory -Path $newPath -Force | Out-Null
+    } else {
+        $relativePath = $_.FullName.Substring($StagingDir.Length).Replace('\', '/')
+        if ($relativePath.StartsWith('/')) {
+            $relativePath = $relativePath.Substring(1)
+        }
+        $newPath = Join-Path $ThinTempDir $relativePath
+        New-Item -ItemType Directory -Path (Split-Path $newPath) -Force | Out-Null
+        Copy-Item -Path $_.FullName -Destination $newPath -Force
     }
-    if (-not $relativePath.EndsWith('/')) {
-        $relativePath = $relativePath + '/'
-    }
-    $ThinZip.CreateEntry($relativePath) | Out-Null
-    $thinCount++
 }
-# Then include files
-Get-ChildItem -Path $StagingDir -Recurse -File | Where-Object {
+
+# Compress to ZIP
+Compress-Archive -Path "$ThinTempDir\*" -DestinationPath $ThinZipPath -CompressionLevel Optimal -Force
+
+# Cleanup temp directory
+Remove-Item -LiteralPath $ThinTempDir -Recurse -Force
+
+# Count entries
+$thinCount = (Get-ChildItem -Path $StagingDir -Recurse | Where-Object {
     -not $_.FullName.Contains("\models\")
-} | ForEach-Object {
-    $relativePath = $_.FullName.Substring($StagingDir.Length).Replace('\', '/')
-    if ($relativePath.StartsWith('/')) {
-        $relativePath = $relativePath.Substring(1)
-    }
-    [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
-        $ThinZip, $_.FullName, $relativePath, 0
-    ) | Out-Null
-    $thinCount++
-}
-$ThinZip.Dispose()
+}).Count
 
 $thinSizeMB = [math]::Round((Get-Item $ThinZipPath).Length / 1MB, 2)
 Write-Host "[OK] Thin ZIP: $ThinZipName ($thinSizeMB MB, $thinCount entries)" -ForegroundColor Green
@@ -168,33 +174,11 @@ if (Test-Path $FullZipPath) {
     Remove-Item -LiteralPath $FullZipPath -Force
 }
 
-$FullZip = [System.IO.Compression.ZipFile]::Open($FullZipPath, 1)
+# Use Compress-Archive for Full ZIP
+Compress-Archive -Path "$StagingDir\*" -DestinationPath $FullZipPath -CompressionLevel Optimal -Force
 
-$fullCount = 0
-# Include directories first
-Get-ChildItem -Path $StagingDir -Recurse -Directory | ForEach-Object {
-    $relativePath = $_.FullName.Substring($StagingDir.Length).Replace('\', '/')
-    if ($relativePath.StartsWith('/')) {
-        $relativePath = $relativePath.Substring(1)
-    }
-    if (-not $relativePath.EndsWith('/')) {
-        $relativePath = $relativePath + '/'
-    }
-    $FullZip.CreateEntry($relativePath) | Out-Null
-    $fullCount++
-}
-# Then include files
-Get-ChildItem -Path $StagingDir -Recurse -File | ForEach-Object {
-    $relativePath = $_.FullName.Substring($StagingDir.Length).Replace('\', '/')
-    if ($relativePath.StartsWith('/')) {
-        $relativePath = $relativePath.Substring(1)
-    }
-    [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
-        $FullZip, $_.FullName, $relativePath, 0
-    ) | Out-Null
-    $fullCount++
-}
-$FullZip.Dispose()
+# Count entries
+$fullCount = (Get-ChildItem -Path $StagingDir -Recurse).Count
 
 $fullSizeMB = [math]::Round((Get-Item $FullZipPath).Length / 1MB, 2)
 Write-Host "[OK] Full ZIP: $FullZipName ($fullSizeMB MB, $fullCount entries)" -ForegroundColor Green
