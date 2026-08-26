@@ -19,6 +19,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+# Load System.IO.Compression upfront — PowerShell parses the entire script
+# before executing, so forward type references fail without this.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
 $RepoRoot = Split-Path $PSScriptRoot -Parent
 $StagingDir = Join-Path $RepoRoot ".staging-portable"
 $ThinZipName = "Scan2Text-${Version}-Portable.zip"
@@ -120,7 +125,6 @@ if (Test-Path $ThinZipPath) {
 }
 
 # Use .NET ZipFile to create ZIP without models/
-Add-Type -AssemblyName System.IO.Compression.FileSystem
 $ThinZipUri = "file:///$($ThinZipPath.Replace('\', '/'))"
 $ThinZip = [System.IO.Compression.ZipFile]::Open($ThinZipPath, [System.IO.Compression.ZipArchiveMode]::Create)
 
