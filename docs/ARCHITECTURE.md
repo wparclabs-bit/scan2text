@@ -109,7 +109,7 @@ Details: [RUNTIME-LAYOUT.md](RUNTIME-LAYOUT.md).
 
 - A `version.json` manifest on GitHub carries `current`, `latest`, `download_url`, `notes`, and
   `model_version`.
-- Application ZIPs and model GGUF files are hosted on Google Drive; updates are manual downloads —
+- Application ZIPs and model GGUF files are hosted on GitHub Releases; updates are manual downloads —
   there is no self-updater.
 - The check runs at launch only, only if `check_updates_on_startup` is enabled; it is non-blocking
   and fails silently offline. Release cadence is monthly.

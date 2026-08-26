@@ -178,7 +178,7 @@ a = Analysis(
 - **Decisions covered (4):**
   1. Feedback button (Google Form + offline queue)
   2. CPU budget (auto = 60% of logical cores)
-  3. Distribution via Google Drive + in-app downloader
+  3. Distribution via GitHub Releases + in-app downloader
   4. Monthly release cadence
 - **Supersedes:** "nothing; extends ADR-006 and PRD §17"
 
@@ -189,7 +189,7 @@ a = Analysis(
   1. Feedback channel = Google Form + offline queue (more detailed)
   2. CPU budget: cpu_threads=0 auto = 60% of logical cores (floor, min 1)
   3. First-run expectations screen (Welcome modal — NOT in File 1)
-  4. Distribution: app zip + model GGUFs on Google Drive (more detailed)
+  4. Distribution: app zip + model GGUFs on GitHub Releases (more detailed)
   5. Log privacy + rotation (NOT in File 1)
   6. Release cadence: monthly only, vigorously tested
 - **Supersedes:** "PRD §9/§18 'filename + byte count' log lines; FR-09 cpu_threads '0 = automatic' semantics. Does not supersede ADR-006."

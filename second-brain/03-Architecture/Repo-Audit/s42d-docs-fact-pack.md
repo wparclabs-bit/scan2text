@@ -631,7 +631,7 @@ Future: `POST /cancel/{task_id}`; `POST /api/output/open`. Share = frontend-only
 
 **Source:** `second-brain/04-Product/02-functional-requirements.md` §8 (verbatim)
 
-- **Update:** GitHub `version.json`; binaries on GDrive; launch-only if enabled; non-blocking; silent offline; manual download, no self-update; monthly cadence.
+- **Update:** GitHub `version.json`; binaries on GitHub Releases; launch-only if enabled; non-blocking; silent offline; manual download, no self-update; monthly cadence.
 - **Logging:** `logs/app.log`, 1 MB rotation ×1. Events: start, settings, model load, job start/complete/skip/fail, output saved, update result, batch-cap skips. Fields: extension + bytes + pages + duration + code + model version + timestamp. Never names/content/OCR text.
 
 ---

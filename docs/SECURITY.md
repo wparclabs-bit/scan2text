@@ -17,7 +17,7 @@ or sets up port forwarding.
 
 1. **GitHub Security Advisories (preferred):** open the repository → **Security** tab →
    "Report a vulnerability".
-2. **Email:** [VERIFY: security contact email]
+2. **Email:** wp.arc.labs@gmail.com
 
 ### What to include
 
@@ -59,7 +59,7 @@ Scan2Text operates under a **local-first threat model**:
 
 - The feedback button opens a Google Form URL — intentional and user-initiated only. (The current
   build ships a placeholder URL, not a production form.)
-- The model downloader fetches from Google Drive — URLs are static and verified by SHA256.
+- The model downloader fetches from GitHub Releases — URLs are static and verified by SHA256.
 - Permissive CORS is scoped to a loopback-only server (ADR-008 addendum) and is not exploitable
   remotely while the loopback binding holds.
 

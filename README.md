@@ -18,7 +18,7 @@ llama-cpp-python on the CPU. No GPU, no account, no cloud service.
 
 ## Install
 
-1. Download the portable ZIP from the Scan2Text Google Drive folder. [VERIFY: public download URL]
+1. Download the portable ZIP from the Scan2Text GitHub Releases page. [VERIFY: public download URL]
 2. Unzip it to any user-writable folder.
 3. Run `Scan2Text.exe`.
 

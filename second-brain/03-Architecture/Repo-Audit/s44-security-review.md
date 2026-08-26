@@ -98,7 +98,7 @@ Rationale:
 - **GGUF quantization:** by bartowski (quantized from f16 original)
 - **Redistribution status:** Apache-2.0 permits redistribution with attribution and NOTICE file preservation
 - **Model files in repo:** `models/vlm.gguf` (811 MB), `models/mmproj.gguf` (205 MB) — **gitignored** (`/models/` line 6, `*.gguf` line 7 of `.gitignore`)
-- **Distribution method:** Google Drive (per ADR-007 §3/ADR-007 §4), version.json on GitHub
+- **Distribution method:** GitHub Releases (per ADR-007 §3/ADR-007 §4), version.json on GitHub
 
 ### llama-cpp-python (runtime inference library)
 - **License:** MIT (per pyproject.toml dependency `llama-cpp-python>=0.3.7,<0.3`)
@@ -177,7 +177,7 @@ Scan2Text is a local-first desktop application. The threat model assumes the bac
 Scan2Text operates under a **local-first threat model**:
 
 1. **Backend binding:** The FastAPI backend binds exclusively to `127.0.0.1:47351`. It is not accessible from other machines on the network.
-2. **No network exposure by default:** No outbound network calls except the explicit feedback button (Google Form) and the in-app model downloader (from GDrive URLs in version.json).
+2. **No network exposure by default:** No outbound network calls except the explicit feedback button (Google Form) and the in-app model downloader (from GitHub Releases URLs in version.json).
 3. **Log privacy:** Logs contain NO file names, NO file content, and NO user data. Fields are limited to: extension, byte count, page count, duration, error code, model version, timestamp. File paths are redacted via `PrivacyFilter`.
 4. **Binary integrity:** Model downloads verify SHA256 hashes against values in version.json before use.
 5. **No telemetry:** No silent data collection, no crash reporting, no analytics.
@@ -185,7 +185,7 @@ Scan2Text operates under a **local-first threat model**:
 ## Known Non-Issues
 
 - The feedback button opens a Google Form URL — this is intentional and user-initiated only.
-- The model downloader fetches from Google Drive — URLs are static and verified by SHA256.
+- The model downloader fetches from GitHub Releases — URLs are static and verified by SHA256.
 ```
 
 ---
@@ -201,7 +201,7 @@ Scan2Text operates under a **local-first threat model**:
 | **Feedback URL scraping** | Low | Low | URL is hardcoded as `https://placeholder.local/feedback` — a placeholder, not a real Google Form. No sensitive URL in source. | ✅ Safe (placeholder) |
 | **version.json poisoning** (attacker modifies GitHub release to serve malicious binary) | Low | High | App verifies SHA256 hash of downloaded model files against `version.json` values before use. Download streams to `.part` then atomic rename only after size verification. | ✅ Built-in |
 | **Model file redistribution legality** | Med | High | OvisOCR2 is Apache-2.0 (per ADR-006). Redistribution permitted with attribution. NOTICE file status unconfirmed. bartowski quantization terms unverified. | ⚠️ Needs CEO decision |
-| **GDrive link exposure** (anyone-with-link access) | Low | Low | GDrive links are inherently public per design (ADR-007). Intended for low-connectivity users. No authentication required. | ✅ By design |
+| **GitHub Releases link exposure** (anyone-with-link access) | Low | Low | GitHub Releases are inherently public per design (ADR-007). Intended for low-connectivity users. No authentication required. | ✅ By design |
 
 ### What If Backend Exposed to Network?
 
@@ -251,7 +251,7 @@ If a user's firewall allows inbound connections on port 47351:
 | Gate | Decision | Impact | Timeline |
 |------|----------|--------|----------|
 | **D1: Vault exposure strategy** | Ship full vault (private repo) / Partial (ADRs only, public) / None (fresh repo) | Determines which second-brain/ content is committed | Before any public release |
-| **D2: Model license confirmation** | Confirm OvisOCR2 upstream NOTICE file requirement and bartowski quantization terms | Legal compliance for GDrive distribution | Before public release |
+| **D2: Model license confirmation** | Confirm OvisOCR2 upstream NOTICE file requirement and bartowski quantization terms | Legal compliance for GitHub Releases distribution | Before public release |
 | **D3: GitHub PAT rotation** | Authorize token rotation in `.dsh/dshmm/mcp.json` | Security hygiene (not critical — token is gitignored) | Within 30 days |
 | **D4: Community files approval** | Review and approve SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md drafts before commit | Public repo readiness | Before public release |
 

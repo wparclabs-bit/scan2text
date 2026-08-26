@@ -80,7 +80,7 @@ Future: `POST /cancel/{task_id}`; `POST /api/output/open`. Share = frontend-only
 Codes: MODEL_NOT_FOUND · MODEL_LOAD_FAILED · UNSUPPORTED_TYPE · FILE_TOO_LARGE · PDF_TOO_MANY_PAGES · FILE_TOO_COMPLEX · OCR_FAILED · OUTPUT_NOT_WRITABLE · INVALID_SETTINGS · DOWNLOAD_FAILED · SIZE_MISMATCH · **PARTIAL_FAILURE (log-only, never user-facing status)**. No raw stack traces; i18n-mapped messages; unknown codes shown as-is English.
 
 ## 8. Update Mechanism & Logging
-- **Update:** GitHub `version.json`; binaries on GDrive; launch-only if enabled; non-blocking; silent offline; manual download, no self-update; monthly cadence.
+- **Update:** GitHub `version.json`; binaries on GitHub Releases; launch-only if enabled; non-blocking; silent offline; manual download, no self-update; monthly cadence.
 - **Logging:** `logs/app.log`, 1 MB rotation ×1. Events: start, settings, model load, job start/complete/skip/fail, output saved, update result, batch-cap skips. Fields: extension + bytes + pages + duration + code + model version + timestamp. Never names/content/OCR text.
 
 ## 9. Functional Requirements (FR-01…FR-17)
@@ -138,7 +138,7 @@ v2.0 (2026-08-20): 20MB/50-pages unified; DEMO purged; partial-success + per-pag
 
 ## 13. Update Mechanism
 
-- Source: GitHub-hosted version.json; binaries (app zip + models) hosted on Google Drive; download_url points to GDrive. First run: in-app model downloader (progress + cancel + size verify) or manual zip replacement (ADR-007).
+- Source: GitHub-hosted version.json; binaries (app zip + models) hosted on GitHub Releases; download_url points to GitHub Releases. First run: in-app model downloader (progress + cancel + size verify) or manual zip replacement (ADR-007).
 - Flow: launch → if enabled + online, fetch → if newer, notify in top bar → user downloads zip manually → replaces app files preserving settings/, output/, logs/.
 - Manual process; no self-updating executable.
 

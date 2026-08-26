@@ -24,9 +24,9 @@ Plain "Welcome to Scan2Text" notice. Two-step first-run wizard: step 1 expectati
 (c) big or dense files can take several minutes; the app stays responsive;
 (d) output is best-effort Markdown — always double-check important numbers.
 
-### 4. Distribution: app zip + model GGUFs on Google Drive
+### 4. Distribution: app zip + model GGUFs on GitHub Releases
 
-(anyone-with-link); version.json stays GitHub-hosted; download_url points to GDrive. First run with missing models: in-app downloader streams from GDrive into models/ with progress + cancel and verifies expected byte size; failure → translated error + retry. Manual zip replacement remains supported.
+(anyone-with-link); version.json stays GitHub-hosted; download_url points to GitHub Releases. First run with missing models: in-app downloader streams from GitHub Releases into models/ with progress + cancel and verifies expected byte size; failure → translated error + retry. Manual zip replacement remains supported.
 
 ### 5. Log privacy + rotation
 
@@ -40,7 +40,7 @@ Logs contain NO file names and NO content; fields = extension + byte count + pag
 
 - Feedback channel lowers barrier for non-technical users while preserving NFR-02 privacy (no silent upload).
 - CPU cap prevents PC freeze during OCR — usability trade-off favors retention over raw speed.
-- GDrive distribution removes need for large GitHub Releases; version.json remains the source of truth for update checks.
+- GitHub Releases handles 1GB+ GGUF files without the 100MB HTML warning page issue; version.json remains the source of truth for update checks.
 - Monthly cadence reduces release overhead; each release must pass full QA gate before shipping.
 - Size-based log rotation guarantees bounded disk usage regardless of usage pattern.
 - Welcome expectations screen sets realistic accuracy/performance expectations upfront, reducing support burden.
