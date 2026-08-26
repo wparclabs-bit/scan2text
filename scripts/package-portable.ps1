@@ -98,6 +98,11 @@ Copy-Item -Path "$BackendPath\*" -Destination (Join-Path $StagingDir "backend") 
 Write-Host "[COPY] version.json -> staging..." -ForegroundColor Gray
 Copy-Item -Path (Join-Path $RepoRoot "version.json") -Destination $StagingDir -Force
 
+# Copy models/ (included in Full ZIP, excluded from Thin ZIP via filter)
+Write-Host "[COPY] models/ -> staging..." -ForegroundColor Gray
+New-Item -ItemType Directory -Path (Join-Path $StagingDir "models") -Force | Out-Null
+Copy-Item -Path "$RepoRoot\models\*" -Destination (Join-Path $StagingDir "models") -Recurse -Force
+
 # Create empty runtime directories
 @("logs", "output", "feedback") | ForEach-Object {
     New-Item -ItemType Directory -Path (Join-Path $StagingDir $_) -Force | Out-Null
