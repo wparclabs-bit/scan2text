@@ -87,8 +87,9 @@ Kilo MUST invoke these tools BEFORE reading raw files or searching directories:
 - Radix ScrollArea neutralized: `[data-radix-scroll-area-viewport] > div { display:block; min-width:0; height:auto }`.
 - Delete ghosts on sight; verify ACTUAL live component before assuming.
 - State: Zustand memory-only; jobOrder[] FIFO; one active job. Jobs NEVER persist.
-- Backend contract (Phase 7): `POST /process → task_id`; `GET /status/{task_id}`; `GET /health`. Poll 15×2000ms=30s, then background re-poll 60s×10.
-- Validation: max 50MB; PNG/JPG/JPEG/WEBP/PDF only; batch cap 10 (first 10 kept, extras skipped + warning toast + logged); invalid batch = ONE aggregated sonner toast; invalid files never enter queue.
+- Backend contract (Phase 7): `POST /process → task_id`; `GET /status/{task_id}`; `GET /health`. Poll 30×1000ms foreground + 60s health-guarded endurance loop.
+- Port contract: 47351 is hardcoded in three places that MUST change together: `frontend/src-tauri/src/backend_process.rs` (BACKEND_PORT const), `frontend/src/lib/apiBase.ts` (getApiBaseUrl), `src/scan2text/utils/prod_runtime.py` (get_port). Port value is locked; do not refactor.
+- Validation: max 20MB; PNG/JPG/JPEG/WEBP/PDF only; batch cap 10 (first 10 kept, extras skipped + warning toast + logged); invalid batch = ONE aggregated sonner toast; invalid files never enter queue.
 - Output naming: `{stem}_{HHmm}_{yyyyMMdd}.md`, collision `_2`/`_3`, never overwrite. Pure util `src/lib/naming.ts` → `generateOutputFilename()`.
 - **Tailwind & theme (CRITICAL):** Tailwind v3; `postcss.config.js` + `tailwind.config.js` v3 format; NEVER install v4. `src/index.css` MUST start with `@tailwind base; @tailwind components; @tailwind utilities`. Dark = `.dark` class on `<html>`; NOT `@media prefers-color-scheme`. NEVER reintroduce Vite boilerplate. Preflight strips headings/lists → rendered Markdown MUST use `@tailwindcss/typography prose`.
 
@@ -119,7 +120,7 @@ If folder names differ, discover via `Get-ChildItem` before writing; never guess
 - Fractions decide; content never resizes panels; no page scroll; BottomBar always visible.
 - Coffee & paper palette (section 6); purple retired.
 - Dot-only 14px status slot; warm always-visible scrollbars (Queue + Preview); visible-subtle card depth.
-- Batch cap 10; 50MB/file; PNG/JPG/JPEG/WEBP/PDF only; invalid batch = one aggregated toast.
+- Batch cap 10; 20MB/file; PNG/JPG/JPEG/WEBP/PDF only; invalid batch = one aggregated toast.
 - Memory-only jobs; localStorage only theme + language.
 - Share = placeholder `https://placeholder.local` + soft toast, no navigation.
 - Feedback = GForm button left of Share + offline queue, no silent send (ADR-007).
