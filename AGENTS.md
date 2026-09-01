@@ -3,7 +3,6 @@ Read FIRST before every slice. Do NOT re-read PRD docs unless the slice prompt l
 
 **Role:** Kilo Code only. Cloud CTO reads `AGENTS-CTO.md`.
 
-## 0. Portable Root Structure (LOCKED)
 ```
 Scan2Text/
   Scan2Text.exe          ← Tauri shell (desktop entry point)
@@ -14,9 +13,8 @@ Scan2Text/
   output/                 ← generated .md files
   logs/                   ← 1 MB rotation, no filenames/content
   feedback/               ← offline queue
-  settings.json           ← user config
+  settings/settings.json      ← user config
 ```
-**NEVER** use `dist/` for the runtime path. `backend/` is the target portable folder. `Scan2Text.exe` and `backend/` sit side-by-side in the root.
 
 ## 1. Paths & Commands (PowerShell ONLY)
 - Repo root: `D:\WingAI\Projects\scan2text`
