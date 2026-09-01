@@ -100,6 +100,7 @@ async def _run_processing(
     queue: QueueService,
     paths: List[Path],
     path_to_stem: Dict[Path, str],
+    enhance: bool = False,
 ) -> None:
     """Background coroutine that processes files and broadcasts progress."""
     app.state.worker_busy = True
@@ -115,7 +116,11 @@ async def _run_processing(
 
     try:
         summary = await asyncio.to_thread(
-            queue.process_image_paths, paths, queue._vlm_adapter, path_to_stem
+            queue.process_image_paths,
+            paths,
+            queue._vlm_adapter,
+            path_to_stem,
+            enhance=enhance,
         )
         processed = summary.succeeded + summary.failed
         task["processed"] = processed
@@ -161,11 +166,17 @@ async def _run_processing(
 
 
 @app.post("/process", status_code=202)
-async def process_files(files: List[UploadFile] = Form(default=[])) -> JSONResponse:
+async def process_files(
+    files: List[UploadFile] = Form(default=[]),
+    enhance: bool = Form(default=False),
+) -> JSONResponse:
     """Trigger batch OCR processing for uploaded files.
 
     Accepts multipart/form-data with one or more files. Each file is saved
     to a local uploads/ directory and then processed by the background worker.
+
+    The optional ``enhance`` flag (default False) requests PIL contrast + color
+    enhancement (4.0x) on images before OCR inference.
 
     Returns a task ID immediately (async fire-and-forget style).
     """
@@ -188,7 +199,9 @@ async def process_files(files: List[UploadFile] = Form(default=[])) -> JSONRespo
         "result_markdown": None,
     }
 
-    asyncio.create_task(_run_processing(task_id, queue, saved_paths, path_to_stem))
+    asyncio.create_task(
+        _run_processing(task_id, queue, saved_paths, path_to_stem, enhance=enhance)
+    )
 
     return JSONResponse(content={"task_id": task_id}, status_code=202)
 

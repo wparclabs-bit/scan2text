@@ -12,6 +12,10 @@ class AppSettings(BaseModel):
     language: str = "auto"
     theme: str = "dark"
     hide_welcome_notice: bool = False
+    # S62: image quality enhancement toggle (persisted to settings.json).
+    # When True, uploaded images get PIL contrast + color enhancement (4.0x)
+    # before OCR inference. Frontend sends the per-request `enhance` flag.
+    enhance_image_quality: bool = False
 
     # Engine (JSON-only advanced knobs, ADR-005; no UI in MVP)
     model_path: str = ""

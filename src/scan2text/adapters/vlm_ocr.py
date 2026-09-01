@@ -218,8 +218,14 @@ class VlmOcrAdapter:
     def model_path(self) -> str:
         return self._model_path
 
-    def ocr(self, image_path: str) -> str | dict[str, Any]:
-        """Submit one file (image or PDF). Returns Markdown or an error dict."""
+    def ocr(self, image_path: str, enhance: bool = False) -> str | dict[str, Any]:
+        """Submit one file (image or PDF). Returns Markdown or an error dict.
+
+        Args:
+            image_path: Path to the image or PDF file.
+            enhance: When True, images are PIL contrast + color enhanced (4.0x)
+                before OCR inference. Defaults to False.
+        """
         if not self._loaded:
             return {
                 "error": MODEL_NOT_FOUND,
@@ -236,10 +242,15 @@ class VlmOcrAdapter:
             page_views = page_views_result
             images = [pv[0] for pv in page_views]
         else:
-            from PIL import Image
+            from PIL import Image, ImageEnhance
 
             with Image.open(path) as pil_img:
-                images = _prepare_views(pil_img.convert("RGB"))
+                img = pil_img.convert("RGB")
+                if enhance:
+                    # S62: boost contrast + color saturation before inference.
+                    img = ImageEnhance.Contrast(img).enhance(4.0)
+                    img = ImageEnhance.Color(img).enhance(4.0)
+                images = _prepare_views(img)
 
         self._input_queue.put({"action": "ocr", "images": images, "max_tokens": 4096})
         effective_timeout = effective_ocr_timeout(self._timeout, len(images))

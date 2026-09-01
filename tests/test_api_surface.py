@@ -65,7 +65,7 @@ def test_run_processing_toggles_worker_busy(app):
     mock_queue = MagicMock()
     mock_queue._vlm_adapter = MagicMock()
 
-    def capture(paths, adapter, path_to_stem=None):
+    def capture(paths, adapter, path_to_stem=None, enhance=False):
         observed["busy"] = api_app.state.worker_busy
         return _Summary()
 

@@ -199,6 +199,7 @@ class QueueService:
         image_paths: List[str | Path],
         vlm_adapter,
         path_to_stem: Optional[Dict[Path, str]] = None,
+        enhance: bool = False,
     ) -> BatchSummary:
         """Process a list of image paths using a VlmOcrAdapter instance.
 
@@ -211,6 +212,8 @@ class QueueService:
                 output stem (e.g. sanitized original filename). When provided
                 and the path is present, ``resolve_output_path`` receives the
                 original stem instead of the UUID temp name.
+            enhance: When True, images are PIL contrast + color enhanced (4.0x)
+                before OCR inference. Defaults to False.
         """
         import shutil
 
@@ -222,7 +225,7 @@ class QueueService:
         for path in image_paths:
             try:
                 path = Path(path)
-                result = vlm_adapter.ocr(str(path))
+                result = vlm_adapter.ocr(str(path), enhance=enhance)
 
                 if isinstance(result, dict) and "error" in result:
                     dest_name = self._resolve_unique_quarantine_name(path.name)
