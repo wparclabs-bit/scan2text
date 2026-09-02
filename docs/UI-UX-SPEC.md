@@ -77,7 +77,7 @@ h-full flex-1 rounded-xl overflow-hidden flex flex-col min-h-0 min-w-0 box-borde
 
 ### Content area (between title and footer)
 ```
-relative z-10 flex-1 min-h-0 flex flex-col gap-4 p-4
+relative z-10 flex-1 min-h-0 flex flex-col gap-1 px-4 pt-1 pb-1
 ```
 
 ### Background
@@ -93,7 +93,7 @@ relative z-10 flex-1 min-h-0 flex flex-col gap-4 p-4
 - Footer text: "max 10 files per batch"
 
 ### Gap
-- `gap-4` between title and content area, and between content area and footer
+- `gap-1` (~4px) between title and content area (inside content div), and between content div and footer (on inner dashed container). Horizontal padding: `px-4`. Vertical margins: `pt-1 pb-1` on content div.
 
 ### Scroll
 - **NO ScrollArea** in the dropzone. Native overflow is acceptable if content overflows.
@@ -186,7 +186,7 @@ relative z-10 flex-1 min-h-0 flex flex-col gap-4 p-4
 During implementation, assert `className` strings on key elements:
 - Dropzone root: `flex flex-col h-full min-h-0 min-w-0 w-full`
 - Inner dashed: `flex-1 min-h-0`
-- Content area: `flex-1 min-h-0 gap-4`
+- Content area: `flex-1 min-h-0 gap-1 px-4 pt-1 pb-1`
 - Scrollbar wrappers: `data-testid="md-table-scroll"`
 
 These are fast, deterministic, and jsdom-safe.

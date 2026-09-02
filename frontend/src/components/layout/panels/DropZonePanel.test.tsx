@@ -65,12 +65,17 @@ describe('DropZonePanel background image', () => {
     expect(dropzone).toHaveClass('min-h-0')
   })
 
-  it('column container uses gap-4 between title and dropzone', () => {
+  it('column container uses gap-1 px-4 pt-1 pb-1 between title and dropzone', () => {
     render(<DropZonePanel />)
     const column = Array.from(document.querySelectorAll('[data-testid="panel-dropzone"] > div > div'))
-      .find((el) => el.classList.contains('gap-4')) as HTMLElement | null
+      .find((el) => el.classList.contains('gap-1') && el.classList.contains('px-4')) as HTMLElement | null
     expect(column).toBeInTheDocument()
-    expect(column).toHaveClass('gap-4')
+    expect(column).toHaveClass('gap-1')
+    expect(column).toHaveClass('px-4')
+    expect(column).toHaveClass('pt-1')
+    expect(column).toHaveClass('pb-1')
+    expect(column).not.toHaveClass('gap-4')
+    expect(column).not.toHaveClass('p-4')
   })
 
   it('dashed root carries flex-1 min-h-0 w-full from parent className', () => {
@@ -99,16 +104,21 @@ describe('DropZonePanel background image', () => {
     expect(card).toHaveClass('min-h-0')
   })
 
-  it('column div has flex-1 min-h-0 flex flex-col gap-4 for stretch chain', () => {
+  it('column div has flex-1 min-h-0 flex flex-col gap-1 px-4 pt-1 pb-1 for stretch chain', () => {
     render(<DropZonePanel />)
     const column = Array.from(document.querySelectorAll('[data-testid="panel-dropzone"] > div > div'))
-      .find((el) => el.classList.contains('gap-4')) as HTMLElement | null
+      .find((el) => el.classList.contains('gap-1') && el.classList.contains('px-4')) as HTMLElement | null
     expect(column).toBeInTheDocument()
     expect(column).toHaveClass('flex-1')
     expect(column).toHaveClass('min-h-0')
     expect(column).toHaveClass('flex')
     expect(column).toHaveClass('flex-col')
-    expect(column).toHaveClass('gap-4')
+    expect(column).toHaveClass('gap-1')
+    expect(column).toHaveClass('px-4')
+    expect(column).toHaveClass('pt-1')
+    expect(column).toHaveClass('pb-1')
+    expect(column).not.toHaveClass('gap-4')
+    expect(column).not.toHaveClass('p-4')
   })
 
   it('FileDropZone dashed root has flex-1 min-h-0 w-full flex flex-col', () => {
