@@ -1,5 +1,5 @@
 export function getApiBaseUrl(): string {
-  return import.meta.env.PROD ? 'http://127.0.0.1:47351' : ''
+  return 'http://127.0.0.1:47351'
 }
 
 export function buildApiUrl(path: string): string {

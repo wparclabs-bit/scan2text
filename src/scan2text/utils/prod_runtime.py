@@ -28,10 +28,8 @@ def frozen_exe_dir() -> Path:
 
 
 def get_port() -> int:
-    """Return the production port (47351) when frozen, 8000 otherwise."""
-    if is_frozen():
-        return 47351
-    return 8000
+    """Return the unified port (47351) — same for frozen and dev."""
+    return 47351
 
 
 def get_host() -> str:

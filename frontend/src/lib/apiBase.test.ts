@@ -6,9 +6,9 @@ describe('getApiBaseUrl', () => {
     vi.unstubAllEnvs()
   })
 
-  it('should return empty string in dev mode', () => {
+  it('should return unified dev port URL in dev mode', () => {
     vi.stubEnv('PROD', false)
-    expect(getApiBaseUrl()).toBe('')
+    expect(getApiBaseUrl()).toBe('http://127.0.0.1:47351')
   })
 
   it('should return production backend URL when PROD is true', () => {
@@ -22,9 +22,9 @@ describe('buildApiUrl', () => {
     vi.unstubAllEnvs()
   })
 
-  it('should return relative path in dev mode', () => {
+  it('should return absolute URL in dev mode (unified port)', () => {
     vi.stubEnv('PROD', false)
-    expect(buildApiUrl('/api/health')).toBe('/api/health')
+    expect(buildApiUrl('/api/health')).toBe('http://127.0.0.1:47351/api/health')
   })
 
   it('should return absolute URL in prod mode', () => {
@@ -34,7 +34,7 @@ describe('buildApiUrl', () => {
 
   it('should prepend a leading slash when missing (dev mode)', () => {
     vi.stubEnv('PROD', false)
-    expect(buildApiUrl('api/health')).toBe('/api/health')
+    expect(buildApiUrl('api/health')).toBe('http://127.0.0.1:47351/api/health')
   })
 
   it('should prepend a leading slash when missing (prod mode)', () => {

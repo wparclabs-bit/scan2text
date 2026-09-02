@@ -176,8 +176,8 @@ relative z-10 flex-1 min-h-0 flex flex-col gap-1 px-4 pt-1 pb-1
 - Content-sized containers make siblings grow unexpectedly
 
 ### Dev-only plumbing differences
-- Dev Vite proxy may differ from production backend port
-- Port 47351 is the locked contract port; dev proxy on 8000 is unlisted and under diagnosis
+- Dev Vite proxy unified to production backend port (47351) — no separate dev port
+- Port 47351 is the locked contract port; dev and prod both use 47351
 - Always verify which port a request actually hits
 
 ## 8. Acceptance Protocol

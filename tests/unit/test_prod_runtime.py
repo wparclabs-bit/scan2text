@@ -43,10 +43,10 @@ class TestGetPort:
         with patch.object(sys, "frozen", True, create=True):
             assert get_port() == 47351
 
-    def test_non_frozen_port_is_8000(self):
+    def test_non_frozen_port_is_47351(self):
         from scan2text.utils.prod_runtime import get_port
         with patch.object(sys, "frozen", False, create=True):
-            assert get_port() == 8000
+            assert get_port() == 47351
 
 
 class TestGetHost:

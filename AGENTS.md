@@ -86,7 +86,7 @@ Kilo MUST invoke these tools BEFORE reading raw files or searching directories:
 - Delete ghosts on sight; verify ACTUAL live component before assuming.
 - State: Zustand memory-only; jobOrder[] FIFO; one active job. Jobs NEVER persist.
 - Backend contract (Phase 7): `POST /process → task_id`; `GET /status/{task_id}`; `GET /health`. Poll 30×1000ms foreground + 60s health-guarded endurance loop.
-- Port contract: 47351 is hardcoded in three places that MUST change together: `frontend/src-tauri/src/backend_process.rs` (BACKEND_PORT const), `frontend/src/lib/apiBase.ts` (getApiBaseUrl), `src/scan2text/utils/prod_runtime.py` (get_port). Port value is locked; do not refactor.
+- Port contract: 47351 is hardcoded in three places that MUST change together: `frontend/src-tauri/src/backend_process.rs` (BACKEND_PORT const), `frontend/src/lib/apiBase.ts` (getApiBaseUrl), `src/scan2text/utils/prod_runtime.py` (get_port). Port value is locked; do not refactor. Dev unified to 47351 (CEO 2026-09-02).
 - Validation: max 20MB; PNG/JPG/JPEG/WEBP/PDF only; batch cap 10 (first 10 kept, extras skipped + warning toast + logged); invalid batch = ONE aggregated sonner toast; invalid files never enter queue.
 - Output naming: `{stem}_{HHmm}_{yyyyMMdd}.md`, collision `_2`/`_3`, never overwrite. Pure util `src/lib/naming.ts` → `generateOutputFilename()`.
 - **Tailwind & theme (CRITICAL):** Tailwind v3; `postcss.config.js` + `tailwind.config.js` v3 format; NEVER install v4. `src/index.css` MUST start with `@tailwind base; @tailwind components; @tailwind utilities`. Dark = `.dark` class on `<html>`; NOT `@media prefers-color-scheme`. NEVER reintroduce Vite boilerplate. Preflight strips headings/lists → rendered Markdown MUST use `@tailwindcss/typography prose`.
