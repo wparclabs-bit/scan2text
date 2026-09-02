@@ -25,7 +25,7 @@ Scan2Text/
 | Command | Context |
 |---|---|
 | `graphify . --code-only` | refresh AST graph |
-| `npm run test` | Vitest (tail output via Select-Object -Last 30 for full suites) |
+| `npm run test` | Vitest (tail full-suite output via Select-Object -Last 30; --reporter=compact is invalid in this Vitest version) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run build` | Vite |
 | `py -3.12 -m pytest -q --tb=line` | backend tests (Phase 7+) |
