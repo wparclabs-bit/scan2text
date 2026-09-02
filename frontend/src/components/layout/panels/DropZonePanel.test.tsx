@@ -45,21 +45,21 @@ describe('DropZonePanel background image', () => {
 
   it('dashed upload area has flex-1 class for fill-between-header-footer layout', () => {
     render(<DropZonePanel />)
-    const dropzone = document.querySelector('[data-testid="dropzone"]') as HTMLElement | null
+    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]') as HTMLElement | null
     expect(dropzone).toBeInTheDocument()
     expect(dropzone).toHaveClass('flex-1')
   })
 
   it('dashed upload area has w-full class', () => {
     render(<DropZonePanel />)
-    const dropzone = document.querySelector('[data-testid="dropzone"]') as HTMLElement | null
+    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]') as HTMLElement | null
     expect(dropzone).toBeInTheDocument()
     expect(dropzone).toHaveClass('w-full')
   })
 
   it('dashed upload area has flex-1 class which implies flexGrow 1', () => {
     render(<DropZonePanel />)
-    const dropzone = document.querySelector('[data-testid="dropzone"]') as HTMLElement | null
+    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]') as HTMLElement | null
     expect(dropzone).toBeInTheDocument()
     expect(dropzone).toHaveClass('flex-1')
     expect(dropzone).toHaveClass('min-h-0')
@@ -75,7 +75,7 @@ describe('DropZonePanel background image', () => {
 
   it('dashed root carries flex-1 min-h-0 w-full from parent className', () => {
     render(<DropZonePanel />)
-    const dropzone = document.querySelector('[data-testid="dropzone"]') as HTMLElement | null
+    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]') as HTMLElement | null
     expect(dropzone).toBeInTheDocument()
     expect(dropzone).toHaveClass('flex-1')
     expect(dropzone).toHaveClass('min-h-0')
@@ -113,7 +113,7 @@ describe('DropZonePanel background image', () => {
 
   it('FileDropZone dashed root has flex-1 min-h-0 w-full flex flex-col', () => {
     render(<DropZonePanel />)
-    const dropzone = document.querySelector('[data-testid="dropzone"]') as HTMLElement | null
+    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]') as HTMLElement | null
     expect(dropzone).toBeInTheDocument()
     expect(dropzone).toHaveClass('flex-1')
     expect(dropzone).toHaveClass('min-h-0')

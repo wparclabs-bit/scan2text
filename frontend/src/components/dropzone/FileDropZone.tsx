@@ -120,9 +120,9 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
 
   return (
     <div
-      data-testid="dropzone"
+      data-testid="dropzone-dashed"
       data-state={isDragOver ? 'drag' : 'idle'}
-      className={`w-full flex flex-col items-center justify-center gap-2 p-4${className ? ` ${className}` : ''} border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+      className={`w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-2 p-4${className ? ` ${className}` : ''} border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
         isDragOver
           ? 'ring-2 ring-accent/60 border-accent bg-[rgba(227,165,95,0.08)]'
           : 'border-muted-foreground/30 hover:border-primary/50'

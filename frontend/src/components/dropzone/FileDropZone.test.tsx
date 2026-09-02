@@ -25,9 +25,9 @@ describe('FileDropZone', () => {
     })
   })
 
-  it('should render with data-testid="dropzone"', () => {
+  it('should render with data-testid="dropzone-dashed"', () => {
     const { container } = render(<FileDropZone />)
-    expect(container.querySelector('[data-testid="dropzone"]')).toBeInTheDocument()
+    expect(container.querySelector('[data-testid="dropzone-dashed"]')).toBeInTheDocument()
   })
 
   it('should render a hidden file input with data-testid="dropzone-input"', () => {
@@ -39,20 +39,20 @@ describe('FileDropZone', () => {
 
   it('should have data-state="idle" by default', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')
     expect(dropzone).toHaveAttribute('data-state', 'idle')
   })
 
   it('should set data-state="drag" on drag enter', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     fireEvent.dragEnter(dropzone, { dataTransfer: { files: [new File(['x'], 'test.png')] } })
     expect(dropzone).toHaveAttribute('data-state', 'drag')
   })
 
   it('should reset to idle on drag leave', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     fireEvent.dragOver(dropzone, { dataTransfer: { files: [new File(['x'], 'test.png')] } })
     fireEvent.dragLeave(dropzone)
     expect(dropzone).toHaveAttribute('data-state', 'idle')
@@ -60,7 +60,7 @@ describe('FileDropZone', () => {
 
   it('dragEnter sets data-state="drag" with warm highlight class', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     fireEvent.dragEnter(dropzone, { dataTransfer: { files: [new File(['x'], 'test.png')] } })
     expect(dropzone).toHaveAttribute('data-state', 'drag')
     expect(dropzone).toHaveClass('ring-2')
@@ -69,7 +69,7 @@ describe('FileDropZone', () => {
 
   it('drag counter: double enter then double leave clears state', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     fireEvent.dragEnter(dropzone)
     expect(dropzone).toHaveAttribute('data-state', 'drag')
     fireEvent.dragEnter(dropzone)
@@ -82,7 +82,7 @@ describe('FileDropZone', () => {
 
   it('dragOver prevents default and stop propagation', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     const pd = vi.fn()
     const ss = vi.fn()
     const event = new MouseEvent('dragover', { bubbles: true, cancelable: true })
@@ -96,7 +96,7 @@ describe('FileDropZone', () => {
 
   it('should open file picker when clicked', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     const input = container.querySelector('[data-testid="dropzone-input"]') as HTMLInputElement
 
     vi.spyOn(input, 'click').mockImplementation(() => {})
@@ -106,7 +106,7 @@ describe('FileDropZone', () => {
 
   it('should open file picker on Enter key', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     const input = container.querySelector('[data-testid="dropzone-input"]') as HTMLInputElement
 
     vi.spyOn(input, 'click').mockImplementation(() => {})
@@ -116,7 +116,7 @@ describe('FileDropZone', () => {
 
   it('should open file picker on Space key', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     const input = container.querySelector('[data-testid="dropzone-input"]') as HTMLInputElement
 
     vi.spyOn(input, 'click').mockImplementation(() => {})
@@ -126,7 +126,7 @@ describe('FileDropZone', () => {
 
   it('should stay idle when an invalid file is dropped (all-invalid batch)', async () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     const txtFile = new File(['content'], 'test.txt', { type: 'text/plain' })
 
     fireEvent.drop(dropzone, { dataTransfer: { files: [txtFile] } })
@@ -137,7 +137,7 @@ describe('FileDropZone', () => {
 
   it('should not call addJob when an invalid file is dropped', async () => {
     render(<FileDropZone />)
-    const dropzone = document.querySelector('[data-testid="dropzone"]')!
+    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
     const txtFile = new File(['content'], 'test.txt', { type: 'text/plain' })
 
     fireEvent.drop(dropzone, { dataTransfer: { files: [txtFile] } })
@@ -148,7 +148,7 @@ describe('FileDropZone', () => {
 
   it('should call addJob with a queue item when a valid PNG is dropped', async () => {
     render(<FileDropZone />)
-    const dropzone = document.querySelector('[data-testid="dropzone"]')!
+    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
     const pngFile = new File(['content'], 'scan.png', { type: 'image/png' })
 
     fireEvent.drop(dropzone, { dataTransfer: { files: [pngFile] } })
@@ -160,7 +160,7 @@ describe('FileDropZone', () => {
 
   it('should call onFileAdd callback when a valid file is accepted', async () => {
     render(<FileDropZone onFileAdd={mockOnFileAdd} />)
-    const dropzone = document.querySelector('[data-testid="dropzone"]')!
+    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
     const pdfFile = new File(['content'], 'doc.pdf', { type: 'application/pdf' })
 
     fireEvent.drop(dropzone, { dataTransfer: { files: [pdfFile] } })
@@ -172,7 +172,7 @@ describe('FileDropZone', () => {
 
   it('should process all valid files when multiple files are dropped', async () => {
     render(<FileDropZone />)
-    const dropzone = document.querySelector('[data-testid="dropzone"]')!
+    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
     const file1 = new File(['a'], 'first.png', { type: 'image/png' })
     const file2 = new File(['b'], 'second.jpg', { type: 'image/jpeg' })
 
@@ -187,7 +187,7 @@ describe('FileDropZone', () => {
 
   it('should stay idle after dropping an invalid file', async () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     const txtFile = new File(['content'], 'test.txt', { type: 'text/plain' })
 
     fireEvent.drop(dropzone, { dataTransfer: { files: [txtFile] } })
@@ -198,27 +198,35 @@ describe('FileDropZone', () => {
 
   it('should be keyboard accessible with role="button" and tabIndex', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     expect(dropzone).toHaveAttribute('role', 'button')
     expect(dropzone).toHaveAttribute('tabindex', '0')
   })
 
   it('should not contain text paragraphs inside the dropzone area (icon-only)', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     const paragraphs = dropzone.querySelectorAll('p')
     expect(paragraphs.length).toBe(0)
   })
 
   it('dashed drop area has w-full class', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     expect(dropzone).toHaveClass('w-full')
+  })
+
+  it('dashed drop area has flex-1, min-h-0, w-full classes to fill card height', () => {
+    const { container } = render(<FileDropZone />)
+    const dashed = container.querySelector('[data-testid="dropzone-dashed"]')!
+    expect(dashed).toHaveClass('flex-1')
+    expect(dashed).toHaveClass('min-h-0')
+    expect(dashed).toHaveClass('w-full')
   })
 
   it('dropzone container always has centering classes even with prop className', () => {
     const { container } = render(<FileDropZone className="flex-1 min-h-0 w-full" />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     // Default centering classes must always be present
     expect(dropzone).toHaveClass('items-center')
     expect(dropzone).toHaveClass('justify-center')
@@ -231,14 +239,14 @@ describe('FileDropZone', () => {
 
   it('dropzone container has gap-2 and p-4 always', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     expect(dropzone).toHaveClass('gap-2')
     expect(dropzone).toHaveClass('p-4')
   })
 
   it('dropzone container has flex and w-full always', () => {
     const { container } = render(<FileDropZone />)
-    const dropzone = container.querySelector('[data-testid="dropzone"]')!
+    const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     expect(dropzone).toHaveClass('flex')
     expect(dropzone).toHaveClass('w-full')
   })
@@ -246,7 +254,7 @@ describe('FileDropZone', () => {
   describe('multi-file behavior', () => {
     it('should add multiple valid files to queue in FIFO order', async () => {
       render(<FileDropZone />)
-      const dropzone = document.querySelector('[data-testid="dropzone"]')!
+      const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
       const file1 = new File(['a'], 'first.png', { type: 'image/png' })
       const file2 = new File(['b'], 'second.jpg', { type: 'image/jpeg' })
       const file3 = new File(['c'], 'third.webp', { type: 'image/webp' })
@@ -262,7 +270,7 @@ describe('FileDropZone', () => {
 
     it('should add only valid files from a mixed batch', async () => {
       render(<FileDropZone />)
-      const dropzone = document.querySelector('[data-testid="dropzone"]')!
+      const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
       const validPng = new File(['a'], 'valid.png', { type: 'image/png' })
       const invalidTxt = new File(['b'], 'invalid.txt', { type: 'text/plain' })
       const validPdf = new File(['c'], 'valid.pdf', { type: 'application/pdf' })
@@ -278,7 +286,7 @@ describe('FileDropZone', () => {
 
     it('should not block valid files because of invalid files', async () => {
       render(<FileDropZone />)
-      const dropzone = document.querySelector('[data-testid="dropzone"]')!
+      const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
       const invalidTxt = new File(['b'], 'invalid.txt', { type: 'text/plain' })
       const validPng = new File(['a'], 'valid.png', { type: 'image/png' })
 
@@ -292,7 +300,7 @@ describe('FileDropZone', () => {
 
     it('should add no jobs when all files are invalid', async () => {
       render(<FileDropZone />)
-      const dropzone = document.querySelector('[data-testid="dropzone"]')!
+      const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
       const txtFile = new File(['content'], 'test.txt', { type: 'text/plain' })
       const exeFile = new File(['content'], 'malware.exe', { type: 'application/octet-stream' })
 
