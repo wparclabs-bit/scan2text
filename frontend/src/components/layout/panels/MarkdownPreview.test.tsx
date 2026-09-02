@@ -49,6 +49,23 @@ describe('MarkdownPreview', () => {
     expect(screen.getByTestId('preview-markdown')).toBeInTheDocument()
   })
 
+  it('wraps GFM table in a div with data-testid="md-table-scroll" and overflow-x-auto', () => {
+    const tableMd = '| Name | Value |\n|------|-------|\n| A    | 1     |'
+    render(<MarkdownPreview markdown={tableMd} />)
+    const tableWrapper = document.querySelector('[data-testid="md-table-scroll"]')
+    expect(tableWrapper).toBeInTheDocument()
+    expect(tableWrapper).toHaveClass('overflow-x-auto')
+    expect(tableWrapper).toHaveClass('max-w-full')
+    const table = tableWrapper?.querySelector('table')
+    expect(table).toBeInTheDocument()
+  })
+
+  it('article element does NOT carry break-words class', () => {
+    render(<MarkdownPreview markdown="# Hello" />)
+    const article = document.querySelector('[data-testid="preview-markdown"]') as HTMLElement
+    expect(article).not.toHaveClass('break-words')
+  })
+
   it('applies prose and dark:prose-invert classes to container', () => {
     render(<MarkdownPreview markdown="# Hello" />)
     const container = document.querySelector('[data-testid="preview-markdown"]') as HTMLElement

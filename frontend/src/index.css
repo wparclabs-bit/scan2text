@@ -330,3 +330,41 @@ html, body {
 :not(.dark) [data-radix-scroll-area-viewport] [data-orientation="vertical"] > [class*="rounded-full"] {
   background: #92400E !important;
 }
+
+/* Native warm-styled always-visible scrollbar for Preview + Queue */
+.scrollbar-warm {
+  scrollbar-width: thin;
+  scrollbar-color: #E3A55F #3B2A18;
+  scrollbar-gutter: stable;
+}
+
+.dark .scrollbar-warm {
+  scrollbar-color: #E3A55F #3B2A18;
+}
+
+:not(.dark) .scrollbar-warm {
+  scrollbar-color: #92400E #D9CFC7;
+}
+
+.scrollbar-warm::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-warm::-webkit-scrollbar-track {
+  background: #3B2A18;
+  border-radius: 9999px;
+}
+
+.scrollbar-warm::-webkit-scrollbar-thumb {
+  background: #E3A55F;
+  border-radius: 9999px;
+}
+
+:not(.dark) .scrollbar-warm::-webkit-scrollbar-track {
+  background: #D9CFC7;
+}
+
+:not(.dark) .scrollbar-warm::-webkit-scrollbar-thumb {
+  background: #92400E;
+}

@@ -65,6 +65,23 @@ describe('DropZonePanel background image', () => {
     expect(dropzone).toHaveClass('min-h-0')
   })
 
+  it('column container uses gap-4 between title and dropzone', () => {
+    render(<DropZonePanel />)
+    const column = Array.from(document.querySelectorAll('[data-testid="panel-dropzone"] > div > div'))
+      .find((el) => el.classList.contains('gap-4')) as HTMLElement | null
+    expect(column).toBeInTheDocument()
+    expect(column).toHaveClass('gap-4')
+  })
+
+  it('dashed root carries flex-1 min-h-0 w-full from parent className', () => {
+    render(<DropZonePanel />)
+    const dropzone = document.querySelector('[data-testid="dropzone"]') as HTMLElement | null
+    expect(dropzone).toBeInTheDocument()
+    expect(dropzone).toHaveClass('flex-1')
+    expect(dropzone).toHaveClass('min-h-0')
+    expect(dropzone).toHaveClass('w-full')
+  })
+
   it('panel root has min-w-0 and w-full to prevent grid item overflow', () => {
     render(<DropZonePanel />)
     const panel = screen.getByTestId('panel-dropzone') as HTMLElement

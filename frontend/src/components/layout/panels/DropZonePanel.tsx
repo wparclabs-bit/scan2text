@@ -22,7 +22,7 @@ export default function DropZonePanel() {
             opacity: 0.15,
           }}
         />
-        <div className="relative z-10 flex-1 min-h-0 flex flex-col gap-3 p-4">
+        <div className="relative z-10 flex-1 min-h-0 flex flex-col gap-4 p-4">
           <p data-testid="dropzone-header" className="text-base font-display font-bold text-[#1F150C] text-center shrink-0">
             {t('dropzone.clickLabel')}
           </p>

@@ -213,7 +213,7 @@ describe('PreviewPanel', () => {
     })
   })
 
-  it('preview ScrollArea mounts a visible ScrollBar component', () => {
+  it('preview scroll container is a native div with overflow-y-auto and scrollbar-warm', () => {
     setupStore('job-1', {
       'job-1': {
         id: 'job-1',
@@ -226,12 +226,24 @@ describe('PreviewPanel', () => {
     render(<PreviewPanel />)
     const scrollArea = screen.getByTestId('preview-scroll-area')
     expect(scrollArea).toBeInTheDocument()
-    const source = require('fs').readFileSync(
-      require('path').join(__dirname, './PreviewPanel.tsx'),
-      'utf8',
-    )
-    expect(source).toContain('import { ScrollArea, ScrollBar }')
-    expect(source).toContain('<ScrollBar orientation="vertical" />')
+    expect(scrollArea.tagName).toBe('DIV')
+    expect(scrollArea).toHaveClass('overflow-y-auto')
+    expect(scrollArea).toHaveClass('scrollbar-warm')
+  })
+
+  it('preview scroll container does NOT use Radix ScrollArea viewport', () => {
+    setupStore('job-1', {
+      'job-1': {
+        id: 'job-1',
+        fileName: 'test.png',
+        fileType: 'image/png',
+        status: 'completed',
+        resultMarkdown: '# Hello\n\nSome longer content to ensure scrollability.',
+      },
+    })
+    render(<PreviewPanel />)
+    const scrollArea = screen.getByTestId('preview-scroll-area')
+    expect(scrollArea.querySelector('[data-radix-scroll-area-viewport]')).toBeNull()
   })
 
   describe('Action Header (Copy & Open Folder)', () => {

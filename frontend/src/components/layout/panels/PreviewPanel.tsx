@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useScan2TextStore } from '@/stores/scan2text.store'
 import { usePreferenceStore } from '@/stores/preferencesStore'
 import MarkdownPreview from './MarkdownPreview'
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+
 import { toast } from 'sonner'
 import { getDepthStyle } from '@/lib/depthStyles'
 import { getSettings } from '@/lib/api'
@@ -99,12 +99,11 @@ export default function PreviewPanel() {
 
       {job !== null && job.status === 'completed' && (
         <div className="flex-1 rounded-xl flex flex-col min-w-0 box-border overflow-hidden" style={depthStyle}>
-          <ScrollArea data-testid="preview-scroll-area" className="flex-1">
+          <div data-testid="preview-scroll-area" className="flex-1 min-h-0 overflow-y-auto scrollbar-warm">
             <div className="p-4">
               <MarkdownPreview markdown={job.resultMarkdown ?? job.markdownOutput ?? ''} />
             </div>
-            <ScrollBar orientation="vertical" />
-          </ScrollArea>
+          </div>
         </div>
       )}
     </div>
