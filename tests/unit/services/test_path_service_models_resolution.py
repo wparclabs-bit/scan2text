@@ -60,12 +60,13 @@ class TestModelsDirEnvVarInvalid:
                 assert fake_path in err_msg
                 # Must list fallback locations for troubleshooting
                 assert "SCAN2TEXT_MODELS_DIR=" in err_msg
-                assert "dev root=" in err_msg
+                # S63a: error lists home/models, not dev root
+                assert "home/models=" in err_msg
             finally:
                 os.environ.pop("SCAN2TEXT_MODELS_DIR", None)
 
-    def test_env_nonexistent_includes_frozen_paths_when_frozen(self):
-        """When frozen + invalid env, error lists frozen paths too."""
+    def test_env_nonexistent_includes_home_path_when_frozen(self):
+        """When frozen + invalid env, error lists home/models."""
         fake_path = "/bad/env/path"
         with patch.object(sys, "frozen", True, create=True):
             with patch.object(sys, "executable", "/tmp/app.exe", create=True):
@@ -76,8 +77,8 @@ class TestModelsDirEnvVarInvalid:
                         _ = svc.models_dir
                     err_msg = str(exc_info.value)
                     assert fake_path in err_msg
-                    assert "frozen grandparent=" in err_msg
-                    assert "frozen parent=" in err_msg
+                    # S63a: error lists home/models
+                    assert "home/models=" in err_msg
                 finally:
                     os.environ.pop("SCAN2TEXT_MODELS_DIR", None)
 
@@ -97,51 +98,65 @@ class TestModelsDirFrozenGrandparent:
             assert svc.models_dir == tmp_path / "models"
 
     def test_grandparent_no_models_parent_has_models(self, tmp_path):
-        """Grandparent lacks models/ — falls to parent if parent has it."""
+        """S63a: frozen home = parent of backend exe, regardless of models location."""
         exe_dir = tmp_path / "exe"
         exe_dir.mkdir()
         (exe_dir / "models").mkdir()
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(exe_dir / "app.exe"), create=True):
             svc = PathService()
-            assert svc.models_dir == exe_dir / "models"
+            # S63a: home = tmp_path (parent of exe_dir), models_dir = tmp_path/models
+            assert svc.models_dir == tmp_path / "models"
 
 
 class TestModelsDirFrozenExeAdjacent:
     """Priority 3: exe-adjacent models/ when grandparent+parent both lack."""
 
     def test_only_exe_has_models(self, tmp_path):
-        """Only exe-adjacent has models/ — should be returned."""
-        exe_dir = tmp_path
-        (exe_dir / "models").mkdir()
+        """S63a: frozen home = parent of backend exe."""
+        # Exe in subdirectory so parent is tmp_path
+        backend_dir = tmp_path / "backend"
+        backend_dir.mkdir()
+        (tmp_path / "models").mkdir()
         with patch.object(sys, "frozen", True, create=True), \
-             patch.object(sys, "executable", str(exe_dir / "app.exe"), create=True):
+             patch.object(sys, "executable", str(backend_dir / "app.exe"), create=True):
             svc = PathService()
-            assert svc.models_dir == exe_dir / "models"
+            # S63a: home = tmp_path (parent of backend_dir), models_dir = tmp_path/models
+            assert svc.models_dir == tmp_path / "models"
 
-    def test_no_models_anywhere_creates_under_exe(self, tmp_path):
-        """No models/ found anywhere — falls to exe_dir/models (auto-create)."""
+    def test_no_models_anywhere_creates_under_home(self, tmp_path):
+        """S63a: No models/ found — home/models (auto-create)."""
         exe_dir = tmp_path / "exe"
         exe_dir.mkdir()
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(exe_dir / "app.exe"), create=True):
             svc = PathService()
-            assert svc.models_dir == exe_dir / "models"
+            # S63a: home = tmp_path (parent of exe_dir), models_dir = tmp_path/models
+            assert svc.models_dir == tmp_path / "models"
 
 
 class TestModelsDirDevRoot:
     """Priority 4: dev layout — cwd when not frozen."""
 
-    def test_non_frozen_returns_cwd(self, tmp_path):
-        """Non-frozen mode uses cwd as models base."""
+    def test_non_frozen_returns_repo_scan2text(self, tmp_path):
+        """S63a: Non-frozen mode uses repo-root .scan2text, NOT cwd."""
         original_cwd = os.getcwd()
+        original_home = os.environ.get("SCAN2TEXT_HOME")
         try:
+            os.environ.pop("SCAN2TEXT_HOME", None)
             os.chdir(tmp_path)
             with patch.object(sys, "frozen", False, create=True):
                 svc = PathService()
-                assert svc.models_dir == tmp_path / "models"
+                # S63a: dev fallback = repo-root .scan2text
+                repo_root = Path(__file__).resolve().parents[3]
+                expected_home = repo_root / ".scan2text"
+                assert svc.models_dir == expected_home.resolve() / "models"
         finally:
             os.chdir(original_cwd)
+            if original_home is None:
+                os.environ.pop("SCAN2TEXT_HOME", None)
+            else:
+                os.environ["SCAN2TEXT_HOME"] = original_home
 
     def test_non_frozen_env_overrides_cwd(self, tmp_path):
         """Env var overrides dev cwd even when not frozen."""
@@ -174,14 +189,13 @@ class TestModelsDirMissingErrorProbedPaths:
                 err_msg = str(exc_info.value)
                 # Should list env var path
                 assert "/no/such/path" in err_msg
-                # Should list fallback paths for debugging
-                assert "dev root=" in err_msg
+                # S63a: error lists home/models
+                assert "home/models=" in err_msg
             finally:
                 os.environ.pop("SCAN2TEXT_MODELS_DIR", None)
 
-    def test_frozen_env_missing_lists_frozen_paths(self):
-        """Frozen + invalid env: error lists frozen grandparent + parent."""
-        # Use a Windows-style path to avoid forward-slash normalization quirks
+    def test_frozen_env_missing_lists_home_path(self):
+        """Frozen + invalid env: error lists home/models."""
         fake_exe = "C:/apps/scan2text/scan2text-backend.exe"
         with patch.object(sys, "frozen", True, create=True):
             with patch.object(sys, "executable", fake_exe, create=True):
@@ -192,12 +206,8 @@ class TestModelsDirMissingErrorProbedPaths:
                         _ = svc.models_dir
                     err_msg = str(exc_info.value)
                     assert "/bad/path" in err_msg
-                    # grandparent = C:/apps, parent = C:/apps/scan2text
-                    assert "frozen grandparent=" in err_msg
-                    assert "frozen parent=" in err_msg
-                    # Use re.search to handle forward/backslash path normalization on Windows
-                    assert re.search(r"apps[/\\]models", err_msg)
-                    assert re.search(r"apps[/\\]scan2text[/\\]models", err_msg)
+                    # S63a: error lists home/models
+                    assert "home/models=" in err_msg
                 finally:
                     os.environ.pop("SCAN2TEXT_MODELS_DIR", None)
 

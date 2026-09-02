@@ -114,19 +114,8 @@ class TestI2PortableRootResolution:
     Correct root: root/ (contains models/, settings/, output/, logs/)
     """
 
-    def test_frozen_portable_root_prefers_root_over_backend_when_models_at_root(self, tmp_path):
-        """When models/ exists at root (alongside backend/), portable root = root, not backend."""
-        # Create the portable layout:
-        # tmp_path/
-        #   backend/
-        #     scan2text-backend.exe (fake)
-        #     models/     <- STRAY, should NOT be chosen
-        #     logs/       <- STRAY
-        #   models/       <- REAL models dir, should be chosen
-        #   settings/
-        #   output/
-        #   logs/
-        
+    def test_frozen_portable_root_is_parent_of_backend_exe_folder(self, tmp_path):
+        """Frozen: portable root = parent of backend executable folder."""
         root = tmp_path / "Scan2Text"
         backend_dir = root / "backend"
         backend_dir.mkdir(parents=True)
@@ -134,91 +123,59 @@ class TestI2PortableRootResolution:
         (root / "settings").mkdir()
         (root / "output").mkdir()
         (root / "logs").mkdir()
-        
-        # Stray directories inside backend (simulating split-brain scenario)
-        (backend_dir / "models").mkdir()
-        (backend_dir / "logs").mkdir()
-        
-        # Fake executable
+
         exe_path = backend_dir / "scan2text-backend.exe"
         exe_path.touch()
-        
-        # Mock sys.executable and sys.frozen (create=True needed for built-in module)
+
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(exe_path), create=True):
-            
-            # Force re-evaluation by creating new PathService
             ps = PathService()
-            
-            # I2 FIX: portable root must be root (where models/ exists), NOT backend
-            portable_root = ps._resolve_portable_root()
-            assert portable_root == root, (
-                f"Portable root should be {root}, got {portable_root}"
-            )
-            
-            # _resolve_models_dir delegates to _resolve_portable_root (returns root)
-            # The models_dir property appends /models
-            models_root = ps._resolve_models_dir()
-            assert models_root == root, (
-                f"_resolve_models_dir should return root {root}, got {models_root}"
-            )
-            # models_dir property should append /models
-            assert ps.models_dir == root / "models", (
-                f"models_dir should be {root / 'models'}, got {ps.models_dir}"
-            )
 
-    def test_frozen_models_dir_delegates_to_unified_resolver(self, tmp_path):
-        """_resolve_models_dir must delegate to the unified resolver, not have separate logic."""
+            # S63a: portable root = parent of backend exe folder
+            assert ps.base_dir == root
+            assert ps.app_root == root
+            assert ps.models_dir == root / "models"
+            assert ps.settings_path == root / "settings" / "settings.json"
+
+    def test_frozen_models_dir_uses_home(self, tmp_path):
+        """Frozen: models_dir = home/models (parent of backend exe)."""
         root = tmp_path / "Scan2Text"
         backend_dir = root / "backend"
         backend_dir.mkdir(parents=True)
         (root / "models").mkdir()
-        (root / "settings").mkdir()
-        
+
         exe_path = backend_dir / "scan2text-backend.exe"
         exe_path.touch()
-        
-        # Mock sys.executable and sys.frozen (create=True needed for built-in module)
+
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(exe_path), create=True):
-            
             ps = PathService()
-            
-            # Both methods should return the same root
-            portable_root = ps._resolve_portable_root()
-            models_root = ps._resolve_models_dir()
+            assert ps.models_dir == root / "models"
 
-            # _resolve_models_dir delegates to _resolve_portable_root
-            assert models_root == portable_root, (
-                f"_resolve_models_dir ({models_root}) must equal "
-                f"_resolve_portable_root() ({portable_root})"
-            )
-            # models_dir property appends /models
-            assert ps.models_dir == portable_root / "models", (
-                f"models_dir ({ps.models_dir}) must equal "
-                f"portable_root / 'models' ({portable_root / 'models'})"
-            )
-
-    def test_dev_mode_uses_cwd(self, tmp_path):
-        """In dev mode (not frozen), paths resolve relative to cwd."""
-        # Create a fake project structure
-        project_root = tmp_path / "myproject"
-        (project_root / "models").mkdir(parents=True)
-        (project_root / "settings").mkdir()
-
+    def test_dev_mode_uses_repo_scan2text(self, tmp_path):
+        """In dev mode (not frozen), paths resolve to repo-root .scan2text, NOT cwd."""
         original_cwd = Path.cwd()
+        original_home = os.environ.get("SCAN2TEXT_HOME")
         try:
-            os.chdir(project_root)
+            os.environ.pop("SCAN2TEXT_HOME", None)
+            os.chdir(tmp_path)
 
             with patch.object(sys, "frozen", False, create=True):
                 ps = PathService()
 
-                assert ps.app_root == project_root
-                assert ps.models_dir == project_root / "models"
-                # Dev mode base_dir = cwd / ".scan2text"
-                assert ps.settings_path == project_root / ".scan2text" / "settings" / "settings.json"
+                # S63a: dev fallback = repo-root .scan2text, NOT cwd
+                repo_root = Path(__file__).resolve().parents[1]
+                expected_home = repo_root / ".scan2text"
+                assert ps.base_dir == expected_home.resolve()
+                assert ps.app_root == expected_home.resolve()
+                assert ps.models_dir == expected_home.resolve() / "models"
+                assert ps.settings_path == expected_home.resolve() / "settings" / "settings.json"
         finally:
             os.chdir(original_cwd)
+            if original_home is None:
+                os.environ.pop("SCAN2TEXT_HOME", None)
+            else:
+                os.environ["SCAN2TEXT_HOME"] = original_home
 
 
 # =============================================================================

@@ -43,40 +43,44 @@ class TestPathServiceFrozen:
             # app_root must be the portable root (tmp_path), NOT exe_dir
             assert svc.app_root == tmp_path
 
-    def test_frozen_base_dir_is_exe_parent(self):
+    def test_frozen_base_dir_is_portable_root(self):
+        """S63a: frozen base_dir = portable root (parent of backend exe folder)."""
         from scan2text.services.path_service import PathService
         fake_exe = Path("C:/apps/scan2text-backend/scan2text-backend.exe")
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(fake_exe), create=True):
             svc = PathService()
-            assert svc.base_dir == Path("C:/apps/scan2text-backend")
+            assert svc.base_dir == Path("C:/apps")
 
-    def test_non_frozen_behavior_unchanged(self):
+    def test_non_frozen_behavior_uses_repo_scan2text(self):
+        """S63a: dev mode uses repo-root .scan2text, NOT cwd."""
         from scan2text.services.path_service import PathService
         with patch.object(sys, "frozen", False, create=True):
             svc = PathService()
             assert ".scan2text" in str(svc.base_dir)
-            # In non-frozen mode, app_root defaults to cwd, base_dir to cwd/.scan2text
-            assert svc.app_root == Path.cwd()
-            assert svc.base_dir == Path.cwd() / ".scan2text"
+            # Dev mode: base_dir = repo-root/.scan2text, app_root = same
+            repo_root = Path(__file__).resolve().parents[3]
+            expected_home = repo_root / ".scan2text"
+            assert svc.app_root == expected_home.resolve()
+            assert svc.base_dir == expected_home.resolve()
 
-    def test_frozen_models_dir_under_exe_parent(self):
+    def test_frozen_models_dir_under_portable_root(self):
+        """S63a: frozen models_dir = portable root/models."""
         from scan2text.services.path_service import PathService
         fake_exe = Path("C:/apps/scan2text-backend/scan2text-backend.exe")
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(fake_exe), create=True):
             svc = PathService()
-            assert svc.models_dir == Path("C:/apps/scan2text-backend/models")
+            assert svc.models_dir == Path("C:/apps/models")
 
-    def test_frozen_settings_path_under_exe_parent_when_no_models_above(self):
-        """When no models/ exists above exe_dir, falls back to exe_parent (legacy behavior)."""
+    def test_frozen_settings_path_at_portable_root(self):
+        """S63a: frozen settings_path at portable root, NOT under backend/."""
         from scan2text.services.path_service import PathService
         fake_exe = Path("C:/apps/scan2text-backend/scan2text-backend.exe")
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(fake_exe), create=True):
             svc = PathService()
-            # No models/ ancestor — _resolve_portable_root falls back to exe_dir
-            assert svc.settings_path == Path("C:/apps/scan2text-backend/settings/settings.json")
+            assert svc.settings_path == Path("C:/apps/settings/settings.json")
 
     def test_resolve_model_path_frozen_uses_models_dir(self, tmp_path):
         """Frozen: resolve_model_path must resolve relative to models_dir, not app_root.
@@ -140,123 +144,77 @@ class TestPathServiceFrozen:
             result = svc.resolve_model_path(r"\\server\models\model.gguf")
             assert result == Path(r"\\server\models\model.gguf")
 
-    def test_frozen_models_dir_grandparent_when_dist_layout(self, tmp_path):
-        """Frozen: models at project-root (exe_dir.parent.parent) not exe_dir.parent.
-
-        Layout:
-          tmp_path/dist/scan2text-backend/scan2text-backend.exe   (exe)
-          tmp_path/models/                                        (models — TRUE grandparent)
-
-        Current bug: _resolve_models_dir uses exe_dir.parent (= tmp_path/dist)
-        instead of exe_dir.parent.parent (= tmp_path), so files_present stays false.
-        """
+    def test_frozen_models_dir_uses_home(self, tmp_path):
+        """S63a: frozen models_dir = home/models (parent of backend exe)."""
         from scan2text.services.path_service import PathService
 
-        # Models live at project root (grandparent of exe)
-        models_dir = tmp_path / "models"
-        models_dir.mkdir()
-        (models_dir / "vlm.gguf").write_bytes(b"model")
-        (models_dir / "mmproj.gguf").write_bytes(b"mmproj")
+        portable_root = tmp_path / "Scan2Text"
+        backend_dir = portable_root / "backend"
+        backend_dir.mkdir(parents=True)
+        (portable_root / "models").mkdir()
+        (portable_root / "models" / "vlm.gguf").write_bytes(b"model")
+        (portable_root / "models" / "mmproj.gguf").write_bytes(b"mmproj")
 
-        # Exe is nested one level deeper: dist/scan2text-backend/
-        exe_dir = tmp_path / "dist" / "scan2text-backend"
-        exe_dir.mkdir(parents=True)
-
-        fake_exe = exe_dir / "scan2text-backend.exe"
+        fake_exe = backend_dir / "scan2text-backend.exe"
 
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(fake_exe), create=True):
             svc = PathService()
-            # The fix: models_dir must resolve to tmp_path/models (grandparent),
-            # NOT tmp_path/dist/models (parent — the current bug).
-            assert svc.models_dir == models_dir
+            # S63a: home = portable root (parent of backend exe)
+            assert svc.base_dir == portable_root
+            assert svc.models_dir == portable_root / "models"
             # Both model files must be found
-            assert svc.resolve_model_path("vlm.gguf") == models_dir / "vlm.gguf"
-            assert svc.resolve_model_path("mmproj.gguf") == models_dir / "mmproj.gguf"
+            assert svc.resolve_model_path("vlm.gguf") == portable_root / "models" / "vlm.gguf"
+            assert svc.resolve_model_path("mmproj.gguf") == portable_root / "models" / "mmproj.gguf"
 
-    def test_frozen_output_dir_resolves_to_portable_root(self, tmp_path):
-        """Frozen: output_dir must land at portable root (first ancestor with models/).
-
-        Layout:
-          tmp_path/models/                    (portable root — has models)
-          tmp_path/dist/scan2text-backend/app.exe  (exe)
-
-        Current bug: output_dir = exe_dir / "output" = tmp_path/dist/scan2text-backend/output.
-        Expected fix: output_dir = tmp_path/output.
-        """
+    def test_frozen_output_dir_at_portable_root(self, tmp_path):
+        """S63a: frozen output_dir = home/output."""
         from scan2text.services.path_service import PathService
 
-        # Portable root with models/
-        models_dir = tmp_path / "models"
-        models_dir.mkdir()
-        (models_dir / "vlm.gguf").write_bytes(b"model")
+        portable_root = tmp_path / "Scan2Text"
+        backend_dir = portable_root / "backend"
+        backend_dir.mkdir(parents=True)
+        (portable_root / "models").mkdir()
 
-        # Exe nested two levels deep
-        exe_dir = tmp_path / "dist" / "scan2text-backend"
-        exe_dir.mkdir(parents=True)
-        fake_exe = exe_dir / "scan2text-backend.exe"
+        fake_exe = backend_dir / "scan2text-backend.exe"
 
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(fake_exe), create=True):
             svc = PathService()
-            # models_dir resolves to portable root (grandparent of exe)
-            assert svc.models_dir == tmp_path / "models"
-            # output_dir must be at portable root, NOT inside dist/
-            assert svc.output_dir == tmp_path / "output"
+            assert svc.output_dir == portable_root / "output"
 
-    def test_frozen_settings_and_logs_resolve_to_portable_root(self, tmp_path):
-        """Frozen: settings_path, logs_dir must land at portable root.
-
-        Layout:
-          tmp_path/models/                      (portable root — has models)
-          tmp_path/dist/scan2text-backend/app.exe  (exe)
-
-        Current bug: settings_path = exe_dir/settings/settings.json,
-        logs_dir = exe_dir/logs — both inside dist/, not at portable root.
-        Expected fix: both under tmp_path/.
-        """
+    def test_frozen_settings_and_logs_at_portable_root(self, tmp_path):
+        """S63a: frozen settings_path, logs_dir at portable root."""
         from scan2text.services.path_service import PathService
 
-        # Portable root with models/
-        models_dir = tmp_path / "models"
-        models_dir.mkdir()
-        (models_dir / "vlm.gguf").write_bytes(b"model")
+        portable_root = tmp_path / "Scan2Text"
+        backend_dir = portable_root / "backend"
+        backend_dir.mkdir(parents=True)
+        (portable_root / "models").mkdir()
 
-        # Exe nested two levels deep
-        exe_dir = tmp_path / "dist" / "scan2text-backend"
-        exe_dir.mkdir(parents=True)
-        fake_exe = exe_dir / "scan2text-backend.exe"
+        fake_exe = backend_dir / "scan2text-backend.exe"
 
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(fake_exe), create=True):
             svc = PathService()
-            # settings_path must be at portable root, NOT inside dist/
-            assert svc.settings_path == tmp_path / "settings" / "settings.json"
-            # logs_dir must be at portable root, NOT inside dist/
-            assert svc.logs_dir == tmp_path / "logs"
+            assert svc.settings_path == portable_root / "settings" / "settings.json"
+            assert svc.logs_dir == portable_root / "logs"
 
-    def test_frozen_feedback_dir_resolves_to_portable_root(self, tmp_path):
-        """Frozen: feedback_dir must land at portable root.
-
-        Layout:
-          tmp_path/models/                      (portable root — has models)
-          tmp_path/dist/scan2text-backend/app.exe  (exe)
-        """
+    def test_frozen_feedback_dir_at_portable_root(self, tmp_path):
+        """S63a: frozen feedback_dir = home/feedback."""
         from scan2text.services.path_service import PathService
 
-        models_dir = tmp_path / "models"
-        models_dir.mkdir()
-        (models_dir / "vlm.gguf").write_bytes(b"model")
+        portable_root = tmp_path / "Scan2Text"
+        backend_dir = portable_root / "backend"
+        backend_dir.mkdir(parents=True)
+        (portable_root / "models").mkdir()
 
-        exe_dir = tmp_path / "dist" / "scan2text-backend"
-        exe_dir.mkdir(parents=True)
-        fake_exe = exe_dir / "scan2text-backend.exe"
+        fake_exe = backend_dir / "scan2text-backend.exe"
 
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(fake_exe), create=True):
             svc = PathService()
-            # feedback_dir must be at portable root, NOT inside dist/
-            assert svc.feedback_dir == tmp_path / "feedback"
+            assert svc.feedback_dir == portable_root / "feedback"
 
     def test_frozen_app_root_resolves_to_portable_root(self, tmp_path):
         """Frozen: app_root must return the portable root (first ancestor with models/).

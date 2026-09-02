@@ -33,13 +33,14 @@ class TestFeedbackDirNotBaseDir:
     """Verify feedback lands at app_root/feedback/pending, NOT base_dir/feedback/pending."""
 
     def _make_frozen_paths(self, tmp_path: Path) -> PathService:
-        """Build a PathService in frozen mode with mocked _resolve_portable_root."""
-        app_root = tmp_path / "Scan2Text"
-        backend_dir = app_root / "backend"
-        app_root.mkdir()
+        """Build a PathService in frozen mode."""
+        portable_root = tmp_path / "Scan2Text"
+        backend_dir = portable_root / "backend"
+        portable_root.mkdir()
         backend_dir.mkdir()
-        (app_root / "models").mkdir()  # anchor for _resolve_portable_root
-        return PathService(base_dir=str(backend_dir), app_root=str(app_root))
+        (portable_root / "models").mkdir()
+        # S63a: base_dir = portable root (parent of backend exe folder)
+        return PathService(base_dir=str(portable_root), app_root=str(portable_root))
 
     def test_ensure_feedback_dirs_returns_paths_under_feedback_dir(self, tmp_path):
         """_ensure_feedback_dirs must return paths under feedback_dir."""
@@ -55,8 +56,8 @@ class TestFeedbackDirNotBaseDir:
         finally:
             _unfreeze()
 
-    def test_save_pending_feedback_uses_feedback_dir_not_base_dir(self, tmp_path):
-        """In frozen mode, save_pending_feedback must write to feedback_dir (portable root), not base_dir."""
+    def test_save_pending_feedback_uses_feedback_dir(self, tmp_path):
+        """In frozen mode, save_pending_feedback must write to feedback_dir."""
         _freeze()
         try:
             paths = self._make_frozen_paths(tmp_path)
@@ -65,20 +66,15 @@ class TestFeedbackDirNotBaseDir:
             filename = svc.save_pending_feedback("Test feedback", None)
 
             expected_pending = paths.feedback_dir / "pending"
-            actual_base_pending = paths.base_dir / "feedback" / "pending"
 
             assert any(expected_pending.glob("*.json")), (
                 f"Expected feedback at {expected_pending} (feedback_dir) but not found."
-            )
-            assert not any(actual_base_pending.glob("*.json")), (
-                f"Feedback must NOT be written to base_dir/feedback/ ({actual_base_pending}). "
-                "This indicates feedback_service.py still uses base_dir instead of feedback_dir."
             )
         finally:
             _unfreeze()
 
     def test_move_pending_to_sent_uses_feedback_dir(self, tmp_path):
-        """move_pending_to_sent must operate within feedback_dir, not base_dir."""
+        """move_pending_to_sent must operate within feedback_dir."""
         _freeze()
         try:
             paths = self._make_frozen_paths(tmp_path)
@@ -88,14 +84,10 @@ class TestFeedbackDirNotBaseDir:
             result = svc.move_pending_to_sent(filename)
 
             expected_sent = paths.feedback_dir / "sent"
-            actual_base_sent = paths.base_dir / "feedback" / "sent"
 
             assert result is True
             assert any(expected_sent.glob("*.json")), (
                 f"Expected sent file at {expected_sent} but not found."
-            )
-            assert not any(actual_base_sent.glob("*.json")), (
-                f"Sent file must NOT be under base_dir/feedback/ ({actual_base_sent})."
             )
         finally:
             _unfreeze()
