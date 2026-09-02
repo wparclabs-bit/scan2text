@@ -20,6 +20,8 @@ exclude_modules = [
 
 excludes = [
     *exclude_modules,
+    "pyarrow",
+    "pandas",
     "tests",
     "scan2text.tests",
     "test_*",
@@ -47,13 +49,15 @@ raw_hiddenimports = tmp_ret_raw[2]
 
 all_binaries = [*llama_binaries, *pil_binaries, *pdf_binaries, *raw_binaries]
 all_hiddenimports = [*llama_hiddenimports, *pil_hiddenimports, *pdf_hiddenimports, *raw_hiddenimports]
+filtered_hiddenimports = [imp for imp in all_hiddenimports if not imp.startswith(('pyarrow', 'pandas'))]
+filtered_binaries = [b for b in all_binaries if 'pyarrow' not in str(b) and 'pandas' not in str(b)]
 
 a = Analysis(
     ["../src/scan2text/cli.py"],
     pathex=['D:\WingAI\Projects\scan2text\src'],
-    binaries=all_binaries,
+    binaries=filtered_binaries,
     datas=[],
-    hiddenimports=all_hiddenimports,
+    hiddenimports=filtered_hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
