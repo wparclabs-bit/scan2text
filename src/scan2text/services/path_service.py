@@ -12,12 +12,15 @@ from pathlib import Path
 
 
 class PathService:
-    """Resolves all file paths relative to the base directory.
+    """Resolves all file paths through a single portable home contract.
 
-    Default base directory resolution order:
-    1. If environment variable SCAN2TEXT_HOME is set, use it.
-    2. If running as a frozen executable, use a directory beside the executable.
-    3. Otherwise, for development, use cwd / ".scan2text".
+    Home resolution priority (S63a):
+    1. SCAN2TEXT_HOME environment variable, if set.
+    2. If frozen PyInstaller: portable root = parent of backend executable folder.
+    3. Dev fallback: repo-root .scan2text (NOT cwd-based).
+
+    All core paths (settings, logs, output, models, feedback) derive from this
+    single home, never from current working directory, never under backend/.
     """
 
     # Windows reserved names that must not be used as stems.
@@ -33,7 +36,7 @@ class PathService:
         if base_dir is not None:
             self._base_dir = Path(base_dir).resolve()
         else:
-            self._base_dir = self._resolve_base_dir()
+            self._base_dir = self.resolve_home()
 
         if app_root is not None:
             self._app_root = Path(app_root).resolve()
@@ -44,32 +47,40 @@ class PathService:
             self._app_root_injected = False
             self._app_root_from_base_dir = True
         else:
-            self._app_root = self._resolve_app_root()
+            self._app_root = self.resolve_home()
             self._app_root_injected = False
             self._app_root_from_base_dir = False
 
     @staticmethod
-    def _resolve_base_dir() -> Path:
+    def resolve_home() -> Path:
+        """Resolve the portable home directory.
+
+        Priority:
+        1. SCAN2TEXT_HOME environment variable, if set.
+        2. Frozen PyInstaller: portable root = parent of backend executable folder.
+        3. Dev fallback: repo-root .scan2text (NOT cwd-based).
+        """
         env_home = os.environ.get("SCAN2TEXT_HOME")
         if env_home:
             return Path(env_home).resolve()
 
-        # Frozen executable (PyInstaller): sys.executable points to .exe
+        # Frozen executable (PyInstaller): portable root = parent of backend exe folder
         if getattr(sys, "frozen", False):
-            return Path(sys.executable).parent
+            return Path(sys.executable).parent.parent
 
-        return Path.cwd() / ".scan2text"
+        # Dev fallback: repo-root .scan2text (parent of src/)
+        repo_root = Path(__file__).resolve().parents[3]
+        return repo_root / ".scan2text"
+
+    @staticmethod
+    def _resolve_base_dir() -> Path:
+        """Deprecated: use resolve_home() instead."""
+        return PathService.resolve_home()
 
     @staticmethod
     def _resolve_app_root() -> Path:
-        env_home = os.environ.get("SCAN2TEXT_HOME")
-        if env_home:
-            return Path(env_home).resolve()
-        # Locked layout: Scan2Text.exe and backend/ sit side-by-side in the portable root.
-        # sys.executable points to backend/scan2text-backend.exe → parent.parent = portable root.
-        if getattr(sys, "frozen", False):
-            return Path(sys.executable).parent.parent
-        return Path.cwd()
+        """Deprecated: use resolve_home() instead."""
+        return PathService.resolve_home()
 
     # --- Properties --------------------------------------------------------
 
@@ -83,86 +94,53 @@ class PathService:
 
     @property
     def settings_path(self) -> Path:
-        if getattr(sys, "frozen", False):
-            return self._resolve_portable_root() / "settings" / "settings.json"
-        return self.base_dir / "settings" / "settings.json"
+        """Settings path: home/settings/settings.json."""
+        return self._base_dir / "settings" / "settings.json"
 
     @property
+    def logs_path(self) -> Path:
+        """Logs directory: home/logs."""
+        return self._base_dir / "logs"
+
+    @property
+    def output_path(self) -> Path:
+        """Output directory: home/output."""
+        return self._base_dir / "output"
+
+    @property
+    def models_path(self) -> Path:
+        """Models directory: home/models."""
+        return self._base_dir / "models"
+
+    @property
+    def feedback_path(self) -> Path:
+        """Feedback directory: home/feedback."""
+        return self._base_dir / "feedback"
+
+    # Backward-compatible aliases
+    @property
     def feedback_dir(self) -> Path:
-        if getattr(sys, "frozen", False):
-            return self._resolve_portable_root() / "feedback"
-        return self.base_dir / "feedback"
-
-    @staticmethod
-    def _resolve_portable_root() -> Path:
-        """Resolve portable root for frozen executables.
-
-        Walks up from exe_dir (exe_dir.parent.parent, exe_dir.parent, exe_dir)
-        and returns the first ancestor containing a models/ directory.
-        Falls back to exe_dir if no ancestor contains models/.
-        """
-        exe_dir = Path(sys.executable).parent
-
-        for cand in (exe_dir.parent.parent, exe_dir.parent, exe_dir):
-            if (cand / "models").is_dir():
-                return cand
-
-        return exe_dir
-
-    @staticmethod
-    def _resolve_output_dir() -> Path:
-        """Resolve output directory for frozen executables.
-
-        Delegates to _resolve_portable_root() and appends /output.
-        Non-frozen is handled by the output_dir property directly.
-        """
-        return PathService._resolve_portable_root() / "output"
+        return self.feedback_path
 
     @property
     def output_dir(self) -> Path:
-        if getattr(sys, "frozen", False):
-            return self._resolve_output_dir()
-        return self.base_dir / "output"
+        return self.output_path
 
     @property
     def logs_dir(self) -> Path:
-        if getattr(sys, "frozen", False):
-            return self._resolve_portable_root() / "logs"
-        return self.base_dir / "logs"
+        return self.logs_path
 
     @property
     def log_file(self) -> Path:
-        return self.logs_dir / "app.log"
-
-    @staticmethod
-    def _resolve_models_dir() -> Path:
-        """Resolve models directory by priority.
-
-        Delegates to _resolve_portable_root() for frozen executables.
-        Priority:
-          1. env SCAN2TEXT_MODELS_DIR if set
-          2. frozen: portable root (grandparent → parent → exe_dir)
-          3. dev root (cwd)
-        """
-        # Priority 1: env var
-        env = os.environ.get("SCAN2TEXT_MODELS_DIR")
-        if env:
-            return Path(env).resolve()
-
-        frozen = getattr(sys, "frozen", False)
-
-        if frozen:
-            return PathService._resolve_portable_root()
-
-        return Path.cwd()
+        return self.logs_path / "app.log"
 
     @property
     def models_dir(self) -> Path:
-        """Resolve models directory by priority (env → frozen grandparent → parent → dev).
+        """Resolve models directory by priority (env → injected → home).
 
         When app_root is explicitly injected, models_dir = app_root/models.
         When app_root derived from base_dir, models_dir = base_dir/models.
-        When fully auto-resolved, priority: env SCAN2TEXT_MODELS_DIR → frozen checks → dev root.
+        When fully auto-resolved, priority: env SCAN2TEXT_MODELS_DIR → home/models.
 
         Raises RuntimeError listing probed paths if SCAN2TEXT_MODELS_DIR
         points to a non-existent directory.
@@ -174,12 +152,7 @@ class PathService:
             resolved = Path(env).resolve()
             if not resolved.is_dir():
                 paths = [f"  SCAN2TEXT_MODELS_DIR={env}"]
-                if getattr(sys, "frozen", False):
-                    exe_dir = Path(sys.executable).parent
-                    paths.append(f"  frozen grandparent={exe_dir.parent.parent}/models")
-                    paths.append(f"  frozen parent={exe_dir.parent}/models")
-                    paths.append(f"  frozen exe-adjacent={exe_dir}/models")
-                paths.append(f"  dev root={Path.cwd()}/models")
+                paths.append(f"  home/models={self._base_dir}/models")
                 raise RuntimeError(
                     "Models directory not found.\nProbed locations:\n"
                     + "\n".join(paths)
@@ -190,9 +163,8 @@ class PathService:
         if self._app_root_injected or self._app_root_from_base_dir:
             return self.app_root / "models"
 
-        # Fully auto-resolved: use priority-based resolution
-        resolved = self._resolve_models_dir()
-        return resolved / "models"
+        # Fully auto-resolved: use home/models
+        return self._base_dir / "models"
 
     def resolve_model_path(self, relative: str) -> Path:
         """Resolve a model path relative to the models directory (Rule 8)."""
