@@ -88,4 +88,44 @@ describe('DropZonePanel background image', () => {
     expect(panel).toHaveClass('min-w-0')
     expect(panel).toHaveClass('w-full')
   })
+
+  it('card root has h-full flex flex-col min-h-0 for unbroken height chain', () => {
+    render(<DropZonePanel />)
+    const card = document.querySelector('[data-testid="panel-dropzone"] > div') as HTMLElement | null
+    expect(card).toBeInTheDocument()
+    expect(card).toHaveClass('h-full')
+    expect(card).toHaveClass('flex')
+    expect(card).toHaveClass('flex-col')
+    expect(card).toHaveClass('min-h-0')
+  })
+
+  it('column div has flex-1 min-h-0 flex flex-col gap-4 for stretch chain', () => {
+    render(<DropZonePanel />)
+    const column = Array.from(document.querySelectorAll('[data-testid="panel-dropzone"] > div > div'))
+      .find((el) => el.classList.contains('gap-4')) as HTMLElement | null
+    expect(column).toBeInTheDocument()
+    expect(column).toHaveClass('flex-1')
+    expect(column).toHaveClass('min-h-0')
+    expect(column).toHaveClass('flex')
+    expect(column).toHaveClass('flex-col')
+    expect(column).toHaveClass('gap-4')
+  })
+
+  it('FileDropZone dashed root has flex-1 min-h-0 w-full flex flex-col', () => {
+    render(<DropZonePanel />)
+    const dropzone = document.querySelector('[data-testid="dropzone"]') as HTMLElement | null
+    expect(dropzone).toBeInTheDocument()
+    expect(dropzone).toHaveClass('flex-1')
+    expect(dropzone).toHaveClass('min-h-0')
+    expect(dropzone).toHaveClass('w-full')
+    expect(dropzone).toHaveClass('flex')
+    expect(dropzone).toHaveClass('flex-col')
+  })
+
+  it('footer element has shrink-0 to stay below stretch dropzone', () => {
+    render(<DropZonePanel />)
+    const footer = screen.getByTestId('dropzone-hint') as HTMLElement | null
+    expect(footer).toBeInTheDocument()
+    expect(footer).toHaveClass('shrink-0')
+  })
 })

@@ -10,7 +10,7 @@ export default function DropZonePanel() {
   const depthStyle = getDepthStyle({ theme, panel: 'left' })
   return (
     <div data-testid="panel-dropzone" className="flex flex-col h-full min-h-0 min-w-0 w-full">
-      <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-w-0 box-border relative" style={depthStyle}>
+      <div className="h-full flex-1 rounded-xl overflow-hidden flex flex-col min-h-0 min-w-0 box-border relative" style={depthStyle}>
         <div
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none"
