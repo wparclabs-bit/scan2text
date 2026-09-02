@@ -56,3 +56,4 @@ deploy-fix65d.ps1
 verify-fix65d.ps1
 AGENTS-CTO.md
 *.zip
+.scratch-diag/
