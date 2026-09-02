@@ -198,3 +198,4 @@ RULE: never guess paths; discover via `Get-ChildItem`.
 - YAGNI: Ovis is the sole engine; external backup for disaster recovery only.
 - Strict Matt Pocock TDD: RED→GREEN→REFACTOR. Tests updated before implementation.
 - S2-S4 locked Ovis recipe: verbatim prompt + temp 0.1 + full-page normalization (no tiling). GFM stdlib converter prevents frontend HTML table breakage.
+- PyInstaller excludes ignore explicit binaries. When using collect_all, filter binaries for banned packages before Analysis. Verify by artifact presence checks.
