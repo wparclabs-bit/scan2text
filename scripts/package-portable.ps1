@@ -15,12 +15,28 @@
 param(
     [string]$Version = "v1.1",
     [switch]$SkipBuild,
-    [string]$OutputDir = $PSScriptRoot
+    [string]$OutputDir
 )
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot = Split-Path $PSScriptRoot -Parent
+# Robust script directory detection: $PSScriptRoot is empty when run via
+# `powershell -File` from certain contexts, so fall back to MyInvocation
+# and finally to the current working directory.
+if ($PSScriptRoot) {
+    $ScriptDir = $PSScriptRoot
+} elseif ($MyInvocation.MyCommand.Definition) {
+    $ScriptDir = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+} else {
+    $ScriptDir = Get-Location
+}
+
+# Default OutputDir to the script's directory if not provided
+if (-not $OutputDir) {
+    $OutputDir = $ScriptDir
+}
+
+$RepoRoot = Split-Path $ScriptDir -Parent
 $StagingDir = Join-Path $RepoRoot ".staging-portable"
 $ThinZipName = "Scan2Text-${Version}-Portable.zip"
 $FullZipName = "Scan2Text-${Version}-Portable-Full.zip"
@@ -114,55 +130,62 @@ Copy-Item -Path "$RepoRoot\models\*" -Destination (Join-Path $StagingDir "models
 # 4. Generate Thin ZIP (exclude models/)
 # ------------------------------------------------------------------
 Write-Host "`n[PACK] Generating Thin ZIP: $ThinZipName" -ForegroundColor Yellow
-
-$ThinZipPath = Join-Path $OutputDir $ThinZipName
-if (Test-Path $ThinZipPath) {
-    Remove-Item -LiteralPath $ThinZipPath -Force
-}
-
-# Use Compress-Archive (PowerShell built-in, no type references needed)
-# Create temp dir, copy excluding models/, compress, cleanup
-$ThinTempDir = Join-Path $RepoRoot ".staging-thin-temp"
-if (Test-Path $ThinTempDir) {
-    Remove-Item -LiteralPath $ThinTempDir -Recurse -Force
-}
-New-Item -ItemType Directory -Path $ThinTempDir -Force | Out-Null
-
-# Copy everything except models/
-Get-ChildItem -Path $StagingDir -Recurse | Where-Object {
-    -not $_.FullName.Contains("\models\")
-} | ForEach-Object {
-    if ($_.PSIsContainer) {
-        $relativePath = $_.FullName.Substring($StagingDir.Length).Replace('\', '/')
-        if ($relativePath.StartsWith('/')) {
-            $relativePath = $relativePath.Substring(1)
-        }
-        $newPath = Join-Path $ThinTempDir $relativePath
-        New-Item -ItemType Directory -Path $newPath -Force | Out-Null
-    } else {
-        $relativePath = $_.FullName.Substring($StagingDir.Length).Replace('\', '/')
-        if ($relativePath.StartsWith('/')) {
-            $relativePath = $relativePath.Substring(1)
-        }
-        $newPath = Join-Path $ThinTempDir $relativePath
-        New-Item -ItemType Directory -Path (Split-Path $newPath) -Force | Out-Null
-        Copy-Item -Path $_.FullName -Destination $newPath -Force
+$DBG = "D:\WingAI\Projects\scan2text\_dbg-thin.txt"
+try {
+    $ThinZipPath = Join-Path $OutputDir $ThinZipName
+    if (Test-Path $ThinZipPath) {
+        Remove-Item -LiteralPath $ThinZipPath -Force
     }
+
+    # Use Compress-Archive (PowerShell built-in, no type references needed)
+    # Create temp dir, copy excluding models/, compress, cleanup
+    $ThinTempDir = Join-Path $RepoRoot ".staging-thin-temp"
+    if (Test-Path $ThinTempDir) {
+        Remove-Item -LiteralPath $ThinTempDir -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $ThinTempDir -Force | Out-Null
+
+    # Copy everything except models/
+    $thinItems = Get-ChildItem -Path $StagingDir -Recurse | Where-Object { -not $_.FullName.Contains("\models\") }
+    for ($__i = 0; $__i -lt $thinItems.Count; $__i++) {
+        $__item = $thinItems[$__i]
+        $relativePath = ""
+        $newPath = ""
+        if ($__item.PSIsContainer) {
+            $relativePath = $__item.FullName.Substring($StagingDir.Length).Replace('\', '/')
+            if ($relativePath.StartsWith('/')) {
+                $relativePath = $relativePath.Substring(1)
+            }
+            $newPath = Join-Path $ThinTempDir $relativePath
+            New-Item -ItemType Directory -Path $newPath -Force | Out-Null
+        } else {
+            $relativePath = $__item.FullName.Substring($StagingDir.Length).Replace('\', '/')
+            if ($relativePath.StartsWith('/')) {
+                $relativePath = $relativePath.Substring(1)
+            }
+            $newPath = Join-Path $ThinTempDir $relativePath
+            New-Item -ItemType Directory -Path (Split-Path $newPath) -Force | Out-Null
+            Copy-Item -Path $__item.FullName -Destination $newPath -Force
+        }
+    }
+
+    Compress-Archive -Path "$ThinTempDir\*" -DestinationPath $ThinZipPath -CompressionLevel Optimal -Force
+
+    # Cleanup temp directory
+    Remove-Item -LiteralPath $ThinTempDir -Recurse -Force
+
+    # Count entries
+    $thinCount = (Get-ChildItem -Path $StagingDir -Recurse | Where-Object {
+        -not $_.FullName.Contains("\models\")
+    }).Count
+
+    $thinSizeMB = [math]::Round((Get-Item $ThinZipPath).Length / 1MB, 2)
+    Write-Host "[OK] Thin ZIP: $ThinZipName ($thinSizeMB MB, $thinCount entries)" -ForegroundColor Green
+} catch {
+    $report = "MSG: $($_.Exception.Message)`n`nCOMMAND: $($_.InvocationInfo.CommandName)`nLINE: $($_.InvocationInfo.LineNumber)`n`nSTACK:`n$($_.ScriptStackTrace)`n`nVARS:`nThinZipPath=[$ThinZipPath]`nThinTempDir=[$ThinTempDir]`nOutputDir=[$OutputDir]`nRepoRoot=[$RepoRoot]`nStagingDir=[$StagingDir]"
+    $report | Out-File -FilePath $DBG -Encoding utf8
+    throw
 }
-
-# Compress to ZIP
-Compress-Archive -Path "$ThinTempDir\*" -DestinationPath $ThinZipPath -CompressionLevel Optimal -Force
-
-# Cleanup temp directory
-Remove-Item -LiteralPath $ThinTempDir -Recurse -Force
-
-# Count entries
-$thinCount = (Get-ChildItem -Path $StagingDir -Recurse | Where-Object {
-    -not $_.FullName.Contains("\models\")
-}).Count
-
-$thinSizeMB = [math]::Round((Get-Item $ThinZipPath).Length / 1MB, 2)
-Write-Host "[OK] Thin ZIP: $ThinZipName ($thinSizeMB MB, $thinCount entries)" -ForegroundColor Green
 
 # ------------------------------------------------------------------
 # 5. Generate Full ZIP (include models/)
