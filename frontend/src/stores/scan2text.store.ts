@@ -45,6 +45,9 @@ export interface Scan2TextState {
   selectedJobId: string | null
   jobOrder: string[]
   showDownloader: boolean
+  /** S62: image enhancement toggle, hydrated from backend settings.json on boot. */
+  enhance: boolean
+  setEnhance: (value: boolean) => void
   registerJob: (id: string) => void
   addJob: (input: {
     id: string
@@ -80,6 +83,7 @@ const initialState = {
   selectedJobId: null as string | null,
   jobOrder: [] as string[],
   showDownloader: false,
+  enhance: false,
 }
 
 function createDefaultJob(
@@ -119,6 +123,10 @@ function isValidTransition(current: JobStatus): boolean {
 
 export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
   ...initialState,
+
+  setEnhance: (value: boolean) => {
+    set({ enhance: value })
+  },
 
   registerJob: (id: string) => {
     set((state) => {
@@ -366,7 +374,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
     }))
 
     try {
-      const response = await uploadFile(input.file)
+      const response = await uploadFile(input.file, get().enhance)
       set((state) => {
         const job = state.jobs[id]
         if (!job) return state

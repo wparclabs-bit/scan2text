@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { getSettings, saveSettings } from '@/lib/api'
 import type { SettingsResponse } from '@/lib/api'
 
@@ -18,6 +19,7 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
   const [outputDir, setOutputDir] = useState('')
   const [maxPdfPages, setMaxPdfPages] = useState('50')
   const [cpuThreads, setCpuThreads] = useState('0')
+  const [enhanceImageQuality, setEnhanceImageQuality] = useState(false)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -28,6 +30,7 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
         setOutputDir(settings.output_dir ?? '')
         setMaxPdfPages(String(settings.max_pdf_pages ?? 50))
         setCpuThreads(String(settings.cpu_threads ?? 0))
+        setEnhanceImageQuality(!!settings.enhance_image_quality)
       })
       .catch(() => {
         toast.error(t('settings.loadFailed'))
@@ -56,10 +59,30 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
         output_dir: outputDir,
         max_pdf_pages: pages,
         cpu_threads: threads,
+        enhance_image_quality: enhanceImageQuality,
       })
       toast.success(t('settings.saved'))
     } catch {
       toast.error(t('settings.saveFailed'))
+    }
+  }
+
+  // S62c: persist the enhance toggle immediately on change so it writes to
+  // settings.json without waiting for the Save button.
+  const handleEnhanceToggle = async (checked: boolean) => {
+    setEnhanceImageQuality(checked);
+    const pages = parseInt(maxPdfPages, 10);
+    const threads = parseInt(cpuThreads, 10);
+    try {
+      await saveSettings({
+        output_dir: outputDir,
+        max_pdf_pages: isNaN(pages) ? 50 : pages,
+        cpu_threads: isNaN(threads) ? 0 : threads,
+        enhance_image_quality: checked,
+      });
+      toast.success(t('settings.saved'));
+    } catch {
+      toast.error(t('settings.saveFailed'));
     }
   }
 
@@ -106,6 +129,25 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
               disabled={loading}
             />
             <p className="text-xs text-muted-foreground">{t('settings.autoHint')}</p>
+          </div>
+          <div className="grid gap-2">
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Label htmlFor="enhance-image-quality">{t('settings.enhanceImageQuality')}</Label>
+                </TooltipTrigger>
+                <TooltipContent>{t('settings.enhanceImageQualityTooltip')}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <input
+              id="enhance-image-quality"
+              data-testid="settings-enhance-toggle"
+              type="checkbox"
+              checked={enhanceImageQuality}
+              onChange={(e) => handleEnhanceToggle(e.target.checked)}
+              disabled={loading}
+              className="h-4 w-4"
+            />
           </div>
         </div>
 

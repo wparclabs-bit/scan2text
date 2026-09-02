@@ -29,6 +29,8 @@ function App() {
       .then((res) => res.json())
       .then((data) => {
         setHideWelcomeNotice(!!data.hide_welcome_notice)
+        // S62: hydrate the image enhancement toggle from settings.json.
+        useScan2TextStore.getState().setEnhance(!!data.enhance_image_quality)
         // Boot fallback: apply theme/language from settings.json when localStorage lacks them
         const storage = window.localStorage
         const storedTheme = storage.getItem('scan2text:theme')

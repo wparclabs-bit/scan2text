@@ -89,6 +89,51 @@ describe('uploadFile', () => {
     const file = new File(['content'], 'doc.png', { type: 'image/png' })
     await expect(uploadFile(file)).rejects.toThrow('Server communication error')
   })
+
+  it('should include enhance=true in FormData when enhance is true', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.resolve({ task_id: 't1' }),
+    })
+
+    const file = new File(['data'], 'scan.png', { type: 'image/png' })
+    await uploadFile(file, true)
+
+    const init = mockFetch.mock.calls[0][1] as RequestInit
+    const body = init.body as FormData
+    expect(body.get('enhance')).toBe('true')
+  })
+
+  it('should NOT include enhance in FormData when enhance is false', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.resolve({ task_id: 't1' }),
+    })
+
+    const file = new File(['data'], 'scan.png', { type: 'image/png' })
+    await uploadFile(file, false)
+
+    const init = mockFetch.mock.calls[0][1] as RequestInit
+    const body = init.body as FormData
+    expect(body.get('enhance')).toBeNull()
+  })
+
+  it('should NOT include enhance in FormData when enhance is omitted (default)', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.resolve({ task_id: 't1' }),
+    })
+
+    const file = new File(['data'], 'scan.png', { type: 'image/png' })
+    await uploadFile(file)
+
+    const init = mockFetch.mock.calls[0][1] as RequestInit
+    const body = init.body as FormData
+    expect(body.get('enhance')).toBeNull()
+  })
 })
 
 describe('getTaskStatus', () => {

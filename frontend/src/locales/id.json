@@ -95,7 +95,9 @@
     "loadFailed": "Gagal memuat pengaturan.",
     "validationPages": "Maks Halaman PDF minimal 1.",
     "validationThreads": "Thread CPU tidak boleh negatif.",
-    "autoHint": "0 = otomatis"
+    "autoHint": "0 = otomatis",
+    "enhanceImageQuality": "Tingkatkan Kualitas Gambar",
+    "enhanceImageQualityTooltip": "Terapkan peningkatan kontras dan warna sebelum OCR untuk pengenalan teks yang lebih baik"
   },
   "welcome": {
     "title": "Selamat datang di Scan2Text",

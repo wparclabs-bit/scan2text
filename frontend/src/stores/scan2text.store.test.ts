@@ -40,6 +40,7 @@ const mockUploadFile = vi.hoisted(() => vi.fn())
 const mockGetTaskStatus = vi.hoisted(() => vi.fn())
 const mockPollTaskStatus = vi.hoisted(() => vi.fn())
 const mockGetHealth = vi.hoisted(() => vi.fn())
+const mockGetSettings = vi.hoisted(() => vi.fn())
 
 vi.mock('../lib/api', async () => {
   const actual = await vi.importActual<typeof import('../lib/api')>('../lib/api')
@@ -49,6 +50,7 @@ vi.mock('../lib/api', async () => {
     getTaskStatus: mockGetTaskStatus,
     pollTaskStatus: mockPollTaskStatus,
     getHealth: mockGetHealth,
+    getSettings: mockGetSettings,
   }
 })
 
@@ -241,7 +243,23 @@ describe('scan2text store', () => {
       mockUploadFile.mockResolvedValue({ task_id: 'task-abc' })
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
       await store.getState().startUpload({ file, jobId: 'my-job-id' })
-      expect(mockUploadFile).toHaveBeenCalledWith(file)
+      expect(mockUploadFile).toHaveBeenCalledWith(file, false)
+    })
+
+    it('should pass enhance=true to uploadFile when the enhance setting is true', async () => {
+      mockUploadFile.mockResolvedValue({ task_id: 'task-abc' })
+      store.setState({ ...store.getState(), enhance: true })
+      const file = new File(['content'], 'test.png', { type: 'image/png' })
+      await store.getState().startUpload({ file, jobId: 'my-job-id' })
+      expect(mockUploadFile).toHaveBeenCalledWith(file, true)
+    })
+
+    it('should pass enhance=false to uploadFile when the enhance setting is false', async () => {
+      mockUploadFile.mockResolvedValue({ task_id: 'task-abc' })
+      store.setState({ ...store.getState(), enhance: false })
+      const file = new File(['content'], 'test.png', { type: 'image/png' })
+      await store.getState().startUpload({ file, jobId: 'my-job-id' })
+      expect(mockUploadFile).toHaveBeenCalledWith(file, false)
     })
 
     it('should store the returned task_id on successful upload', async () => {

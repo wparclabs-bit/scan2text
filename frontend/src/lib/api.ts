@@ -84,6 +84,7 @@ export interface SettingsResponse {
   output_dir: string
   max_pdf_pages: number
   cpu_threads: number
+  enhance_image_quality?: boolean
   [key: string]: unknown
 }
 
@@ -93,6 +94,7 @@ export interface SettingsPatch {
   cpu_threads?: number
   theme?: string
   language?: string
+  enhance_image_quality?: boolean
 }
 
 export async function getSettings(): Promise<SettingsResponse> {
@@ -122,9 +124,12 @@ export async function getHealth(): Promise<{ status: string }> {
   return response.json() as Promise<{ status: string }>
 }
 
-export async function uploadFile(file: File): Promise<UploadResponse> {
+export async function uploadFile(file: File, enhance = false): Promise<UploadResponse> {
   const formData = new FormData()
   formData.append('files', file, file.name)
+  if (enhance) {
+    formData.append('enhance', 'true')
+  }
   const response = await fetch(buildApiUrl('/process'), {
     method: 'POST',
     body: formData,

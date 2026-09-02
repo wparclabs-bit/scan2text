@@ -95,7 +95,9 @@
     "loadFailed": "Failed to load settings.",
     "validationPages": "Max PDF Pages must be at least 1.",
     "validationThreads": "CPU Threads cannot be negative.",
-    "autoHint": "0 = auto"
+    "autoHint": "0 = auto",
+    "enhanceImageQuality": "Enhance Image Quality",
+    "enhanceImageQualityTooltip": "Apply contrast and color enhancement before OCR for better text recognition"
   },
   "welcome": {
     "title": "Welcome to Scan2Text",
