@@ -60,63 +60,69 @@ class TestModelsDirPriority:
 
 
 class TestModelsDirFrozenGrandparent:
-    """Priority 2: frozen exe_dir.parent.parent when models/ exists."""
+    """Priority 2: frozen home = parent of backend exe folder."""
 
     def test_frozen_grandparent_has_models(self, tmp_path):
         # Structure: tmp_path/models, tmp_path/exe/app.exe
-        # Path("tmp_path/exe/app.exe").parent = tmp_path/exe
-        # Path("tmp_path/exe/app.exe").parent.parent = tmp_path
+        # S63a: frozen home = parent of backend exe = tmp_path
         (tmp_path / "models").mkdir()
         exe_dir = tmp_path / "exe"
         exe_dir.mkdir()
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(exe_dir / "app.exe"), create=True):
             svc = PathService()
-            # Grandparent=tmp_path has models/, so base=tmp_path, models_dir=tmp_path/models
+            # Home = tmp_path (parent of exe_dir), models_dir = tmp_path/models
             assert svc.models_dir == tmp_path / "models"
 
     def test_frozen_grandparent_no_models_parent_has_models(self, tmp_path):
         # Structure: tmp_path (no models), tmp_path/exe/models, tmp_path/exe/app.exe
+        # S63a: frozen home = parent of backend exe = tmp_path (regardless of models location)
         exe_dir = tmp_path / "exe"
         exe_dir.mkdir()
         (exe_dir / "models").mkdir()
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(exe_dir / "app.exe"), create=True):
             svc = PathService()
-            # Grandparent tmp_path no models/; parent exe_dir has models/
-            assert svc.models_dir == exe_dir / "models"
+            # Home = tmp_path (parent of exe_dir), models_dir = tmp_path/models
+            assert svc.models_dir == tmp_path / "models"
 
     def test_frozen_grandparent_no_models_no_parent(self, tmp_path):
         # Structure: tmp_path (no models), tmp_path/exe (no models), tmp_path/exe/app.exe
+        # S63a: frozen home = parent of backend exe = tmp_path
         exe_dir = tmp_path / "exe"
         exe_dir.mkdir()
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(exe_dir / "app.exe"), create=True):
             svc = PathService()
-            # No models/ anywhere; frozen fallback to exe_dir, models_dir=exe_dir/models
-            assert svc.models_dir == exe_dir / "models"
+            # Home = tmp_path (parent of exe_dir), models_dir = tmp_path/models
+            assert svc.models_dir == tmp_path / "models"
 
 
 class TestModelsDirExeAdjacent:
-    """Priority 3: exe-adjacent models/."""
+    """Priority 3: frozen home = parent of backend exe folder."""
 
     def test_frozen_exe_adjacent_models_only(self, tmp_path):
-        exe_dir = tmp_path
-        (exe_dir / "models").mkdir()
+        # exe at tmp_path/exe/app.exe, home = tmp_path (parent of exe_dir)
+        exe_dir = tmp_path / "exe"
+        exe_dir.mkdir()
+        (tmp_path / "models").mkdir()
         with patch.object(sys, "frozen", True, create=True), \
              patch.object(sys, "executable", str(exe_dir / "app.exe"), create=True):
             svc = PathService()
-            assert svc.models_dir == exe_dir / "models"
+            # Home = tmp_path (parent of exe_dir), models_dir = tmp_path/models
+            assert svc.models_dir == tmp_path / "models"
 
 
 class TestModelsDirDevRoot:
-    """Priority 4: dev root unchanged."""
+    """Priority 4: dev fallback = repo-root .scan2text."""
 
-    def test_non_frozen_models_is_cwd(self):
+    def test_non_frozen_models_is_repo_scan2text(self):
         with patch.object(sys, "frozen", False, create=True):
             svc = PathService()
-            # Dev mode: base=cwd, models_dir=cwd/models
-            assert svc.models_dir == Path.cwd() / "models"
+            # S63a: dev fallback = repo-root .scan2text, NOT cwd
+            repo_root = Path(__file__).resolve().parents[3]
+            expected_home = repo_root / ".scan2text"
+            assert svc.models_dir == expected_home.resolve() / "models"
 
 
 class TestModelsDirMissingError:
@@ -131,5 +137,7 @@ class TestModelsDirMissingError:
                     _ = svc.models_dir
                 err_msg = str(exc_info.value)
                 assert "/nonexistent/models" in err_msg
+                # S63a: error lists home/models, not dev root
+                assert "home/models=" in err_msg
             finally:
                 os.environ.pop("SCAN2TEXT_MODELS_DIR", None)
