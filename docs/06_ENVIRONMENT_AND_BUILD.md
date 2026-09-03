@@ -48,7 +48,7 @@ D:\WingAI\Projects\scan2text\
 ├── scripts/                    # Build scripts
 ├── dev.ps1                     # Dev startup
 ├── pytest.ini                  # Pytest config
-└── second-brain/               # Obsidian vault
+└── second-brain/               # Obsidian vault (local-only; gitignored; NOT published)
 ```
 
 ---

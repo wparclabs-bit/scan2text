@@ -98,7 +98,7 @@ Scan2Text/
 ├── packaging/
 │   └── scan2text-backend.spec      # PyInstaller spec
 ├── scripts/                        # Build/deployment scripts
-└── second-brain/                   # Obsidian vault
+└── second-brain/                   # Obsidian vault (local-only; gitignored; NOT published)
 ```
 
 ---

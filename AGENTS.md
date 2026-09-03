@@ -98,7 +98,9 @@ DSH MUST invoke these tools BEFORE reading raw files or searching directories:
 **Scrollbars:** always-visible, thin, rounded, warm on Queue + Preview only.
 
 ## 7. Memory Protocol + Vault Map
-Every slice: read THIS file + `second-brain/00-Current-State.md` ONLY; read ADRs/docs only if slice lists them; update `00-Current-State.md` on state changes; write summary to `second-brain/01-Agent-Memory/Phase-{N}/slice-{X}-{name}.md`.
+Every slice: read THIS file + `second-brain/00-Current-State.md` ONLY (if present locally); read ADRs/docs only if slice lists them; update `00-Current-State.md` on state changes; write summary to `second-brain/01-Agent-Memory/Phase-{N}/slice-{X}-{name}.md`.
+
+> **Privacy note:** `second-brain/` = local-only private vault (gitignored; NOT on GitHub). Public docs live at `docs/product/` and other `docs/*.md` files.
 
 ```
 second-brain/

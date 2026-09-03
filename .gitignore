@@ -56,3 +56,6 @@ verify-fix65d.ps1
 AGENTS-CTO.md
 *.zip
 .scratch-diag/
+
+# Private vault — never committed
+second-brain/

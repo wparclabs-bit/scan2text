@@ -14,7 +14,7 @@ Feed this exact text to any new AI agent or human developer on session start:
 You are joining the Scan2Text project at D:\WingAI\Projects\scan2text.
 Read these documents IN ORDER before doing anything else:
 1. AGENTS.md — Agent operating manual (engineering rules, locked decisions)
-2. second-brain/00-Current-State.md — Current phase, test counts, recent changelog
+2. second-brain/00-Current-State.md — Current phase, test counts, recent changelog *(read ONLY if present locally; public readers: skip this)*
 3. docs/ARCHITECTURE.md — Master architecture reference
 
 After reading, state: "Loaded. Current phase: [N]. Status: [COMPLETE/READY/BLOCKED]."
@@ -28,7 +28,7 @@ Then await your slice prompt.
 Strict sequence for any new agent or developer:
 
 1. **`AGENTS.md`** — Operating manual: paths, commands, engineering rules, locked decisions, lessons learned
-2. **`second-brain/00-Current-State.md`** — Current phase, test baselines, recent changelog (last 5 entries)
+2. **`second-brain/00-Current-State.md`** — Current phase, test baselines, recent changelog (last 5 entries) *(read ONLY if present locally; public readers: `docs/` is the complete spec)*
 3. **`docs/ARCHITECTURE.md`** — Single source of truth for architecture: repo topology, layers, contracts, data flows
 4. **`docs/01_FILE_MATRIX.md`** — Complete file ledger
 5. **`docs/02_IPC_AND_API_CONTRACTS.md`** — API schemas and IPC contracts
@@ -170,17 +170,17 @@ git log --oneline -5
 ## Obsidian Vault Map
 
 ```
-second-brain/
+second-brain/                   ← LOCAL-ONLY PRIVATE VAULT (gitignored; not published)
   00-Current-State.md          ← Read first for current phase
   00-Inbox/                    ← Unprocessed items
   01-Agent-Memory/             ← Slice summaries (Phase-2…Phase-7)
-    Archive/                   ← Old state history
+     Archive/                   ← Old state history
   02-QA/                       ← Manual test scripts (CEO-executed)
   03-Architecture/             ← ADRs and architecture docs
   05-Sprints/                  ← Sprint planning
 ```
 
-> **Rule:** Every slice updates `00-Current-State.md` and writes a summary to `second-brain/01-Agent-Memory/Phase-{N}/slice-{X}-{name}.md`.
+> **Rule:** Every slice updates `00-Current-State.md` and writes a summary to `second-brain/01-Agent-Memory/Phase-{N}/slice-{X}-{name}.md`. *(This only applies to local DSH workspace; the vault is gitignored and never pushed.)*
 
 ---
 
