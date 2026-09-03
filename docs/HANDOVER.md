@@ -37,7 +37,7 @@ Strict sequence for any new agent or developer:
 8. **`docs/05_DATA_FLOWS.md`** — Sequence diagrams
 9. **`docs/06_ENVIRONMENT_AND_BUILD.md`** — Build instructions and environment setup
 
-> **Note:** PRD docs in `second-brain/04-Product/` are only read if explicitly listed in a slice prompt.
+> **Note:** PRD docs are now public at `docs/product/` (moved from `second-brain/04-Product/`). Read only if explicitly listed in a slice prompt.
 
 ---
 
@@ -177,7 +177,6 @@ second-brain/
     Archive/                   ← Old state history
   02-QA/                       ← Manual test scripts (CEO-executed)
   03-Architecture/             ← ADRs and architecture docs
-  04-Product/                  ← PRD v1.7 files
   05-Sprints/                  ← Sprint planning
 ```
 

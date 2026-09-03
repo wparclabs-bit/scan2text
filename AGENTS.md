@@ -107,7 +107,6 @@ second-brain/
   01-Agent-Memory/  (Phase-2…Phase-7 slice summaries + Archive/)
   02-QA/            (manual test scripts)
   03-Architecture/  (docs + ADRs/)
-  04-Product/       (PRD v1.7 files 01-04)
   05-Sprints/
 ```
 If folder names differ, discover via `Get-ChildItem` before writing; never guess.
