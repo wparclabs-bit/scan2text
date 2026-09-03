@@ -124,7 +124,22 @@ export async function getHealth(): Promise<{ status: string }> {
   return response.json() as Promise<{ status: string }>
 }
 
-export async function uploadFile(file: File, enhance = false): Promise<UploadResponse> {
+export async function uploadFile(filePaths: string[], enhance = false): Promise<UploadResponse> {
+    const payload = { file_paths: filePaths };
+    const response = await fetch(buildApiUrl('/process'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+    }
+    try {
+        return (await response.json()) as UploadResponse;
+    } catch {
+        throw new Error('Server communication error');
+    }
+}
   const formData = new FormData()
   formData.append('files', file, file.name)
   if (enhance) {

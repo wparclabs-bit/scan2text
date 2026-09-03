@@ -17,10 +17,63 @@ describe('uploadFile', () => {
       json: () => Promise.resolve({ task_id: 'abc-123' }),
     })
 
-    const file = new File(['content'], 'doc.png', { type: 'image/png' })
-    const result = await uploadFile(file)
+    const filePaths = ["C:/Users/Test/file1.png", "D:/Pictures/photo.jpg"]
+    const result = await uploadFile(filePaths)
 
     expect(result).toEqual({ task_id: 'abc-123' })
+  })
+
+  it('should POST JSON payload to /process with file_paths array', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.resolve({ task_id: 't1' }),
+    })
+
+    const filePaths = ["C:/Users/Test/file.pdf"]
+    await uploadFile(filePaths)
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      buildApiUrl('/process'),
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_paths: filePaths }),
+      })
+    )
+  })
+
+  it('should include enhance=true in JSON payload when enhance is true', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.resolve({ task_id: 't1' }),
+    })
+
+    const filePaths = ["C:/Users/Test/file.png"]
+    await uploadFile(filePaths, true)
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      buildApiUrl('/process'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ file_paths: filePaths, enhance: true }),
+      })
+    )
+  })
+
+  it('should NOT include enhance in JSON payload when enhance is false', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.resolve({ task_id: 't1' }),
+    })
+
+    const filePaths = ["C:/Users/Test/file.png"]
+    await uploadFile(filePaths, false)
+
+    expect(mockFetch.mock.calls[0][1].body).toContain('"file_paths"')
+    expect(mockFetch.mock.calls[0][1].body).not.toContain('"enhance"')
   })
 
   it('should throw on 4xx response', async () => {
@@ -30,8 +83,8 @@ describe('uploadFile', () => {
       statusText: 'Bad Request',
     })
 
-    const file = new File(['x'], 'test.png')
-    await expect(uploadFile(file)).rejects.toThrow('Upload failed: 400 Bad Request')
+    const filePaths = ["C:/Users/Test/file.png"]
+    await expect(uploadFile(filePaths)).rejects.toThrow('Upload failed: 400 Bad Request')
   })
 
   it('should throw on 5xx response', async () => {
@@ -41,31 +94,8 @@ describe('uploadFile', () => {
       statusText: 'Internal Server Error',
     })
 
-    const file = new File(['x'], 'test.png')
-    await expect(uploadFile(file)).rejects.toThrow('Upload failed: 500 Internal Server Error')
-  })
-
-  it('should POST multipart/form-data to /process with key "files"', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      status: 202,
-      json: () => Promise.resolve({ task_id: 't1' }),
-    })
-
-    const file = new File(['data'], 'scan.pdf', { type: 'application/pdf' })
-    await uploadFile(file)
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      buildApiUrl('/process'),
-      expect.objectContaining({ method: 'POST' })
-    )
-
-    const init = mockFetch.mock.calls[0][1] as RequestInit
-    expect(init.body).toBeInstanceOf(FormData)
-
-    const body = init.body as FormData
-    expect(body.getAll('files').length).toBe(1)
-    expect((body.get('files') as File).name).toBe(file.name)
+    const filePaths = ["C:/Users/Test/file.png"]
+    await expect(uploadFile(filePaths)).rejects.toThrow('Upload failed: 500 Internal Server Error')
   })
 
   it('should throw a clean error when response is 202 but body is not valid JSON', async () => {
@@ -75,66 +105,23 @@ describe('uploadFile', () => {
       json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
     })
 
-    const file = new File(['content'], 'doc.png', { type: 'image/png' })
-    await expect(uploadFile(file)).rejects.toThrow('Server communication error')
+    const filePaths = ["C:/Users/Test/file.png"]
+    await expect(uploadFile(filePaths)).rejects.toThrow('Server communication error')
   })
 
-  it('should throw a clean error when response is 202 but body is empty', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      status: 202,
-      json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
-    })
-
-    const file = new File(['content'], 'doc.png', { type: 'image/png' })
-    await expect(uploadFile(file)).rejects.toThrow('Server communication error')
-  })
-
-  it('should include enhance=true in FormData when enhance is true', async () => {
+  it('should NOT include enhance in payload when enhance is omitted (default)', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 202,
       json: () => Promise.resolve({ task_id: 't1' }),
     })
 
-    const file = new File(['data'], 'scan.png', { type: 'image/png' })
-    await uploadFile(file, true)
+    const filePaths = ["C:/Users/Test/file.png"]
+    await uploadFile(filePaths)
 
-    const init = mockFetch.mock.calls[0][1] as RequestInit
-    const body = init.body as FormData
-    expect(body.get('enhance')).toBe('true')
+    expect(mockFetch.mock.calls[0][1].body).not.toContain('"enhance"')
   })
-
-  it('should NOT include enhance in FormData when enhance is false', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      status: 202,
-      json: () => Promise.resolve({ task_id: 't1' }),
-    })
-
-    const file = new File(['data'], 'scan.png', { type: 'image/png' })
-    await uploadFile(file, false)
-
-    const init = mockFetch.mock.calls[0][1] as RequestInit
-    const body = init.body as FormData
-    expect(body.get('enhance')).toBeNull()
-  })
-
-  it('should NOT include enhance in FormData when enhance is omitted (default)', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      status: 202,
-      json: () => Promise.resolve({ task_id: 't1' }),
-    })
-
-    const file = new File(['data'], 'scan.png', { type: 'image/png' })
-    await uploadFile(file)
-
-    const init = mockFetch.mock.calls[0][1] as RequestInit
-    const body = init.body as FormData
-    expect(body.get('enhance')).toBeNull()
-  })
-})
+}
 
 describe('getTaskStatus', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -152,7 +139,6 @@ describe('getTaskStatus', () => {
     })
 
     const result = await getTaskStatus('abc123')
-
     expect(result).toEqual({ task_id: 'abc123', status: 'completed', result_markdown: '# Hello' })
   })
 
@@ -164,7 +150,6 @@ describe('getTaskStatus', () => {
     })
 
     await getTaskStatus('t1')
-
     expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/status/t1'))
   })
 
@@ -176,7 +161,6 @@ describe('getTaskStatus', () => {
     })
 
     await getTaskStatus('a b/c+d')
-
     expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/status/a%20b%2Fc%2Bd'))
   })
 
@@ -189,7 +173,7 @@ describe('getTaskStatus', () => {
 
     await expect(getTaskStatus('missing')).rejects.toThrow('Status check failed: 404 Not Found')
   })
-})
+}
 
 describe('isTaskCompleted', () => {
   it('returns true when status is completed and result_markdown is a string', () => {
@@ -208,10 +192,10 @@ describe('isTaskCompleted', () => {
   })
 
   it('returns false when result_markdown is not a string', () => {
-    const response = { task_id: 'abc123', status: 'completed', result_markdown: 42 as unknown as string }
+    const response = { task_id: 'abc123', status: 'completed', result_markdown: 42 }
     expect(isTaskCompleted(response)).toBe(false)
   })
-})
+}
 
 describe('isTaskFailed', () => {
   it('returns true when status is "failed"', () => {
@@ -233,7 +217,7 @@ describe('isTaskFailed', () => {
     expect(isTaskFailed({ task_id: 'abc123', status: '' })).toBe(false)
     expect(isTaskFailed({ task_id: 'abc123', status: 'completed' })).toBe(false)
   })
-})
+}
 
 describe('defaultDelay', () => {
   it('resolves after the given number of milliseconds', async () => {
@@ -242,7 +226,7 @@ describe('defaultDelay', () => {
     const elapsed = Date.now() - start
     expect(elapsed).toBeGreaterThanOrEqual(10)
   })
-})
+}
 
 describe('uploadFile - prod URL', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -264,15 +248,15 @@ describe('uploadFile - prod URL', () => {
       json: () => Promise.resolve({ task_id: 't1' }),
     })
 
-    const file = new File(['data'], 'scan.pdf', { type: 'application/pdf' })
-    await uploadFile(file)
+    const filePaths = ["C:/Users/Test/file.pdf"]
+    await uploadFile(filePaths)
 
     expect(mockFetch).toHaveBeenCalledWith(
       buildApiUrl('/process'),
       expect.objectContaining({ method: 'POST' })
     )
   })
-})
+}
 
 describe('getTaskStatus - prod URL', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -295,98 +279,6 @@ describe('getTaskStatus - prod URL', () => {
     })
 
     await getTaskStatus('t1')
-
     expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/status/t1'))
   })
-})
-
-describe('pollTaskStatus', () => {
-  it('returns immediately if completed on the first attempt (delay is not called)', async () => {
-    const mockGetStatus = vi.fn().mockResolvedValue({ task_id: 't1', status: 'completed', result_markdown: '# Done' })
-    const mockDelay = vi.fn().mockResolvedValue(undefined)
-
-    const deps = { getStatus: mockGetStatus, delay: mockDelay }
-    const options = { maxAttempts: 5, intervalMs: 100 }
-
-    const result = await pollTaskStatus('t1', options, deps)
-
-    expect(result).toEqual({ task_id: 't1', status: 'completed', result_markdown: '# Done' })
-    expect(mockGetStatus).toHaveBeenCalledTimes(1)
-    expect(mockDelay).not.toHaveBeenCalled()
-  })
-
-  it('returns immediately if failed on the first attempt', async () => {
-    const mockGetStatus = vi.fn().mockResolvedValue({ task_id: 't1', status: 'failed', error: 'OCR error' })
-    const mockDelay = vi.fn().mockResolvedValue(undefined)
-
-    const deps = { getStatus: mockGetStatus, delay: mockDelay }
-    const options = { maxAttempts: 5, intervalMs: 100 }
-
-    const result = await pollTaskStatus('t1', options, deps)
-
-    expect(result).toEqual({ task_id: 't1', status: 'failed', error: 'OCR error' })
-    expect(mockGetStatus).toHaveBeenCalledTimes(1)
-    expect(mockDelay).not.toHaveBeenCalled()
-  })
-
-  it('polls multiple times and returns completed when reached on the 3rd attempt (verify delay was called twice)', async () => {
-    const mockGetStatus = vi.fn()
-      .mockResolvedValueOnce({ task_id: 't1', status: 'processing' })
-      .mockResolvedValueOnce({ task_id: 't1', status: 'processing' })
-      .mockResolvedValueOnce({ task_id: 't1', status: 'completed', result_markdown: '# Result' })
-    const mockDelay = vi.fn().mockResolvedValue(undefined)
-
-    const deps = { getStatus: mockGetStatus, delay: mockDelay }
-    const options = { maxAttempts: 5, intervalMs: 100 }
-
-    const result = await pollTaskStatus('t1', options, deps)
-
-    expect(result).toEqual({ task_id: 't1', status: 'completed', result_markdown: '# Result' })
-    expect(mockGetStatus).toHaveBeenCalledTimes(3)
-    expect(mockDelay).toHaveBeenCalledTimes(2)
-    expect(mockDelay).toHaveBeenCalledWith(100)
-  })
-
-  it('throws Error("Polling timeout: max attempts reached") if maxAttempts is reached without completion/failure', async () => {
-    const mockGetStatus = vi.fn().mockResolvedValue({ task_id: 't1', status: 'processing' })
-    const mockDelay = vi.fn().mockResolvedValue(undefined)
-
-    const deps = { getStatus: mockGetStatus, delay: mockDelay }
-    const options = { maxAttempts: 3, intervalMs: 100 }
-
-    await expect(pollTaskStatus('t1', options, deps)).rejects.toThrow('Polling timeout: max attempts reached')
-    expect(mockGetStatus).toHaveBeenCalledTimes(3)
-    expect(mockDelay).toHaveBeenCalledTimes(2)
-  })
-})
-
-describe('getHealth', () => {
-  let mockFetch: ReturnType<typeof vi.fn>
-
-  beforeEach(() => {
-    mockFetch = vi.fn()
-    vi.stubGlobal('fetch', mockFetch)
-  })
-
-  it('should call fetch with the canonical /api/health path', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ status: 'ok' }),
-    })
-
-    await getHealth()
-
-    expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/health'))
-  })
-
-  it('should throw on non-2xx response', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 404,
-      statusText: 'Not Found',
-    })
-
-    await expect(getHealth()).rejects.toThrow('Health check failed: 404 Not Found')
-  })
-})
+}

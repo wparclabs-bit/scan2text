@@ -1,4 +1,8 @@
 import { describe, it, expect } from 'vitest'
+import { jsdom } from 'jsdom'
+
+// Mock document for components that rely on DOM APIs
+global.document = jsdom().defaultView?.document || ({} as Document)
 import { render, screen } from '@testing-library/react'
 import MarkdownPreview from './MarkdownPreview'
 
