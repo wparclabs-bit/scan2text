@@ -33,7 +33,6 @@ samples/
 
 # Privacy / runtime artifacts — never commit
 uploads/
-.scan2text/
 graphify-out/
 src/graphify-out/
 .kilo/

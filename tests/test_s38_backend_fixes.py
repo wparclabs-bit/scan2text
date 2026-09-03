@@ -152,8 +152,8 @@ class TestI2PortableRootResolution:
             ps = PathService()
             assert ps.models_dir == root / "models"
 
-    def test_dev_mode_uses_repo_scan2text(self, tmp_path):
-        """In dev mode (not frozen), paths resolve to repo-root .scan2text, NOT cwd."""
+    def test_dev_mode_uses_repo_root(self, tmp_path):
+        """In dev mode (not frozen), paths resolve to repo root, NOT cwd."""
         original_cwd = Path.cwd()
         original_home = os.environ.get("SCAN2TEXT_HOME")
         try:
@@ -163,13 +163,13 @@ class TestI2PortableRootResolution:
             with patch.object(sys, "frozen", False, create=True):
                 ps = PathService()
 
-                # S63a: dev fallback = repo-root .scan2text, NOT cwd
+                # S63-FIX: dev fallback = repo root, NOT .scan2text subdir
                 repo_root = Path(__file__).resolve().parents[1]
-                expected_home = repo_root / ".scan2text"
-                assert ps.base_dir == expected_home.resolve()
-                assert ps.app_root == expected_home.resolve()
-                assert ps.models_dir == expected_home.resolve() / "models"
-                assert ps.settings_path == expected_home.resolve() / "settings" / "settings.json"
+                expected_home = repo_root.resolve()
+                assert ps.base_dir == expected_home
+                assert ps.app_root == expected_home
+                assert ps.models_dir == expected_home / "models"
+                assert ps.settings_path == expected_home / "settings" / "settings.json"
         finally:
             os.chdir(original_cwd)
             if original_home is None:

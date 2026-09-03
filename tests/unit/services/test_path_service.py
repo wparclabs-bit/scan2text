@@ -18,9 +18,11 @@ class TestPathServiceBaseDir:
             svc = PathService(base_dir=tmpdir)
             assert svc.base_dir == Path(tmpdir).resolve()
 
-    def test_default_base_dir_is_under_cwd(self):
+    def test_default_base_dir_is_repo_root(self):
+        """S63-FIX: dev home = repo root, NOT .scan2text subdir."""
         svc = PathService()
-        assert ".scan2text" in str(svc.base_dir)
+        repo_root = Path(__file__).resolve().parents[3]
+        assert svc.base_dir == repo_root.resolve()
 
     def test_scan2text_home_override(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -171,3 +173,26 @@ class TestEnsureDirsAlias:
     def test_ensure_dirs_is_alias_of_ensure_runtime_dirs(self):
         from scan2text.services.path_service import ensure_dirs, PathService
         assert ensure_dirs is PathService.ensure_runtime_dirs
+
+
+class TestGitignoreGhostsDead:
+    """Ghost-killing: .scan2text/ must not appear in .gitignore.
+
+    S63-FIX: dev home = repo root; the old .scan2text subdir is obsolete.
+    Absence test keeps the ghost dead atomically.
+    """
+
+    def test_gitignore_no_scan2text_entry(self):
+        gitignore = Path(__file__).resolve().parents[3] / ".gitignore"
+        content = gitignore.read_text(encoding="utf-8")
+        assert ".scan2text/" not in content, (
+            f".scan2text/ still in .gitignore — ghost alive. "
+            "Dev home is now repo root; remove the entry."
+        )
+
+    def test_gitignore_contains_runtime_dirs(self):
+        """Runtime folders must be gitignored: models/, output/, logs/, feedback/, settings/."""
+        gitignore = Path(__file__).resolve().parents[3] / ".gitignore"
+        content = gitignore.read_text(encoding="utf-8")
+        for entry in ("models/", "output/", "logs/", "feedback/", "settings/"):
+            assert entry in content, f"{entry} missing from .gitignore"

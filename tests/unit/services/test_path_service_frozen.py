@@ -52,17 +52,16 @@ class TestPathServiceFrozen:
             svc = PathService()
             assert svc.base_dir == Path("C:/apps")
 
-    def test_non_frozen_behavior_uses_repo_scan2text(self):
-        """S63a: dev mode uses repo-root .scan2text, NOT cwd."""
+    def test_non_frozen_behavior_uses_repo_root(self):
+        """S63-FIX: dev mode uses repo root, NOT .scan2text subdir."""
         from scan2text.services.path_service import PathService
         with patch.object(sys, "frozen", False, create=True):
             svc = PathService()
-            assert ".scan2text" in str(svc.base_dir)
-            # Dev mode: base_dir = repo-root/.scan2text, app_root = same
             repo_root = Path(__file__).resolve().parents[3]
-            expected_home = repo_root / ".scan2text"
-            assert svc.app_root == expected_home.resolve()
-            assert svc.base_dir == expected_home.resolve()
+            expected_home = repo_root.resolve()
+            assert svc.base_dir == expected_home
+            # Dev mode: base_dir = app_root = repo root
+            assert svc.app_root == expected_home
 
     def test_frozen_models_dir_under_portable_root(self):
         """S63a: frozen models_dir = portable root/models."""

@@ -211,12 +211,12 @@ class TestPathsAreAbsolute:
                 os.environ["SCAN2TEXT_HOME"] = original
 
 
-class TestDevFallbackUsesDotScan2text:
+class TestDevFallbackUsesRepoRoot:
     """Dev fallback: when no explicit home and not frozen,
-    home falls back to repo .scan2text (NOT cwd-based)."""
+    home is the repo root (NOT .scan2text subdir, NOT cwd-based)."""
 
-    def test_dev_fallback_uses_repo_scan2text_not_cwd(self, tmp_path):
-        """Dev mode without SCAN2TEXT_HOME must use repo .scan2text, not cwd."""
+    def test_dev_fallback_uses_repo_root_not_cwd(self, tmp_path):
+        """Dev mode without SCAN2TEXT_HOME must use repo root, not cwd."""
         original = os.environ.get("SCAN2TEXT_HOME")
         original_cwd = os.getcwd()
         try:
@@ -225,13 +225,13 @@ class TestDevFallbackUsesDotScan2text:
                 # Change to a different directory
                 os.chdir(tmp_path)
                 svc = PathService()
-                # The home should be based on repo root, NOT tmp_path (cwd)
+                # The home should be repo root, NOT tmp_path (cwd)
                 # Repo root is the parent of src/ (parents[3] from test file)
                 repo_root = Path(__file__).resolve().parents[3]
-                expected_home = repo_root / ".scan2text"
-                assert svc.base_dir == expected_home.resolve(), (
+                expected_home = repo_root.resolve()
+                assert svc.base_dir == expected_home, (
                     f"Expected {expected_home}, got {svc.base_dir}. "
-                    "Dev fallback must use repo .scan2text, not cwd."
+                    "Dev fallback must use repo root, not cwd."
                 )
         finally:
             os.chdir(original_cwd)

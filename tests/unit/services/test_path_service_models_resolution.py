@@ -136,10 +136,10 @@ class TestModelsDirFrozenExeAdjacent:
 
 
 class TestModelsDirDevRoot:
-    """Priority 4: dev layout — cwd when not frozen."""
+    """Priority 4: dev layout — repo root when not frozen."""
 
-    def test_non_frozen_returns_repo_scan2text(self, tmp_path):
-        """S63a: Non-frozen mode uses repo-root .scan2text, NOT cwd."""
+    def test_non_frozen_returns_repo_root(self, tmp_path):
+        """S63-FIX: Non-frozen mode uses repo root, NOT .scan2text subdir."""
         original_cwd = os.getcwd()
         original_home = os.environ.get("SCAN2TEXT_HOME")
         try:
@@ -147,10 +147,10 @@ class TestModelsDirDevRoot:
             os.chdir(tmp_path)
             with patch.object(sys, "frozen", False, create=True):
                 svc = PathService()
-                # S63a: dev fallback = repo-root .scan2text
+                # S63-FIX: dev fallback = repo root
                 repo_root = Path(__file__).resolve().parents[3]
-                expected_home = repo_root / ".scan2text"
-                assert svc.models_dir == expected_home.resolve() / "models"
+                expected_home = repo_root.resolve()
+                assert svc.models_dir == expected_home / "models"
         finally:
             os.chdir(original_cwd)
             if original_home is None:

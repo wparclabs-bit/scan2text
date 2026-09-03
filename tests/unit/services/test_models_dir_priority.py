@@ -114,15 +114,15 @@ class TestModelsDirExeAdjacent:
 
 
 class TestModelsDirDevRoot:
-    """Priority 4: dev fallback = repo-root .scan2text."""
+    """Priority 4: dev fallback = repo root."""
 
-    def test_non_frozen_models_is_repo_scan2text(self):
+    def test_non_frozen_models_is_repo_root(self):
         with patch.object(sys, "frozen", False, create=True):
             svc = PathService()
-            # S63a: dev fallback = repo-root .scan2text, NOT cwd
+            # S63-FIX: dev fallback = repo root, NOT .scan2text subdir
             repo_root = Path(__file__).resolve().parents[3]
-            expected_home = repo_root / ".scan2text"
-            assert svc.models_dir == expected_home.resolve() / "models"
+            expected_home = repo_root.resolve()
+            assert svc.models_dir == expected_home / "models"
 
 
 class TestModelsDirMissingError:

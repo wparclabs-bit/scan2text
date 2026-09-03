@@ -17,7 +17,7 @@ class PathService:
     Home resolution priority (S63a):
     1. SCAN2TEXT_HOME environment variable, if set.
     2. If frozen PyInstaller: portable root = parent of backend executable folder.
-    3. Dev fallback: repo-root .scan2text (NOT cwd-based).
+    3. Dev fallback: repo root (NOT cwd-based, NOT .scan2text subdir).
 
     All core paths (settings, logs, output, models, feedback) derive from this
     single home, never from current working directory, never under backend/.
@@ -58,7 +58,7 @@ class PathService:
         Priority:
         1. SCAN2TEXT_HOME environment variable, if set.
         2. Frozen PyInstaller: portable root = parent of backend executable folder.
-        3. Dev fallback: repo-root .scan2text (NOT cwd-based).
+        3. Dev fallback: repo root (NOT cwd-based, NOT .scan2text subdir).
         """
         env_home = os.environ.get("SCAN2TEXT_HOME")
         if env_home:
@@ -68,9 +68,9 @@ class PathService:
         if getattr(sys, "frozen", False):
             return Path(sys.executable).parent.parent
 
-        # Dev fallback: repo-root .scan2text (parent of src/)
+        # Dev fallback: repo root (CEO 2026-09-03, Option A)
         repo_root = Path(__file__).resolve().parents[3]
-        return repo_root / ".scan2text"
+        return repo_root
 
     @staticmethod
     def _resolve_base_dir() -> Path:
@@ -196,7 +196,7 @@ class PathService:
         """Convert a filename stem to Windows-safe form.
 
         Removes or replaces invalid Windows filename characters:
-          < > : " / \ | ? *
+          < > : \" / \\ | ? *
         and control characters. Rejects Windows reserved names.
         """
         import re
