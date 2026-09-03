@@ -15,6 +15,7 @@
 param(
     [string]$Version = "v1.1",
     [switch]$SkipBuild,
+    [switch]$SkipBackend,
     [string]$OutputDir
 )
 
@@ -72,6 +73,21 @@ if (-not $SkipBuild) {
     Set-Location $RepoRoot
 } else {
     Write-Host "[SKIP] Build step skipped per -SkipBuild." -ForegroundColor Gray
+}
+
+# ------------------------------------------------------------------
+# 1.5 Build backend (unless skipped)
+# ------------------------------------------------------------------
+if (-not $SkipBackend) {
+    Write-Host "[BUILD] Backend..." -ForegroundColor Yellow
+    & "$PSScriptRoot\build-backend.ps1"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[FAIL] Backend build failed." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "[OK] Backend build success." -ForegroundColor Green
+} else {
+    Write-Host "[SKIP] Backend build skipped per -SkipBackend." -ForegroundColor Gray
 }
 
 # ------------------------------------------------------------------

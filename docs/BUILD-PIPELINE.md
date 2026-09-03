@@ -31,14 +31,18 @@ scripts/build-backend.ps1
 
 ## Mandatory Rebuild Order
 
-1. `scripts/build-backend.ps1` — build the backend artifact first
-2. `scripts/package-portable.ps1` — package using the freshly built backend
+`scripts/package-portable.ps1` now internally invokes `scripts/build-backend.ps1` before staging, so the scripts are **internally ordered** — a caller cannot accidentally package a stale backend.
 
-**Never** run package-portable before build-backend, or you package a stale backend.
+| Invocation | Backend built? | Frontend/Tauri built? |
+|---|---|---|
+| `package-portable.ps1` (no flags) | ✅ Yes (default) | ✅ Yes (default) |
+| `package-portable.ps1 -SkipBuild` | ✅ Yes (default) | ❌ Skipped |
+| `package-portable.ps1 -SkipBackend` | ❌ Skipped | ✅ Yes (default) |
+| `package-portable.ps1 -SkipBuild -SkipBackend` | ❌ Skipped | ❌ Skipped |
 
-## Known Gap
+## Resolved
 
-Pipeline wiring fix (integrate `build-backend.ps1` into `package-portable.ps1`, add `-SkipBackend` opt-out) is **CEO-approved, ON HOLD** until the crash/bloat issue (DIAG-V11: C1 port-conflict + S1 unexpected-bundle) is resolved.
+**PIPELINE-WIRING-OPTION-A** (CEO 2026-09-03): `build-backend.ps1` is now integrated into `package-portable.ps1` by default. A `-SkipBackend` opt-out switch allows skipping the backend build when only frontend changes were made. The integration enforces ordering by construction — a caller cannot accidentally package a stale backend.
 
 ## Known Pitfalls
 
