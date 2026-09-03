@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import FeedbackButton from './FeedbackButton'
 import { buildApiUrl } from '@/lib/apiBase'
 
-const VERSION = 'v1.0.0'
+const VERSION = 'v1.1.0'
 const SHARE_URL = 'https://placeholder.local'
 
 function getWorkerStatus() {
@@ -63,7 +63,7 @@ export default function BottomStatusBar() {
           <span className="h-px w-px bg-border" aria-hidden="true" />
           <span>{cpuDisplay}</span>
           <span className="h-px w-px bg-border" aria-hidden="true" />
-          <span>{VERSION}</span>
+          <span data-testid="version">{VERSION}</span>
         </div>
         <div className="flex items-center justify-end gap-2">
           <FeedbackButton />

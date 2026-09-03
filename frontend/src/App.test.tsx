@@ -83,7 +83,7 @@ describe('Command Center layout', () => {
       render(<App />)
       expect(screen.getByTestId('bottom-bar')).toBeInTheDocument()
       expect(screen.getByText('Worker: Idle')).toBeInTheDocument()
-      expect(screen.getByText('v1.0.0')).toBeInTheDocument()
+      expect(screen.getByText('v1.1.0')).toBeInTheDocument()
     })
 
     it('renders panel-dropzone', () => {

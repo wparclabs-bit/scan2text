@@ -70,8 +70,8 @@ describe('BottomStatusBar structure', () => {
   it('version string is present in center zone', () => {
     render(<BottomStatusBar />)
     const footer = screen.getByTestId('bottom-bar') as HTMLElement
-    // Final product: shipped version is v1.0.0
-    expect(footer.textContent).toContain('v1.0.0')
+    // CEO locked 2026-09-03: display format v1.1.0
+    expect(footer.textContent).toContain('v1.1.0')
   })
 
   it('shows RAM value from health endpoint instead of dash', async () => {
