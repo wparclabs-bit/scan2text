@@ -1,117 +1,332 @@
-# Architecture
+# Scan2Text v1.1 — Master Architecture Reference
 
-Scan2Text is a **local-first modular monolith**: one desktop process pair, no cloud services, no
-external database, no microservices. All recognition happens locally; the only outbound network
-traffic is the optional update check, the model downloader, and the user-initiated feedback form.
+> **Last Updated:** 2026-09-03  
+> **Version:** 1.1.0  
+> **Classification:** Principal Systems Audit
 
-## Components
+---
 
-| Component | Technology | Role |
-|---|---|---|
-| Desktop shell | Tauri v2 (Rust), source `frontend/src-tauri/` | Bundles the built React frontend; owns the backend lifecycle (spawn and kill) |
-| Frontend | React + Zustand, built with Vite | Command Center UI: dropzone, queue, preview; memory-only job state |
-| Backend | FastAPI packaged with PyInstaller (`backend/scan2text-backend.exe`) | Validation, FIFO queue, OCR worker, output writing, settings, updates |
+## Executive Summary
 
-The shell spawns the PyInstaller backend as a child process bound to **127.0.0.1:47351**.
+Scan2Text is a portable, offline desktop application that converts images (PNG, JPG, JPEG, WEBP) and PDFs into Markdown using a local vision-language model (OvisOCR2 0.9B) running entirely on CPU. The application follows a three-layer architecture:
 
-## Backend lifecycle
+1. **Tauri Shell (Rust)** — Desktop window management, backend lifecycle, IPC bridge
+2. **React/TypeScript Frontend** — Command Center UI, state management, API client
+3. **Python/FastAPI Backend** — OCR pipeline, model inference, file processing
 
-The shell owns spawn **and** kill:
+### Key Design Principles
+- **Local-first**: All processing happens on the user's machine
+- **Offline-capable**: Works without internet after initial model download
+- **CPU-only**: No GPU required; uses llama-cpp-python with GGUF models
+- **Privacy-focused**: No telemetry, no cloud services, no data collection
+- **Portable**: Single-folder deployment, no installer required
 
-- **Spawn:** on launch the shell starts `backend/scan2text-backend.exe` as a hidden child process
-  and waits for port 47351 (wait capped at 5 s).
-- **Kill:** on exit the shell kills the whole backend process tree
-  (`taskkill /F /IM scan2text-backend.exe /T`). Closing the app leaves zero leftover processes.
-- **Boot-time self-heal:** before spawning, the shell kills any stale process still holding
-  port 47351 (for example after a crash).
-- A single running instance per machine is assumed.
+---
 
-## Communication: HTTP polling
+## Repository Topology
 
-Frontend and backend communicate over local HTTP. WebSockets were evaluated and deliberately
-deferred (see ADR `002-websockets-over-polling`); polling is sufficient for one active job.
-
-- `POST /process` returns `{task_id}` immediately.
-- The frontend polls `GET /status/{task_id}` 15 times at 2000 ms intervals (30 s active window).
-- If the job is still running, it moves to a background re-poll schedule: 60 s intervals, 10 attempts.
-  Background jobs are surfaced with the `background` status.
-
-## Endpoints
-
-| Endpoint | Purpose |
-|---|---|
-| `POST /process` | Multipart upload; returns `{task_id}` |
-| `GET /status/{task_id}` | Six statuses (`pending`, `uploading`, `processing`, `completed`, `failed`, `background`) plus `result_markdown` on completion |
-| `GET /api/health` | Worker idle/busy, RAM %, CPU %, model loaded. Canonical health endpoint; there is deliberately no bare `/health` |
-| `GET /api/settings`, `PUT /api/settings` | Read/patch `AppSettings` (includes theme and language) |
-| `GET /api/feedback/pending-count` | Drives the launch-time feedback reminder |
-
-Planned, not yet implemented: `POST /cancel/{task_id}`, `POST /api/output/open`.
-Legacy: `/api/jobs` exists but is unused. CORS allows all origins — safe because the server is
-loopback-only (ADR-008 addendum).
-
-## Global error envelope
-
-Every backend error uses one envelope:
-
-```json
-{ "error": { "code": "MODEL_NOT_FOUND", "message": "...", "details": {} } }
+```
+Scan2Text/
+├── dev.ps1                          # Unified dev startup script
+├── frontend/                        # Tauri + React frontend
+│   ├── src-tauri/                  # Rust/Tauri shell
+│   │   ├── src/
+│   │   │   ├── main.rs             # Entry point (5 lines)
+│   │   │   ├── lib.rs              # App setup, IPC commands, cleanup
+│   │   │   └── backend_process.rs  # Backend lifecycle management
+│   │   ├── tauri.conf.json         # Tauri app configuration
+│   │   └── capabilities/          # Capability definitions
+│   └── src/                        # React/TypeScript frontend
+│       ├── main.tsx                # React entry point
+│       ├── App.tsx                 # Root component
+│       ├── components/
+│       │   └── layout/
+│       │       ├── CommandCenterLayout.tsx
+│       │       ├── TopBar.tsx
+│       │       ├── BottomStatusBar.tsx
+│       │       ├── SettingsDialog.tsx
+│       │       └── panels/
+│       │           ├── DropZonePanel.tsx
+│       │           ├── QueuePanel.tsx
+│       │           ├── PreviewPanel.tsx
+│       │           └── MarkdownPreview.tsx
+│       ├── stores/
+│       │   ├── scan2text.store.ts  # Main Zustand store
+│       │   └── preferencesStore.ts # Theme/language store
+│       ├── lib/
+│       │   ├── api.ts              # API client functions
+│       │   ├── apiBase.ts          # Base URL builder
+│       │   ├── naming.ts           # Output filename generation
+│       │   ├── fileValidation.ts   # File validation logic
+│       │   └── preferences.ts      # Theme/language helpers
+│       ├── hooks/
+│       │   └── useBackendBootFailedListener.ts
+│       └── locales/
+│           ├── en.json
+│           └── id.json
+├── src/scan2text/                  # Python backend
+│   ├── api/
+│   │   ├── main.py                 # FastAPI app, endpoints
+│   │   └── websocket_manager.py    # WebSocket connection manager
+│   ├── adapters/
+│   │   ├── ocr_engine.py           # OCREngine ABC + FakeOCR
+│   │   └── vlm_ocr.py              # VLM OCR adapter (OvisOCR2)
+│   ├── routes/
+│   │   ├── health.py               # /api/health endpoint
+│   │   ├── settings.py             # /api/settings endpoints
+│   │   ├── feedback.py             # /api/feedback endpoints
+│   │   └── download.py             # /api/download endpoints
+│   ├── services/
+│   │   ├── queue_service.py        # Batch processing orchestrator
+│   │   ├── output_service.py       # Markdown file writer
+│   │   ├── file_service.py         # File discovery/validation
+│   │   ├── pdf_service.py          # PDF detection/rendering
+│   │   ├── settings_service.py     # Settings persistence
+│   │   ├── path_service.py         # Path resolution
+│   │   ├── feedback_service.py     # Offline feedback queue
+│   │   ├── model_downloader_service.py  # Model download logic
+│   │   ├── postprocess_service.py  # GFM conversion + image crops
+│   │   └── logging_service.py      # Structured logging
+│   ├── models/
+│   │   ├── settings.py             # AppSettings Pydantic model
+│   │   ├── job.py                  # OCRJob model
+│   │   ├── ocr_result.py           # OCRResult model
+│   │   └── errors.py               # ErrorCode enum
+│   ├── utils/
+│   │   └── prod_runtime.py         # Frozen exe detection
+│   └── cli.py                      # Production entry point
+├── packaging/
+│   └── scan2text-backend.spec      # PyInstaller spec
+├── scripts/                        # Build/deployment scripts
+└── second-brain/                   # Obsidian vault
 ```
 
-Full code list: `MODEL_NOT_FOUND` · `MODEL_LOAD_FAILED` · `UNSUPPORTED_TYPE` · `FILE_TOO_LARGE` ·
-`PDF_TOO_MANY_PAGES` · `FILE_TOO_COMPLEX` · `OCR_FAILED` · `OUTPUT_NOT_WRITABLE` ·
-`INVALID_SETTINGS` · `DOWNLOAD_FAILED` · `SIZE_MISMATCH` · `PARTIAL_FAILURE`
-(log-only; never a user-facing status).
+---
 
-Rules: no raw stack traces reach the UI; messages are i18n-mapped; unknown codes are shown as-is
-in English.
+## Cross-Runtime Architecture
 
-## Data flow
+### Layer 1: Tauri Shell (Rust)
+- **Entry Point:** `frontend/src-tauri/src/main.rs` (5 lines)
+- **Core Logic:** `frontend/src-tauri/src/lib.rs` (423 lines)
+- **Backend Management:** `frontend/src-tauri/src/backend_process.rs` (542 lines)
 
-1. **Drop** — user drops up to 10 files; frontend validates type and 50 MB size cap. Invalid files
-   are rejected with one aggregated toast; extras beyond the cap are skipped with a warning and
-   logged. Invalid files never enter the queue.
-2. **Upload** — valid files are posted to `POST /process`; each returns a `task_id`.
-3. **Queue** — jobs are held FIFO in a memory-only Zustand store (`jobOrder[]`, one active job;
-   jobs never persist across restarts). The backend maintains its own queue with quarantine
-   semantics: one bad file never stops the batch.
-4. **Inspect** — the backend re-checks PDF size (50 MB) and page count (50) before rendering.
-5. **OCR worker** — `VlmOcrAdapter` renders PDF pages and runs the OvisOCR2 GGUF model through
-   llama-cpp-python, CPU-only. The model loads on demand. `cpu_threads = 0` selects automatic
-   thread count. Jobs longer than 2 minutes trigger a repeating hint toast in the UI.
-6. **Postprocess** — model output is normalized and converted to GitHub-Flavored Markdown
-   (HTML tables become GFM tables; noise lines are filtered).
-7. **Output** — `OutputService` writes one `.md` per valid input using
-   `{stem}_{HHmm}_{yyyyMMdd}.md` naming with `_2`/`_3` collision suffixes; never overwrites.
+**Responsibilities:**
+- Window management and lifecycle
+- Backend process spawning and cleanup
+- Health check polling
+- IPC command handling
+- Event emission (backend-boot-failed)
 
-Partial success: a batch or PDF with at least one successful unit completes (green); `failed` is
-shown only when zero units succeed.
+**Key Constants:**
+- `BACKEND_PORT = 47351` (hardcoded in 3 places)
+- `BOOT_FAIL_WINDOW = 5s` (early exit detection)
 
-## Path resolution (portable root)
+### Layer 2: React Frontend
+- **Entry Point:** `frontend/src/main.tsx` (23 lines)
+- **Root Component:** `frontend/src/App.tsx` (102 lines)
+- **Layout:** `frontend/src/components/layout/CommandCenterLayout.tsx` (28 lines)
 
-All runtime paths derive from the portable root — the folder containing `Scan2Text.exe` — and are
-centralized in `PathService` (the highest-connectivity module in the codebase). The root contains
-`backend/`, `models/`, `output/`, `logs/`, `feedback/`, and `settings/settings.json` side by side;
-`dist/` is never a runtime path. Model lookup applies a directory priority order:
+**Responsibilities:**
+- UI rendering (Command Center v1.7 layout)
+- State management (Zustand stores)
+- API communication
+- i18n (EN + ID)
+- Theme switching (dark/light)
 
-1. `SCAN2TEXT_MODELS_DIR` environment variable (if set)
-2. Frozen grandparent (`exe_dir.parent.parent`) when `models/` exists there
-3. Executable-adjacent `models/` directory
-4. Development current working directory (source: `tests/unit/services/test_models_dir_priority.py`)
+**UI Layout (Fixed 1200×800 window):**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  [Logo]                    Scan2Text                    [🌙][🌐][⚙️]  │ ← TopBar (34px)
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────────────┐  ┌─────────────────────────────────┐  │
+│  │                  │  │                                 │  │
+│  │   Drop Zone      │  │        Preview Panel            │  │
+│  │   (38% height)   │  │        (full height)            │  │
+│  │                  │  │                                 │  │
+│  ├──────────────────┤  └─────────────────────────────────┘  │
+│  │                  │                                       │
+│  │    Queue         │                                       │
+│  │   (62% height)   │                                       │
+│  │                  │                                       │
+│  └──────────────────┘                                       │
+├─────────────────────────────────────────────────────────────┤
+│                    Worker: Idle · RAM — · v1.1.0    [✉️][📤]  │ ← BottomBar (36px)
+└─────────────────────────────────────────────────────────────┘
+```
 
-Portable-root resolution is covered by dedicated integration tests
-(`TestI2PortableRootResolution` in `tests/test_s38_backend_fixes.py`,
-`test_models_dir_priority.py`, `test_path_service_models_resolution.py`).
+### Layer 3: Python Backend
+- **Entry Point:** `src/scan2text/cli.py` (35 lines)
+- **FastAPI App:** `src/scan2text/api/main.py` (246 lines)
+- **OCR Engine:** `src/scan2text/adapters/vlm_ocr.py` (351 lines)
 
-Details: [RUNTIME-LAYOUT.md](RUNTIME-LAYOUT.md).
+**Responsibilities:**
+- HTTP API server (FastAPI + Uvicorn)
+- WebSocket broadcasting
+- File upload handling
+- OCR processing pipeline
+- Model management
+- Settings persistence
 
-## Update mechanism
+---
 
-- A `version.json` manifest on GitHub carries `current`, `latest`, `download_url`, `notes`, and
-  `model_version`.
-- Application ZIPs and model GGUF files are hosted on GitHub Releases; updates are manual downloads —
-  there is no self-updater.
-- The check runs at launch only, only if `check_updates_on_startup` is enabled; it is non-blocking
-  and fails silently offline. Release cadence is monthly.
-- Model downloads are streamed to a `.part` file and atomically renamed only after the SHA256 hash
-  (and size) from `version.json` verifies.
+## Communication Protocols
+
+### Tauri → Backend (IPC)
+The Tauri shell manages the backend process lifecycle:
+1. **Spawn:** `backend_process.rs:start_backend()` spawns `scan2text-backend.exe`
+2. **Health Check:** Polls `GET /api/health` until 200 or timeout (30s)
+3. **Cleanup:** On window close/app exit, calls `taskkill /F /IM scan2text-backend.exe /T`
+4. **Event Emission:** Emits `backend-boot-failed` if backend exits within 5s of spawn
+
+### Frontend → Backend (HTTP)
+All API calls go through `http://127.0.0.1:47351`:
+- `POST /process` — Upload files for OCR
+- `GET /status/{task_id}` — Poll job status
+- `GET /api/health` — Health check
+- `GET /api/settings` — Get settings
+- `PUT /api/settings` — Update settings
+- `POST /api/feedback` — Submit feedback
+- `GET /api/feedback/pending-count` — Check pending feedback
+- `POST /api/download/start` — Start model download
+- `GET /api/download/status` — Get download progress
+- `POST /api/download/cancel` — Cancel download
+
+### Frontend → Backend (WebSocket)
+- `WS /ws/progress` — Real-time progress updates (currently unused by frontend)
+
+### Tauri → Frontend (IPC Commands)
+- `open_output_folder(path: String)` — Open system file explorer
+
+---
+
+## State Management
+
+### Frontend State (Zustand)
+1. **`scan2text.store.ts`** — Job queue, upload status, poll tracking
+2. **`preferencesStore.ts`** — Theme, language (synced to localStorage + backend)
+
+### Backend State
+- **In-memory task store:** `_task_store: Dict[str, Dict]` (maps task_id → status/result)
+- **WebSocket manager:** `ConnectionManager` (tracks active connections)
+- **Settings:** Persisted to `settings/settings.json`
+
+### Persistence
+- **settings/settings.json:** AppSettings (Pydantic model)
+- **localStorage:** Only `scan2text:theme` and `scan2text:language`
+- **jobs:** Never persisted (memory-only)
+- **logs:** Rotating file handler, 1MB max, filenames/redacted
+
+---
+
+## Security & Privacy
+
+### Network Boundaries
+- Backend binds **ONLY** to `127.0.0.1:47351` (localhost only)
+- No `0.0.0.0` bindings detected
+- CORS enabled with `allow_origins=["*"]` (internal only due to localhost binding)
+
+### Privacy Filters
+- `PrivacyFilter` class strips:
+  - Windows paths (`[A-Z]:\...`)
+  - File extensions with names (`filename.pdf`)
+  - Long text blocks (>200 chars) → truncated to 100 chars + `[REDACTED]`
+  - Log arguments >40 chars → `[REDACTED]`
+
+### Telemetry Verification
+- **No external telemetry detected**
+- No analytics SDKs
+- No silent network calls
+- Feedback is **offline queue** (stored locally, not sent automatically)
+- Share button uses placeholder `https://placeholder.local`
+
+---
+
+## Data Flow: Core OCR Pipeline
+
+```
+User drops file → FileDropZone.validateFilesBatch()
+    ↓
+Frontend adds job to Zustand store (status: pending)
+    ↓
+Frontend calls POST /process (multipart/form-data)
+    ↓
+Backend saves file to uploads/ directory
+    ↓
+Backend creates task_id, spawns background coroutine
+    ↓
+VlmOcrAdapter.ocr() → llama-cpp-python worker process
+    ↓
+Worker renders PDF pages (pypdfium2) or prepares images (PIL)
+    ↓
+Worker runs OCR inference (Llama CPP, temperature=0.1)
+    ↓
+Post-processing: HTML tables → GFM, noise filtering, image crops
+    ↓
+OutputService.write() → {stem}_{HHmm}_{yyyyMMdd}.md
+    ↓
+Backend broadcasts progress via WebSocket (if connected)
+    ↓
+Frontend polls GET /status/{task_id}
+    ↓
+Frontend updates job status → completed/failed
+    ↓
+User sees result in PreviewPanel (MarkdownPreview)
+```
+
+---
+
+## Build & Runtime Dependencies
+
+### Required Runtimes
+- **Python 3.12** (locked, never bare `python`)
+- **Node.js ≥ 18** (for Vite, Tauri CLI)
+- **Rust ≥ 1.70** (for Tauri compilation)
+
+### Key Dependencies
+**Frontend:**
+- React 19, TypeScript 6, Vite 8
+- Tauri 2.11, Zustand 5, react-i18next 17
+- Tailwind CSS 3, shadcn/ui, Lucide icons
+- Vitest 4, jsdom 30 (testing)
+
+**Backend:**
+- FastAPI, Uvicorn, Pydantic v2
+- llama-cpp-python (CPU-only, GGUF models)
+- pypdfium2 (PDF rendering)
+- Pillow (image processing)
+- psutil (process management)
+
+### Build Commands
+```powershell
+# Development
+.\dev.ps1  # Starts backend + Tauri dev mode
+
+# Frontend build
+cd frontend && npm run build
+
+# Backend build (PyInstaller)
+py -3.12 -m PyInstaller packaging/scan2text-backend.spec
+
+# Full Tauri build
+cd frontend && npx tauri build
+```
+
+---
+
+## Version & Release
+
+- **Current Version:** 1.1.0
+- **Release Format:** Portable ZIP (`Scan2Text-v1.1-Portable-Full.zip`)
+- **Deployment:** GitHub Releases
+- **Cadence:** Monthly releases
+
+---
+
+## See Also
+
+- [01_FILE_MATRIX.md](./01_FILE_MATRIX.md) — Complete file ledger
+- [02_IPC_AND_API_CONTRACTS.md](./02_IPC_AND_API_CONTRACTS.md) — API schemas and contracts
+- [03_STATE_AND_PERSISTENCE.md](./03_STATE_AND_PERSISTENCE.md) — State management details
+- [04_SECURITY_AND_PRIVACY.md](./04_SECURITY_AND_PRIVACY.md) — Security audit
+- [05_DATA_FLOWS.md](./05_DATA_FLOWS.md) — Sequence diagrams
+- [06_ENVIRONMENT_AND_BUILD.md](./06_ENVIRONMENT_AND_BUILD.md) — Build instructions
