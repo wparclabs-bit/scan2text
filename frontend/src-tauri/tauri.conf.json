@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Scan2Text",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "identifier": "com.wingai.scan2text",
   "build": {
     "frontendDist": "../dist",
