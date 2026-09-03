@@ -52,7 +52,9 @@ for ($i = 0; $i -lt 30; $i++) {
 
 if (-not $healthy) {
     Write-Error "Backend did not become healthy within 30 s. Check logs."
-    Stop-Process -Id $backendProc.Id -Force -ErrorAction SilentlyContinue
+    if ($backendProc -and $backendProc.Id) {
+        Stop-Process -Id $backendProc.Id -Force -ErrorAction SilentlyContinue
+    }
     exit 1
 }
 
@@ -65,7 +67,9 @@ Set-Location $frontendDir
 $script:backendPid = $backendProc.Id
 trap {
     Write-Host "`nShutting down backend (PID $script:backendPid) …" -ForegroundColor Gray
-    Stop-Process -Id $script:backendPid -Force -ErrorAction SilentlyContinue
+    if ($script:backendPid -and $script:backendPid -ne 0) {
+        Stop-Process -Id $script:backendPid -Force -ErrorAction SilentlyContinue
+    }
     # Also kill any child uvicorn processes
     Get-Process -Name python -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne [System.Diagnostics.Process]::GetCurrentProcess().Id } | Stop-Process -Force -ErrorAction SilentlyContinue
     exit $LASTEXITCODE
