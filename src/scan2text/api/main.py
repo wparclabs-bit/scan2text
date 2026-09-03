@@ -155,22 +155,22 @@ async def _run_processing(
 # NEW ENDPOINT: JSON file path mediation (replaces multipart upload)
 @app.post("/process", status_code=202)
 async def process_files_json(
-    payload: Dict[str, List[str]] = Body(..., description="JSON payload with file_paths"),
-    enhance: bool = Form(default=False),
+    payload: Dict[str, Any] = Body(..., description="JSON payload with file_paths"),
 ) -> JSONResponse:
     """Trigger batch OCR processing via JSON file paths.
 
-    Payload format: {"file_paths": ["C:/path/to/file.png", "D:/another.jpg"]}
+    Payload format: {"file_paths": ["C:/path/to/file.png", "D:/another.jpg"], "enhance": bool}
     Tauri provides absolute paths; backend validates and processes directly from disk.
     """
     file_paths = payload.get("file_paths", [])
+    enhance = payload.get("enhance", False)
     if not file_paths:
         raise HTTPException(status_code=400, detail="No files provided")
     # Validate paths are absolute Windows paths
     for p in file_paths:
         if not isinstance(p, str):
             raise HTTPException(status_code=422, detail="Invalid path format")
-        if not p.startswith(('C:/', 'D:/', 'E:/', 'F:/')):
+        if not Path(p).is_absolute():
             raise HTTPException(status_code=422, detail="Path must be absolute Windows path")
         if not Path(p).exists():
             raise HTTPException(status_code=422, detail=f"File not found: {p}")

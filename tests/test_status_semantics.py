@@ -8,12 +8,20 @@ Rule: succeeded > 0 → status "completed" (even if failed > 0).
 from __future__ import annotations
 
 import asyncio
+import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from fastapi.testclient import TestClient
+
+
+def _tmp_file(suffix: str = ".png") -> str:
+    """Create a temp file in C:\\Windows\\Temp and return its absolute path."""
+    p = Path(tempfile.mktemp(suffix=suffix, dir="C:/Windows/Temp"))
+    p.write_bytes(b"fake image bytes")
+    return str(p)
 
 
 def _make_app():
@@ -60,15 +68,9 @@ class TestStatusSemantics:
             ],
         )
 
+        paths = [_tmp_file(), _tmp_file(), _tmp_file()]
         with TestClient(api_app) as client:
-            resp = client.post(
-                "/process",
-                files=[
-                    ("files", ("a.png", b"img a")),
-                    ("files", ("b.png", b"img b")),
-                    ("files", ("c.png", b"img c")),
-                ],
-            )
+            resp = client.post("/process", json={"file_paths": paths})
 
         assert resp.status_code == 202
         task_id = resp.json()["task_id"]
@@ -90,14 +92,9 @@ class TestStatusSemantics:
             ],
         )
 
+        paths = [_tmp_file(), _tmp_file()]
         with TestClient(api_app) as client:
-            resp = client.post(
-                "/process",
-                files=[
-                    ("files", ("x.png", b"img x")),
-                    ("files", ("y.png", b"img y")),
-                ],
-            )
+            resp = client.post("/process", json={"file_paths": paths})
 
         assert resp.status_code == 202
         task_id = resp.json()["task_id"]
@@ -119,14 +116,9 @@ class TestStatusSemantics:
             ],
         )
 
+        paths = [_tmp_file(), _tmp_file()]
         with TestClient(api_app) as client:
-            resp = client.post(
-                "/process",
-                files=[
-                    ("files", ("ok.png", b"img ok")),
-                    ("files", ("bad.png", b"img bad")),
-                ],
-            )
+            resp = client.post("/process", json={"file_paths": paths})
 
         assert resp.status_code == 202
         task_id = resp.json()["task_id"]
@@ -148,14 +140,9 @@ class TestStatusSemantics:
             ],
         )
 
+        paths = [_tmp_file(), _tmp_file()]
         with TestClient(api_app) as client:
-            resp = client.post(
-                "/process",
-                files=[
-                    ("files", ("a.png", b"img a")),
-                    ("files", ("b.png", b"img b")),
-                ],
-            )
+            resp = client.post("/process", json={"file_paths": paths})
 
         assert resp.status_code == 202
         task_id = resp.json()["task_id"]

@@ -3,11 +3,19 @@
 from __future__ import annotations
 
 import asyncio
+import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
+
+
+def _tmp_file(suffix: str = ".png") -> str:
+    """Create a temp file in C:\\Windows\\Temp and return its absolute path."""
+    p = Path(tempfile.mktemp(suffix=suffix, dir="C:/Windows/Temp"))
+    p.write_bytes(b"fake image bytes")
+    return str(p)
 
 
 class _FakeSummary:
@@ -37,23 +45,17 @@ def app():
 
 class TestProcessEndpoint:
     def test_post_process_returns_202(self, app):
-        """POST /process accepts multipart files and returns 202."""
+        """POST /process accepts JSON file_paths and returns 202."""
         api_app, mock_qs = app
+        paths = [_tmp_file(".png"), _tmp_file(".jpg")]
         with TestClient(api_app) as client:
-            response = client.post(
-                "/process",
-                files=[
-                    ("files", ("doc1.png", b"fake image bytes 1")),
-                    ("files", ("doc2.jpg", b"fake image bytes 2")),
-                ],
-            )
+            response = client.post("/process", json={"file_paths": paths})
 
         assert response.status_code == 202
         data = response.json()
         assert "task_id" in data
         task_id = data["task_id"]
 
-        # Verify the saved paths were passed to the queue service
         call_args = mock_qs.process_image_paths.call_args
         saved_paths = call_args[0][0]
         assert len(saved_paths) == 2
@@ -64,39 +66,31 @@ class TestProcessEndpoint:
     def test_post_process_returns_valid_json_with_task_id(self, app):
         """POST /process returns valid JSON with task_id field (contract test)."""
         api_app, _ = app
+        path = _tmp_file()
         with TestClient(api_app) as client:
-            response = client.post(
-                "/process",
-                files={"files": ("test.png", b"fake image bytes")},
-            )
+            response = client.post("/process", json={"file_paths": [path]})
 
         assert response.status_code == 202
-        # Verify content-type is JSON
         assert "application/json" in response.headers.get("content-type", "")
-        # Verify response body is valid JSON with task_id
         data = response.json()
         assert isinstance(data, dict)
         assert "task_id" in data
         assert isinstance(data["task_id"], str)
         assert len(data["task_id"]) > 0
-        # Ensure no extra unexpected fields in minimal response
         assert set(data.keys()) == {"task_id"}
 
     def test_post_process_creates_task_in_store(self, app):
         """POST /process registers the task in the in-memory store."""
         api_app, _ = app
+        path = _tmp_file()
         with TestClient(api_app) as client:
-            response = client.post(
-                "/process",
-                files={"files": ("doc1.png", b"fake image bytes")},
-            )
+            response = client.post("/process", json={"file_paths": [path]})
 
         assert response.status_code == 202
         task_id = response.json()["task_id"]
 
         from scan2text.api.main import _task_store
         assert task_id in _task_store
-        # Background task runs synchronously with mocks, so status may already be completed.
         assert _task_store[task_id]["total"] == 1
         assert _task_store[task_id]["status"] in ("processing", "completed")
 
@@ -104,33 +98,23 @@ class TestProcessEndpoint:
         """POST /process returns 400 when no files are provided."""
         api_app, _ = app
         with TestClient(api_app) as client:
-            response = client.post("/process")
+            response = client.post("/process", json={"file_paths": []})
 
         assert response.status_code == 400
         assert "No files provided" in response.json()["detail"]
 
-    def test_post_process_saves_files_to_uploads_dir(self, app, tmp_path):
-        """Uploaded files are saved to the uploads/ directory with UUID names."""
+    def test_post_process_reads_from_original_path(self, app, tmp_path):
+        """JSON endpoint reads files directly from the provided paths (no uploads dir)."""
         api_app, _ = app
-        from scan2text.api.main import UPLOADS_DIR
+        src = tmp_path / "doc.pdf"
+        src.write_bytes(b"fake pdf content")
 
-        # Use a temporary uploads dir for this test
-        with patch("scan2text.api.main.UPLOADS_DIR", tmp_path / "uploads"):
-            with TestClient(api_app) as client:
-                response = client.post(
-                    "/process",
-                    files={"files": ("report.pdf", b"fake pdf content")},
-                )
+        with TestClient(api_app) as client:
+            response = client.post("/process", json={"file_paths": [str(src)]})
 
         assert response.status_code == 202
-        uploaded_files = list((tmp_path / "uploads").iterdir())
-        assert len(uploaded_files) == 1
-        # Filename should be UUID-based (64 hex chars + .pdf)
-        name = uploaded_files[0].name
-        stem = Path(name).stem
-        suffix = Path(name).suffix
-        assert len(stem) == 32  # uuid4 hex is 32 chars
-        assert suffix == ".pdf"
+        data = response.json()
+        assert "task_id" in data
 
 
 class TestSaveUploadedFileOriginalStem:
@@ -150,14 +134,11 @@ class TestSaveUploadedFileOriginalStem:
             )
             path, desired_stem = asyncio.run(_save_uploaded_file(file))
 
-        # Path should be UUID-based on disk
         name = path.name
         stem_on_disk = Path(name).stem
         suffix = Path(name).suffix
-        assert len(stem_on_disk) == 32  # uuid4 hex
+        assert len(stem_on_disk) == 32
         assert suffix == ".jpg"
-
-        # desired_stem should be sanitized original filename
         assert desired_stem == "strutur_qris"
 
     def test_save_fallback_to_uuid_stem_when_filename_none(self, tmp_path):
@@ -174,7 +155,6 @@ class TestSaveUploadedFileOriginalStem:
             )
             path, desired_stem = asyncio.run(_save_uploaded_file(file))
 
-        # desired_stem should be the uuid stem (32 hex chars)
         assert len(desired_stem) == 32
         assert all(c in "0123456789abcdef" for c in desired_stem)
 
@@ -279,7 +259,6 @@ class TestCors:
                 headers={"Origin": "http://localhost:5173"},
             )
 
-        # 404 is expected since the task doesn't exist; CORS header should still be present.
         allow_origin = response.headers.get("access-control-allow-origin")
         assert allow_origin in ("*", "http://localhost:5173")
 
@@ -308,7 +287,6 @@ class TestCors:
                 headers={"Origin": "tauri://localhost"},
             )
 
-        # 404 is expected since the task doesn't exist; CORS header must be present.
         allow_origin = response.headers.get("access-control-allow-origin")
         assert allow_origin == "*"
 
@@ -349,7 +327,6 @@ class TestRunProcessingOffloadsToThread:
             mock_to_thread.side_effect = lambda fn, *a, **kw: fn(*a, **kw)
             asyncio.run(_run_processing(task_id, mock_queue, [Path("fake.png")], {}))
 
-        # The sync call must go through asyncio.to_thread
         mock_to_thread.assert_called_once()
         call_args = mock_to_thread.call_args
         assert call_args[0][0] == mock_queue.process_image_paths
@@ -379,7 +356,6 @@ class TestStatusFailurePropagation:
 
         assert response.status_code == 200
         data = response.json()
-        # Initially still processing (mock hasn't run yet)
         assert data["status"] == "processing"
 
     def test_status_returns_failed_after_ocr_exception(self, app):
@@ -387,20 +363,16 @@ class TestStatusFailurePropagation:
         api_app, mock_qs = app
         from scan2text.api.main import _task_store
 
-        # Make the adapter raise on ocr call
         mock_qs._vlm_adapter.ocr.side_effect = RuntimeError("RGBA JPEG save failed")
         mock_qs.process_image_paths.side_effect = RuntimeError("RGBA JPEG save failed")
 
+        path = _tmp_file()
         with TestClient(api_app) as client:
-            response = client.post(
-                "/process",
-                files={"files": ("rgba.png", b"fake rgba bytes")},
-            )
+            response = client.post("/process", json={"file_paths": [path]})
 
         assert response.status_code == 202
         task_id = response.json()["task_id"]
 
-        # Background task runs via asyncio.create_task; poll until status settles
         import asyncio
         async def _poll():
             for _ in range(10):

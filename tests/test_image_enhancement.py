@@ -1,7 +1,7 @@
 """Tests for the image enhancement toggle (S62).
 
 Covers the three backend seams:
-1. POST /process accepts an optional ``enhance`` FormData flag and forwards it
+1. POST /process accepts an optional ``enhance`` flag in JSON payload and forwards it
    to the queue service.
 2. ``VlmOcrAdapter.ocr(image_path, enhance=True)`` applies PIL contrast + color
    enhancement (4.0x) before inference; ``enhance=False`` leaves the image untouched.
@@ -10,11 +10,19 @@ Covers the three backend seams:
 
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
+
+
+def _tmp_file(suffix: str = ".png") -> str:
+    """Create a temp file in C:\\Windows\\Temp and return its absolute path."""
+    p = Path(tempfile.mktemp(suffix=suffix, dir="C:/Windows/Temp"))
+    p.write_bytes(b"fake image bytes")
+    return str(p)
 
 
 class _FakeSummary:
@@ -49,11 +57,11 @@ class TestProcessEndpointEnhanceFlag:
     def test_post_process_passes_enhance_true_to_queue(self, app):
         """POST /process with enhance=true forwards enhance=True to the queue."""
         api_app, mock_qs = app
+        path = _tmp_file()
         with TestClient(api_app) as client:
             response = client.post(
                 "/process",
-                files={"files": ("doc.png", b"fake image bytes")},
-                data={"enhance": "true"},
+                json={"file_paths": [path], "enhance": True},
             )
 
         assert response.status_code == 202
@@ -63,10 +71,11 @@ class TestProcessEndpointEnhanceFlag:
     def test_post_process_defaults_enhance_to_false(self, app):
         """POST /process without an enhance flag defaults to enhance=False."""
         api_app, mock_qs = app
+        path = _tmp_file()
         with TestClient(api_app) as client:
             response = client.post(
                 "/process",
-                files={"files": ("doc.png", b"fake image bytes")},
+                json={"file_paths": [path]},
             )
 
         assert response.status_code == 202
@@ -76,11 +85,11 @@ class TestProcessEndpointEnhanceFlag:
     def test_post_process_passes_enhance_false_explicit(self, app):
         """POST /process with enhance=false forwards enhance=False to the queue."""
         api_app, mock_qs = app
+        path = _tmp_file()
         with TestClient(api_app) as client:
             response = client.post(
                 "/process",
-                files={"files": ("doc.png", b"fake image bytes")},
-                data={"enhance": "false"},
+                json={"file_paths": [path], "enhance": False},
             )
 
         assert response.status_code == 202
