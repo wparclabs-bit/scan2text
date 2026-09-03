@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { invoke } from '@tauri-apps/api/core'
 import {
   uploadFile,
   getTaskStatus,
@@ -7,12 +8,36 @@ import {
   isTaskFailed,
   defaultDelay,
   pollTaskStatus,
+  getSettings,
 } from '../lib/api'
 import { startProgress, stopProgress } from '../lib/progressManager'
 import { i18n } from '../i18n'
 import { toast } from 'sonner'
 
 const DEFAULT_POLL_OPTIONS = { maxAttempts: 30, intervalMs: 1000 }
+
+/** Write markdown content to disk via the Rust output_writer command. */
+async function writeOutputFile(
+  content: string,
+  sourceFilename: string,
+  outputDir: string,
+): Promise<void> {
+  try {
+    const now = new Date()
+    await invoke('write_output_file', {
+      input: {
+        content,
+        source_filename: sourceFilename,
+        output_dir: outputDir,
+        completion_date: now.toISOString(),
+      },
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    toast.error(i18n.t('errors.outputWriteFailed'))
+    throw new Error(`Failed to write output file: ${message}`)
+  }
+}
 
 export type JobStatus =
   | 'pending'
@@ -459,6 +484,11 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
           selectedJobId: input.jobId,
         })
         get().promoteNextPending()
+        // Write output file via Rust command (fire-and-forget, non-blocking)
+        const settings = await getSettings().catch(() => ({ output_dir: '' }))
+        void writeOutputFile(md, j.fileName, settings.output_dir ?? '').catch(() => {
+          // Write failure is non-fatal; job is already marked completed
+        })
         return
       }
       if (isTaskFailed(response)) {
@@ -577,6 +607,11 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
               selectedJobId: input.jobId,
             })
             get().promoteNextPending()
+            // Write output file via Rust command (fire-and-forget, non-blocking)
+            const settings = await getSettings().catch(() => ({ output_dir: '' }))
+            void writeOutputFile(md, j.fileName, settings.output_dir ?? '').catch(() => {
+              // Write failure is non-fatal; job is already marked completed
+            })
             return
           }
           if (isTaskFailed(statusResponse)) {

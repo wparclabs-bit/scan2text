@@ -57,14 +57,12 @@ class QueueService:
         path_service: Optional[PathService] = None,
         settings_service: Optional[SettingsService] = None,
         file_service: Optional[FileService] = None,
-        output_service: Optional[OutputService] = None,
         quarantine_dir: Optional[Path] = None,
     ) -> None:
         self._ocr_engine = ocr_engine
         self._paths = path_service or PathService()
         self._settings_svc = settings_service or SettingsService(path_service=self._paths)
         self._file_svc = file_service or FileService()
-        self._output_svc = output_service or OutputService(path_service=self._paths)
         self._quarantine_dir = (
             quarantine_dir
             if quarantine_dir is not None
@@ -154,10 +152,11 @@ class QueueService:
                 pages=pages,
             )
 
-            # Write output
-            output_path = self._output_svc.write(job, ocr_result)
-            ocr_result.output_path = str(output_path)
-            job.output_path = str(output_path)
+            # Render output — now returns markdown content instead of writing to disk
+            markdown = OutputService.render_markdown(ocr_result)
+            if not OutputService._has_raw_text(ocr_result):
+                from scan2text.services.output_service import _NO_TEXT_NOTICE
+                markdown = _NO_TEXT_NOTICE
             job.status = JobStatus.DONE
             summary.succeeded += 1
             summary.job_results.append({
@@ -165,13 +164,13 @@ class QueueService:
                 "source_file": discovered.name,
                 "status": JobStatus.DONE.value,
                 "error_code": None,
-                "output_path": str(output_path),
+                "output_path": None,
+                "markdown_content": markdown,
             })
 
             logger.info(
-                "Job done: %s -> %s (%d pages)",
+                "Job done: %s (%d pages)",
                 discovered.name,
-                output_path.name,
                 len(pages),
             )
 
@@ -245,21 +244,16 @@ class QueueService:
                         "output_path": None,
                     })
                 else:
-                    desired_stem = (
-                        path_to_stem.get(path) if path_to_stem else None
-                    )
-                    output_path = self._paths.resolve_output_path(path, desired_stem)
-                    output_path.parent.mkdir(parents=True, exist_ok=True)
-                    output_path.write_text(result, encoding="utf-8")
-                    logger.info("OCR success: %s -> %s", path.name, output_path.name)
                     summary.succeeded += 1
                     summary.job_results.append({
                         "job_id": str(uuid.uuid4()),
                         "source_file": path.name,
                         "status": JobStatus.DONE.value,
                         "error_code": None,
-                        "output_path": str(output_path),
+                        "output_path": None,
+                        "markdown_content": result,
                     })
+                    logger.info("OCR success: %s", path.name)
             except Exception as exc:
                 error_code = ErrorCode.UNKNOWN_ERROR.value
                 error_msg = str(exc) if exc else "Unknown error"

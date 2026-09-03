@@ -19,7 +19,6 @@ from scan2text.adapters.ocr_engine import OCREngine
 from scan2text.models.job import JobStatus
 from scan2text.models.errors import ErrorCode
 from scan2text.services.file_service import FileService, SkippedFile
-from scan2text.services.output_service import OutputService
 from scan2text.services.path_service import PathService
 from scan2text.services.queue_service import QueueService
 
@@ -107,18 +106,16 @@ def _make_queue(tmp_path, ocr_engine=None, base_dir_suffix="scan2text"):
     if ocr_engine is None:
         ocr_engine = SentinelOCR()
     file_svc = FileService()
-    output_svc = OutputService(path_service=paths)
     queue = QueueService(
         ocr_engine=ocr_engine,
         path_service=paths,
         file_service=file_svc,
-        output_service=output_svc,
     )
     return queue, input_dir, paths
 
 
 # ====================================================================
-# T1 — Privacy: sentinel in output .md but NOT in logs
+# T1 — Privacy: sentinel in output but NOT in logs
 # ====================================================================
 
 class TestT1Privacy:
@@ -131,11 +128,11 @@ class TestT1Privacy:
         img.touch()
         summary = queue.process_batch([img])
 
-        # Sentinel must be in the output file
-        output_files = list(paths.output_dir.glob("*.md"))
-        assert len(output_files) >= 1
-        content = output_files[0].read_text(encoding="utf-8")
-        assert _SENTINEL in content
+        # Sentinel must be in the markdown content
+        assert summary.succeeded == 1
+        job_result = summary.job_results[0]
+        assert "markdown_content" in job_result
+        assert _SENTINEL in job_result["markdown_content"]
 
         # Sentinel must NOT appear in captured log text
         assert _SENTINEL not in caplog.text
@@ -200,7 +197,7 @@ class TestT3Skip:
 
 
 # ====================================================================
-# T4 — Duplicate stems: same filename in different dirs → two .md files
+# T4 — Duplicate stems: same filename in different dirs → separate results
 # ====================================================================
 
 class TestT4DuplicateStems:
@@ -211,12 +208,10 @@ class TestT4DuplicateStems:
         paths = PathService(base_dir=str(base_dir))
         engine = SentinelOCR()
         file_svc = FileService()
-        output_svc = OutputService(path_service=paths)
         queue = QueueService(
             ocr_engine=engine,
             path_service=paths,
             file_service=file_svc,
-            output_service=output_svc,
         )
 
         # Two files with the SAME stem but different parent directories
@@ -230,14 +225,14 @@ class TestT4DuplicateStems:
         summary = queue.process_batch([a_report, b_report])
 
         assert summary.succeeded == 2
+        # Each job result should have markdown_content with the sentinel
+        assert len(summary.job_results) == 2
+        for job_result in summary.job_results:
+            assert "markdown_content" in job_result
+            assert _SENTINEL in job_result["markdown_content"]
+        # No files should have been written to disk
         output_files = list(paths.output_dir.glob("*.md"))
-        assert len(output_files) == 2, (
-            f"Expected 2 distinct .md files for duplicate stems, got {len(output_files)}: {[f.name for f in output_files]}"
-        )
-        # Both outputs must contain the sentinel
-        for f in output_files:
-            content = f.read_text(encoding="utf-8")
-            assert _SENTINEL in content
+        assert len(output_files) == 0
 
 
 # ====================================================================
@@ -285,4 +280,9 @@ class TestOneToOneOutput:
         assert summary.total_inputs == 5
         assert summary.accepted == 5
         assert summary.succeeded == 5
-        assert len(list(paths.output_dir.glob("*.md"))) == 5
+        # Each job has markdown_content; no files written to disk
+        assert len(summary.job_results) == 5
+        for job_result in summary.job_results:
+            assert "markdown_content" in job_result
+        output_files = list(paths.output_dir.glob("*.md"))
+        assert len(output_files) == 0

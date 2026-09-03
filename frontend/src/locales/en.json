@@ -35,7 +35,8 @@
     "fileTooComplexRejected": "File too large or complex. Please try a smaller file.",
     "fileTooComplexLocked": "File too large or complex. Limits: 20 MB per file · 50 pages per PDF. Split bigger PDFs and retry.",
     "modelNotFound": "AI engine files are missing. Downloading the model now…",
-    "backendLost": "Backend connection lost"
+    "backendLost": "Backend connection lost",
+    "outputWriteFailed": "Failed to save output file"
   },
   "dropzone": {
     "hint": "PNG · JPG · WEBP · PDF — max 20MB per file · max 10 files per batch",

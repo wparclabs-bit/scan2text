@@ -29,7 +29,6 @@ from PIL import Image
 
 from scan2text.adapters.vlm_ocr import VlmOcrAdapter, OCR_FAILED
 from scan2text.services.file_service import FileService
-from scan2text.services.output_service import OutputService
 from scan2text.services.path_service import PathService
 from scan2text.services.queue_service import QueueService
 
@@ -162,12 +161,10 @@ class TestVlmOcrPdfPageResilienceEndToEnd:
             ocr_engine=MagicMock(),
             path_service=paths,
             file_service=FileService(),
-            output_service=OutputService(path_service=paths),
         )
 
     def test_partial_success_writes_single_markdown(self, tmp_path):
-        """A partially-successful PDF yields ONE .md containing only the good
-        pages (in order)."""
+        """A partially-successful PDF yields markdown content in job_results."""
         svc = self._svc(tmp_path)
         adapter = _build_adapter()
         path = _make_pdf(tmp_path)
@@ -182,15 +179,19 @@ class TestVlmOcrPdfPageResilienceEndToEnd:
 
         assert summary.succeeded == 1
         assert summary.failed == 0
-        md_files = list((tmp_path / "output").glob("*.md"))
-        assert len(md_files) == 1
-        content = md_files[0].read_text(encoding="utf-8")
+        assert len(summary.job_results) == 1
+        job_result = summary.job_results[0]
+        assert "markdown_content" in job_result
+        content = job_result["markdown_content"]
         assert "page0-cropped" in content
         assert "page2-cropped" in content
         assert "page1" not in content
+        # No files written to disk
+        md_files = list((tmp_path / "output").glob("*.md"))
+        assert len(md_files) == 0
 
     def test_all_pages_fail_writes_no_markdown_and_quarantines(self, tmp_path):
-        """An all-failing PDF writes NO .md and quarantines the source file."""
+        """An all-failing PDF writes NO markdown and quarantines the source file."""
         paths = PathService(base_dir=str(tmp_path))
         (tmp_path / "output").mkdir(parents=True, exist_ok=True)
         quarantine = tmp_path / "quarantine" / "failed"
@@ -198,7 +199,6 @@ class TestVlmOcrPdfPageResilienceEndToEnd:
             ocr_engine=MagicMock(),
             path_service=paths,
             file_service=FileService(),
-            output_service=OutputService(path_service=paths),
             quarantine_dir=quarantine,
         )
         adapter = _build_adapter()

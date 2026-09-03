@@ -35,7 +35,8 @@
     "fileTooComplexRejected": "File terlalu besar atau kompleks. Silakan coba file yang lebih kecil.",
     "fileTooComplexLocked": "File terlalu besar atau kompleks. Batas: 20 MB per file · 50 halaman per PDF. Pecah PDF besar lalu coba lagi.",
     "modelNotFound": "File mesin AI tidak ditemukan. Mengunduh model sekarang…",
-    "backendLost": "Koneksi backend terputus"
+    "backendLost": "Koneksi backend terputus",
+    "outputWriteFailed": "Gagal menyimpan file output"
   },
   "dropzone": {
     "hint": "PNG · JPG · WEBP · PDF — maks 20MB per file · maks 10 file per batch",

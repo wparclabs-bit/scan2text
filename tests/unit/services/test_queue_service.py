@@ -13,22 +13,25 @@ import pytest
 from scan2text.adapters.ocr_engine import FakeOCR
 from scan2text.models.job import JobStatus, OCRJob
 from scan2text.services.file_service import FileService
-from scan2text.services.output_service import OutputService
 from scan2text.services.path_service import PathService
 from scan2text.services.queue_service import BatchSummary, QueueService
 
 
+def _make_svc(tmp_path, engine=None):
+    """Helper to create a QueueService with default settings."""
+    paths = PathService(base_dir=str(tmp_path))
+    if engine is None:
+        engine = FakeOCR()
+    return QueueService(
+        ocr_engine=engine,
+        path_service=paths,
+        file_service=FileService(),
+    )
+
+
 class TestQueueProcessesSupportedFiles:
     def test_processes_supported_files(self, tmp_path):
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
-        engine = FakeOCR()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+        svc = _make_svc(tmp_path)
 
         src = tmp_path / "doc.png"
         src.touch()
@@ -37,19 +40,13 @@ class TestQueueProcessesSupportedFiles:
         assert summary.succeeded == 1
         assert summary.failed == 0
         assert summary.skipped == 0
+        assert len(summary.job_results) == 1
+        assert "markdown_content" in summary.job_results[0]
 
 
 class TestQueueSkipsUnsupported:
     def test_skips_unsupported_without_calling_ocr(self, tmp_path):
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
-        engine = FakeOCR()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+        svc = _make_svc(tmp_path)
 
         unsupported = tmp_path / "file.xyz"
         unsupported.touch()
@@ -62,8 +59,6 @@ class TestQueueSkipsUnsupported:
 class TestQueueContinuesAfterFailure:
     def test_continues_after_ocr_failure(self, tmp_path):
         """A failing job does not abort the batch."""
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
 
         class FailingEngine(FakeOCR):
             call_count = 0
@@ -75,12 +70,7 @@ class TestQueueContinuesAfterFailure:
                 return "[fake ocr output]"
 
         engine = FailingEngine()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+        svc = _make_svc(tmp_path, engine)
 
         f1 = tmp_path / "fail.png"
         f2 = tmp_path / "ok.png"
@@ -94,15 +84,7 @@ class TestQueueContinuesAfterFailure:
 
 class TestBatchSummaryCounts:
     def test_summary_counts_are_correct(self, tmp_path):
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
-        engine = FakeOCR()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+        svc = _make_svc(tmp_path)
 
         supported = tmp_path / "a.png"
         unsupported = tmp_path / "b.xyz"
@@ -119,33 +101,23 @@ class TestBatchSummaryCounts:
 
 
 class TestQueueWriteFailure:
-    def test_continues_after_write_failure(self, tmp_path):
-        """A write failure marks the job failed but batch continues."""
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
-        engine = FakeOCR()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+    def test_continues_after_ocr_error(self, tmp_path):
+        """An OCR error marks the job failed but batch continues."""
 
-        # Make the second write fail by patching OutputService.write
-        original_write = svc._output_svc.write
+        class FailingEngine(FakeOCR):
+            call_count = 0
 
-        call_count = [0]
+            def process_image(self, image_bytes: bytes, name=None) -> str:
+                self.call_count += 1
+                if self.call_count == 2:
+                    raise RuntimeError("Simulated disk full")
+                return "[fake ocr output]"
 
-        def failing_write(job, ocr_result, desired_stem=None):
-            call_count[0] += 1
-            if call_count[0] == 2:
-                raise OSError("Disk full")
-            return original_write(job, ocr_result, desired_stem)
-
-        svc._output_svc.write = failing_write
+        engine = FailingEngine()
+        svc = _make_svc(tmp_path, engine)
 
         f1 = tmp_path / "ok.png"
-        f2 = tmp_path / "fail_write.png"
+        f2 = tmp_path / "fail.png"
         f3 = tmp_path / "also_ok.png"
         f1.touch()
         f2.touch()
@@ -159,7 +131,7 @@ class TestQueueWriteFailure:
 
 class TestQueueNoOcrTextInLogs:
     def test_ocr_text_not_logged(self, tmp_path, caplog):
-        """Sentinel string appears in output file but never in log output."""
+        """Sentinel string appears in output but never in log output."""
         caplog.set_level(0)
 
         SENTINEL = "___OCR_SENTINEL_TEXT___"
@@ -177,15 +149,8 @@ class TestQueueNoOcrTextInLogs:
                     full_text=SENTINEL,
                 )
 
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
         engine = SentinelEngine()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+        svc = _make_svc(tmp_path, engine)
 
         src = tmp_path / "doc.png"
         src.touch()
@@ -193,11 +158,10 @@ class TestQueueNoOcrTextInLogs:
 
         assert summary.succeeded == 1
 
-        # Verify sentinel is in the output file
-        output_files = list((tmp_path / "output").glob("*.md"))
-        assert len(output_files) >= 1
-        content = output_files[0].read_text(encoding="utf-8")
-        assert SENTINEL in content
+        # Verify sentinel is in the markdown content
+        job_result = summary.job_results[0]
+        assert "markdown_content" in job_result
+        assert SENTINEL in job_result["markdown_content"]
 
         # Verify sentinel does NOT appear in any log record
         for record in caplog.records:
@@ -207,8 +171,6 @@ class TestQueueNoOcrTextInLogs:
 class TestQueuePdfProcessing:
     def test_pdf_uses_process_pdf(self, tmp_path):
         """PDF files go through process_pdf instead of process_image."""
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
 
         class TrackingEngine(FakeOCR):
             pdf_called = False
@@ -224,12 +186,7 @@ class TestQueuePdfProcessing:
                 return [OCRPage(page_number=1, text="[fake ocr output]")]
 
         engine = TrackingEngine()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+        svc = _make_svc(tmp_path, engine)
 
         pdf = tmp_path / "doc.pdf"
         pdf.touch()
@@ -243,15 +200,7 @@ class TestQueuePdfProcessing:
 class TestQueueBatchSummaryStructure:
     def test_job_results_have_required_keys(self, tmp_path):
         """Each job result dict has the expected keys."""
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
-        engine = FakeOCR()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+        svc = _make_svc(tmp_path)
 
         supported = tmp_path / "a.png"
         unsupported = tmp_path / "b.xyz"
@@ -261,21 +210,13 @@ class TestQueueBatchSummaryStructure:
 
         summary = svc.process_batch([supported, unsupported, missing])
 
-        required_keys = {"job_id", "source_file", "status", "error_code", "output_path"}
+        required_keys = {"job_id", "source_file", "status", "error_code"}
         for job_result in summary.job_results:
             assert required_keys.issubset(set(job_result.keys()))
 
     def test_skipped_files_recorded(self, tmp_path):
         """Skipped files appear in skipped_files list with reason codes."""
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
-        engine = FakeOCR()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+        svc = _make_svc(tmp_path)
 
         unsupported = tmp_path / "bad.xyz"
         missing = tmp_path / "missing.txt"
@@ -292,15 +233,7 @@ class TestQueueBatchSummaryStructure:
 class TestQueueAcceptsPathsAndDiscoveryResult:
     def test_accepts_string_paths(self, tmp_path):
         """process_batch accepts string paths as well as Path objects."""
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
-        engine = FakeOCR()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+        svc = _make_svc(tmp_path)
 
         src = tmp_path / "doc.png"
         src.touch()
@@ -310,15 +243,7 @@ class TestQueueAcceptsPathsAndDiscoveryResult:
 
     def test_accepts_directory_path(self, tmp_path):
         """Directories are expanded into files for processing."""
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
-        engine = FakeOCR()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+        svc = _make_svc(tmp_path)
 
         d = tmp_path / "input_dir"
         d.mkdir()
@@ -335,15 +260,7 @@ class TestQueueAcceptsPathsAndDiscoveryResult:
 class TestQueueTotalProcessed:
     def test_total_processed_property(self, tmp_path):
         """total_processed = succeeded + failed + skipped."""
-        paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
-        engine = FakeOCR()
-        svc = QueueService(
-            ocr_engine=engine,
-            path_service=paths,
-            file_service=FileService(),
-            output_service=OutputService(path_service=paths),
-        )
+        svc = _make_svc(tmp_path)
 
         supported = tmp_path / "ok.png"
         unsupported = tmp_path / "bad.xyz"
@@ -361,7 +278,6 @@ class TestQueueServiceQuarantine:
 
     def _make_svc(self, tmp_path):
         paths = PathService(base_dir=str(tmp_path))
-        (tmp_path / "output").mkdir(parents=True, exist_ok=True)
         quarantine_dir = tmp_path / "quarantine" / "failed"
         return QueueService(
             ocr_engine=MagicMock(),
@@ -462,8 +378,8 @@ class TestQueueServiceQuarantine:
         assert not f1.exists()
         assert not f2.exists()
 
-    def test_success_saves_markdown_using_path_service_naming(self, tmp_path):
-        """Successful OCR results are saved as Markdown using path_service naming convention."""
+    def test_success_returns_markdown_content(self, tmp_path):
+        """Successful OCR results include markdown_content in job_results."""
         svc = self._make_svc(tmp_path)
 
         mock_adapter = MagicMock()
@@ -475,20 +391,17 @@ class TestQueueServiceQuarantine:
 
         assert summary.succeeded == 1
         assert summary.failed == 0
+        assert len(summary.job_results) == 1
 
+        job_result = summary.job_results[0]
+        assert "markdown_content" in job_result
+        assert "Extracted Text" in job_result["markdown_content"]
+        assert "Some content here." in job_result["markdown_content"]
+        # No file should have been written
         output_files = list((tmp_path / "output").glob("*.md"))
-        assert len(output_files) >= 1
+        assert len(output_files) == 0
 
-        md_content = output_files[0].read_text(encoding="utf-8")
-        assert "Extracted Text" in md_content
-        assert "Some content here." in md_content
-
-        # Verify naming convention: {stem}_{HHmm}_{yyyyMMdd}.md
-        name = output_files[0].name
-        assert name.startswith("document_")
-        assert name.endswith(".md")
-
-    def test_process_image_paths_uses_original_stem_from_mapping(self, tmp_path):
+    def test_process_image_paths_with_original_stem(self, tmp_path):
         """When path_to_stem is provided, output uses original stem not uuid."""
         svc = self._make_svc(tmp_path)
 
@@ -505,16 +418,12 @@ class TestQueueServiceQuarantine:
         assert summary.succeeded == 1
         assert summary.failed == 0
 
+        job_result = summary.job_results[0]
+        assert "markdown_content" in job_result
+        assert "QRIS Content" in job_result["markdown_content"]
+        # No file should have been written
         output_files = list((tmp_path / "output").glob("*.md"))
-        assert len(output_files) == 1
-
-        # Output stem must be the original, NOT 32-hex chars
-        name = output_files[0].name
-        assert name.startswith("strutur_qris_")
-        assert name.endswith(".md")
-        # Must NOT be a 32-hex uuid stem
-        stem = Path(name).stem.split("_")[0]
-        assert len(stem) != 32 or not all(c in "0123456789abcdef" for c in stem)
+        assert len(output_files) == 0
 
     def test_process_image_paths_fallback_when_no_mapping(self, tmp_path):
         """Without path_to_stem, falls back to source_path.stem (uuid hex)."""
@@ -529,10 +438,6 @@ class TestQueueServiceQuarantine:
         summary = svc.process_image_paths([uuid_path], mock_adapter)
 
         assert summary.succeeded == 1
-
+        # No file should have been written
         output_files = list((tmp_path / "output").glob("*.md"))
-        assert len(output_files) == 1
-
-        # Should use the uuid stem as fallback
-        name = output_files[0].name
-        assert name.startswith("a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6_")
+        assert len(output_files) == 0

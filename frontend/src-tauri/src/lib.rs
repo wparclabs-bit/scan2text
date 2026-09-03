@@ -8,6 +8,8 @@ use log;
 
 mod backend_process;
 pub use backend_process::{boot_backend, BackendManager};
+mod output_writer;
+pub use output_writer::write_output_file;
 
 /// Tauri managed state holding the BackendManager.
 pub struct AppState(pub Arc<Mutex<BackendManager>>);
@@ -396,7 +398,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![open_output_folder])
+        .invoke_handler(tauri::generate_handler![open_output_folder, write_output_file])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(move |app: &tauri::AppHandle, event: RunEvent| {
