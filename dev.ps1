@@ -34,12 +34,12 @@ $backendProc = Start-Process -FilePath "py" -ArgumentList "-3.12", "-m", "uvicor
 
 Write-Host "Backend (Uvicorn) started [PID $($backendProc.Id)] on http://127.0.0.1:$port" -ForegroundColor Green
 
-# ── Health-wait: poll /health up to 30 s ─────────────────────────────────────
+# ── Health-wait: poll /api/health up to 30 s ─────────────────────────────────
 $healthy = $false
 for ($i = 0; $i -lt 30; $i++) {
     Start-Sleep -Seconds 1
     try {
-        $resp = Invoke-WebRequest -Uri "http://127.0.0.1:$port/health" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+        $resp = Invoke-WebRequest -Uri "http://127.0.0.1:$port/api/health" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
         if ($resp.StatusCode -eq 200) {
             $healthy = $true
             Write-Host "Backend healthy after $($i + 1)s" -ForegroundColor Green

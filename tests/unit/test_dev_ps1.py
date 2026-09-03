@@ -33,8 +33,22 @@ class TestDevPs1Contract:
         )
 
     def test_has_health_wait_polling(self, dev_ps1_content: str) -> None:
-        assert "/health" in dev_ps1_content, (
-            "dev.ps1 must poll /health endpoint for readiness"
+        assert "/api/health" in dev_ps1_content, (
+            "dev.ps1 must poll /api/health endpoint for readiness (backend route is /api/health)"
+        )
+
+    def test_uvicorn_uses_true_asgi_entry(self, dev_ps1_content: str) -> None:
+        """dev.ps1 must use the discovered true ASGI entry: scan2text.api.main:app."""
+        assert "scan2text.api.main:app" in dev_ps1_content, (
+            "dev.ps1 uvicorn args must contain the true ASGI entry 'scan2text.api.main:app'"
+        )
+
+    def test_pythonpath_or_working_directory_set(self, dev_ps1_content: str) -> None:
+        """dev.ps1 must set PYTHONPATH to absolute src path OR use -WorkingDirectory repo root."""
+        has_pythonpath = "$env:PYTHONPATH" in dev_ps1_content and "backendSrc" in dev_ps1_content
+        has_working_dir = "-WorkingDirectory" in dev_ps1_content and "repoRoot" in dev_ps1_content
+        assert has_pythonpath or has_working_dir, (
+            "dev.ps1 must set PYTHONPATH to absolute src path OR use -WorkingDirectory to repo root"
         )
 
     def test_launches_tauri_dev(self, dev_ps1_content: str) -> None:
