@@ -374,6 +374,12 @@ pub fn run() {
 
             app.handle().plugin(tauri_plugin_shell::init())?;
 
+            app.handle().plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_focus();
+                }
+            }))?;
+
             let manager = {
                 let state = app.state::<AppState>();
                 Arc::clone(&state.0)
