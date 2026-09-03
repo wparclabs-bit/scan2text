@@ -1,7 +1,7 @@
 # Scan2Text — Agent Operating Manual
 Read FIRST before every slice. Do NOT re-read PRD docs unless the slice prompt lists them.
 
-**Role:** Kilo Code only. Cloud CTO reads `AGENTS-CTO.md`.
+**Role:** DSH only. Cloud CTO reads `AGENTS-CTO.md`.
 
 ```
 Scan2Text/
@@ -51,12 +51,12 @@ Scan2Text/
 
 **2.6 i18n:** react-i18next, EN + ID. NO hardcoded strings. New strings in BOTH `src/locales/en.json` AND `src/locales/id.json`. Inject via `initI18n()` in tests.
 
-**2.7 QA boundary:** `second-brain/02-QA/` scripts are CEO-executed. Kilo authors only. No Playwright/Cypress/puppeteer. Doc-only slices never touch `frontend/` or `backend/` source.
+**2.7 QA boundary:** `second-brain/02-QA/` scripts are CEO-executed. DSH authors only. No Playwright/Cypress/puppeteer. Doc-only slices never touch `frontend/` or `backend/` source.
 
 **2.8 UI/UX:** toasts via sonner (root-mounted). Desktop-only. Dark DEFAULT, light via toggle. `localStorage` ONLY for theme + language; jobs NEVER persist. shadcn/ui + lucide-react.
 
 ## 3. MCP Tool-First Protocol (STRICT)
-Kilo MUST invoke these tools BEFORE reading raw files or searching directories:
+DSH MUST invoke these tools BEFORE reading raw files or searching directories:
 
 | Tool | When |
 |---|---|
@@ -132,7 +132,7 @@ If folder names differ, discover via `Get-ChildItem` before writing; never guess
 - Python locked to `py -3.12`. Never bare `python`.
 - TDD mandatory for all code, script, config changes.
 - Doc-only slices never touch `frontend/` or `backend/` source.
-- Kilo authors QA scripts; CEO runs them.
+- DSH authors QA scripts; CEO runs them.
 - Dependency installation requires explicit CEO approval in slice prompt.
 
 ## 9. Definition of Done
