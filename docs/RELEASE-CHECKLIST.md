@@ -4,7 +4,7 @@ Manual steps for the CEO to publish the v1.1 GitHub Release. Do not automate; th
 
 ## Pre-flight
 
-- [ ] 1. Verify `Scan2Text-v1.1-Portable-Full.zip` exists locally and is the correct artifact (Full ZIP, not Thin ZIP).
+- [ ] 1. Verify the Full ZIP exists locally and is the correct artifact (not the Thin ZIP).
 - [ ] 2. Do NOT commit the Full ZIP to git — it belongs on GitHub Releases only.
 - [ ] 3. Do NOT upload the Thin ZIP publicly; it is internal-only.
 
