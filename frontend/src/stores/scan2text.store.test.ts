@@ -239,27 +239,30 @@ describe('scan2text store', () => {
       await startPromise
     })
 
-    it('should call the Phase 4 uploadFile API with the provided File', async () => {
+    it('should call the Phase 4 uploadFile API with the provided File path', async () => {
       mockUploadFile.mockResolvedValue({ task_id: 'task-abc' })
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
+      Object.defineProperty(file, 'path', { value: 'C:/Users/Test/test.pdf', writable: false })
       await store.getState().startUpload({ file, jobId: 'my-job-id' })
-      expect(mockUploadFile).toHaveBeenCalledWith(file, false)
+      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/test.pdf'], false)
     })
 
     it('should pass enhance=true to uploadFile when the enhance setting is true', async () => {
       mockUploadFile.mockResolvedValue({ task_id: 'task-abc' })
       store.setState({ ...store.getState(), enhance: true })
       const file = new File(['content'], 'test.png', { type: 'image/png' })
+      Object.defineProperty(file, 'path', { value: 'C:/Users/Test/test.png', writable: false })
       await store.getState().startUpload({ file, jobId: 'my-job-id' })
-      expect(mockUploadFile).toHaveBeenCalledWith(file, true)
+      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/test.png'], true)
     })
 
     it('should pass enhance=false to uploadFile when the enhance setting is false', async () => {
       mockUploadFile.mockResolvedValue({ task_id: 'task-abc' })
       store.setState({ ...store.getState(), enhance: false })
       const file = new File(['content'], 'test.png', { type: 'image/png' })
+      Object.defineProperty(file, 'path', { value: 'C:/Users/Test/test.png', writable: false })
       await store.getState().startUpload({ file, jobId: 'my-job-id' })
-      expect(mockUploadFile).toHaveBeenCalledWith(file, false)
+      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/test.png'], false)
     })
 
     it('should store the returned task_id on successful upload', async () => {

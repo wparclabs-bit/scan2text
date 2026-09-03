@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { uploadFile, getTaskStatus, isTaskCompleted, isTaskFailed, pollTaskStatus, defaultDelay, getHealth } from './api'
+import { uploadFile, getTaskStatus, isTaskCompleted, isTaskFailed, defaultDelay } from './api'
 import { buildApiUrl } from './apiBase'
 
 describe('uploadFile', () => {
@@ -121,7 +121,7 @@ describe('uploadFile', () => {
 
     expect(mockFetch.mock.calls[0][1].body).not.toContain('"enhance"')
   })
-}
+})
 
 describe('getTaskStatus', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -173,7 +173,7 @@ describe('getTaskStatus', () => {
 
     await expect(getTaskStatus('missing')).rejects.toThrow('Status check failed: 404 Not Found')
   })
-}
+})
 
 describe('isTaskCompleted', () => {
   it('returns true when status is completed and result_markdown is a string', () => {
@@ -192,10 +192,10 @@ describe('isTaskCompleted', () => {
   })
 
   it('returns false when result_markdown is not a string', () => {
-    const response = { task_id: 'abc123', status: 'completed', result_markdown: 42 }
+    const response = { task_id: 'abc123', status: 'completed', result_markdown: 42 as unknown as string }
     expect(isTaskCompleted(response)).toBe(false)
   })
-}
+})
 
 describe('isTaskFailed', () => {
   it('returns true when status is "failed"', () => {
@@ -217,7 +217,7 @@ describe('isTaskFailed', () => {
     expect(isTaskFailed({ task_id: 'abc123', status: '' })).toBe(false)
     expect(isTaskFailed({ task_id: 'abc123', status: 'completed' })).toBe(false)
   })
-}
+})
 
 describe('defaultDelay', () => {
   it('resolves after the given number of milliseconds', async () => {
@@ -226,7 +226,7 @@ describe('defaultDelay', () => {
     const elapsed = Date.now() - start
     expect(elapsed).toBeGreaterThanOrEqual(10)
   })
-}
+})
 
 describe('uploadFile - prod URL', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -256,7 +256,7 @@ describe('uploadFile - prod URL', () => {
       expect.objectContaining({ method: 'POST' })
     )
   })
-}
+})
 
 describe('getTaskStatus - prod URL', () => {
   let mockFetch: ReturnType<typeof vi.fn>
@@ -281,4 +281,4 @@ describe('getTaskStatus - prod URL', () => {
     await getTaskStatus('t1')
     expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/status/t1'))
   })
-}
+})

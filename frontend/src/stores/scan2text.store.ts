@@ -399,7 +399,9 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
     }))
 
     try {
-      const response = await uploadFile(input.file, get().enhance)
+      // In Tauri, File objects have a .path property with the absolute path
+      const filePath = (input.file as any).path as string
+      const response = await uploadFile([filePath], get().enhance)
       set((state) => {
         const job = state.jobs[id]
         if (!job) return state

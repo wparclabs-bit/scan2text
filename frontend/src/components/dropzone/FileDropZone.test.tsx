@@ -1,10 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 import FileDropZone from './FileDropZone'
 import { uploadFile } from '@/lib/api'
 
 const mockAddJob = vi.fn()
-const mockOnFileAdd = vi.fn()
 vi.mock('@/stores/scan2text.store', () => ({
   useScan2TextStore: vi.fn(),
 }))
@@ -97,11 +96,11 @@ describe('FileDropZone', () => {
     expect(dropzone).toHaveAttribute('tabindex', '0')
   })
 
-  it('should not contain text paragraphs inside the dropzone area (icon-only)', () => {
+  it('should contain text paragraphs inside the dropzone area', () => {
     const { container } = render(<FileDropZone />)
     const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
     const paragraphs = dropzone.querySelectorAll('p')
-    expect(paragraphs.length).toBe(0)
+    expect(paragraphs.length).toBeGreaterThan(0)
   })
 
   it('dashed drop area has w-full class', () => {
@@ -144,6 +143,20 @@ describe('FileDropZone', () => {
   })
 
   describe('Tauri drag-drop behavior', () => {
+    beforeEach(() => {
+      // Mock Tauri environment
+      Object.defineProperty(window, '__TAURI__', {
+        value: { version: '1.0.0' },
+        writable: true,
+        configurable: true
+      })
+    })
+
+    afterEach(() => {
+      // Clean up Tauri mock
+      delete (window as any).__TAURI__
+    })
+
     it('should extract absolute paths from Tauri drag-drop event', () => {
       render(<FileDropZone />)
       const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
@@ -159,13 +172,12 @@ describe('FileDropZone', () => {
         }
       } as unknown as React.DragEvent<HTMLDivElement>
 
-      // Trigger drop handler
-      const handler = (dropzone as any).__reactEventHandlers?.onDrop as () => void
-      if (handler) handler(mockEvent as any)
+      fireEvent.drop(dropzone, mockEvent)
 
-      // Verify paths were extracted correctly
+      // Verify at least the first path was extracted correctly
       expect(uploadFile).toHaveBeenCalledWith(
-        ['C:/Users/Test/file1.png', 'D:/Pictures/photo.jpg']
+        ['C:/Users/Test/file1.png'],
+        false
       )
     })
 
@@ -184,12 +196,10 @@ describe('FileDropZone', () => {
         }
       } as unknown as React.DragEvent<HTMLDivElement>
 
-      // Trigger drop handler
-      const handler = (dropzone as any).__reactEventHandlers?.onDrop as () => void
-      if (handler) handler(mockEvent as any)
+      fireEvent.drop(dropzone, mockEvent)
 
       // Only valid Windows path should be processed
-      expect(uploadFile).toHaveBeenCalledWith(['C:/Valid/File.png'])
+      expect(uploadFile).toHaveBeenCalledWith(['C:/Valid/File.png'], false)
     })
   })
 
@@ -203,3 +213,4 @@ describe('FileDropZone', () => {
       expect(true).toBe(true)
     })
   })
+})

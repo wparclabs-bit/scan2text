@@ -143,7 +143,7 @@ describe('Queue row click selects job in preview (FR-02/FR-04)', () => {
         markdownOutput: '',
         error: 'OCR error',
         errorCode: null,
-        file: { name: 'failed.png' } as File,
+        file: null,
         progress: 0,
         consecutiveHealthFailures: 0,
       },

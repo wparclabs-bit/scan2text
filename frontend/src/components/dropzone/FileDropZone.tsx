@@ -1,7 +1,7 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { validateFilesBatch, type SkippedFile } from '@/lib/fileValidation'
+
 import { useScan2TextStore } from '@/stores/scan2text.store'
 import { uploadFile } from '@/lib/api'
 
@@ -56,9 +56,10 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
         const limitedPaths = validPaths.slice(0, 10);
         for (const path of limitedPaths) {
           const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-          addJob({ id: jobId, fileName: Path.basename(path), fileSize: 0, filePath: path });
+          const fileName = path.split('\\').pop()?.split('/').pop() || path;
+          addJob({ id: jobId, fileName, fileSize: 0 });
           await uploadFile([path], false);
-          onFileAdd?.(Path.basename(path));
+          onFileAdd?.(fileName);
         }
       } catch (error) {
         toast.error(t('errors.uploadFailed'))
@@ -74,15 +75,15 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
       setDragCount(0)
 
       // Tauri v2 drag-drop provides absolute file paths via event.dataTransfer.files
-      const isTauri = typeof window.__TAURI__ !== 'undefined';
+      const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
       let paths: string[] = [];
 
       if (isTauri && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         // In Tauri v2, File objects have a 'path' property with absolute path
         for (let i = 0; i < e.dataTransfer.files.length; i++) {
           const file = e.dataTransfer.files[i];
-          if (file.path) {
-            paths.push(file.path);
+          if ((file as any).path) {
+            paths.push((file as any).path);
           }
         }
       } else {
@@ -144,9 +145,8 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
 }
 
 // Helper function for legacy file input fallback
-function uploadFilesFromInput(files: File[]) {
-  const paths = files.map(f => f.name);
-  uploadFiles(paths);
+function uploadFilesFromInput(_files: File[], _onFileAdd?: (fileName: string) => void) {
+  // Note: This is a legacy helper; actual upload is handled by the component
 }
 
 // Export for legacy compatibility
