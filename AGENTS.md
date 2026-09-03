@@ -199,3 +199,11 @@ RULE: never guess paths; discover via `Get-ChildItem`.
 - Strict Matt Pocock TDD: RED→GREEN→REFACTOR. Tests updated before implementation.
 - S2-S4 locked Ovis recipe: verbatim prompt + temp 0.1 + full-page normalization (no tiling). GFM stdlib converter prevents frontend HTML table breakage.
 - PyInstaller excludes ignore explicit binaries. When using collect_all, filter binaries for banned packages before Analysis. Verify by artifact presence checks.
+
+### Process — S63 autopsy (2026-09-03)
+- Diagnosis discipline: trace the full wrapper chain (script → spawn → proxy → served code) before fixing; prove which code is served before editing; run the real user path (dev.ps1 boot) inside the slice, never defer verification.
+- Tests blind to real risk: unit suites passed while dev boot was broken; every dev-infra slice ends with a 60-second CEO smoke check BEFORE the next slice starts.
+- PowerShell gotcha: Stop-Process -Id $null throws a binding error regardless of -ErrorAction SilentlyContinue; always null-guard PIDs.
+- One home per mode: dev home = repo root; frozen home = portable root; never a second models location; "manifest not found" means home/models mismatch.
+- Port rule: 47351 is the single contract port for dev and prod; any new port = CEO grill; dev.ps1 occupancy check must loud-fail.
+- CTO no-guess rule: no guessed paths or module names in CEO-facing commands; discover first (Hard Discovery Lock).

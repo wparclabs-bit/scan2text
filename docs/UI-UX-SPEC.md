@@ -205,3 +205,12 @@ Before marking any slice COMPLETE:
 ### i18n gate
 - New UI strings must appear in BOTH `src/locales/en.json` AND `src/locales/id.json`
 - Brand image `alt="Scan2Text"` is the only i18n-exempt element
+
+## 9. CEO Visual Deltas
+
+Authority: CEO taste, dated. These override earlier spec entries; they are not bugs — they are locked taste decisions.
+
+- 2026-09-02: dropzone dashed box fills card (flex-1 min-h-0) — accepted via CEO screenshot.
+- 2026-09-02: dropzone content area px-4 + gap-1 (CEO taste; overrides earlier p-4/gap-4).
+- 2026-09-03: preview vertical warm scrollbar accepted; horizontal scrollbar visible only at table bottom = accepted AS-IS, no change (CEO decision 2026-09-03).
+- 2026-09-03: BottomBar version displays v1.1.0.
