@@ -1,11 +1,22 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
 
 import { useScan2TextStore } from '@/stores/scan2text.store'
 import { uploadFile } from '@/lib/api'
 import { fileKind } from '@/lib/fileKind'
+
+// PROBE-TEMP START — temporary runtime-path probe, remove before remediation slice
+// Channel 3: tauri://drag-drop event listener (paths are strings in Tauri v2)
+useEffect(() => {
+  const unlisten = listen<{ type: string; paths: string[] }>('tauri://drag-drop', (event: any) => {
+    console.log('[PROBE] tauri:', JSON.stringify(event))
+  })
+  return () => { unlisten.then((fn) => fn()) }
+}, [])
+// PROBE-TEMP END
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
 
@@ -35,6 +46,11 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
     input.onchange = (e) => {
       const files = Array.from((e.target as HTMLInputElement).files || [])
       if (files.length > 0) {
+        // PROBE-TEMP START — Channel 1: click picker input probe
+        for (const f of files) {
+          console.log('[PROBE] click:', 'name=' + (f as any).name, 'typeof path=' + typeof (f as any).path, 'path=' + (f as any).path, 'size=' + (f as any).size)
+        }
+        // PROBE-TEMP END
         const paths = files.map((f: any) => f.path || f.name)
         uploadFiles(paths)
       }
@@ -152,6 +168,9 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
           if ((file as any).path) {
             paths.push((file as any).path);
           }
+          // PROBE-TEMP START — Channel 2: browser drop handler probe
+          console.log('[PROBE] drop:', 'name=' + (file as any).name, 'typeof path=' + typeof (file as any).path, 'path=' + (file as any).path, 'size=' + (file as any).size)
+          // PROBE-TEMP END
         }
       } else {
         // Fallback for web: extract file names
