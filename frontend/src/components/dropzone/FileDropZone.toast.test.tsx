@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { handleDroppedPaths } from './FileDropZone'
 
 const mockAddJob = vi.fn()
+const mockStartNextPendingJob = vi.fn()
 const mockT = vi.fn((key: string, params?: any) => key + (params ? JSON.stringify(params) : ''))
-const deps = { addJob: mockAddJob, t: mockT }
+const deps = { addJob: mockAddJob, startNextPendingJob: mockStartNextPendingJob, t: mockT }
 
 vi.mock('@/stores/scan2text.store', () => ({
   useScan2TextStore: vi.fn(),
@@ -18,13 +19,6 @@ vi.mock('sonner', () => ({
     warning: vi.fn(),
   },
 }))
-
-// Mock uploadFile - define inline to avoid hoisting issues
-vi.mock('@/lib/api', () => {
-  const mockFn = vi.fn().mockResolvedValue({ task_id: 'test-task-id' })
-  return { uploadFile: mockFn }
-})
-const uploadFileMock = vi.mocked(await import('@/lib/api')).uploadFile
 
 // Mock Tauri webview getCurrentWindow for drag-drop listener (same pattern as FileDropZone.test.tsx)
 const mockGetCurrentWindow = vi.fn().mockReturnValue({
@@ -55,11 +49,11 @@ describe('FileDropZone toast errors', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInvoke.mockReset()
-    uploadFileMock.mockResolvedValue({ task_id: 'test-task-id' })
     const storeMock = useScan2TextStore as unknown as ReturnType<typeof vi.fn>
     storeMock.mockImplementation((selector: (state: any) => any) => {
       const state = {
         addJob: mockAddJob,
+        startNextPendingJob: mockStartNextPendingJob,
       }
       return selector(state)
     })
@@ -91,30 +85,34 @@ describe('FileDropZone toast errors', () => {
       'D:/Pictures/photo.jpg'
     ], deps)
 
-    expect(uploadFileMock).toHaveBeenCalledTimes(2)
+    expect(mockAddJob).toHaveBeenCalledTimes(2)
+    // Verify addJob receives real metadata sizes, not hardcoded 0
+    const jobCalls = mockAddJob.mock.calls.map((c: any[]) => c[0])
+    expect(jobCalls.every((j: any) => j.fileSize != null && j.fileSize > 0)).toBe(true)
     expect(toast.error).not.toHaveBeenCalled()
     expect(toast.warning).not.toHaveBeenCalled()
 
     delete (window as any).__TAURI__
   })
 
-  it('should show error toast when upload fails', async () => {
+  it('should not show error toast when upload fails — errors are handled by the store', async () => {
     Object.defineProperty(window, '__TAURI__', {
       value: { version: '2.0.0' },
       writable: true,
       configurable: true
     })
-    uploadFileMock.mockRejectedValue(new Error('Network error'))
     mockInvoke.mockResolvedValue([
       { path: 'C:/Users/Test/file1.png', size: 1024, exists: true },
     ])
 
-    // Wrap in .catch() to absorb the unhandled rejection from uploadFile
-    await handleDroppedPaths(['C:/Users/Test/file1.png'], deps).catch(() => {})
+    // handleDroppedPaths no longer calls uploadFile directly; it delegates to the store.
+    await handleDroppedPaths(['C:/Users/Test/file1.png'], deps)
 
-    // uploadFile throws but addJob was already called before the throw
-    console.log('mockAddJob calls:', mockAddJob.mock.calls)
+    // addJob should have been called with correct metadata
     expect(mockAddJob).toHaveBeenCalledTimes(1)
+    expect(mockAddJob).toHaveBeenCalledWith(expect.objectContaining({ fileName: 'file1.png', fileSize: 1024 }))
+    // No error toast from handleDroppedPaths itself — store handles upload errors asynchronously
+    expect(toast.error).not.toHaveBeenCalled()
 
     delete (window as any).__TAURI__
   })
@@ -132,7 +130,10 @@ describe('FileDropZone toast errors', () => {
 
     await handleDroppedPaths(allPaths, deps)
 
-    expect(uploadFileMock).toHaveBeenCalledTimes(10)
+    // First 10 files are kept, extras skipped with warning toast
+    expect(mockAddJob).toHaveBeenCalledTimes(10)
+    const jobCalls = mockAddJob.mock.calls.map((c: any[]) => c[0])
+    expect(jobCalls.every((j: any) => j.fileSize === 1024)).toBe(true)
     expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('dropzone.maxFilesWarning'))
 
     delete (window as any).__TAURI__
@@ -145,7 +146,6 @@ describe('FileDropZone toast errors', () => {
     ], deps)
 
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('errors.allInvalid'))
-    expect(uploadFileMock).not.toHaveBeenCalled()
     expect(mockAddJob).not.toHaveBeenCalled()
   })
 
@@ -164,8 +164,8 @@ describe('FileDropZone toast errors', () => {
       'C:/Users/Test/bad.txt'
     ], deps)
 
-    expect(uploadFileMock).toHaveBeenCalledTimes(1)
     expect(mockAddJob).toHaveBeenCalledTimes(1)
+    expect(mockAddJob).toHaveBeenCalledWith(expect.objectContaining({ fileName: 'good.png', fileSize: 1024 }))
     expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('errors.batchSkipped'))
     const errorCalls = (toast.error as ReturnType<typeof vi.fn>).mock.calls
     expect(errorCalls.length).toBe(0)

@@ -1006,6 +1006,32 @@ describe('scan2text store', () => {
       expect(store.getState().activeJobId).toBe('job-2')
       expect(store.getState().jobs['job-2'].status).toBe('processing')
     })
+
+    it('should dispatch metadata-only job through startUpload when no real File exists', async () => {
+      mockUploadFile.mockResolvedValue({ task_id: 'task-meta' })
+      // Simulate handleDroppedPaths adding a job with path+size but no actual File object
+      store.getState().addJob({
+        id: 'meta-job-1',
+        fileName: 'scan.png',
+        fileSize: 5000,
+        filePath: 'C:/Users/Test/scan.png',
+        metaSize: 5000,
+      })
+      expect(store.getState().jobs['meta-job-1'].status).toBe('pending')
+      expect(store.getState().activeJobId).toBeNull()
+
+      // startNextPendingJob should construct a synthetic file and call uploadFile via startUpload
+      store.getState().startNextPendingJob()
+
+      await vi.waitFor(() => {
+        expect(mockUploadFile).toHaveBeenCalled()
+      })
+      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/scan.png'], false)
+      // Task ID should be captured and status transitions to processing
+      expect(store.getState().jobs['meta-job-1'].taskId).toBe('task-meta')
+      expect(store.getState().jobs['meta-job-1'].status).toBe('processing')
+      expect(store.getState().activeJobId).toBe('meta-job-1')
+    })
   })
 
   describe('long-doc hint', () => {

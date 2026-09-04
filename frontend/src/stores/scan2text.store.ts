@@ -80,6 +80,10 @@ export interface Scan2TextState {
     fileSize?: number
     fileType?: string
     createdAt?: number
+    /** Absolute file path for metadata-only jobs (no real File object). */
+    filePath?: string
+    /** File size from Rust metadata when no real File is available. */
+    metaSize?: number
   }) => void
   updateJob: (id: string, patch: Partial<Omit<ScanJob, 'id'>>) => void
   setTaskId: (id: string, taskId: string) => void
@@ -167,13 +171,30 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
         [input.id]: createDefaultJob(
           input.id,
           input.fileName,
-          input.fileSize ?? 0,
+          input.fileSize ?? input.metaSize ?? 0,
           input.fileType ?? 'application/octet-stream',
           input.createdAt ?? Date.now(),
         ),
       },
       jobOrder: [...state.jobOrder, input.id],
     }))
+    // Store metadata for jobs created without a real File object (e.g. from path+size only)
+    if (input.filePath || input.metaSize != null) {
+      set((state) => {
+        const job = state.jobs[input.id]
+        if (!job) return state
+        return {
+          jobs: {
+            ...state.jobs,
+            [input.id]: {
+              ...job,
+              filePath: input.filePath ?? (job as any).filePath,
+              metaSize: input.metaSize ?? (job as any).metaSize,
+            },
+          },
+        }
+      })
+    }
   },
 
   updateJob: (id, patch) => {
@@ -305,9 +326,16 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
     })
     if (nextJobId) {
       const nextJob = state.jobs[nextJobId]
-      if (nextJob && nextJob.file) {
+      if (nextJob) {
+        // Prefer real File object; fall back to synthetic file from metadata for path-based jobs
+        const uploadFile: File = nextJob.file ?? new globalThis.File(
+          [],
+          nextJob.fileName,
+          { type: nextJob.fileType || 'application/octet-stream' },
+        ) as any
+        ;(uploadFile as any).path = (nextJob as any).filePath
         get().startUpload({
-          file: nextJob.file,
+          file: uploadFile,
           jobId: nextJobId,
         })
       }

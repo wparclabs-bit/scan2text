@@ -5,7 +5,6 @@ import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 
 import { useScan2TextStore } from '@/stores/scan2text.store'
-import { uploadFile } from '@/lib/api'
 import { fileKind } from '@/lib/fileKind'
 import { pickFilesViaDialog } from '@/lib/filePicker'
 
@@ -30,11 +29,12 @@ export async function handleDroppedPaths(
   paths: string[],
   deps: {
     addJob: (job: any) => void,
+    startNextPendingJob: () => void,
     t: (key: string, params?: any) => string,
     onFileAdd?: (fileName: string) => void,
   } = {} as any
 ) {
-  const { addJob, t, onFileAdd } = deps
+  const { addJob, startNextPendingJob, t, onFileAdd } = deps
 
   // Normalize slashes: accept both C:\ and C:/ drive prefixes
   const validPaths = paths.filter(p => {
@@ -91,8 +91,9 @@ export async function handleDroppedPaths(
       for (const path of validPathsAfterSize) {
         const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const fileName = path.split('\\').pop()?.split('/').pop() || path;
-        addJob({ id: jobId, fileName, fileSize: 0 });
-        await uploadFile([path], false);
+        // Find the matching metadata to get size
+        const meta = metadataList!.find(m => m.path === path)
+        addJob({ id: jobId, fileName, fileSize: meta?.size ?? undefined, filePath: path });
         onFileAdd?.(fileName);
       }
     } else {
@@ -108,8 +109,7 @@ export async function handleDroppedPaths(
       for (const path of validExtensionPaths) {
         const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const fileName = path.split('\\').pop()?.split('/').pop() || path;
-        addJob({ id: jobId, fileName, fileSize: 0 });
-        await uploadFile([path], false);
+        addJob({ id: jobId, fileName, filePath: path });
         onFileAdd?.(fileName);
       }
     }
@@ -117,12 +117,15 @@ export async function handleDroppedPaths(
     // All files failed extension check — one aggregated error toast
     toast.error(t('errors.allInvalid'))
   }
+  // Dispatch the queue so pending jobs start processing through the store
+  startNextPendingJob()
 }
 
 export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps) {
   const [dragCount, setDragCount] = useState(0)
   const isDragOver = dragCount > 0
   const addJob = useScan2TextStore((s) => s.addJob)
+  const startNextPendingJob = useScan2TextStore((s) => s.startNextPendingJob)
   const { t } = useTranslation()
 
   // Wire tauri://drag-drop event listener using Tauri v2 native API
@@ -130,22 +133,22 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
     const appWindow = getCurrentWindow()
     const unlistenPromise = appWindow.onDragDropEvent((event: any) => {
       if (event.payload.type === 'drop' && Array.isArray(event.payload.paths)) {
-        handleDroppedPaths(event.payload.paths, { addJob, t, onFileAdd })
+        handleDroppedPaths(event.payload.paths, { addJob, startNextPendingJob, t, onFileAdd })
       }
     })
     return () => {
       unlistenPromise.then((unlisten: () => void) => unlisten())
     }
-  }, [addJob, t, onFileAdd])
+  }, [addJob, startNextPendingJob, t, onFileAdd])
 
   const triggerPicker = useCallback(() => {
     pickFilesViaDialog().then((paths: string[] | null) => {
       if (paths !== null && paths.length > 0) {
-        handleDroppedPaths(paths, { addJob, t, onFileAdd })
+        handleDroppedPaths(paths, { addJob, startNextPendingJob, t, onFileAdd })
       }
       // null = user cancelled — no-op
     })
-  }, [addJob, t, onFileAdd])
+  }, [addJob, startNextPendingJob, t, onFileAdd])
 
 
 

@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { handleDroppedPaths } from './FileDropZone'
 
 const mockAddJob = vi.fn()
+const mockStartNextPendingJob = vi.fn()
 const mockT = vi.fn((key: string, params?: any) => key + (params ? JSON.stringify(params) : ''))
-const deps = { addJob: mockAddJob, t: mockT }
+const deps = { addJob: mockAddJob, startNextPendingJob: mockStartNextPendingJob, t: mockT }
 
 vi.mock('@/stores/scan2text.store', () => ({
   useScan2TextStore: vi.fn(),
@@ -18,13 +19,6 @@ vi.mock('sonner', () => ({
     warning: vi.fn(),
   },
 }))
-
-// Mock uploadFile
-vi.mock('@/lib/api', () => {
-  const mockFn = vi.fn().mockResolvedValue({ task_id: 'test-task-id' })
-  return { uploadFile: mockFn }
-})
-const uploadFileMock = vi.mocked(await import('@/lib/api')).uploadFile
 
 // Mock Tauri webview getCurrentWindow for drag-drop listener (same pattern as FileDropZone.test.tsx)
 const mockGetCurrentWindow = vi.fn().mockReturnValue({
@@ -56,10 +50,9 @@ describe('FileDropZone size validation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInvoke.mockReset()
-    uploadFileMock.mockResolvedValue({ task_id: 'test-task-id' })
     const storeMock = useScan2TextStore as unknown as ReturnType<typeof vi.fn>
     storeMock.mockImplementation((selector: (state: any) => any) => {
-      const state = { addJob: mockAddJob }
+      const state = { addJob: mockAddJob, startNextPendingJob: mockStartNextPendingJob }
       return selector(state)
     })
   })
@@ -85,7 +78,6 @@ describe('FileDropZone size validation', () => {
     await handleDroppedPaths(['C:/Users/Test/big.png'], deps)
 
     expect(mockInvoke).toHaveBeenCalledWith('get_file_metadata_command', expect.any(Object))
-    expect(uploadFileMock).not.toHaveBeenCalled()
     expect(mockAddJob).not.toHaveBeenCalled()
     teardownTauri()
   })
@@ -105,9 +97,8 @@ describe('FileDropZone size validation', () => {
       'C:/Users/Test/big.jpg'
     ], deps)
 
-    expect(uploadFileMock).toHaveBeenCalledTimes(1)
     expect(mockAddJob).toHaveBeenCalledTimes(1)
-    expect(mockAddJob).toHaveBeenCalledWith(expect.objectContaining({ fileName: 'small.png' }))
+    expect(mockAddJob).toHaveBeenCalledWith(expect.objectContaining({ fileName: 'small.png', fileSize: 1024 }))
     expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('errors.batchSkipped'))
     // Only ONE warning toast, not per-file
     const warningCalls = (toast.warning as ReturnType<typeof vi.fn>).mock.calls
@@ -127,7 +118,6 @@ describe('FileDropZone size validation', () => {
     ], deps)
 
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('errors.allInvalid'))
-    expect(uploadFileMock).not.toHaveBeenCalled()
     expect(mockAddJob).not.toHaveBeenCalled()
     teardownTauri()
   })
@@ -143,8 +133,10 @@ describe('FileDropZone size validation', () => {
       'C:/Users/Test/b.pdf'
     ], deps)
 
-    expect(uploadFileMock).toHaveBeenCalledTimes(2)
     expect(mockAddJob).toHaveBeenCalledTimes(2)
+    // Verify addJob receives real metadata sizes, not hardcoded 0
+    const jobCalls = mockAddJob.mock.calls.map((c: any[]) => c[0])
+    expect(jobCalls.every((j: any) => j.fileSize === 1024)).toBe(true)
     expect(toast.error).not.toHaveBeenCalled()
     expect(toast.warning).not.toHaveBeenCalled()
     teardownTauri()
@@ -158,7 +150,6 @@ describe('FileDropZone size validation', () => {
 
     await handleDroppedPaths(['C:/Users/Test/missing.png'], deps)
 
-    expect(uploadFileMock).not.toHaveBeenCalled()
     expect(mockAddJob).not.toHaveBeenCalled()
     teardownTauri()
   })

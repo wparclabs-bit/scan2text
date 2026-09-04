@@ -1,19 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 import FileDropZone, { handleDroppedPaths } from './FileDropZone'
-import { uploadFile } from '@/lib/api'
 
 const mockAddJob = vi.fn()
+const mockStartNextPendingJob = vi.fn()
 vi.mock('@/stores/scan2text.store', () => ({
   useScan2TextStore: vi.fn(),
 }))
 
 const { useScan2TextStore } = await import('@/stores/scan2text.store')
-
-// Mock the uploadFile API call
-vi.mock('@/lib/api', () => ({
-  uploadFile: vi.fn().mockResolvedValue({ task_id: 'test-task-id' }),
-}))
 
 // Mock Tauri invoke for file metadata command (use vi.hoisted for proper hoisting)
 const { invoke: mockInvoke } = vi.hoisted(() => ({
@@ -63,6 +58,7 @@ describe('FileDropZone', () => {
     storeMock.mockImplementation((selector: (state: any) => any) => {
       const state = {
         addJob: mockAddJob,
+        startNextPendingJob: mockStartNextPendingJob,
       }
       return selector(state)
     })
@@ -200,7 +196,7 @@ describe('FileDropZone', () => {
 
     it('should validate Windows absolute paths via handleDroppedPaths', async () => {
       const mockT = vi.fn((key: string) => key)
-      const deps = { addJob: mockAddJob, t: mockT }
+      const deps = { addJob: mockAddJob, startNextPendingJob: mockStartNextPendingJob, t: mockT }
 
       // Test drive-prefix filtering directly
       await handleDroppedPaths([
@@ -303,7 +299,7 @@ describe('FileDropZone', () => {
       })
     })
 
-    it('should handle null cancel from local seam as no-op (no uploadFile call)', async () => {
+    it('should handle null cancel from local seam as no-op (no addJob call)', async () => {
       const { container } = render(<FileDropZone />)
       const dropzone = container.querySelector('[data-testid="dropzone-dashed"]')!
 
@@ -313,15 +309,15 @@ describe('FileDropZone', () => {
       mockPickFilesViaDialog.mockResolvedValue(null)
 
       await vi.waitFor(() => {
-        expect(uploadFile).not.toHaveBeenCalled()
         expect(mockAddJob).not.toHaveBeenCalled()
+        expect(mockStartNextPendingJob).not.toHaveBeenCalled()
       })
     })
   })
 
   describe('Pure drag core tests', () => {
     const mockT = vi.fn((key: string, params?: any) => key + (params ? JSON.stringify(params) : ''))
-    const deps = { addJob: mockAddJob, t: mockT }
+    const deps = { addJob: mockAddJob, startNextPendingJob: mockStartNextPendingJob, t: mockT }
 
     beforeEach(() => {
       Object.defineProperty(window, '__TAURI__', {
@@ -343,7 +339,9 @@ describe('FileDropZone', () => {
       await handleDroppedPaths(['C:/Users/Test/a.jpg', 'D:/Docs/b.png'], deps)
 
       expect(mockAddJob).toHaveBeenCalledTimes(2)
-      expect(uploadFile).toHaveBeenCalledTimes(2)
+      // Verify addJob receives real metadata sizes, not hardcoded 0
+      const jobCalls = mockAddJob.mock.calls.map((c: any[]) => c[0])
+      expect(jobCalls.every((j: any) => j.fileSize === 1024)).toBe(true)
     })
 
     it('should skip oversized files and show aggregated toast', async () => {
@@ -421,9 +419,10 @@ describe('FileDropZone', () => {
       expect(preventDefaultMock).toHaveBeenCalled()
       expect(stopPropagationMock).toHaveBeenCalled()
 
-      // No uploadFile call since browser File objects don't have .path in jsdom
+      // Browser drop is neutralized — no jobs added, queue not dispatched
       await vi.waitFor(() => {
-        expect(uploadFile).not.toHaveBeenCalled()
+        expect(mockAddJob).not.toHaveBeenCalled()
+        expect(mockStartNextPendingJob).not.toHaveBeenCalled()
       })
     })
   })
@@ -439,7 +438,7 @@ describe('FileDropZone', () => {
 
   describe('Extension validation via handleDroppedPaths', () => {
     const mockT = vi.fn((key: string, params?: any) => key + (params ? JSON.stringify(params) : ''))
-    const deps = { addJob: mockAddJob, t: mockT }
+    const deps = { addJob: mockAddJob, startNextPendingJob: mockStartNextPendingJob, t: mockT }
 
     beforeEach(() => {
       Object.defineProperty(window, '__TAURI__', {
@@ -460,14 +459,12 @@ describe('FileDropZone', () => {
     it('should filter out files with unsupported extensions (.txt)', async () => {
       await handleDroppedPaths(['C:/Users/Test/document.txt'], deps)
 
-      expect(uploadFile).not.toHaveBeenCalled()
       expect(mockAddJob).not.toHaveBeenCalled()
     })
 
     it('should filter out files with unsupported extensions (.exe)', async () => {
       await handleDroppedPaths(['C:/Users/Test/malware.exe'], deps)
 
-      expect(uploadFile).not.toHaveBeenCalled()
       expect(mockAddJob).not.toHaveBeenCalled()
     })
 
@@ -478,14 +475,11 @@ describe('FileDropZone', () => {
         'C:/Users/Test/also-valid.pdf'
       ], deps)
 
-      expect(uploadFile).toHaveBeenCalledTimes(2)
       expect(mockAddJob).toHaveBeenCalledTimes(2)
-      const calledPaths = (uploadFile as ReturnType<typeof vi.fn>).mock.calls.map(
-        call => call[0][0]
-      )
-      expect(calledPaths).toContain('C:/Users/Test/valid.png')
-      expect(calledPaths).toContain('C:/Users/Test/also-valid.pdf')
-      expect(calledPaths).not.toContain('C:/Users/Test/invalid.txt')
+      const jobCalls = mockAddJob.mock.calls.map((c: any[]) => c[0])
+      expect(jobCalls.some((j: any) => j.filePath === 'C:/Users/Test/valid.png')).toBe(true)
+      expect(jobCalls.some((j: any) => j.filePath === 'C:/Users/Test/also-valid.pdf')).toBe(true)
+      expect(jobCalls.every((j: any) => j.filePath !== 'C:/Users/Test/invalid.txt')).toBe(true)
     })
 
     it('should not add invalid files to queue', async () => {
@@ -507,8 +501,10 @@ describe('FileDropZone', () => {
         'C:/e.PDF'
       ], deps)
 
-      expect(uploadFile).toHaveBeenCalledTimes(5)
       expect(mockAddJob).toHaveBeenCalledTimes(5)
+      // Verify addJob receives real metadata sizes, not hardcoded 0
+      const jobCalls = mockAddJob.mock.calls.map((c: any[]) => c[0])
+      expect(jobCalls.every((j: any) => j.fileSize === 1024)).toBe(true)
     })
   })
 })
