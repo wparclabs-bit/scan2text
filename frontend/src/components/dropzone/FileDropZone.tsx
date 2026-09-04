@@ -8,16 +8,6 @@ import { useScan2TextStore } from '@/stores/scan2text.store'
 import { uploadFile } from '@/lib/api'
 import { fileKind } from '@/lib/fileKind'
 
-// PROBE-TEMP START — temporary runtime-path probe, remove before remediation slice
-// Channel 3: tauri://drag-drop event listener (paths are strings in Tauri v2)
-useEffect(() => {
-  const unlisten = listen<{ type: string; paths: string[] }>('tauri://drag-drop', (event: any) => {
-    console.log('[PROBE] tauri:', JSON.stringify(event))
-  })
-  return () => { unlisten.then((fn) => fn()) }
-}, [])
-// PROBE-TEMP END
-
 const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
 
 interface FileMetadata {
@@ -36,6 +26,16 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
   const isDragOver = dragCount > 0
   const addJob = useScan2TextStore((s) => s.addJob)
   const { t } = useTranslation()
+
+  // PROBE-TEMP START — temporary runtime-path probe, remove before remediation slice
+  // Channel 3: tauri://drag-drop event listener (paths are strings in Tauri v2)
+  useEffect(() => {
+    const unlisten = listen<{ type: string; paths: string[] }>('tauri://drag-drop', (event: any) => {
+      console.log('[PROBE] tauri:', JSON.stringify(event))
+    })
+    return () => { unlisten.then((fn) => fn()) }
+  }, [])
+  // PROBE-TEMP END
 
   const triggerPicker = useCallback(() => {
     // File picker fallback for non-Tauri environments
