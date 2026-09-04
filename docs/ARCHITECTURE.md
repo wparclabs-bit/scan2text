@@ -275,6 +275,89 @@ User sees result in PreviewPanel (MarkdownPreview)
 
 ---
 
+## Tauri Upload Seam Architecture
+
+### Why Local Seam Modules (Not node_modules Mocking)
+
+Direct mocking of `@tauri-apps` packages in `node_modules/` was banned because:
+
+1. **Fragility:** Node modules are regenerated on every install; mocks break silently after `npm install`.
+2. **Non-deterministic builds:** Vite resolves imports at build time from node_modules — mocking there corrupts the production bundle.
+3. **Test-runtime coupling:** Tests that mock Tauri packages must run in a real or fake Tauri runtime, preventing pure unit testing with jsdom.
+
+**Approved pattern:** Local seam modules under `frontend/src/lib/` wrap Tauri APIs behind stable interfaces. Tests import the seam module and replace only that dependency — no node_modules mutation required.
+
+### Click Upload Flow
+
+```
+User clicks "Add Files" button
+    ↓
+Seam calls @tauri-apps/plugin-dialog open() (multi-file picker)
+    ↓
+Dialog returns array of absolute string paths (e.g., C:\Users\...\image.png)
+    ↓
+Paths passed to handleDroppedPaths(paths, dependencies) — pure function
+    ↓
+Validation: allowed extensions PNG/JPG/JPEG/WEBP/PDF; max 20MB per file via Rust metadata command
+    ↓
+Invalid files rejected before queue entry (one aggregated toast for entire invalid batch)
+    ↓
+Valid paths added to Zustand store as pending jobs
+```
+
+### Drag Upload Flow
+
+```
+User drags files onto DropZone component
+    ↓
+Tauri drag-drop event fires: tauri://drag-drop payload contains .paths array
+    ↓
+Paths extracted from event.payload.paths (absolute OS-native paths)
+    ↓
+Same validation pipeline as click upload via handleDroppedPaths(paths, dependencies)
+    ↓
+Invalid files rejected; valid files queued
+```
+
+### Browser Drop Neutralization
+
+Browser native drag-drop (`dragover`, `drop` on window/document) is **not** the source of truth for disk paths. These handlers exist only to:
+
+- Call `event.preventDefault()` / `event.stopPropagation()` to prevent browser navigation or file opening behavior.
+- Allow Tauri's own `tauri://drag-drop` event (Channel 3 listener in FileDropZone) to remain the authoritative path source.
+
+**Rule:** Browser drop handlers must never read `event.dataTransfer.files` for upload logic — they are guard-rails only.
+
+### Validation Rules
+
+| Rule | Enforcement |
+|---|---|
+| Allowed extensions: PNG, JPG, JPEG, WEBP, PDF | Extension check in seam validation layer |
+| Max 20 MB per file | Rust metadata command invoked from seam (not client-side guess) |
+| Batch cap: 10 files | First 10 accepted; extras skipped with warning toast + log entry |
+| Invalid batch = one aggregated toast | Single sonner call after all files evaluated, not per-file toasts |
+| Invalid files never enter queue | Validation rejects before `addJob` is called |
+
+### Testing Policy
+
+- **Mock local seam modules** (e.g., `frontend/src/lib/tauriUploadSeam.ts`) — replace the module with a jest/vitest mock.
+- **Never mock `@tauri-apps/*` packages in node_modules.** This keeps tests decoupled from Tauri runtime internals and avoids build contamination.
+- Tests that need file paths should inject them directly via the seam's dependency parameter, not through window mocks or global state.
+
+### Pure Function Rule: handleDroppedPaths
+
+The `handleDroppedPaths` function receives `(paths: string[], deps: UploadDependencies)` as arguments — it does **not** read from globals, stores, or Tauri APIs directly. This design makes it:
+
+- Testable in jsdom without a fake Tauri runtime.
+- Verifiable by pure unit tests that assert input → output (queue actions + validation results).
+- Swappable at the seam boundary for integration vs. unit contexts.
+
+### Rust Metadata Command for 20MB Gate
+
+The frontend does not trust client-side file size guesses. Before accepting a file, the seam invokes a small Rust command (`get_file_size`) that reads the OS-level metadata and returns the exact byte count. This value drives the 20 MB rejection decision — ensuring consistency between dev and production builds where Vite might otherwise approximate sizes differently.
+
+---
+
 ## Build & Runtime Dependencies
 
 ### Required Runtimes
