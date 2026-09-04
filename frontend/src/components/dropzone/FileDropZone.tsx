@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useScan2TextStore } from '@/stores/scan2text.store'
 import { uploadFile } from '@/lib/api'
+import { fileKind } from '@/lib/fileKind'
 
 interface FileDropZoneProps {
   onFileAdd?: (fileName: string) => void
@@ -53,8 +54,26 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
           return
         }
         // Limit to 10 files per batch
-        const limitedPaths = validPaths.slice(0, 10);
-        for (const path of limitedPaths) {
+        let limitedPaths = validPaths.slice(0, 10);
+        if (limitedPaths.length < validPaths.length) {
+          toast.warning(t('dropzone.maxFilesWarning'))
+        }
+        // Filter by extension: only image and pdf allowed
+        const validExtensionPaths = limitedPaths.filter(p => {
+          const fileName = p.split('\\').pop()?.split('/').pop() || p;
+          return fileKind(fileName) !== 'unknown';
+        });
+        const skippedCount = limitedPaths.length - validExtensionPaths.length;
+        if (skippedCount > 0 && validExtensionPaths.length === 0) {
+          // All files invalid — one aggregated error toast
+          toast.error(t('errors.allInvalid'))
+          return
+        }
+        if (skippedCount > 0) {
+          // Some files skipped — one aggregated warning toast
+          toast.warning(t('errors.batchSkipped', { total: skippedCount, unsupported: skippedCount, tooLarge: 0 }))
+        }
+        for (const path of validExtensionPaths) {
           const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`;
           const fileName = path.split('\\').pop()?.split('/').pop() || path;
           addJob({ id: jobId, fileName, fileSize: 0 });

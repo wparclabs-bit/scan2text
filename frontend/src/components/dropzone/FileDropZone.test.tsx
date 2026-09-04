@@ -213,4 +213,98 @@ describe('FileDropZone', () => {
       expect(true).toBe(true)
     })
   })
+
+  describe('Extension validation', () => {
+    beforeEach(() => {
+      Object.defineProperty(window, '__TAURI__', {
+        value: { version: '1.0.0' },
+        writable: true,
+        configurable: true
+      })
+    })
+
+    afterEach(() => {
+      delete (window as any).__TAURI__
+    })
+
+    it('should filter out files with unsupported extensions (.txt)', async () => {
+      render(<FileDropZone />)
+      const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
+      // Create a proper File-like object with path property for Tauri
+      const file = Object.assign(new File([''], 'document.txt'), { path: 'C:/Users/Test/document.txt' })
+      fireEvent.drop(dropzone, { dataTransfer: { files: [file] } })
+
+      await vi.waitFor(() => {
+        expect(uploadFile).not.toHaveBeenCalled()
+        expect(mockAddJob).not.toHaveBeenCalled()
+      })
+    })
+
+    it('should filter out files with unsupported extensions (.exe)', async () => {
+      render(<FileDropZone />)
+      const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
+      const file = Object.assign(new File([''], 'malware.exe'), { path: 'C:/Users/Test/malware.exe' })
+      fireEvent.drop(dropzone, { dataTransfer: { files: [file] } })
+
+      await vi.waitFor(() => {
+        expect(uploadFile).not.toHaveBeenCalled()
+        expect(mockAddJob).not.toHaveBeenCalled()
+      })
+    })
+
+    it('should only process valid extensions from a mixed batch', async () => {
+      render(<FileDropZone />)
+      const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
+      const files = [
+        Object.assign(new File([''], 'valid.png'), { path: 'C:/Users/Test/valid.png' }),
+        Object.assign(new File([''], 'invalid.txt'), { path: 'C:/Users/Test/invalid.txt' }),
+        Object.assign(new File([''], 'also-valid.pdf'), { path: 'C:/Users/Test/also-valid.pdf' }),
+      ]
+      fireEvent.drop(dropzone, { dataTransfer: { files } })
+
+      await vi.waitFor(() => {
+        expect(uploadFile).toHaveBeenCalledTimes(2)
+        expect(mockAddJob).toHaveBeenCalledTimes(2)
+        const calledPaths = (uploadFile as ReturnType<typeof vi.fn>).mock.calls.map(
+          call => call[0][0]
+        )
+        expect(calledPaths).toContain('C:/Users/Test/valid.png')
+        expect(calledPaths).toContain('C:/Users/Test/also-valid.pdf')
+        expect(calledPaths).not.toContain('C:/Users/Test/invalid.txt')
+      })
+    })
+
+    it('should not add invalid files to queue', async () => {
+      render(<FileDropZone />)
+      const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
+      const files = [
+        Object.assign(new File([''], 'good.jpg'), { path: 'C:/Users/Test/good.jpg' }),
+        Object.assign(new File([''], 'bad.bmp'), { path: 'C:/Users/Test/bad.bmp' }),
+      ]
+      fireEvent.drop(dropzone, { dataTransfer: { files } })
+
+      await vi.waitFor(() => {
+        expect(mockAddJob).toHaveBeenCalledTimes(1)
+        expect(mockAddJob).toHaveBeenCalledWith(expect.objectContaining({ fileName: 'good.jpg' }))
+      })
+    })
+
+    it('should accept all valid extensions: png, jpg, jpeg, webp, pdf', async () => {
+      render(<FileDropZone />)
+      const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
+      const files = [
+        Object.assign(new File([''], 'a.png'), { path: 'C:/a.png' }),
+        Object.assign(new File([''], 'b.jpg'), { path: 'D:/b.jpg' }),
+        Object.assign(new File([''], 'c.JPEG'), { path: 'E:/c.JPEG' }),
+        Object.assign(new File([''], 'd.webp'), { path: 'F:/d.webp' }),
+        Object.assign(new File([''], 'e.PDF'), { path: 'C:/e.PDF' }),
+      ]
+      fireEvent.drop(dropzone, { dataTransfer: { files } })
+
+      await vi.waitFor(() => {
+        expect(uploadFile).toHaveBeenCalledTimes(5)
+        expect(mockAddJob).toHaveBeenCalledTimes(5)
+      })
+    })
+  })
 })
