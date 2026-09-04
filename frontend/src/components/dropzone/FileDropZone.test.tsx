@@ -15,9 +15,20 @@ vi.mock('@/lib/api', () => ({
   uploadFile: vi.fn().mockResolvedValue({ task_id: 'test-task-id' }),
 }))
 
+// Mock Tauri invoke for file metadata command
+const mockInvoke = vi.fn()
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: (...args: any[]) => mockInvoke(...args),
+}))
+
 describe('FileDropZone', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockInvoke.mockReset()
+    // Default: return metadata that passes size check for requested paths
+    mockInvoke.mockImplementation(async ({ paths }: { paths: string[] }) =>
+      (paths as string[]).map(p => ({ path: p, size: 1024, exists: true }))
+    )
     const storeMock = useScan2TextStore as unknown as ReturnType<typeof vi.fn>
     storeMock.mockImplementation((selector: (state: any) => any) => {
       const state = {
@@ -157,7 +168,7 @@ describe('FileDropZone', () => {
       delete (window as any).__TAURI__
     })
 
-    it('should extract absolute paths from Tauri drag-drop event', () => {
+    it('should extract absolute paths from Tauri drag-drop event', async () => {
       render(<FileDropZone />)
       const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
       const mockEvent = {
@@ -174,14 +185,16 @@ describe('FileDropZone', () => {
 
       fireEvent.drop(dropzone, mockEvent)
 
-      // Verify at least the first path was extracted correctly
-      expect(uploadFile).toHaveBeenCalledWith(
-        ['C:/Users/Test/file1.png'],
-        false
-      )
+      await vi.waitFor(() => {
+        // Verify at least the first path was extracted correctly
+        expect(uploadFile).toHaveBeenCalledWith(
+          ['C:/Users/Test/file1.png'],
+          false
+        )
+      })
     })
 
-    it('should validate Windows absolute paths only', () => {
+    it('should validate Windows absolute paths only', async () => {
       render(<FileDropZone />)
       const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
       const mockEvent = {
@@ -198,8 +211,10 @@ describe('FileDropZone', () => {
 
       fireEvent.drop(dropzone, mockEvent)
 
-      // Only valid Windows path should be processed
-      expect(uploadFile).toHaveBeenCalledWith(['C:/Valid/File.png'], false)
+      await vi.waitFor(() => {
+        // Only valid Windows path should be processed
+        expect(uploadFile).toHaveBeenCalledWith(['C:/Valid/File.png'], false)
+      })
     })
   })
 

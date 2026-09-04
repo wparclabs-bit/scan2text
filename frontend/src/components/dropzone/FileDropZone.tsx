@@ -1,10 +1,19 @@
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import { invoke } from '@tauri-apps/api/core'
 
 import { useScan2TextStore } from '@/stores/scan2text.store'
 import { uploadFile } from '@/lib/api'
 import { fileKind } from '@/lib/fileKind'
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
+
+interface FileMetadata {
+  path: string
+  size: number | null
+  exists: boolean
+}
 
 interface FileDropZoneProps {
   onFileAdd?: (fileName: string) => void
@@ -63,22 +72,61 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
           const fileName = p.split('\\').pop()?.split('/').pop() || p;
           return fileKind(fileName) !== 'unknown';
         });
-        const skippedCount = limitedPaths.length - validExtensionPaths.length;
-        if (skippedCount > 0 && validExtensionPaths.length === 0) {
-          // All files invalid — one aggregated error toast
+        const extSkippedCount = limitedPaths.length - validExtensionPaths.length;
+
+        // Retrieve file metadata via Rust command to enforce 20MB limit (Tauri-only)
+        let sizeSkippedCount = 0;
+        if (validExtensionPaths.length > 0 && typeof (window as any).__TAURI__ !== 'undefined') {
+          try {
+            const metadataList = await invoke<FileMetadata[]>('get_file_metadata_command', {
+              paths: validExtensionPaths,
+            });
+            const validPathsAfterSize: string[] = []
+            for (const meta of metadataList) {
+              if (!meta.exists || meta.size == null || meta.size > MAX_FILE_SIZE) {
+                sizeSkippedCount++
+              } else {
+                validPathsAfterSize.push(meta.path)
+              }
+            }
+            // Update skipped count to include both extension and size rejections
+            const totalSkipped = extSkippedCount + sizeSkippedCount
+            if (totalSkipped > 0 && validPathsAfterSize.length === 0) {
+              toast.error(t('errors.allInvalid'))
+              return
+            }
+            if (totalSkipped > 0) {
+              toast.warning(t('errors.batchSkipped', { total: totalSkipped, unsupported: extSkippedCount, tooLarge: sizeSkippedCount }))
+            }
+            // Process only files that passed both extension and size checks
+            for (const path of validPathsAfterSize) {
+              const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+              const fileName = path.split('\\').pop()?.split('/').pop() || path;
+              addJob({ id: jobId, fileName, fileSize: 0 });
+              await uploadFile([path], false);
+              onFileAdd?.(fileName);
+            }
+          } catch (_invokeErr) {
+            // If metadata command fails, fall back to extension-only validation
+            const totalSkipped = extSkippedCount
+            if (totalSkipped > 0 && validExtensionPaths.length === 0) {
+              toast.error(t('errors.allInvalid'))
+              return
+            }
+            if (totalSkipped > 0) {
+              toast.warning(t('errors.batchSkipped', { total: totalSkipped, unsupported: extSkippedCount, tooLarge: 0 }))
+            }
+            for (const path of validExtensionPaths) {
+              const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+              const fileName = path.split('\\').pop()?.split('/').pop() || path;
+              addJob({ id: jobId, fileName, fileSize: 0 });
+              await uploadFile([path], false);
+              onFileAdd?.(fileName);
+            }
+          }
+        } else if (extSkippedCount > 0) {
+          // All files failed extension check — one aggregated error toast
           toast.error(t('errors.allInvalid'))
-          return
-        }
-        if (skippedCount > 0) {
-          // Some files skipped — one aggregated warning toast
-          toast.warning(t('errors.batchSkipped', { total: skippedCount, unsupported: skippedCount, tooLarge: 0 }))
-        }
-        for (const path of validExtensionPaths) {
-          const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-          const fileName = path.split('\\').pop()?.split('/').pop() || path;
-          addJob({ id: jobId, fileName, fileSize: 0 });
-          await uploadFile([path], false);
-          onFileAdd?.(fileName);
         }
       } catch (error) {
         toast.error(t('errors.uploadFailed'))
