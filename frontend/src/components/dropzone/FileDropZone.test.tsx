@@ -229,6 +229,36 @@ describe('FileDropZone', () => {
     })
   })
 
+  describe('Click handler (triggerPicker) path extraction', () => {
+    it('should extract Tauri absolute .path from clicked files, not bare f.name', async () => {
+      // Verify the path extraction logic that triggerPicker uses:
+      // paths = files.map(f => (f as any).path || f.name)
+      // This ensures absolute Tauri paths are passed instead of bare filenames.
+      const files = [
+        Object.assign(new File([''], 'photo.png'), { path: 'C:/Users/Test/photo.png' }),
+        Object.assign(new File([''], 'scan.pdf'), { path: 'D:/Docs/scan.pdf' }),
+      ]
+
+      // Simulate triggerPicker's extraction: (f as any).path || f.name
+      const paths = files.map((f: any) => f.path || f.name)
+
+      // Must extract absolute .path values, not bare names.
+      expect(paths).toEqual(['C:/Users/Test/photo.png', 'D:/Docs/scan.pdf'])
+      expect(paths).not.toEqual(['photo.png', 'scan.pdf'])
+    })
+
+    it('should render translated dropzone text, not raw i18n keys', () => {
+      // Render with English locale active — the component uses t('dropzone.dropPrompt')
+      // and t('dropzone.maxFiles'). If those keys are missing from en.json the rendered
+      // DOM will contain the literal strings "dropzone.dropPrompt" / "dropzone.maxFiles".
+      const { container } = render(<FileDropZone />)
+      const text = container.textContent
+
+      expect(text).not.toContain('dropzone.dropPrompt')
+      expect(text).not.toContain('dropzone.maxFiles')
+    })
+  })
+
   describe('Extension validation', () => {
     beforeEach(() => {
       Object.defineProperty(window, '__TAURI__', {

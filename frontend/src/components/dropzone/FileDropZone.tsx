@@ -35,8 +35,8 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
     input.onchange = (e) => {
       const files = Array.from((e.target as HTMLInputElement).files || [])
       if (files.length > 0) {
-        const fileNames = files.map(f => f.name)
-        uploadFiles(fileNames)
+        const paths = files.map((f: any) => f.path || f.name)
+        uploadFiles(paths)
       }
     }
     input.click()
