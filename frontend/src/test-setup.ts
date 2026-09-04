@@ -3,6 +3,13 @@ import { vi } from 'vitest'
 import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 
+// Mock Tauri webview API so FileDropZone (which uses getCurrentWindow) can render in jsdom tests
+vi.mock('@tauri-apps/api/webview', () => ({
+  getCurrentWindow: vi.fn().mockReturnValue({
+    onDragDropEvent: vi.fn().mockResolvedValue(vi.fn()),
+  }),
+}))
+
 vi.mock('sonner', () => ({
   Toaster: () => null,
   toast: {

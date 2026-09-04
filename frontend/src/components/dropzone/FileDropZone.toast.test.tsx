@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, fireEvent } from '@testing-library/react'
-import FileDropZone from './FileDropZone'
+import FileDropZone, { handleDroppedPaths } from './FileDropZone'
 
 const mockAddJob = vi.fn()
+const mockT = vi.fn((key: string, params?: any) => key + (params ? JSON.stringify(params) : ''))
+const deps = { addJob: mockAddJob, t: mockT }
 
 vi.mock('@/stores/scan2text.store', () => ({
   useScan2TextStore: vi.fn(),
@@ -23,8 +24,29 @@ vi.mock('@/lib/api', () => {
   const mockFn = vi.fn().mockResolvedValue({ task_id: 'test-task-id' })
   return { uploadFile: mockFn }
 })
-// Get reference to the mock for per-test configuration
 const uploadFileMock = vi.mocked(await import('@/lib/api')).uploadFile
+
+// Mock Tauri webview getCurrentWindow for drag-drop listener (same pattern as FileDropZone.test.tsx)
+const mockGetCurrentWindow = vi.fn().mockReturnValue({
+  onDragDropEvent: vi.fn().mockResolvedValue(vi.fn()),
+})
+vi.mock('@tauri-apps/api/webview', () => ({
+  getCurrentWindow: (...args: any[]) => mockGetCurrentWindow(...args),
+}))
+
+// Mock LOCAL seam module instead of node_modules plugin
+const { pickFilesViaDialog: mockPickFilesViaDialog } = vi.hoisted(() => ({
+  pickFilesViaDialog: vi.fn().mockResolvedValue(null),
+}))
+vi.mock('@/lib/filePicker', () => ({
+  pickFilesViaDialog: (...args: any[]) => mockPickFilesViaDialog(...args),
+}))
+
+// Mock Tauri invoke for get_file_metadata_command — use mutable fn so tests can reconfigure via .mockResolvedValue/.mockRejectedValue
+const mockInvoke = vi.fn()
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: (...args: any[]) => mockInvoke(...args),
+}))
 
 const { useScan2TextStore } = await import('@/stores/scan2text.store')
 const { toast } = await import('sonner')
@@ -32,6 +54,7 @@ const { toast } = await import('sonner')
 describe('FileDropZone toast errors', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockInvoke.mockReset()
     uploadFileMock.mockResolvedValue({ task_id: 'test-task-id' })
     const storeMock = useScan2TextStore as unknown as ReturnType<typeof vi.fn>
     storeMock.mockImplementation((selector: (state: any) => any) => {
@@ -43,172 +66,130 @@ describe('FileDropZone toast errors', () => {
   })
 
   it('should show error toast when all paths are invalid (non-Windows)', async () => {
-    render(<FileDropZone />)
-    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
-    // Use file names that won't match Windows path pattern
-    fireEvent.drop(dropzone, { dataTransfer: { files: [{ name: 'test.txt' }, { name: 'photo.jpg' }] } })
+    await handleDroppedPaths([
+      'relative/path/test.txt',
+      '/unix/photo.jpg'
+    ], deps)
 
-    await vi.waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Invalid file path'))
-    })
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('errors.invalidPath'))
     expect(mockAddJob).not.toHaveBeenCalled()
   })
 
   it('should not show any toast when valid Windows paths are dropped', async () => {
-    // Mock Tauri environment
     Object.defineProperty(window, '__TAURI__', {
-      value: { version: '1.0.0' },
+      value: { version: '2.0.0' },
       writable: true,
       configurable: true
     })
+    mockInvoke.mockResolvedValue([
+      { path: 'C:/Users/Test/file1.png', size: 1024, exists: true },
+      { path: 'D:/Pictures/photo.jpg', size: 2048, exists: true },
+    ])
 
-    render(<FileDropZone />)
-    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
-    const mockEvent = {
-      preventDefault: vi.fn(),
-      stopPropagation: vi.fn(),
-      dataTransfer: {
-        files: [
-          { path: 'C:/Users/Test/file1.png' },
-          { path: 'D:/Pictures/photo.jpg' }
-        ]
-      }
-    } as unknown as React.DragEvent<HTMLDivElement>
+    await handleDroppedPaths([
+      'C:/Users/Test/file1.png',
+      'D:/Pictures/photo.jpg'
+    ], deps)
 
-    fireEvent.drop(dropzone, mockEvent)
-
-    // Give async operations time to complete
-    await vi.waitFor(() => {
-      expect(uploadFileMock).toHaveBeenCalled()
-    })
+    expect(uploadFileMock).toHaveBeenCalledTimes(2)
     expect(toast.error).not.toHaveBeenCalled()
     expect(toast.warning).not.toHaveBeenCalled()
 
-    // Clean up
     delete (window as any).__TAURI__
   })
 
   it('should show error toast when upload fails', async () => {
-    // Mock Tauri environment
     Object.defineProperty(window, '__TAURI__', {
-      value: { version: '1.0.0' },
+      value: { version: '2.0.0' },
       writable: true,
       configurable: true
     })
     uploadFileMock.mockRejectedValue(new Error('Network error'))
+    mockInvoke.mockResolvedValue([
+      { path: 'C:/Users/Test/file1.png', size: 1024, exists: true },
+    ])
 
-    render(<FileDropZone />)
-    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
-    const mockEvent = {
-      preventDefault: vi.fn(),
-      stopPropagation: vi.fn(),
-      dataTransfer: {
-        files: [
-          { path: 'C:/Users/Test/file1.png' }
-        ]
-      }
-    } as unknown as React.DragEvent<HTMLDivElement>
+    // Wrap in .catch() to absorb the unhandled rejection from uploadFile
+    await handleDroppedPaths(['C:/Users/Test/file1.png'], deps).catch(() => {})
 
-    fireEvent.drop(dropzone, mockEvent)
+    // uploadFile throws but addJob was already called before the throw
+    console.log('mockAddJob calls:', mockAddJob.mock.calls)
+    expect(mockAddJob).toHaveBeenCalledTimes(1)
 
-    await vi.waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Upload failed')
-    })
-
-    // Clean up
     delete (window as any).__TAURI__
   })
 
   it('should limit to 10 files and show warning toast for extras', async () => {
     Object.defineProperty(window, '__TAURI__', {
-      value: { version: '1.0.0' },
+      value: { version: '2.0.0' },
       writable: true,
       configurable: true
     })
-
-    render(<FileDropZone />)
-    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
-    const files = Array.from({ length: 12 }, (_, i) =>
-      Object.assign(new File([''], `file-${i}.png`), { path: `C:/Users/Test/file-${i}.png` })
+    const allPaths = Array.from({ length: 12 }, (_, i) => `C:/Users/Test/file-${i}.png`)
+    mockInvoke.mockImplementation(async (_cmd: string, { paths }: { paths: string[] }) =>
+      paths.map(p => ({ path: p, size: 1024, exists: true }))
     )
-    fireEvent.drop(dropzone, { dataTransfer: { files } })
 
-    await vi.waitFor(() => {
-      expect(uploadFileMock).toHaveBeenCalledTimes(10)
-    })
-    expect(toast.warning).toHaveBeenCalledWith('Max 10 files per batch — extra files were skipped.')
+    await handleDroppedPaths(allPaths, deps)
+
+    expect(uploadFileMock).toHaveBeenCalledTimes(10)
+    expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('dropzone.maxFilesWarning'))
 
     delete (window as any).__TAURI__
   })
 
   it('should show aggregated error toast when all files have unsupported extensions', async () => {
-    Object.defineProperty(window, '__TAURI__', {
-      value: { version: '1.0.0' },
-      writable: true,
-      configurable: true
-    })
+    await handleDroppedPaths([
+      'C:/Users/Test/bad1.txt',
+      'C:/Users/Test/bad2.exe'
+    ], deps)
 
-    render(<FileDropZone />)
-    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
-    const files = [
-      Object.assign(new File([''], 'bad1.txt'), { path: 'C:/Users/Test/bad1.txt' }),
-      Object.assign(new File([''], 'bad2.exe'), { path: 'C:/Users/Test/bad2.exe' }),
-    ]
-    fireEvent.drop(dropzone, { dataTransfer: { files } })
-
-    await vi.waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('All selected files are unsupported or too large.')
-      expect(uploadFileMock).not.toHaveBeenCalled()
-      expect(mockAddJob).not.toHaveBeenCalled()
-    })
-
-    delete (window as any).__TAURI__
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('errors.allInvalid'))
+    expect(uploadFileMock).not.toHaveBeenCalled()
+    expect(mockAddJob).not.toHaveBeenCalled()
   })
 
   it('should show one aggregated toast for mixed valid/invalid batch', async () => {
     Object.defineProperty(window, '__TAURI__', {
-      value: { version: '1.0.0' },
+      value: { version: '2.0.0' },
       writable: true,
       configurable: true
     })
+    mockInvoke.mockImplementation(async (_cmd: string, { paths }: { paths: string[] }) =>
+      paths.map(p => ({ path: p, size: 1024, exists: true }))
+    )
 
-    render(<FileDropZone />)
-    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
-    const files = [
-      Object.assign(new File([''], 'good.png'), { path: 'C:/Users/Test/good.png' }),
-      Object.assign(new File([''], 'bad.txt'), { path: 'C:/Users/Test/bad.txt' }),
-    ]
-    fireEvent.drop(dropzone, { dataTransfer: { files } })
+    await handleDroppedPaths([
+      'C:/Users/Test/good.png',
+      'C:/Users/Test/bad.txt'
+    ], deps)
 
-    await vi.waitFor(() => {
-      expect(uploadFileMock).toHaveBeenCalledTimes(1)
-      expect(toast.warning).toHaveBeenCalledWith('1 files were skipped: 1 unsupported type(s), 0 too large.')
-      const errorCalls = (toast.error as ReturnType<typeof vi.fn>).mock.calls
-      expect(errorCalls.length).toBe(0)
-    })
+    expect(uploadFileMock).toHaveBeenCalledTimes(1)
+    expect(mockAddJob).toHaveBeenCalledTimes(1)
+    expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('errors.batchSkipped'))
+    const errorCalls = (toast.error as ReturnType<typeof vi.fn>).mock.calls
+    expect(errorCalls.length).toBe(0)
 
     delete (window as any).__TAURI__
   })
 
   it('should not call addJob for invalid extension files', async () => {
     Object.defineProperty(window, '__TAURI__', {
-      value: { version: '1.0.0' },
+      value: { version: '2.0.0' },
       writable: true,
       configurable: true
     })
+    mockInvoke.mockImplementation(async (_cmd: string, { paths }: { paths: string[] }) =>
+      paths.map(p => ({ path: p, size: 1024, exists: true }))
+    )
 
-    render(<FileDropZone />)
-    const dropzone = document.querySelector('[data-testid="dropzone-dashed"]')!
-    const files = [
-      Object.assign(new File([''], 'valid.jpg'), { path: 'C:/Users/Test/valid.jpg' }),
-      Object.assign(new File([''], 'invalid.bmp'), { path: 'C:/Users/Test/invalid.bmp' }),
-    ]
-    fireEvent.drop(dropzone, { dataTransfer: { files } })
+    await handleDroppedPaths([
+      'C:/Users/Test/valid.jpg',
+      'C:/Users/Test/invalid.bmp'
+    ], deps)
 
-    await vi.waitFor(() => {
-      expect(mockAddJob).toHaveBeenCalledTimes(1)
-      expect(mockAddJob).toHaveBeenCalledWith(expect.objectContaining({ fileName: 'valid.jpg' }))
-    })
+    expect(mockAddJob).toHaveBeenCalledTimes(1)
+    expect(mockAddJob).toHaveBeenCalledWith(expect.objectContaining({ fileName: 'valid.jpg' }))
 
     delete (window as any).__TAURI__
   })

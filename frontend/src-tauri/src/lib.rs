@@ -376,6 +376,8 @@ pub fn run() {
                 )?;
             }
 
+            app.handle().plugin(tauri_plugin_dialog::init())?;
+
             app.handle().plugin(tauri_plugin_shell::init())?;
 
             app.handle().plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {

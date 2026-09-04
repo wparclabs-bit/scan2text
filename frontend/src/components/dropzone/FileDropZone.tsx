@@ -2,11 +2,12 @@ import { useState, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { invoke } from '@tauri-apps/api/core'
-import { listen } from '@tauri-apps/api/event'
+import { getCurrentWindow } from '@tauri-apps/api/webview'
 
 import { useScan2TextStore } from '@/stores/scan2text.store'
 import { uploadFile } from '@/lib/api'
 import { fileKind } from '@/lib/fileKind'
+import { pickFilesViaDialog } from '@/lib/filePicker'
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
 
@@ -21,42 +22,135 @@ interface FileDropZoneProps {
   className?: string
 }
 
+/**
+ * Pure function for validating and processing dropped file paths.
+ * Accepts optional dependencies for testability; uses module-level defaults otherwise.
+ */
+export async function handleDroppedPaths(
+  paths: string[],
+  deps: {
+    addJob: (job: any) => void,
+    t: (key: string, params?: any) => string,
+    onFileAdd?: (fileName: string) => void,
+  } = {} as any
+) {
+  const { addJob, t, onFileAdd } = deps
+
+  // Normalize slashes: accept both C:\ and C:/ drive prefixes
+  const validPaths = paths.filter(p => {
+    const normalized = p.replace(/\\/g, '/');
+    return normalized.startsWith('C:/') || normalized.startsWith('D:/') || normalized.startsWith('E:/') || normalized.startsWith('F:/');
+  });
+  if (validPaths.length === 0) {
+    toast.error(t('errors.invalidPath'))
+    return
+  }
+  // Limit to 10 files per batch
+  let limitedPaths = validPaths.slice(0, 10);
+  if (limitedPaths.length < validPaths.length) {
+    toast.warning(t('dropzone.maxFilesWarning'))
+  }
+  // Filter by extension: only image and pdf allowed
+  const validExtensionPaths = limitedPaths.filter(p => {
+    const fileName = p.split('\\').pop()?.split('/').pop() || p;
+    return fileKind(fileName) !== 'unknown';
+  });
+  const extSkippedCount = limitedPaths.length - validExtensionPaths.length;
+
+  // Retrieve file metadata via Rust command to enforce 20MB limit (Tauri-only)
+  let sizeSkippedCount = 0;
+  if (validExtensionPaths.length > 0 && typeof (window as any).__TAURI__ !== 'undefined') {
+    let metadataList: FileMetadata[] | null = null;
+    try {
+      metadataList = await invoke<FileMetadata[]>('get_file_metadata_command', {
+        paths: validExtensionPaths,
+      });
+    } catch (_invokeErr) {
+      // fall through — will use extension-only validation below
+    }
+
+    if (metadataList) {
+      const validPathsAfterSize: string[] = []
+      for (const meta of metadataList) {
+        if (!meta.exists || meta.size == null || meta.size > MAX_FILE_SIZE) {
+          sizeSkippedCount++
+        } else {
+          validPathsAfterSize.push(meta.path)
+        }
+      }
+      // Update skipped count to include both extension and size rejections
+      const totalSkipped = extSkippedCount + sizeSkippedCount
+      if (totalSkipped > 0 && validPathsAfterSize.length === 0) {
+        toast.error(t('errors.allInvalid'))
+        return
+      }
+      if (totalSkipped > 0) {
+        toast.warning(t('errors.batchSkipped', { total: totalSkipped, unsupported: extSkippedCount, tooLarge: sizeSkippedCount }))
+      }
+      // Process only files that passed both extension and size checks
+      for (const path of validPathsAfterSize) {
+        const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const fileName = path.split('\\').pop()?.split('/').pop() || path;
+        addJob({ id: jobId, fileName, fileSize: 0 });
+        await uploadFile([path], false);
+        onFileAdd?.(fileName);
+      }
+    } else {
+      // If metadata command fails, fall back to extension-only validation
+      const totalSkipped = extSkippedCount
+      if (totalSkipped > 0 && validExtensionPaths.length === 0) {
+        toast.error(t('errors.allInvalid'))
+        return
+      }
+      if (totalSkipped > 0) {
+        toast.warning(t('errors.batchSkipped', { total: totalSkipped, unsupported: extSkippedCount, tooLarge: 0 }))
+      }
+      for (const path of validExtensionPaths) {
+        const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const fileName = path.split('\\').pop()?.split('/').pop() || path;
+        addJob({ id: jobId, fileName, fileSize: 0 });
+        await uploadFile([path], false);
+        onFileAdd?.(fileName);
+      }
+    }
+  } else if (extSkippedCount > 0) {
+    // All files failed extension check — one aggregated error toast
+    toast.error(t('errors.allInvalid'))
+  }
+}
+
 export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps) {
   const [dragCount, setDragCount] = useState(0)
   const isDragOver = dragCount > 0
   const addJob = useScan2TextStore((s) => s.addJob)
   const { t } = useTranslation()
 
-  // PROBE-TEMP START — temporary runtime-path probe, remove before remediation slice
-  // Channel 3: tauri://drag-drop event listener (paths are strings in Tauri v2)
+  // Wire tauri://drag-drop event listener using Tauri v2 native API
+  // PROBE-TEMP START — Channel 3: tauri://drag-drop event probe (getCurrentWindow)
   useEffect(() => {
-    const unlisten = listen<{ type: string; paths: string[] }>('tauri://drag-drop', (event: any) => {
-      console.log('[PROBE] tauri:', JSON.stringify(event))
+    const window = getCurrentWindow()
+    const unlistenPromise = window.onDragDropEvent((event: any) => {
+      console.log('[PROBE] tauri drop:', JSON.stringify(event.payload))
+      if (event.payload.type === 'drop' && Array.isArray(event.payload.paths)) {
+        handleDroppedPaths(event.payload.paths, { addJob, t, onFileAdd })
+      }
     })
-    return () => { unlisten.then((fn) => fn()) }
-  }, [])
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten())
+    }
+  }, [addJob, t, onFileAdd])
   // PROBE-TEMP END
 
   const triggerPicker = useCallback(() => {
-    // File picker fallback for non-Tauri environments
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.png,.jpg,.jpeg,.webp,.pdf,image/png,image/jpeg,image/webp,application/pdf'
-    input.multiple = true
-    input.onchange = (e) => {
-      const files = Array.from((e.target as HTMLInputElement).files || [])
-      if (files.length > 0) {
-        // PROBE-TEMP START — Channel 1: click picker input probe
-        for (const f of files) {
-          console.log('[PROBE] click:', 'name=' + (f as any).name, 'typeof path=' + typeof (f as any).path, 'path=' + (f as any).path, 'size=' + (f as any).size)
-        }
-        // PROBE-TEMP END
-        const paths = files.map((f: any) => f.path || f.name)
-        uploadFiles(paths)
+    pickFilesViaDialog().then((paths: string[] | null) => {
+      if (paths !== null && paths.length > 0) {
+        handleDroppedPaths(paths, { addJob, t, onFileAdd })
       }
-    }
-    input.click()
-  }, [])
+      // null = user cancelled — no-op
+    })
+  }, [addJob, t, onFileAdd])
+
+
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -68,121 +162,16 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
     [triggerPicker],
   )
 
-  const uploadFiles = useCallback(
-    async (paths: string[]) => {
-      try {
-        const validPaths = paths.filter(p => {
-          return p.startsWith('C:/') || p.startsWith('D:/') || p.startsWith('E:/') || p.startsWith('F:/');
-        });
-        if (validPaths.length === 0) {
-          toast.error(t('errors.invalidPath'))
-          return
-        }
-        // Limit to 10 files per batch
-        let limitedPaths = validPaths.slice(0, 10);
-        if (limitedPaths.length < validPaths.length) {
-          toast.warning(t('dropzone.maxFilesWarning'))
-        }
-        // Filter by extension: only image and pdf allowed
-        const validExtensionPaths = limitedPaths.filter(p => {
-          const fileName = p.split('\\').pop()?.split('/').pop() || p;
-          return fileKind(fileName) !== 'unknown';
-        });
-        const extSkippedCount = limitedPaths.length - validExtensionPaths.length;
 
-        // Retrieve file metadata via Rust command to enforce 20MB limit (Tauri-only)
-        let sizeSkippedCount = 0;
-        if (validExtensionPaths.length > 0 && typeof (window as any).__TAURI__ !== 'undefined') {
-          try {
-            const metadataList = await invoke<FileMetadata[]>('get_file_metadata_command', {
-              paths: validExtensionPaths,
-            });
-            const validPathsAfterSize: string[] = []
-            for (const meta of metadataList) {
-              if (!meta.exists || meta.size == null || meta.size > MAX_FILE_SIZE) {
-                sizeSkippedCount++
-              } else {
-                validPathsAfterSize.push(meta.path)
-              }
-            }
-            // Update skipped count to include both extension and size rejections
-            const totalSkipped = extSkippedCount + sizeSkippedCount
-            if (totalSkipped > 0 && validPathsAfterSize.length === 0) {
-              toast.error(t('errors.allInvalid'))
-              return
-            }
-            if (totalSkipped > 0) {
-              toast.warning(t('errors.batchSkipped', { total: totalSkipped, unsupported: extSkippedCount, tooLarge: sizeSkippedCount }))
-            }
-            // Process only files that passed both extension and size checks
-            for (const path of validPathsAfterSize) {
-              const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-              const fileName = path.split('\\').pop()?.split('/').pop() || path;
-              addJob({ id: jobId, fileName, fileSize: 0 });
-              await uploadFile([path], false);
-              onFileAdd?.(fileName);
-            }
-          } catch (_invokeErr) {
-            // If metadata command fails, fall back to extension-only validation
-            const totalSkipped = extSkippedCount
-            if (totalSkipped > 0 && validExtensionPaths.length === 0) {
-              toast.error(t('errors.allInvalid'))
-              return
-            }
-            if (totalSkipped > 0) {
-              toast.warning(t('errors.batchSkipped', { total: totalSkipped, unsupported: extSkippedCount, tooLarge: 0 }))
-            }
-            for (const path of validExtensionPaths) {
-              const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-              const fileName = path.split('\\').pop()?.split('/').pop() || path;
-              addJob({ id: jobId, fileName, fileSize: 0 });
-              await uploadFile([path], false);
-              onFileAdd?.(fileName);
-            }
-          }
-        } else if (extSkippedCount > 0) {
-          // All files failed extension check — one aggregated error toast
-          toast.error(t('errors.allInvalid'))
-        }
-      } catch (error) {
-        toast.error(t('errors.uploadFailed'))
-      }
-    },
-    [addJob, onFileAdd, t]
-  )
 
   const handleDrop = useCallback(
     async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault()
       e.stopPropagation()
       setDragCount(0)
-
-      // Tauri v2 drag-drop provides absolute file paths via event.dataTransfer.files
-      const isTauri = typeof (window as any).__TAURI__ !== 'undefined';
-      let paths: string[] = [];
-
-      if (isTauri && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        // In Tauri v2, File objects have a 'path' property with absolute path
-        for (let i = 0; i < e.dataTransfer.files.length; i++) {
-          const file = e.dataTransfer.files[i];
-          if ((file as any).path) {
-            paths.push((file as any).path);
-          }
-          // PROBE-TEMP START — Channel 2: browser drop handler probe
-          console.log('[PROBE] drop:', 'name=' + (file as any).name, 'typeof path=' + typeof (file as any).path, 'path=' + (file as any).path, 'size=' + (file as any).size)
-          // PROBE-TEMP END
-        }
-      } else {
-        // Fallback for web: extract file names
-        const files = Array.from(e.dataTransfer.files);
-        paths = files.map(f => f.name);
-      }
-
-      if (paths.length > 0) {
-        uploadFiles(paths);
-      }
+      // Browser drop handler neutralized — paths come via tauri://drag-drop event instead
     },
-    [uploadFiles]
+    []
   )
 
   const handleDragEnter = useCallback(() => {
