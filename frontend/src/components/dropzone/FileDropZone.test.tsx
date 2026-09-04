@@ -26,26 +26,21 @@ vi.mock('@tauri-apps/api/core', () => ({
 // Mock Tauri event listen to avoid unhandled rejections in jsdom
 let mockUnlistenFn: ReturnType<typeof vi.fn>
 vi.mock('@tauri-apps/api/event', () => ({
-  listen: (...args: any[]) => {
+  listen: (..._args: any[]) => {
     mockUnlistenFn = vi.fn()
     return Promise.resolve(mockUnlistenFn)
   },
 }))
 
-// Mock Tauri webview getCurrentWindow for drag-drop tests
+// Mock Tauri window getCurrentWindow for drag-drop tests
 const { getCurrentWindow: mockGetCurrentWindow } = vi.hoisted(() => ({
   getCurrentWindow: vi.fn().mockReturnValue({
     onDragDropEvent: vi.fn().mockResolvedValue(vi.fn()),
   }),
 }))
-vi.mock('@tauri-apps/api/webview', () => ({
+vi.mock('@tauri-apps/api/window', () => ({
   getCurrentWindow: (...args: any[]) => mockGetCurrentWindow(...args),
 }))
-
-// Helper to get the mocked onDragDropEvent for testing
-function getMockedOnDragDropEvent() {
-  return mockGetCurrentWindow().onDragDropEvent as ReturnType<typeof vi.fn>
-}
 
 // Mock LOCAL seam module instead of node_modules plugin (use vi.hoisted for proper hoisting)
 const { pickFilesViaDialog: mockPickFilesViaDialog } = vi.hoisted(() => ({

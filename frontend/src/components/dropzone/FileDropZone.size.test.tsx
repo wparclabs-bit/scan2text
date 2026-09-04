@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import FileDropZone, { handleDroppedPaths } from './FileDropZone'
+import { handleDroppedPaths } from './FileDropZone'
 
 const mockAddJob = vi.fn()
 const mockT = vi.fn((key: string, params?: any) => key + (params ? JSON.stringify(params) : ''))

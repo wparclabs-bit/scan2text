@@ -16,6 +16,12 @@ vi.mock('@/lib/cleanupObjectURLs', () => ({
   cleanupObjectURLs: vi.fn(),
 }))
 
+vi.mock('@tauri-apps/api/window', () => ({
+  getCurrentWindow: vi.fn().mockReturnValue({
+    onDragDropEvent: vi.fn().mockResolvedValue(vi.fn()),
+  }),
+}))
+
 const { useScan2TextStore } = await import('@/stores/scan2text.store')
 
 describe('ScrollAreas', () => {

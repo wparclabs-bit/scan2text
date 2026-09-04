@@ -1,6 +1,12 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import CommandCenterLayout from './CommandCenterLayout'
+
+vi.mock('@tauri-apps/api/window', () => ({
+  getCurrentWindow: vi.fn().mockReturnValue({
+    onDragDropEvent: vi.fn().mockResolvedValue(vi.fn()),
+  }),
+}))
 
 describe('Viewport lock', () => {
   it('root container uses fixed inset-0 for viewport-height layout', () => {

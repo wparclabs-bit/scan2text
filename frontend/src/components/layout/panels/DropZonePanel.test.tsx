@@ -6,6 +6,12 @@ vi.mock('@/stores/preferencesStore', () => ({
   usePreferenceStore: vi.fn(() => 'dark'),
 }))
 
+vi.mock('@tauri-apps/api/window', () => ({
+  getCurrentWindow: vi.fn().mockReturnValue({
+    onDragDropEvent: vi.fn().mockResolvedValue(vi.fn()),
+  }),
+}))
+
 describe('DropZonePanel background image', () => {
   it('renders panel-dropzone with background image at 0.15 opacity', () => {
     render(<DropZonePanel />)

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { invoke } from '@tauri-apps/api/core'
-import { getCurrentWindow } from '@tauri-apps/api/webview'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 
 import { useScan2TextStore } from '@/stores/scan2text.store'
 import { uploadFile } from '@/lib/api'
@@ -126,20 +126,17 @@ export default function FileDropZone({ onFileAdd, className }: FileDropZoneProps
   const { t } = useTranslation()
 
   // Wire tauri://drag-drop event listener using Tauri v2 native API
-  // PROBE-TEMP START — Channel 3: tauri://drag-drop event probe (getCurrentWindow)
   useEffect(() => {
-    const window = getCurrentWindow()
-    const unlistenPromise = window.onDragDropEvent((event: any) => {
-      console.log('[PROBE] tauri drop:', JSON.stringify(event.payload))
+    const appWindow = getCurrentWindow()
+    const unlistenPromise = appWindow.onDragDropEvent((event: any) => {
       if (event.payload.type === 'drop' && Array.isArray(event.payload.paths)) {
         handleDroppedPaths(event.payload.paths, { addJob, t, onFileAdd })
       }
     })
     return () => {
-      unlistenPromise.then((unlisten) => unlisten())
+      unlistenPromise.then((unlisten: () => void) => unlisten())
     }
   }, [addJob, t, onFileAdd])
-  // PROBE-TEMP END
 
   const triggerPicker = useCallback(() => {
     pickFilesViaDialog().then((paths: string[] | null) => {
