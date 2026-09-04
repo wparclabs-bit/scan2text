@@ -36,13 +36,16 @@
     "fileTooComplexLocked": "File too large or complex. Limits: 20 MB per file · 50 pages per PDF. Split bigger PDFs and retry.",
     "modelNotFound": "AI engine files are missing. Downloading the model now…",
     "backendLost": "Backend connection lost",
-    "outputWriteFailed": "Failed to save output file"
+    "outputWriteFailed": "Failed to save output file",
+    "invalidPath": "Invalid file path. Please select valid files."
   },
   "dropzone": {
     "hint": "PNG · JPG · WEBP · PDF — max 20MB per file · max 10 files per batch",
     "clickLabel": "Click or drag files here",
     "dropLabel": "Drop files here",
-    "maxFilesWarning": "Max 10 files per batch — extra files were skipped."
+    "maxFilesWarning": "Max 10 files per batch — extra files were skipped.",
+    "dropPrompt": "Click or drag images & PDFs here",
+    "maxFiles": "Max {{count}} files per batch"
   },
   "preview": {
     "emptyState": "Select a completed job to preview the magic.",

@@ -49,7 +49,7 @@ describe('FileDropZone toast errors', () => {
     fireEvent.drop(dropzone, { dataTransfer: { files: [{ name: 'test.txt' }, { name: 'photo.jpg' }] } })
 
     await vi.waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('errors.invalidPath'))
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Invalid file path'))
     })
     expect(mockAddJob).not.toHaveBeenCalled()
   })

@@ -257,6 +257,20 @@ describe('FileDropZone', () => {
       expect(text).not.toContain('dropzone.dropPrompt')
       expect(text).not.toContain('dropzone.maxFiles')
     })
+
+    it('should render translated dropzone prompt and max-files count, not raw keys', () => {
+      // Positive assertion: verified translations must appear in the DOM.
+      // Negative assertions: missing keys fall back to literal key strings — those must NOT appear.
+      const { container } = render(<FileDropZone />)
+      const text = container.textContent
+
+      expect(text).toContain('Click or drag')
+      expect(text).toContain('Max 10 files per batch')
+      expect(text).not.toContain('dropzone.dropPrompt')
+      expect(text).not.toContain('dropzone.maxFiles')
+      // errors.invalidPath is a toast key; if missing it would surface as raw text in any rendered output.
+      expect(text).not.toContain('errors.invalidPath')
+    })
   })
 
   describe('Extension validation', () => {

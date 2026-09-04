@@ -28,6 +28,8 @@ void i18next
             clickLabel: 'Click or drag files here',
             dropLabel: 'Drop files here',
             maxFilesWarning: 'Max 10 files per batch — extra files were skipped.',
+            dropPrompt: 'Click or drag images & PDFs here',
+            maxFiles: 'Max {{count}} files per batch',
           },
           errors: {
             unsupportedFileType: 'Unsupported file type. Allowed: PNG, JPG, JPEG, WEBP, PDF',
@@ -38,6 +40,7 @@ void i18next
             pdfTooComplex: 'PDF too complex for the current page limit. Raise the page limit in Settings and retry.',
             fileTooComplex: 'File too complex (max 20MB).',
             modelNotFound: 'AI engine files are missing. Downloading the model now…',
+            invalidPath: 'Invalid file path. Please select valid files.',
           },
           preview: {
             empty: 'Select a job to preview',
@@ -148,6 +151,8 @@ void i18next
             clickLabel: 'Klik atau seret file ke sini',
             dropLabel: 'Lepaskan file di sini',
             maxFilesWarning: 'Maksimal 10 file per batch — file tambahan dilewati.',
+            dropPrompt: 'Klik atau seret gambar & PDF ke sini',
+            maxFiles: 'Maks {{count}} file per batch',
           },
           errors: {
             unsupportedFileType: 'Tipe file tidak didukung. Yang didukung: PNG, JPG, JPEG, WEBP, PDF',
@@ -158,6 +163,7 @@ void i18next
             pdfTooComplex: 'PDF terlalu kompleks untuk batas halaman saat ini. Naikkan batas halaman di Pengaturan lalu coba lagi.',
             fileTooComplex: 'File terlalu kompleks (maks 20MB).',
             modelNotFound: 'File mesin AI tidak ditemukan. Mengunduh model sekarang…',
+            invalidPath: 'Jalur file tidak valid. Pilih file yang valid.',
           },
           preview: {
             empty: 'Pilih pekerjaan untuk pratinjau',
