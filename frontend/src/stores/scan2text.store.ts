@@ -352,21 +352,34 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
         return
       }
     }
+    // Find the next non-terminal job in FIFO order, preferring those already uploaded
     const nextJobId = state.jobOrder.find((jid) => {
       const j = state.jobs[jid]
-      return j && j.status === 'pending' && j.taskId !== null
+      return j && !TERMINAL_STATUSES.includes(j.status)
     })
     if (nextJobId) {
       const nextJob = state.jobs[nextJobId]
       if (nextJob) {
-        set((state) => ({
-          jobs: {
-            ...state.jobs,
-            [nextJobId]: { ...nextJob, status: 'processing' },
-          },
-          activeJobId: nextJobId,
-        }))
-        get().startPolling({ jobId: nextJobId })
+        if (nextJob.taskId !== null) {
+          // Already uploaded — just promote to processing and start polling
+          set((state) => ({
+            jobs: {
+              ...state.jobs,
+              [nextJobId]: { ...nextJob, status: 'processing' },
+            },
+            activeJobId: nextJobId,
+          }))
+          get().startPolling({ jobId: nextJobId })
+        } else {
+          // Not yet uploaded — start upload via startUpload (handles synthetic file for path-based jobs)
+          const uploadFile: File = nextJob.file ?? new globalThis.File(
+            [],
+            nextJob.fileName,
+            { type: nextJob.fileType || 'application/octet-stream' },
+          ) as any
+          ;(uploadFile as any).path = (nextJob as any).filePath
+          get().startUpload({ file: uploadFile, jobId: nextJobId })
+        }
       }
     }
   },
@@ -403,28 +416,31 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
     const shouldActivate =
       !activeJob || TERMINAL_STATUSES.includes(activeJob.status)
 
-    set((state) => ({
-      jobs: {
-        ...state.jobs,
-        [id]: {
-          ...createDefaultJob(
-            id,
-            input.file.name,
-            input.file.size,
-            input.file.type || 'application/octet-stream',
-            input.createdAt ?? Date.now(),
-          ),
-          taskId: null,
-          status: shouldActivate ? 'uploading' : 'pending',
-          isBackground: false,
-          file: input.file,
+    set((state) => {
+      const existingJob = state.jobs[id]
+      return {
+        jobs: {
+          ...state.jobs,
+          [id]: {
+            ...createDefaultJob(
+              id,
+              input.file.name,
+              existingJob?.fileSize ?? input.file.size,
+              input.file.type || 'application/octet-stream',
+              input.createdAt ?? Date.now(),
+            ),
+            taskId: null,
+            status: shouldActivate ? 'uploading' : 'pending',
+            isBackground: false,
+            file: input.file,
+          },
         },
-      },
-      jobOrder: state.jobOrder.includes(id)
-        ? state.jobOrder
-        : [...state.jobOrder, id],
-      ...(shouldActivate ? { activeJobId: id } : {}),
-    }))
+        jobOrder: state.jobOrder.includes(id)
+          ? state.jobOrder
+          : [...state.jobOrder, id],
+        ...(shouldActivate ? { activeJobId: id } : {}),
+      }
+    })
 
     try {
       // In Tauri, File objects have a .path property with the absolute path

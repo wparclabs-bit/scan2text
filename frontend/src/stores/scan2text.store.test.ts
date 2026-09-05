@@ -1032,6 +1032,52 @@ describe('scan2text store', () => {
       expect(store.getState().jobs['meta-job-1'].status).toBe('processing')
       expect(store.getState().activeJobId).toBe('meta-job-1')
     })
+
+    it('should advance to next pending job without taskId when active completes via pollJob', async () => {
+      // Simulate drag-drop path: add jobs with filePath but no real File or taskId
+      store.getState().addJob({ id: 'job-1', fileName: 'first.png', fileSize: 5000, filePath: 'C:/Users/Test/first.png' })
+      store.getState().addJob({ id: 'job-2', fileName: 'second.png', fileSize: 6000, filePath: 'C:/Users/Test/second.png' })
+
+      // Start job-1 via startNextPendingJob (as handleDroppedPaths would do)
+      mockUploadFile.mockResolvedValue({ task_id: 'task-1' })
+      store.getState().startNextPendingJob()
+      await vi.waitFor(() => {
+        expect(mockUploadFile).toHaveBeenCalled()
+      })
+      expect(store.getState().activeJobId).toBe('job-1')
+      expect(store.getState().jobs['job-1'].status).toBe('processing')
+
+      // Job-2 is still pending with no taskId (never uploaded)
+      expect(store.getState().jobs['job-2'].status).toBe('pending')
+      expect(store.getState().jobs['job-2'].taskId).toBeNull()
+
+      // Complete job-1 via pollJob — this should trigger startNextPendingJob for job-2
+      mockPollTaskStatus.mockResolvedValue({ task_id: 'task-1', status: 'completed', result_markdown: '# Done' })
+      await store.getState().pollJob({ jobId: 'job-1' })
+
+      // BUG A FIX: job-2 should now be promoted (startUpload called for it)
+      // startUpload completes synchronously in tests, so status is 'processing' by this point
+      expect(store.getState().activeJobId).toBe('job-2')
+      expect(store.getState().jobs['job-2'].status).toBe('processing')
+    })
+
+    it('should preserve existing fileSize when startUpload is called with a synthetic file', async () => {
+      // Simulate drag-drop path: add job with real metadata size but no File object
+      store.getState().addJob({ id: 'meta-job-1', fileName: 'scan.png', fileSize: 5000, filePath: 'C:/Users/Test/scan.png' })
+
+      const originalFileSize = store.getState().jobs['meta-job-1'].fileSize
+      expect(originalFileSize).toBe(5000)
+
+      // startNextPendingJob creates a synthetic File (size=0) and calls startUpload
+      mockUploadFile.mockResolvedValue({ task_id: 'task-meta' })
+      store.getState().startNextPendingJob()
+      await vi.waitFor(() => {
+        expect(mockUploadFile).toHaveBeenCalled()
+      })
+
+      // BUG B FIX: fileSize should still be 5000, not overwritten to 0 by synthetic file's size=0
+      expect(store.getState().jobs['meta-job-1'].fileSize).toBe(5000)
+    })
   })
 
   describe('long-doc hint', () => {
