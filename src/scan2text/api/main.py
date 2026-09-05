@@ -124,10 +124,13 @@ async def _run_processing(
             task["error_code"] = "PARTIAL_FAILURE"
         else:
             task["status"] = "completed"
-        # Collect result markdown from successful jobs
+        # Collect result markdown from successful jobs.
+        # VLM OCR jobs populate markdown_content directly; legacy jobs use output_path on disk.
         result_parts: List[str] = []
         for jr in summary.job_results:
-            if jr.get("output_path"):
+            if jr.get("markdown_content"):
+                result_parts.append(jr["markdown_content"])
+            elif jr.get("output_path"):
                 try:
                     result_parts.append(Path(jr["output_path"]).read_text(encoding="utf-8"))
                 except Exception:
