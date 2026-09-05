@@ -9,8 +9,8 @@ All rulings locked. Here is the full **01-PRD v2.0** in GFM, ready for your revi
 | Version | 2.1 |
 | Date | 2026-08-22 |
 | Status | Release GO — v1.0.0 approved with one known issue deferred to app v1.1 |
-| Product Owner | CEO · Technical Owner: CTO |
-| Audience | CEO + human reviewers — the WHAT and WHY |
+| Product Owner | Product Lead · Technical Owner: CTO |
+| Audience | Product Lead + human reviewers — the WHAT and WHY |
 | Supersedes | `01-product-and-scope.md` v1.13 + `02-functional-requirements.md` v1.12 (product-level parts) |
 | Companion docs | `02-architecture-and-quality.md` (FRs, NFRs, contracts, testing) · `Archive/product-history.md` (sanitized history) |
 
@@ -97,7 +97,7 @@ All rulings locked. Here is the full **01-PRD v2.0** in GFM, ready for your revi
 6. User edits Markdown in external tools.
 
 ## 10. Version Notes
-v2.1 (2026-08-22): v1.0.0 release GO by CEO with one known issue deferred to app v1.1 — FILE_TOO_COMPLEX queue red-dot tooltip shows generic "Failed" instead of locked translated copy. Doc-version scheme confirmed: PRD doc version independent from app version. App follow-up target is v1.1; PRD doc advances to v2.1.
+v2.1 (2026-08-22): v1.0.0 release GO by Product Lead with one known issue deferred to app v1.1 — FILE_TOO_COMPLEX queue red-dot tooltip shows generic "Failed" instead of locked translated copy. Doc-version scheme confirmed: PRD doc version independent from app version. App follow-up target is v1.1; PRD doc advances to v2.1.
 
 v2.0 (2026-08-20): 20 MB/50 pages everywhere; DEMO removed; partial-success, 2-min hint, preference-travel added; FRs/NFRs moved to companion doc; backlog deleted to archive. Supersedes 01 v1.13 + 02 v1.12. History: `Archive/product-history.md`.
 

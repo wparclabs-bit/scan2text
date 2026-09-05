@@ -7,12 +7,12 @@
 |---|---|
 | Version | 2.0 |
 | Date | 2026-08-20 |
-| Status | Release Candidate — pending CEO review |
+| Status | Release Candidate — pending product lead review |
 | Audience | CTO + Kilo + engineers — the HOW, contracts, quality |
 | Supersedes | `03-non-functional-and-architecture.md` v1.15 + `04-testing-and-engineering-rules.md` v1.10 + product-level parts of old 01/02 |
 | Companion docs | `01-product-and-requirements.md` (product intent, guardrails limits, success metrics) · `Archive/product-history.md` |
 
-> **Reading rule:** measurable contracts live ONCE here. Guardrail *limits* (20MB/50 pages/10 files) are owned by 01 §6; FRs below reference them. Execution rules (CSS law, palette mirror, slice discipline) live in `AGENTS.md`; this doc never duplicates them. ADRs live in `second-brain/03-Architecture/ADRs/`.
+> **Reading rule:** measurable contracts live ONCE here. Guardrail *limits* (20MB/50 pages/10 files) are owned by 01 §6; FRs below reference them. Execution rules (CSS law, palette mirror, slice discipline) are maintained separately; this doc never duplicates them.
 
 ## 1. Non-Functional Requirements
 - **NFR-01 Offline-First:** fully offline after initial download; no processing requires internet; update check optional, non-blocking.
@@ -53,7 +53,7 @@ scan2text/
 │   ├── src/ (components/ stores/ lib/ i18n/ hooks/)
 │   ├── src-tauri/           # Rust shell (backend_process.rs, lib.rs)
 │   └── Images/
-└── second-brain/ (00..05)
+
 ```
 
 ## 5. Local Application Contract
@@ -123,11 +123,11 @@ Pyramid 70/20/10 (integration/unit/manual). AIASD behavior testing; TDD RED→GR
 - **Unit:** naming + collisions; sanitization; settings validation; version compare; error mapping; guardrails (20MB, 50 pages, cap 10); type whitelist; i18n keys; size formatting.
 - **Integration (backend, FakeOCR):** one .md per input, never merge; skip unsupported + log; **reject >50 pages / >20MB pre-render**; missing output folder; settings persistence; /process → /status progression; /api/health telemetry; status-slot contract + absence test (NO fake progress bar).
 - **Integration (frontend):** store addJob/updateJob/pollJob; FIFO; auto-select; background re-poll; cap-12→10 jobs + toast; markdown render; i18n; theme+language persistence incl. settings.json fallback; visual-contract renders (brand alt, 34px TopBar, fixed shell, BottomBar grid, Dropzone no-ScrollArea, borderless preview buttons, Radix tray override, 0-vs-10 structural constancy).
-- **Manual/E2E:** against real model; `second-brain/02-QA/` scripts CEO-executed; accuracy = CEO human review vs originals.
+- **Manual/E2E:** against real model; QA scripts executed by product lead; accuracy = product lead human review vs originals.
 - No concrete test counts in this doc (counts live in `00-Current-State.md`).
 
 ## 11. Definition of Done
-Portable launch, no admin; Command Center renders per contract; coffee & paper depth; cap-10 enforced; dot-only slots + tooltips + retry; borderless preview buttons; i18n complete except brand alt; preferences persist (restart + PC-move); offline OCR image+PDF; collision-safe naming; errors translated, non-blocking; Share/Feedback placeholders; automated gates green; QA script run; CEO screenshot acceptance; PRD v2.0 docs committed as source of truth.
+Portable launch, no admin; Command Center renders per contract; coffee & paper depth; cap-10 enforced; dot-only slots + tooltips + retry; borderless preview buttons; i18n complete except brand alt; preferences persist (restart + PC-move); offline OCR image+PDF; collision-safe naming; errors translated, non-blocking; Share/Feedback placeholders; automated gates green; QA script run; product lead screenshot acceptance; PRD v2.0 docs committed as source of truth.
 
 ## 12. Version Notes
 v2.0 (2026-08-20): 20MB/50-pages unified; DEMO purged; partial-success + per-page resilience + persistence semantics + 2-min hint + clean-exit NFR + lifecycle kill-tree + `frontend/src-tauri/` + feedback endpoint added; fake-progress stale lines purged (absence test kept); engineering rules de-duplicated to AGENTS.md. Supersedes 03 v1.15 + 04 v1.10. History: `Archive/product-history.md`.

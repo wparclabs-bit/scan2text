@@ -2,7 +2,7 @@
 ///
 /// Under the U2 contract, the frontend receives absolute file paths (not File
 /// objects with size metadata). This module provides a Rust-side command that
-/// reads file metadata so the frontend can enforce the CEO-locked 20MB rule
+/// reads file metadata so the frontend can enforce the product requirement (20MB cap)
 /// before files enter the queue.
 
 use serde::{Deserialize, Serialize};

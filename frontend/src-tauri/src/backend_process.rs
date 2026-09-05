@@ -284,7 +284,7 @@ pub fn start_backend(exe_path: &std::path::Path) -> std::process::Child {
 /// backend daemonizes — the outer PID dies immediately, so /PID-targeted kill
 /// fails silently and the inner Uvicorn daemon survives as a zombie.
 ///
-/// CEO locked: taskkill /F /IM scan2text-backend.exe /T
+/// PRODUCT REQUIREMENT: taskkill /F /IM scan2text-backend.exe /T
 pub fn build_kill_command(_pid: u32) -> Command {
     let mut cmd = Command::new("taskkill");
     #[cfg(windows)]
