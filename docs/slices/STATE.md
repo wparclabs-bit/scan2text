@@ -3,24 +3,26 @@
 ## Where the work stands
 
 - **Date:** 2026-11-15
-- **Phase:** CLOUD-ENGINE (design closed, first three slices executed)
-- **Status:** Design complete. 55 decisions recorded. T00 (the slice-document checker) is implemented and green. T01 (the provider spike) is executed and recorded: the hosted provider was measured on 2026-11-15, two D-38 thresholds failed, and the plan changes are named in the record. T02 (the Cloud Profile) is executed: Settings holds a Beta, off-by-default Cloud engine section; the key is stored by Windows Credential Manager with a DPAPI encrypted-file fallback and never reaches settings, the frontend, storage, logs, or toasts; the connection test sends one image plus text through a hermetic fake and reports the model, vision capability, latency, and the T01-measured cost estimate. T13 (the CI workflow) is pushed and **fully green on GitHub**, including the tag-triggered release job; it caught four machine-dependent defects on its first two runs, all repaired.
-- **Next action:** T03 (the first cloud job asks consent) starts on top of the T02 provider seam and Profile; T07 is independent. T13 is done (#9) and the release job is proven (probe tag `v0.1.0-probe`, draft release and tag deleted after the check). The owner owes one amendment to D-15 and D-38 (see Open items), and one manual live provider check with a real key.
+- **Phase:** CLOUD-ENGINE (design closed, first four slices executed)
+- **Status:** Design complete. 55 decisions recorded. T00 (the slice-document checker) is implemented and green. T01 (the provider spike) is executed and recorded: the hosted provider was measured on 2026-11-15, two D-38 thresholds failed, and the plan changes are named in the record. T02 (the Cloud Profile) is executed: Settings holds a Beta, off-by-default Cloud engine section; the key is stored by Windows Credential Manager with a DPAPI encrypted-file fallback and never reaches settings, the frontend, storage, logs, or toasts; the connection test sends one image plus text through a hermetic fake and reports the model, vision capability, latency, and the T01-measured cost estimate. T03 (the consent gate) is executed: one backend module owns the 8 MB and 50 MB boundaries and exposes them at `GET /api/cloud/routing` and `POST /api/cloud/batch-route`; the Profile carries its region; the input cap is raised so a file above the local threshold reaches the routing decision; the first Cloud job of a session opens one consent modal naming provider, model, file count, total size, region, and the provider's recording, with Send, Cancel, and a whole-batch CPU override; a keyless or Cloud-disabled batch gets one escape toast. This slice sends nothing. T13 (the CI workflow) is pushed and **fully green on GitHub**, including the tag-triggered release job; it caught four machine-dependent defects on its first two runs, all repaired.
+- **Next action:** T04 (a file over 8 MB becomes Markdown through the Cloud engine) starts on top of the T03 gate and the T02 provider seam; T07 is independent. T13 is done (#9) and the release job is proven (probe tag `v0.1.0-probe`, draft release and tag deleted after the check). The owner owes one amendment to D-15 and D-38 (see Open items), one manual live provider check with a real key, and one look at the consent modal with a real key.
 
 ## Baseline
 
-Measured on 2026-11-15 at commit `1343be1`, on Windows.
+Measured on 2026-11-15 at commit `2232800`, on Windows.
 
 | Gate | Result |
 |---|---|
-| Frontend tests | 716 passed, 42 files (710 before T02, +6 Cloud Settings tests) |
+| Frontend tests | 739 passed, 45 files (716 in 42 files before T03, +15 consent-gate, +5 routing-mirror, +3 copy/cap tests) |
 | Frontend typecheck | 0 errors |
-| Frontend build | success, 2177 modules (2176 before T02) |
-| Backend tests | 486 passed, 1 warning (463 before T02, +23 Cloud tests) |
+| Frontend build | success, 2178 modules (2176 before T02/T03) |
+| Backend tests | 496 passed, 1 warning (486 before T03, +10 routing tests) |
 | Cargo check | clean |
-| Slice-document checker | exit 0, 4 documents |
+| Slice-document checker | exit 0, 5 documents |
 
-T02 added one new frontend module (`CloudSettingsSection.tsx`), five backend modules under `src/scan2text/cloud/`, one credential-store module, four backend test files, one packaging-spec assertion, and the slice document. The Local engine, its Ovis recipe, the Command Center shell, and the TopBar are untouched.
+Local environment note, measured 2026-11-15: the DSH sandbox cannot delete its own temporary tree, so the 13 backend tests that use the `tmp_path` fixture cannot run here and the frontend suite cannot run until Node is allowed to spawn its test workers. With the wider mode, the frontend reports 739 passed in 45 files and the backend reports 496 passed plus that one `tmp_path` environment error group. CI has a normal temporary directory and runs all 509 backend tests.
+
+T03 added one backend module (`route_decision.py`) with its route preview endpoints, the `region` Profile value, two backend test files, one frontend store, one frontend dialog, one frontend routing mirror, and the raised input cap in `fileValidation.ts`, `FileDropZone.tsx`, and `pdf_service.py`. The Local engine, its Ovis recipe, the Command Center shell, and the TopBar are untouched.
 
 T13 was pushed on 2026-11-15 and took three runs, which is exactly what continuous integration is for:
 - Run `43698698370` (`844c103`): documentation green; frontend and backend red on three tests that only pass on this machine — a UTC+7 assumption in `frontend/src/lib/naming.test.ts`, and two races in `tests/test_status_semantics.py` that read the task store before the fire-and-forget background job finished. Rust and release were skipped behind the failed gates.
@@ -40,6 +42,7 @@ T13 was pushed on 2026-11-15 and took three runs, which is exactly what continuo
 | `docs/slices/T00-checker-script.md` | The first slice document, produced from the template |
 | `docs/slices/T01-provider-spike.md` | The measured provider record (T01): base64, tokens, latency, cost, threshold verdicts |
 | `docs/slices/T02-cloud-profile.md` | The Cloud Profile slice (T02): secret boundary, provider seam, capability test, cost provenance |
+| `docs/slices/T03-consent-gate.md` | The consent gate slice (T03): routing authority, API bounds, gate states, consent modal |
 | `docs/slices/T13-ci-workflow.md` | The CI slice (T13): jobs, gates, runner, cache keys, release job |
 | `.github/workflows/ci.yml` | Continuous integration: checker, frontend, backend, Rust, and a tag-triggered draft release |
 | `scripts/check_slice_docs.py` | Validates slice documents; standard library only (D-48) |
@@ -66,7 +69,7 @@ Three specs, then twelve vertical tickets, then one slice document per ticket.
 | T07 | A digital PDF converts from its text layer without OCR | none | #8 |
 | T13 | CI runs the five gates on every change | T00 | #9 |
 | T02 | Save a cloud profile and prove the model works | T01 | #10 — **done, T02-cloud-profile.md** |
-| T03 | The first cloud job asks consent | T02 | #11 |
+| T03 | The first cloud job asks consent | T02 | #11 — **done, T03-consent-gate.md** |
 | T04 | A file over 8 MB becomes Markdown through the cloud engine | T03 | #12 |
 | T05 | A provider failure parks the job with a reason and a retry | T04 | #13 |
 | T06 | The user can cancel a long cloud job | T04 | #14 |

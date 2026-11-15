@@ -20,8 +20,8 @@ const { useScan2TextStore } = await import('@/stores/scan2text.store')
 // Locked copy from CEO decision
 const LONG_DOC_HINT_EN = 'Still processing — please be patient.'
 const LONG_DOC_HINT_ID = 'Masih diproses — mohon bersabar.'
-const FILE_TOO_COMPLEX_EN = 'File too large or complex. Limits: 20 MB per file · 50 pages per PDF. Split bigger PDFs and retry.'
-const FILE_TOO_COMPLEX_ID = 'File terlalu besar atau kompleks. Batas: 20 MB per file · 50 halaman per PDF. Pecah PDF besar lalu coba lagi.'
+const FILE_TOO_COMPLEX_EN = 'File too large or complex. Limits: 50 MB per file · 50 pages per PDF. Split bigger PDFs and retry.'
+const FILE_TOO_COMPLEX_ID = 'File terlalu besar atau kompleks. Batas: 50 MB per file · 50 halaman per PDF. Pecah PDF besar lalu coba lagi.'
 
 describe('S34 frontend polish — welcome modal, longDocHint, FILE_TOO_COMPLEX tooltip', () => {
   let mockFetch: ReturnType<typeof vi.fn>

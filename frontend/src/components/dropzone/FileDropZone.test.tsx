@@ -345,9 +345,9 @@ describe('FileDropZone', () => {
     })
 
     it('should skip oversized files and show aggregated toast', async () => {
-      // Mock metadata returning one file over 20MB limit
+      // Mock metadata returning one file over the 50MB ceiling
       mockInvoke.mockImplementation(async (_cmd: string, { paths }: { paths: string[] }) =>
-        (paths as string[]).map(p => ({ path: p, size: p.includes('big') ? 30 * 1024 * 1024 : 1024, exists: true }))
+        (paths as string[]).map(p => ({ path: p, size: p.includes('big') ? 60 * 1024 * 1024 : 1024, exists: true }))
       )
 
       await handleDroppedPaths([

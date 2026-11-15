@@ -26,26 +26,45 @@
   },
   "errors": {
     "unsupportedFileType": "Tipe file tidak didukung. Yang didukung: PNG, JPG, JPEG, WEBP, PDF",
-    "fileTooLarge": "Ukuran file melebihi batas 20MB",
+    "fileTooLarge": "Ukuran file melebihi batas 50MB",
     "uploadFailed": "Gagal mengunggah",
     "batchSkipped": "{{total}} file dilewati: {{unsupported}} tipe tidak didukung, {{tooLarge}} terlalu besar.",
     "allInvalid": "Semua file yang dipilih tidak didukung atau terlalu besar.",
     "pdfTooComplex": "PDF terlalu kompleks untuk batas halaman saat ini. Naikkan batas halaman di Pengaturan lalu coba lagi.",
-    "fileTooComplex": "File terlalu kompleks (maks 20MB).",
+    "fileTooComplex": "File terlalu kompleks (maks 50MB).",
     "fileTooComplexRejected": "File terlalu besar atau kompleks. Silakan coba file yang lebih kecil.",
-    "fileTooComplexLocked": "File terlalu besar atau kompleks. Batas: 20 MB per file · 50 halaman per PDF. Pecah PDF besar lalu coba lagi.",
+    "fileTooComplexLocked": "File terlalu besar atau kompleks. Batas: 50 MB per file · 50 halaman per PDF. Pecah PDF besar lalu coba lagi.",
     "modelNotFound": "File mesin AI tidak ditemukan. Mengunduh model sekarang…",
     "backendLost": "Koneksi backend terputus",
     "outputWriteFailed": "Gagal menyimpan file output",
     "invalidPath": "Jalur file tidak valid. Pilih file yang valid."
   },
   "dropzone": {
-    "hint": "PNG · JPG · WEBP · PDF — maks 20MB per file · maks 10 file per batch",
+    "hint": "PNG · JPG · WEBP · PDF — maks 50MB per file · maks 10 file per batch",
     "clickLabel": "Klik atau seret file ke sini",
     "dropLabel": "Lepaskan file di sini",
     "maxFilesWarning": "Maksimal 10 file per batch — file tambahan dilewati.",
     "dropPrompt": "Klik atau seret gambar & PDF ke sini",
     "maxFiles": "Maks {{count}} file per batch"
+  },
+  "consent": {
+    "title": "Kirim batch ini ke mesin Cloud?",
+    "provider": "Penyedia",
+    "model": "Model",
+    "fileCount": "File",
+    "totalSize": "Ukuran total",
+    "region": "Wilayah",
+    "trafficNotice": "Penyedia merekam masukan dan keluaran setiap permintaan sesuai ketentuannya sendiri. Kunci API Anda tetap di mesin ini.",
+    "send": "Kirim",
+    "cancel": "Batal",
+    "useCpu": "Proses batch ini di CPU saya saja",
+    "toast": {
+      "needsKey": "File-file ini terlalu besar untuk mesin Lokal, dan tidak ada kunci API Cloud tersimpan. Tambahkan kunci API, atau tetap proses di CPU.",
+      "addKey": "Tambahkan kunci API",
+      "enableCloud": "Aktifkan mesin Cloud",
+      "cloudDisabled": "Mesin Cloud sedang dimatikan. Nyalakan di Pengaturan, atau tetap proses di CPU.",
+      "processOnCpu": "Tetap proses di CPU"
+    }
   },
   "preview": {
     "emptyState": "Pilih pekerjaan yang sudah selesai untuk melihat keajaibannya.",
@@ -136,7 +155,7 @@
   "welcome": {
     "title": "Selamat datang di Scan2Text",
     "bullet1": "Ubah dokumen hasil scan Anda menjadi teks yang bisa diedit — tanpa internet.",
-    "bullet2": "File harus di bawah 20MB (sekitar 10-20 foto atau PDF pendek).",
+    "bullet2": "File harus di bawah 50MB (sekitar 10-20 foto atau PDF pendek).",
     "bullet3": "PDF bisa sampai 50 halaman.",
     "bullet4": "Kami menerima PNG, JPG, WEBP, dan PDF.",
     "dontShowAgain": "Jangan tampilkan lagi",

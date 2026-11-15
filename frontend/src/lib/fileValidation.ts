@@ -1,4 +1,4 @@
-const MAX_FILE_SIZE = 20 * 1024 * 1024
+import { exceedsCeiling } from './cloudRouting'
 
 const ALLOWED_MIME_TYPES = [
   'image/png',
@@ -45,8 +45,8 @@ export function validateFile(file: File): ValidationResult {
     return { valid: false, error: 'Invalid file type. Allowed: PNG, JPG, JPEG, WEBP, PDF', reason: 'unsupported' }
   }
 
-  if (file.size > MAX_FILE_SIZE) {
-    return { valid: false, error: 'File exceeds 20MB limit', reason: 'tooLarge' }
+  if (exceedsCeiling(file.size)) {
+    return { valid: false, error: 'File exceeds 50MB limit', reason: 'tooLarge' }
   }
 
   return { valid: true }

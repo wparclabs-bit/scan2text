@@ -43,6 +43,7 @@ class CloudProfile(BaseModel):
     enabled: bool = False
     base_url: str
     model_id: str
+    region: str = "United States"
     recipe: CloudRecipe
     cost_estimate: CloudCostEstimate
     credential: CredentialDescriptor | None = None

@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field, SecretStr
 
 from scan2text.cloud.models import CloudProfile
+from scan2text.cloud.route_decision import CEILING_BYTES, LOCAL_THRESHOLD_BYTES  # noqa: F401
 from scan2text.cloud.provider import (
     ProviderAuthenticationError,
     ProviderError,

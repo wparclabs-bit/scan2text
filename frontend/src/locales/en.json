@@ -26,26 +26,45 @@
   },
   "errors": {
     "unsupportedFileType": "Unsupported file type. Allowed: PNG, JPG, JPEG, WEBP, PDF",
-    "fileTooLarge": "File exceeds 20MB limit",
+    "fileTooLarge": "File exceeds 50MB limit",
     "uploadFailed": "Upload failed",
     "batchSkipped": "{{total}} files were skipped: {{unsupported}} unsupported type(s), {{tooLarge}} too large.",
     "allInvalid": "All selected files are unsupported or too large.",
     "pdfTooComplex": "PDF too complex for the current page limit. Raise the page limit in Settings and retry.",
-    "fileTooComplex": "File too complex (max 20MB).",
+    "fileTooComplex": "File too complex (max 50MB).",
     "fileTooComplexRejected": "File too large or complex. Please try a smaller file.",
-    "fileTooComplexLocked": "File too large or complex. Limits: 20 MB per file · 50 pages per PDF. Split bigger PDFs and retry.",
+    "fileTooComplexLocked": "File too large or complex. Limits: 50 MB per file · 50 pages per PDF. Split bigger PDFs and retry.",
     "modelNotFound": "AI engine files are missing. Downloading the model now…",
     "backendLost": "Backend connection lost",
     "outputWriteFailed": "Failed to save output file",
     "invalidPath": "Invalid file path. Please select valid files."
   },
   "dropzone": {
-    "hint": "PNG · JPG · WEBP · PDF — max 20MB per file · max 10 files per batch",
+    "hint": "PNG · JPG · WEBP · PDF — max 50MB per file · max 10 files per batch",
     "clickLabel": "Click or drag files here",
     "dropLabel": "Drop files here",
     "maxFilesWarning": "Max 10 files per batch — extra files were skipped.",
     "dropPrompt": "Click or drag images & PDFs here",
     "maxFiles": "Max {{count}} files per batch"
+  },
+  "consent": {
+    "title": "Send this batch to the Cloud engine?",
+    "provider": "Provider",
+    "model": "Model",
+    "fileCount": "Files",
+    "totalSize": "Total size",
+    "region": "Region",
+    "trafficNotice": "The provider records the input and output of every request under its own terms. Your API key stays on this machine.",
+    "send": "Send",
+    "cancel": "Cancel",
+    "useCpu": "Process this batch on my CPU instead",
+    "toast": {
+      "needsKey": "These files are too large for the Local engine, and no Cloud API key is stored. Add an API key, or process on the CPU anyway.",
+      "addKey": "Add an API key",
+      "enableCloud": "Enable the Cloud engine",
+      "cloudDisabled": "The Cloud engine is switched off. Turn it on in Settings, or process on the CPU anyway.",
+      "processOnCpu": "Process on CPU anyway"
+    }
   },
   "preview": {
     "emptyState": "Select a completed job to preview the magic.",
@@ -136,7 +155,7 @@
   "welcome": {
     "title": "Welcome to Scan2Text",
     "bullet1": "Turn your scanned documents into editable text — no internet required.",
-    "bullet2": "Files must be under 20MB (that's about 10-20 photos or a short PDF).",
+    "bullet2": "Files must be under 50MB (that's about 10-20 photos or a short PDF).",
     "bullet3": "PDFs can be up to 50 pages.",
     "bullet4": "We accept PNG, JPG, WEBP, and PDF.",
     "dontShowAgain": "Don't show this again",

@@ -23,6 +23,7 @@ from scan2text.routes import settings as settings_routes
 from scan2text.routes import feedback as feedback_routes
 from scan2text.routes import download as download_routes
 from scan2text.cloud import routes as cloud_routes
+from scan2text.cloud.route_decision import router as cloud_routing_routes
 from scan2text.cloud.service import build_production_cloud_service
 from scan2text.services.queue_service import QueueService
 from scan2text.services.path_service import PathService
@@ -67,6 +68,7 @@ app.include_router(settings_routes.router)
 app.include_router(feedback_routes.router)
 app.include_router(download_routes.router)
 app.include_router(cloud_routes.router)
+app.include_router(cloud_routing_routes)
 
 # UPLOADS_DIR is retired — no longer used for incoming file data
 UPLOADS_DIR = Path(__file__).resolve().parents[3] / "uploads"

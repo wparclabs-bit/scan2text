@@ -7,8 +7,9 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useScan2TextStore } from '@/stores/scan2text.store'
 import { fileKind } from '@/lib/fileKind'
 import { pickFilesViaDialog } from '@/lib/filePicker'
+import { exceedsCeiling } from '@/lib/cloudRouting'
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
+// Early convenience check only: the backend owns the 8 MB and 50 MB bounds (D-07).
 
 interface FileMetadata {
   path: string
@@ -72,7 +73,7 @@ export async function handleDroppedPaths(
     if (metadataList) {
       const validPathsAfterSize: string[] = []
       for (const meta of metadataList) {
-        if (!meta.exists || meta.size == null || meta.size > MAX_FILE_SIZE) {
+        if (!meta.exists || meta.size == null || exceedsCeiling(meta.size)) {
           sizeSkippedCount++
         } else {
           validPathsAfterSize.push(meta.path)

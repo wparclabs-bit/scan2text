@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List
 
 MAX_PDF_PAGES_DEFAULT = 50
-MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
+MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB ceiling; the Cloud engine accepts up to 50 MB (D-08)
 
 # Magic-byte signatures for real-type detection.
 _MAGIC_PDF = b"%PDF"

@@ -44,7 +44,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 
 const { useScan2TextStore } = await import('@/stores/scan2text.store')
 const { toast } = await import('sonner')
-const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
 
 describe('FileDropZone size validation', () => {
   beforeEach(() => {

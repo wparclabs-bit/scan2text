@@ -4,6 +4,7 @@
   "enabled": false,
   "base_url": "https://integrate.api.nvidia.com/v1",
   "model_id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+  "region": "United States",
   "recipe": {
     "version": "cloud-v1-2026-11-15",
     "prompt": "Transcribe every visible character exactly, preserve the natural reading order, and emit tables as HTML table elements. Do not add commentary or code fences.",

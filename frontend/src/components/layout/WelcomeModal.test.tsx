@@ -38,7 +38,7 @@ describe('WelcomeModal', () => {
     })
   })
 
-  it('renders welcome body with 20MB limit copy', async () => {
+  it('renders welcome body with 50MB limit copy', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ hide_welcome_notice: false }),
@@ -48,7 +48,7 @@ describe('WelcomeModal', () => {
       const modal = document.querySelector('[data-testid="welcome-modal"]') as HTMLElement | null
       expect(modal).toBeInTheDocument()
       expect(modal!.textContent).toContain('Turn your scanned documents')
-      expect(modal!.textContent).toContain('20MB')
+      expect(modal!.textContent).toContain('50MB')
       expect(modal!.textContent).toContain('50 pages')
     })
   })
