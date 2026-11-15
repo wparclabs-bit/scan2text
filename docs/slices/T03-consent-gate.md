@@ -3,7 +3,7 @@
 ## State snapshot
 - Read `AGENTS.md` first, then `docs/slices/HANDOFF-GUIDE.md`, `docs/slices/DECISIONS.md` (D-05, D-06, D-07, D-08, D-09, D-11, D-12, D-13, D-14, D-31, D-36, and the amended D-15), and `docs/slices/STATE.md`.
 - Read `docs/slices/T02-cloud-profile.md` for the Profile, the provider seam, and the credential storage that already exist.
-- Committed as `69ed2c6`.
+- Committed as `69ed2c6`, `a1c5281`, and `52fba0f` (the gate wiring).
 - Baseline at the start: frontend 716 tests in 42 files, typecheck 0 errors, build success (2176 modules), backend 486 passed with one warning, cargo check clean; measured 2026-11-15 on Windows.
 - Final result: implemented and green. Backend 486 to 496 tests; frontend 716 tests in 42 files to 741 tests in 46 files; build 2176 to 2182 modules; typecheck 0 errors; cargo clean; slice-document checker exit 0 with 5 documents.
 - Gate note: this sandbox cannot remove its own temporary tree, so the repository's 13 `tmp_path`-based backend tests cannot run here; the full suite reports 496 passed with that one documented environment error group. CI, which has a normal temp directory, runs them and reports the clean count. The frontend suite is unaffected once the sandbox permits Node to spawn its test workers.
@@ -147,6 +147,7 @@ Write `second-brain/01-Agent-Memory/Phase-S66/slice-T03-CONSENT-GATE.md` with th
 ## Handoff notes
 - What now works: the boundaries are authoritative in one backend module and visible through the API; a mixed batch routes per file; the first Cloud job of a session asks consent once, naming the recipient, the data, the region, and the provider's recording, with Send, Cancel, and a whole-batch CPU override; a keyless or Cloud-disabled user gets one escape toast per batch.
 - The next slice may assume: `GET /api/cloud/routing` returns the two bounds; `POST /api/cloud/batch-route` returns per-file routes; `CloudProfile.region` is present and is the only source of the region string; the consent store holds `grantConsent`, `denyConsent`, `setCpuOverride`, and a `sessionConsentGranted` flag that no persistence layer sees.
+- The next slice may assume: the gate is mounted. `ConsentGate.tsx` opens the modal when the newest job in `jobOrder` has a size above the local threshold, and `useCloudRequirement.ts` supplies the batch summary. A Cloud job executes only when `canUseCloud(batchId)` is true.
 - Still open: cloud conversion, page sending, failure parking, cancel, and spend visibility are T04, T05, T06, and T11.
 - T04 must build the over-ceiling rejection message and prove it; this slice only proves that the ceiling exists in the routing module and the API.
 - Operational risk: the owner must still perform the live provider check with a real key outside the repository; CI has no key and must stay green.
