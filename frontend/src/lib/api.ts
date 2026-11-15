@@ -127,6 +127,7 @@ export interface CloudProfileResponse {
   enabled: boolean
   base_url: string
   model_id: string
+  region: string
   recipe: CloudRecipeResponse
   cost_estimate: CloudCostEstimateResponse
   credential: CredentialDescriptorResponse | null

@@ -6,6 +6,7 @@ import { buildApiUrl } from './lib/apiBase'
 import CommandCenterLayout from './components/layout/CommandCenterLayout'
 import WelcomeModal from './components/layout/WelcomeModal'
 import ModelDownloaderModal from './components/layout/ModelDownloaderModal'
+import ConsentGate from './components/layout/ConsentGate'
 import { useBackendBootFailedListener } from './hooks/useBackendBootFailedListener'
 import { toast } from 'sonner'
 
@@ -93,6 +94,7 @@ function App() {
   return (
     <>
       <CommandCenterLayout />
+      <ConsentGate />
       <ModelDownloaderModal open={showDownloader} onClose={handleDownloaderClose} modelsMissing={!modelReady} isOnline={!!navigator.onLine} versionJsonExists={true} />
       {modelReady && !hideWelcomeNotice && <WelcomeModal />}
     </>

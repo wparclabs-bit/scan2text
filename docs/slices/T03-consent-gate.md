@@ -5,7 +5,7 @@
 - Read `docs/slices/T02-cloud-profile.md` for the Profile, the provider seam, and the credential storage that already exist.
 - Committed as `69ed2c6`.
 - Baseline at the start: frontend 716 tests in 42 files, typecheck 0 errors, build success (2176 modules), backend 486 passed with one warning, cargo check clean; measured 2026-11-15 on Windows.
-- Final result: implemented and green. Backend 486 to 496 tests; frontend 716 tests in 42 files to 739 tests in 45 files; build 2176 to 2178 modules; typecheck 0 errors; cargo clean; slice-document checker exit 0 with 5 documents.
+- Final result: implemented and green. Backend 486 to 496 tests; frontend 716 tests in 42 files to 741 tests in 46 files; build 2176 to 2182 modules; typecheck 0 errors; cargo clean; slice-document checker exit 0 with 5 documents.
 - Gate note: this sandbox cannot remove its own temporary tree, so the repository's 13 `tmp_path`-based backend tests cannot run here; the full suite reports 496 passed with that one documented environment error group. CI, which has a normal temp directory, runs them and reports the clean count. The frontend suite is unaffected once the sandbox permits Node to spawn its test workers.
 - Open blockers: none. The owner supplies the real key outside the repository; every automated test uses fakes and no test calls the network.
 - Issue: #11.
@@ -67,6 +67,9 @@ T02 delivered the Profile, the provider seam with its fake, the credential store
 - `frontend/src/stores/consent.store.ts` and `frontend/src/stores/consent.store.test.ts` — gate state, once-per-session flag, per-batch CPU override.
 - `frontend/src/lib/cloudRouting.ts` — the frontend mirror of the thresholds for early convenience rejection only.
 - `frontend/src/components/layout/CloudConsentModal.tsx` and `frontend/src/components/layout/CloudConsentModal.test.tsx` — the consent dialog built from the existing dialog components.
+- `frontend/src/components/layout/ConsentGate.tsx` and `frontend/src/components/layout/ConsentGate.test.tsx` — mounts the gate for the queue: opens the modal once per session, or lets the escape toast fire.
+- `frontend/src/hooks/useCloudRequirement.ts` — reads the Profile and the queue and reports the newest Cloud-routed job.
+- `frontend/src/App.tsx` — mounts `ConsentGate`; the shell layout itself is untouched.
 - `frontend/src/lib/api.ts` — routing-threshold client call.
 - `frontend/src/lib/fileValidation.ts`, `frontend/src/components/dropzone/FileDropZone.tsx`, `frontend/src/locales/en.json`, `frontend/src/locales/id.json` — raised input cap and the new strings.
 - `frontend/src/components/layout/WelcomeModal.tsx` and its test — the honesty copy names 50 MB.
@@ -87,7 +90,13 @@ T02 delivered the Profile, the provider seam with its fake, the credential store
 - `frontend/src/stores/consent.store.test.ts`: `test_gate_state_is_cloud_enabled_when_a_key_is_stored`, `test_gate_state_is_needs_key_when_cloud_is_enabled_without_a_key`, `test_gate_state_is_cloud_disabled_when_the_toggle_is_off`, `test_consent_is_asked_once_per_session_and_not_again_for_a_later_cloud_job`, `test_cpu_override_routes_the_whole_batch_to_the_local_engine`, and `test_consent_flag_is_never_written_to_browser_storage`.
 - `frontend/src/components/layout/CloudConsentModal.test.tsx`: `test_modal_names_provider_model_count_total_size_region_and_traffic_recording`, `test_send_grant_is_the_only_path_that_permits_a_cloud_job`, `test_cancel_denies_and_permits_no_cloud_job`, `test_cpu_checkbox_routes_the_batch_locally`, `test_modal_never_renders_or_logs_the_key`, and `test_consent_strings_exist_in_english_and_indonesian`.
 - `frontend/src/lib/cloudRouting.test.ts`: `test_dropzone_accepts_a_file_above_the_local_threshold` and `test_frontend_rejects_a_file_above_the_ceiling_early`.
-- Expected count before and after: backend 486 tests to 496 tests; frontend 716 tests in 42 files to 739 tests in 45 files. RED is run per named file only; the full suites run only at the verification gate.
+- `frontend/src/components/layout/ConsentGate.test.tsx`: `test_gate_opens_the_consent_modal_when_a_cloud_routed_file_lands` and `test_gate_does_not_open_the_modal_for_a_batch_that_stays_local`.
+- Expected count before and after: backend 486 tests to 496 tests; frontend 716 tests in 42 files to 741 tests in 46 files. RED is run per named file only; the full suites run only at the verification gate.
+
+## GREEN evidence
+- Backend: 10 new tests, 5 in `tests/unit/cloud/test_route_decision.py` and 5 in `tests/integration/test_cloud_routing_routes.py`.
+- Frontend: 23 new tests — 11 in `consent.store.test.ts`, 9 in `CloudConsentModal.test.tsx`, 5 in `cloudRouting.test.ts` — plus 2 wiring tests in `ConsentGate.test.tsx`, plus the copy and cap updates in the existing files.
+- Full suites at the gate: backend 496 passed (plus the documented `tmp_path` group this sandbox cannot host); frontend 741 passed in 46 files.
 
 ## Implementation steps
 1. Write `route_decision.py` with `LOCAL_THRESHOLD_BYTES = 8 * 1024 * 1024`, `CEILING_BYTES = 50 * 1024 * 1024`, the `Engine` values `local` and `cloud`, and `decide_route(size_bytes, *, engine_choice=None)`. Confirm the named unit tests fail.
@@ -96,18 +105,19 @@ T02 delivered the Profile, the provider seam with its fake, the credential store
 4. Raise `MAX_PDF_SIZE_BYTES` to the 50 MB ceiling so a file above 8 MB reaches the routing decision.
 5. Write `consent.store.ts`: `cloudState` (`enabled` with a key descriptor / `enabled` without / `disabled`), `resolveConsentGate`, `requestConsent(batch)`, `grantConsent`, `denyConsent`, `setCpuOverride`, and the module-private session flag. Memory only. Confirm the named store tests fail.
 6. Write `CloudConsentModal.tsx` from `dialog.tsx`, `button.tsx`, and `label.tsx`: provider, model, file count, total size, region, the traffic-recording statement in plain words, Send, Cancel, and the CPU checkbox. Confirm the named modal tests fail.
-7. Add the one aggregated per-batch toast for the `needs-key` and `cloud-disabled` states, with the add-a-key, enable-the-Cloud-engine, and process-on-CPU actions.
-8. Add `cloudRouting.ts` for the early convenience rejection only, raise the drop zone cap, and update both locale files and every affected copy assertion.
-9. Update the rolling state, this document's final counts and state snapshot, the vault summary, and `00-Current-State.md`; run all five gates and the checker; commit with the GitHub noreply email.
+7. Mount the gate: `useCloudRequirement.ts` reads the Profile and the queue, `ConsentGate.tsx` opens the modal or lets the escape toast fire, and `App.tsx` renders it. Confirm the named gate tests fail.
+8. Add the one aggregated per-batch toast for the `needs-key` and `cloud-disabled` states, with the add-a-key, enable-the-Cloud-engine, and process-on-CPU actions.
+9. Add `cloudRouting.ts` for the early convenience rejection only, raise the drop zone cap, and update both locale files and every affected copy assertion.
+10. Update the rolling state, this document's final counts and state snapshot, the vault summary, and `00-Current-State.md`; run all five gates and the checker; commit with the GitHub noreply email.
 
 ## Verification commands
 - `py -3.12 -m pytest -q --tb=line tests/unit/cloud/test_route_decision.py` at the repository root with `PYTHONPATH=src` — expected targeted routing tests pass.
 - `py -3.12 -m pytest -q --tb=line tests/integration/test_cloud_routes.py` — expected targeted Cloud API tests pass.
 - `npm.cmd run test -- consent.store.test.ts CloudConsentModal.test.tsx cloudRouting.test.ts` in `frontend/` — expected targeted frontend tests pass.
 - `py -3.12 -m pytest -q --tb=line` at the repository root with `PYTHONPATH=src` — expected 496 passed, 1 warning (plus 13 `tmp_path`-based tests that this sandbox cannot host; CI runs them).
-- `npm.cmd run test` in `frontend/` — expected 739 passed in 45 files.
+- `npm.cmd run test` in `frontend/` — expected 741 passed in 46 files.
 - `npm.cmd run typecheck` in `frontend/` — expected 0 errors.
-- `npm.cmd run build` in `frontend/` — expected build success, 2178 modules.
+- `npm.cmd run build` in `frontend/` — expected build success, 2182 modules.
 - `cargo check --message-format=short` in `frontend/src-tauri/` — expected clean.
 - `py -3.12 scripts/check_slice_docs.py --all` — expected exit 0 with 5 documents.
 - `git diff --check` — expected no whitespace errors; `git diff --cached` — expected no key, secret, fixture, or absolute local path.

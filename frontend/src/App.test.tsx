@@ -25,7 +25,7 @@ vi.mock('./stores/preferencesStore', () => {
   return { usePreferenceStore: useStore }
 })
 
-let _mockScan2TextStoreState = { jobs: {}, showDownloader: false }
+let _mockScan2TextStoreState = { jobs: {}, jobOrder: [], showDownloader: false }
 vi.mock('./stores/scan2text.store', async () => {
   const React = await import('react')
   const listeners = new Set<() => void>()
@@ -65,7 +65,7 @@ describe('Command Center layout', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     document.documentElement.className = ''
-    _mockScan2TextStoreState = { jobs: {}, showDownloader: false }
+    _mockScan2TextStoreState = { jobs: {}, jobOrder: [], showDownloader: false }
     mockState = {
       theme: 'dark',
       language: 'en',
@@ -454,7 +454,7 @@ describe('Command Center layout', () => {
 
   describe('reactive MODEL_NOT_FOUND modal', () => {
     it('shows model-downloader-modal when store.showDownloader is true', async () => {
-      _mockScan2TextStoreState = { jobs: {}, showDownloader: true }
+      _mockScan2TextStoreState = { jobs: {}, jobOrder: [], showDownloader: true }
       const mockFetch = vi.fn()
       vi.stubGlobal('fetch', mockFetch)
       mockFetch.mockImplementation((url: string) => {

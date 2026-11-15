@@ -46,12 +46,15 @@ interface ConsentState {
   cpuOverrides: Record<string, true>
   /** Batches whose one escape toast has already been shown. Never persisted. */
   escapeNotifiedBatches: Record<string, true>
+  /** The batch currently awaiting a consent decision, if any. Never persisted. */
+  pendingBatch: ConsentBatchSummary | null
   setCloudState: (input: { enabled: boolean; hasKey: boolean }) => void
   resolveConsentGate: () => ConsentGate
   ensureConsent: (batchId: string, options?: EnsureConsentOptions) => ConsentRequest
   decideConsent: (batchId: string, decision: ConsentDecision) => void
   setBatchCpuOverride: (batchId: string, override: boolean) => void
   markEscapeNotified: (batchId: string) => boolean
+  setPendingBatch: (batch: ConsentBatchSummary | null) => void
   canUseCloud: (batchId: string) => boolean
   localBatchIds: () => string[]
   resetConsent: () => void
@@ -64,6 +67,7 @@ const initialConsentState = {
   batchDecisions: {} as Record<string, BatchDecision>,
   cpuOverrides: {} as Record<string, true>,
   escapeNotifiedBatches: {} as Record<string, true>,
+  pendingBatch: null as ConsentBatchSummary | null,
 }
 
 export const useConsentStore = create<ConsentState>((set, get) => ({
@@ -109,6 +113,7 @@ export const useConsentStore = create<ConsentState>((set, get) => ({
       cpuOverrides: decision.cpuOverride
         ? { ...state.cpuOverrides, [batchId]: true as const }
         : state.cpuOverrides,
+      pendingBatch: state.pendingBatch?.id === batchId ? null : state.pendingBatch,
     }))
   },
 
@@ -130,6 +135,10 @@ export const useConsentStore = create<ConsentState>((set, get) => ({
       escapeNotifiedBatches: { ...state.escapeNotifiedBatches, [batchId]: true as const },
     }))
     return true
+  },
+
+  setPendingBatch: (batch) => {
+    set({ pendingBatch: batch })
   },
 
   canUseCloud: (batchId) => {
