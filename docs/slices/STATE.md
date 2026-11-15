@@ -23,14 +23,14 @@ T00 added one backend test file and no product code, so the frontend, typecheck,
 
 T01 re-ran all five gates on 2026-11-15; every count is unchanged because T01 added only documentation. The slice-document checker was also run and passed.
 
-T13 re-ran all five gates on 2026-11-15 at commit `fe2695d`. Frontend tests, typecheck, build, and cargo check are unchanged from the table above. The backend suite now collects **462 tests and all 462 pass, 1 warning**: T13 adds 15 workflow tests (`tests/test_ci_workflow.py`) and repairs a pre-existing failure. At `fe2695d` the suite collected 447 tests but reported 446 passed and 1 failed, because `tests/test_check_slice_docs.py` froze the collected set at `{T00-checker-script.md}` and had failed since T01 added a slice document. The assertion now checks that T00 is collected and that every collected document passes.
+T13 re-ran all five gates on 2026-11-15 at commit `fe2695d`. Frontend tests, typecheck, build, and cargo check are unchanged from the table above. The backend suite now collects **463 tests and all 463 pass, 1 warning**: T13 adds 16 workflow tests (`tests/test_ci_workflow.py`) and repairs a pre-existing failure. At `fe2695d` the suite collected 447 tests but reported 446 passed and 1 failed, because `tests/test_check_slice_docs.py` froze the collected set at `{T00-checker-script.md}` and had failed since T01 added a slice document. The assertion now checks that T00 is collected and that every collected document passes.
 
 | Gate (T13) | Result |
 |---|---|
 | Frontend tests | 710 passed, 42 files (unchanged) |
 | Frontend typecheck | 0 errors (unchanged) |
 | Frontend build | success (unchanged) |
-| Backend tests | 462 passed, 1 warning |
+| Backend tests | 463 passed, 1 warning |
 | Cargo check | clean (unchanged) |
 | Slice-document checker | exit 0, 3 documents |
 

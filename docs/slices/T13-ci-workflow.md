@@ -56,7 +56,7 @@ Every push and every pull request is verified on a Windows runner by the same fi
 ## RED tests to write first
 File: `tests/test_ci_workflow.py`. Standard library only, because the backend job installs the test subset and no YAML parser. Structural assertions only; the file never asserts on formatting.
 
-Expected backend count: 447 before, 462 after (15 tests).
+Expected backend count: 447 before, 463 after (16 tests).
 
 Named tests:
 - `test_workflow_file_exists`
@@ -73,9 +73,10 @@ Named tests:
 - `test_workflow_caches_frontend_and_python_on_the_lock_files`
 - `test_workflow_carries_no_secret_and_no_provider_key`
 - `test_no_gate_continues_on_error`
+- `test_rust_job_provides_the_bundled_backend_resource_path`
 - `test_build_backend_script_derives_its_root_from_its_own_location`
 
-All fifteen fail while `.github/workflows/ci.yml` is absent; the build-script test fails while the script and the packaging spec hard-code a local absolute path.
+All sixteen fail while `.github/workflows/ci.yml` is absent; the build-script test fails while the script and the packaging spec hard-code a local absolute path.
 
 ## Implementation steps
 1. Write the RED test and run only it; confirm every test fails for the right reason.
@@ -125,7 +126,7 @@ What now works that did not before:
 What the next slice may assume without re-verifying:
 - The five gates still run locally exactly as before; CI adds no new gate and changes none.
 - `tests/test_ci_workflow.py` is hermetic, standard-library only, and asserts structure, not formatting.
-- The backend suite collects 462 tests and all of them pass. This slice also repaired `tests/test_check_slice_docs.py`, whose assertion froze the slice-document set at `{T00-checker-script.md}`; the suite was 446 passed and 1 failed at `fe2695d`, so the recorded "447 tests, 1 warning" baseline hid one red test. CI would have caught it; now it does.
+- The backend suite collects 463 tests and all of them pass. This slice also repaired `tests/test_check_slice_docs.py`, whose assertion froze the slice-document set at `{T00-checker-script.md}`; the suite was 446 passed and 1 failed at `fe2695d`, so the recorded "447 tests, 1 warning" baseline hid one red test. CI would have caught it; now it does.
 - The workflow contains no `secrets.` reference and no provider key. The only credential is the automatic `github.token`, granted `contents: write` on the release job alone, and it is not a stored secret.
 
 What is still open or risky:

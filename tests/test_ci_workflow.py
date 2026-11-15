@@ -185,6 +185,14 @@ def test_no_gate_continues_on_error():
     assert "continue-on-error" not in read_workflow()
 
 
+def test_rust_job_provides_the_bundled_backend_resource_path():
+    """tauri-build fails on a fresh checkout when ../../backend is absent (T13)."""
+    block = job_blocks(read_workflow())["rust"]
+    assert re.search(r"New-Item[^\n]*Directory[^\n]*backend", block), (
+        "the rust job does not create the bundled backend resource path"
+    )
+
+
 def test_build_backend_script_derives_its_root_from_its_own_location():
     assert BUILD_SCRIPT.is_file()
     text = BUILD_SCRIPT.read_text(encoding="utf-8")

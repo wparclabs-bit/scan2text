@@ -6,8 +6,13 @@ Rule: succeeded > 0 → status "completed" (even if failed > 0).
 
 `/process` returns 202 before the background coroutine finishes, so every test
 waits for its own task to reach a terminal state through the public `/status`
-route instead of reading the store while the task is still "processing". The
-wait keeps these tests deterministic on a slow CI runner (T13).
+route instead of reading the store while the task is still "processing".
+
+The dependency patches are started explicitly and stopped by an autouse
+fixture, rather than held open by a dangling generator. A generator held only
+by a local name can be garbage-collected mid-test, which unwinds its `with`
+block and lets the real `QueueService` run — the first CI run caught exactly
+that when it reported MODEL_NOT_FOUND (T13).
 """
 
 from __future__ import annotations
@@ -45,27 +50,30 @@ def _wait_until_finished(client: TestClient, task_id: str, timeout: float = 20.0
 
 
 @pytest.fixture(autouse=True)
-def _isolated_task_store():
-    """Clear the shared in-memory task store around every test."""
+def _isolated_app_state():
+    """Clear the shared task store and stop this test's patches."""
     from scan2text.api.main import _task_store
     _task_store.clear()
     yield
+    patch.stopall()
     _task_store.clear()
 
 
 def _make_app():
-    """Create the app with mocked dependencies."""
-    with patch("scan2text.api.main.QueueService") as MockQS, \
-         patch("scan2text.api.main.VlmOcrAdapter") as MockVlm:
-        mock_qs = MagicMock()
-        mock_qs._vlm_adapter = MagicMock()
-        MockQS.return_value = mock_qs
+    """Patch the app's dependencies and return (app, mock queue).
 
-        mock_vlm = MagicMock()
-        MockVlm.return_value = mock_vlm
+    `patch.start()` keeps the mocks alive until the autouse fixture stops them,
+    so the request handler always sees this test's mock.
+    """
+    mock_qs_cls = patch("scan2text.api.main.QueueService").start()
+    patch("scan2text.api.main.VlmOcrAdapter").start()
 
-        from scan2text.api.main import app as api_app
-        yield api_app, mock_qs
+    mock_qs = MagicMock()
+    mock_qs._vlm_adapter = MagicMock()
+    mock_qs_cls.return_value = mock_qs
+
+    from scan2text.api.main import app as api_app
+    return api_app, mock_qs
 
 
 class FakeSummary:
@@ -82,8 +90,7 @@ class TestStatusSemantics:
 
     def test_succeeded_gt0_failed_gt0_status_completed(self):
         """When some files succeed AND some fail, task status is 'completed'."""
-        app_gen = _make_app()
-        api_app, mock_qs = next(app_gen)
+        api_app, mock_qs = _make_app()
 
         mock_qs.process_image_paths.return_value = FakeSummary(
             succeeded=2, failed=1, total_inputs=3,
@@ -109,8 +116,7 @@ class TestStatusSemantics:
 
     def test_succeeded_eq0_failed_gt0_status_failed(self):
         """When all files fail (succeeded == 0), task status is 'failed'."""
-        app_gen = _make_app()
-        api_app, mock_qs = next(app_gen)
+        api_app, mock_qs = _make_app()
 
         mock_qs.process_image_paths.return_value = FakeSummary(
             succeeded=0, failed=2, total_inputs=2,
@@ -134,8 +140,7 @@ class TestStatusSemantics:
 
     def test_succeeded_gt0_failed_gt0_error_code_set(self):
         """When some succeed AND some fail, error_code is PARTIAL_FAILURE."""
-        app_gen = _make_app()
-        api_app, mock_qs = next(app_gen)
+        api_app, mock_qs = _make_app()
 
         mock_qs.process_image_paths.return_value = FakeSummary(
             succeeded=1, failed=1, total_inputs=2,
@@ -159,8 +164,7 @@ class TestStatusSemantics:
 
     def test_succeeded_gt0_failed_eq0_no_error_code(self):
         """When all succeed, error_code should not be set (or be None)."""
-        app_gen = _make_app()
-        api_app, mock_qs = next(app_gen)
+        api_app, mock_qs = _make_app()
 
         mock_qs.process_image_paths.return_value = FakeSummary(
             succeeded=2, failed=0, total_inputs=2,

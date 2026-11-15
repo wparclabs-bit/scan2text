@@ -102,6 +102,13 @@ jobs:
         with:
           name: frontend-dist
           path: frontend/dist
+      # tauri-build validates the bundled `../../backend` resource path while
+      # running its build script, and a fresh checkout has no backend/ (it is a
+      # gitignored frozen artifact produced by the release job). Create the
+      # directory so this compile-only check does not depend on a prior build.
+      - name: Prepare the bundled backend resource path
+        shell: pwsh
+        run: New-Item -ItemType Directory -Path backend -Force | Out-Null
       - name: Cargo check
         working-directory: frontend/src-tauri
         run: cargo check --message-format=short
