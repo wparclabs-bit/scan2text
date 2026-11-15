@@ -4,8 +4,8 @@
 
 - **Date:** 2026-11-15
 - **Phase:** CLOUD-ENGINE-DESIGN (design closed, documentation written, first slice executed)
-- **Status:** Design complete. 55 decisions recorded. Four artefacts written. T00 (the slice-document checker) is implemented, tested, and green; no product code written.
-- **Next action:** T01 and T07 may start in parallel; T13 (CI) is unblocked now that T00 exists.
+- **Status:** Design complete. 55 decisions recorded. T00 (the slice-document checker) is implemented and green. T01 (the provider spike) is executed and recorded: the hosted provider was measured on 2026-11-15, two D-38 thresholds failed, and the plan changes are named in the record. No product code written.
+- **Next action:** T02 starts on top of the T01 record and must reuse the measured model and recipe; T07 and T13 are independent. The owner owes one amendment to D-15 and D-38 (see Open items).
 
 ## Baseline
 
@@ -21,6 +21,8 @@ Measured on 2026-11-15 at commit `45bdf97`, on Windows.
 
 T00 added one backend test file and no product code, so the frontend, typecheck, build, and cargo baselines are unchanged; the backend count rose from 432 to 447.
 
+T01 re-ran all five gates on 2026-11-15; every count is unchanged because T01 added only documentation. The slice-document checker was also run and passed.
+
 ## Artefacts
 
 | File | Purpose |
@@ -31,6 +33,7 @@ T00 added one backend test file and no product code, so the frontend, typecheck,
 | `docs/slices/STATE.md` | This file: current state and open items |
 | `docs/slices/README.md` | Index of the pipeline and the ticket list |
 | `docs/slices/T00-checker-script.md` | The first slice document, produced from the template |
+| `docs/slices/T01-provider-spike.md` | The measured provider record (T01): base64, tokens, latency, cost, threshold verdicts |
 | `scripts/check_slice_docs.py` | Validates slice documents; standard library only (D-48) |
 | `tests/test_check_slice_docs.py` | The checker's test suite |
 | `docs/slices/specs/` | The four specs, local copies of issues #2 to #5 |
@@ -76,7 +79,8 @@ Three specs, then twelve vertical tickets, then one slice document per ticket.
 | — | The published specs (#2 to #5) and tickets (#6 to #19) need the `ready-for-agent` label applied in the browser, because the token cannot set labels | owner |
 | — | The GitHub token can **create** issues but cannot modify them (label, comment, close, delete all fail). All five triage labels now exist, created by the owner in the browser. Publish without `--label`; apply labels in the browser via multi-select. Recorded in `docs/agents/issue-tracker.md`. | resolved, constraint recorded |
 | — | GitHub issue **#1** "setup probe - delete me" (leftover from the setup probe) is closed. The token cannot delete it, so it stays as a closed, harmless issue. | resolved |
-| — | The NVIDIA API key for the spike must be supplied out of the repository | owner, at T01 |
+| — | The NVIDIA API key for the spike must be supplied out of the repository | resolved at T01; supplied out of the repository, never committed |
+| — | D-15 and D-38 amendment: scope the 20-second band latency to full-page bands and the 98% cell-accuracy threshold to model crops of 12 columns or fewer, with wide tables on the D-27 geometry path | owner, after T01 |
 
 ## Known repository inconsistencies
 
