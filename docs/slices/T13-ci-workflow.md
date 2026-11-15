@@ -38,6 +38,8 @@ Every push and every pull request is verified on a Windows runner by the same fi
 - `.github/workflows/ci.yml` (new) — the whole workflow.
 - `tests/test_ci_workflow.py` (new) — the RED test for the workflow and the packaging-script root fix.
 - `tests/test_check_slice_docs.py` — repair a pre-existing failure: the assertion froze the collected slice-document set at `{T00-checker-script.md}` and had failed since T01 added a document. The backend gate cannot be green without it.
+- `frontend/src/lib/naming.test.ts` — the first GitHub run exposed a timezone assumption: the test started from UTC midnight and expected `07:00`, which only holds in UTC+7. Repaired to build the Date from local components.
+- `tests/test_status_semantics.py` — the same run exposed two races: the tests read `_task_store[task_id]` before the fire-and-forget background job finished. Repaired to poll `/status/{task_id}` until the task is terminal.
 - `scripts/build-backend.ps1` — replace the hard-coded local repository root with `$PSScriptRoot` so the release job can build the frozen backend on a runner.
 - `packaging/scan2text-backend.spec` — restore the `pathex=[]` placeholder so the build script injects the source path at build time and the committed spec stays machine-independent.
 - `docs/slices/T13-ci-workflow.md` (this file).
@@ -127,6 +129,7 @@ What the next slice may assume without re-verifying:
 - The workflow contains no `secrets.` reference and no provider key. The only credential is the automatic `github.token`, granted `contents: write` on the release job alone, and it is not a stored secret.
 
 What is still open or risky:
+- **The first run was red, and that was the point.** The push of `844c103` ran the workflow on GitHub for the first time: the documentation job passed, and the frontend and backend jobs failed on three machine-dependent tests that no local gate could catch — one UTC+7 assumption in `frontend/src/lib/naming.test.ts`, and two races in `tests/test_status_semantics.py` that read the task store before the background job finished. Both were repaired and the run was repeated; the Rust and release jobs were skipped in the red run because they `need` the failed gates.
 - **A green run on GitHub needs a push.** The workflow file is new and has never executed on a runner. The owner must push this commit (or open a pull request) and read the Actions tab for the run. The first tag push is what proves the `release` job, because it is the only job that cannot run on a pull request.
 - The `release` job installs the full runtime (including `llama-cpp-python`) because the frozen build genuinely needs it; this is the one deliberate, documented exception to the "test subset only" rule, which applies to the `backend` job. A first tag run may be slow, and a source build of `llama-cpp-python` is the most likely failure point. If it fails, move that install to a prebuilt CPU wheel index rather than weakening the gate.
 - The `rust` job downloads the `frontend/dist` artifact produced by the `frontend` job, because Tauri's codegen resolves `frontendDist` at macro-expansion time; a fresh checkout has no `dist`. Keep that dependency if the jobs are ever reordered.

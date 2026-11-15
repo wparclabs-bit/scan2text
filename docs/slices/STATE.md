@@ -34,6 +34,8 @@ T13 re-ran all five gates on 2026-11-15 at commit `fe2695d`. Frontend tests, typ
 | Cargo check | clean (unchanged) |
 | Slice-document checker | exit 0, 3 documents |
 
+T13 was pushed on 2026-11-15 (commit `844c103`, run 43698698370). The first GitHub run was red, and correctly so: the documentation job passed, while the frontend and backend jobs failed on three tests that only pass on this machine — a UTC+7 timezone assumption in `frontend/src/lib/naming.test.ts`, and two races in `tests/test_status_semantics.py` that read the task store before the fire-and-forget background job finished. Both tests were repaired (build the Date from local components; poll `/status/{task_id}` until terminal) and the gates re-run locally. CI is the only place these were visible.
+
 ## Artefacts
 
 | File | Purpose |

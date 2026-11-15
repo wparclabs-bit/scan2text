@@ -177,10 +177,11 @@ describe('generateOutputFilename', () => {
     });
 
     it('should work with different timezones (uses local time)', () => {
-      // This tests that the date is formatted based on the Date object passed in
-      const utcMidnight = new Date(Date.UTC(2026, 7, 6, 0, 0, 0));
-      const result = generateOutputFilename('test.pdf', utcMidnight);
-      // UTC midnight becomes 07:00 in WIB timezone (UTC+7)
+      // Construct the Date from local components so the expectation holds in
+      // every timezone. The previous body started from UTC midnight and
+      // expected 07:00, which only passed on a UTC+7 machine (T13).
+      const localTime = new Date(2026, 7, 6, 7, 0, 0);
+      const result = generateOutputFilename('test.pdf', localTime);
       expect(result).toBe('test_0700_20260806.md');
     });
   });

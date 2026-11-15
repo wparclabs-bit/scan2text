@@ -3,12 +3,18 @@
 Rule: succeeded > 0 → status "completed" (even if failed > 0).
       succeeded == 0 AND failed > 0 → status "failed".
       Partial failure records error_code for observability.
+
+`/process` returns 202 before the background coroutine finishes, so every test
+waits for its own task to reach a terminal state through the public `/status`
+route instead of reading the store while the task is still "processing". The
+wait keeps these tests deterministic on a slow CI runner (T13).
 """
 
 from __future__ import annotations
 
 import asyncio
 import tempfile
+import time
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -18,10 +24,33 @@ from fastapi.testclient import TestClient
 
 
 def _tmp_file(suffix: str = ".png") -> str:
-    """Create a temp file in C:\\Windows\\Temp and return its absolute path."""
+    """Create a temp file in C:\\\\Windows\\\\Temp and return its absolute path."""
     p = Path(tempfile.mktemp(suffix=suffix, dir="C:/Windows/Temp"))
     p.write_bytes(b"fake image bytes")
     return str(p)
+
+
+def _wait_until_finished(client: TestClient, task_id: str, timeout: float = 20.0) -> str:
+    """Poll the task through `/status` until it is completed or failed."""
+    deadline = time.monotonic() + timeout
+    observed = None
+    while time.monotonic() < deadline:
+        observed = client.get(f"/status/{task_id}").json().get("status")
+        if observed in ("completed", "failed"):
+            return observed
+        time.sleep(0.05)
+    raise AssertionError(
+        f"task {task_id} stayed {observed!r} for {timeout}s; the background job never finished"
+    )
+
+
+@pytest.fixture(autouse=True)
+def _isolated_task_store():
+    """Clear the shared in-memory task store around every test."""
+    from scan2text.api.main import _task_store
+    _task_store.clear()
+    yield
+    _task_store.clear()
 
 
 def _make_app():
@@ -71,9 +100,10 @@ class TestStatusSemantics:
         paths = [_tmp_file(), _tmp_file(), _tmp_file()]
         with TestClient(api_app) as client:
             resp = client.post("/process", json={"file_paths": paths})
+            assert resp.status_code == 202
+            task_id = resp.json()["task_id"]
+            _wait_until_finished(client, task_id)
 
-        assert resp.status_code == 202
-        task_id = resp.json()["task_id"]
         from scan2text.api.main import _task_store
         assert _task_store[task_id]["status"] == "completed"
 
@@ -95,9 +125,10 @@ class TestStatusSemantics:
         paths = [_tmp_file(), _tmp_file()]
         with TestClient(api_app) as client:
             resp = client.post("/process", json={"file_paths": paths})
+            assert resp.status_code == 202
+            task_id = resp.json()["task_id"]
+            _wait_until_finished(client, task_id)
 
-        assert resp.status_code == 202
-        task_id = resp.json()["task_id"]
         from scan2text.api.main import _task_store
         assert _task_store[task_id]["status"] == "failed"
 
@@ -119,9 +150,10 @@ class TestStatusSemantics:
         paths = [_tmp_file(), _tmp_file()]
         with TestClient(api_app) as client:
             resp = client.post("/process", json={"file_paths": paths})
+            assert resp.status_code == 202
+            task_id = resp.json()["task_id"]
+            _wait_until_finished(client, task_id)
 
-        assert resp.status_code == 202
-        task_id = resp.json()["task_id"]
         from scan2text.api.main import _task_store
         assert _task_store[task_id].get("error_code") == "PARTIAL_FAILURE"
 
@@ -143,8 +175,9 @@ class TestStatusSemantics:
         paths = [_tmp_file(), _tmp_file()]
         with TestClient(api_app) as client:
             resp = client.post("/process", json={"file_paths": paths})
+            assert resp.status_code == 202
+            task_id = resp.json()["task_id"]
+            _wait_until_finished(client, task_id)
 
-        assert resp.status_code == 202
-        task_id = resp.json()["task_id"]
         from scan2text.api.main import _task_store
         assert _task_store[task_id].get("error_code") is None
