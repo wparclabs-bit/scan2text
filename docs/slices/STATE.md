@@ -4,8 +4,8 @@
 
 - **Date:** 2026-11-15
 - **Phase:** CLOUD-ENGINE-DESIGN (design closed, documentation written, first slice executed)
-- **Status:** Design complete. 55 decisions recorded. T00 (the slice-document checker) is implemented and green. T01 (the provider spike) is executed and recorded: the hosted provider was measured on 2026-11-15, two D-38 thresholds failed, and the plan changes are named in the record. No product code written.
-- **Next action:** T02 starts on top of the T01 record and must reuse the measured model and recipe; T07 and T13 are independent. The owner owes one amendment to D-15 and D-38 (see Open items).
+- **Status:** Design complete. 55 decisions recorded. T00 (the slice-document checker) is implemented and green. T01 (the provider spike) is executed and recorded: the hosted provider was measured on 2026-11-15, two D-38 thresholds failed, and the plan changes are named in the record. T13 (the CI workflow) is implemented and green locally; the workflow has never run on GitHub, so the owner must push to see it. No product code written.
+- **Next action:** T02 starts on top of the T01 record and must reuse the measured model and recipe; T07 is independent. T13 is done (#9): push the T13 commit, open the repository's Actions tab for the `CI` run, then push a probe `v*` tag to prove the draft-release job. The owner owes one amendment to D-15 and D-38 (see Open items).
 
 ## Baseline
 
@@ -23,6 +23,17 @@ T00 added one backend test file and no product code, so the frontend, typecheck,
 
 T01 re-ran all five gates on 2026-11-15; every count is unchanged because T01 added only documentation. The slice-document checker was also run and passed.
 
+T13 re-ran all five gates on 2026-11-15 at commit `fe2695d`. Frontend tests, typecheck, build, and cargo check are unchanged from the table above. The backend suite now collects **462 tests and all 462 pass, 1 warning**: T13 adds 15 workflow tests (`tests/test_ci_workflow.py`) and repairs a pre-existing failure. At `fe2695d` the suite collected 447 tests but reported 446 passed and 1 failed, because `tests/test_check_slice_docs.py` froze the collected set at `{T00-checker-script.md}` and had failed since T01 added a slice document. The assertion now checks that T00 is collected and that every collected document passes.
+
+| Gate (T13) | Result |
+|---|---|
+| Frontend tests | 710 passed, 42 files (unchanged) |
+| Frontend typecheck | 0 errors (unchanged) |
+| Frontend build | success (unchanged) |
+| Backend tests | 462 passed, 1 warning |
+| Cargo check | clean (unchanged) |
+| Slice-document checker | exit 0, 3 documents |
+
 ## Artefacts
 
 | File | Purpose |
@@ -34,6 +45,8 @@ T01 re-ran all five gates on 2026-11-15; every count is unchanged because T01 ad
 | `docs/slices/README.md` | Index of the pipeline and the ticket list |
 | `docs/slices/T00-checker-script.md` | The first slice document, produced from the template |
 | `docs/slices/T01-provider-spike.md` | The measured provider record (T01): base64, tokens, latency, cost, threshold verdicts |
+| `docs/slices/T13-ci-workflow.md` | The CI slice (T13): jobs, gates, runner, cache keys, release job |
+| `.github/workflows/ci.yml` | Continuous integration: checker, frontend, backend, Rust, and a tag-triggered draft release |
 | `scripts/check_slice_docs.py` | Validates slice documents; standard library only (D-48) |
 | `tests/test_check_slice_docs.py` | The checker's test suite |
 | `docs/slices/specs/` | The four specs, local copies of issues #2 to #5 |
@@ -72,7 +85,7 @@ Three specs, then twelve vertical tickets, then one slice document per ticket.
 
 | ID | Item | Owner |
 |---|---|---|
-| D-53 | Continuous integration and delivery | scoped (D-53, D-56, D-57, D-58); implementation lands in T13 (#9), blocked by T00 (#6) |
+| D-53 | Continuous integration and delivery | implemented in T13 (#9): `.github/workflows/ci.yml` runs the checker and the five gates on a Windows runner and drafts a release on a `v*` tag. Green locally; the owner must push for the first GitHub run. |
 | D-54 | Hosted provider licence for production use, and the privacy wording that depends on it | owner; the beta ships with the trial terms disclosed |
 | D-55 | Merge the two files numbered ADR-007 in the private vault; write ADR-010 and ADR-011 | T12 (#19) |
 | — | Fixture files need an explicit ignore exception before they can be committed | T10 (#17), needs approval |
@@ -95,4 +108,4 @@ Found during the design work. Each belongs to a ticket, not to a design decision
 | `origin` points at `wparclabs-bit/scan2text`; the release manifest points at `wPAILabs/scan2text` | `version.json` | T12 |
 | `.gitignore` line 39 merges two rules: `*.log.txtbackend/` | `.gitignore` | T12 |
 | The local model name is never shown in the interface; the health payload carries it | `frontend/src/App.tsx` | T12 |
-| No continuous integration exists; the five gates run locally only | `.github/workflows/` | D-53 |
+| Resolved by T13: continuous integration exists; the five gates plus the checker run on a Windows runner | `.github/workflows/ci.yml` | D-53 (done) |

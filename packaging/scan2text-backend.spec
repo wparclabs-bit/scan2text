@@ -54,7 +54,7 @@ filtered_binaries = [b for b in all_binaries if 'pyarrow' not in str(b) and 'pan
 
 a = Analysis(
     ["../src/scan2text/cli.py"],
-    pathex=['D:\WingAI\Projects\scan2text\src'],
+    pathex=[],
     binaries=filtered_binaries,
     datas=[],
     hiddenimports=filtered_hiddenimports,

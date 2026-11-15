@@ -151,7 +151,11 @@ def test_rewriting_the_guide_changes_the_result(checker, tmp_path):
 
 def test_every_slice_document_in_the_repository_passes(checker, template):
     documents = checker.collect_slice_documents(REPO_ROOT / "docs" / "slices")
-    assert {path.name for path in documents} == {"T00-checker-script.md"}
+    names = {path.name for path in documents}
+    # The set grows by one document per slice, so assert the checker's own
+    # document is present and that every collected document passes, rather
+    # than freezing the set and failing CI on the next slice (T13).
+    assert "T00-checker-script.md" in names, names
     for path in documents:
         report = checker.check_text(path, path.read_text(encoding="utf-8"), template)
         assert report["ok"] is True, report["problems"]

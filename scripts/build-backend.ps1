@@ -1,5 +1,7 @@
 $ErrorActionPreference = "Stop"
-$RepoRoot = "D:\WingAI\Projects\scan2text"
+# Derive the root from this script's own location so the frozen backend can be
+# built on any machine, including a CI runner (T13, D-56).
+$RepoRoot = Split-Path $PSScriptRoot -Parent
 Set-Location "$RepoRoot\packaging"
 $specPath = "scan2text-backend.spec"
 $srcPath = "$RepoRoot\src"

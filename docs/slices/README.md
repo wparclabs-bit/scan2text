@@ -21,6 +21,7 @@ How the Cloud engine work is planned, specified, split, and executed. Read this 
 | `STATE.md` | Current state, baseline counts, planned work, open items. |
 | `specs/` | The four specs, local copies of issues #2 to #5. |
 | `tickets/` | The fourteen tickets, local copies of issues #6 to #19. |
+| `TNN-*.md` | Executed slice documents: `T00-checker-script.md`, `T01-provider-spike.md`, `T13-ci-workflow.md`. Each is validated by `scripts/check_slice_docs.py`. |
 | `README.md` | This index. |
 
 ## Starting a slice
@@ -33,7 +34,7 @@ How the Cloud engine work is planned, specified, split, and executed. Read this 
 
 ## Ticket list
 
-Fourteen vertical tracer bullets. Each cuts a complete path through the layers, and each is demoable on its own. T00, T01, and T07 have no blockers and can run in parallel.
+Fourteen vertical tracer bullets. Each cuts a complete path through the layers, and each is demoable on its own. T00, T01, and T07 have no blockers and can run in parallel. Executed so far: T00 (the checker), T01 (the provider spike), and T13 (the CI workflow, blocked by T00 and now green).
 
 | Ticket | Title | Blocked by | Issue |
 |---|---|---|---|
