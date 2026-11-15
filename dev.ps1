@@ -12,6 +12,32 @@ Write-Host "Frontend  : $frontendDir"
 Write-Host "Backend   : $backendSrc"
 Write-Host ""
 
+# ── Toolchain safety belt: cargo must be on PATH for Tauri ───────────────────
+# A fresh shell often lacks %USERPROFILE%\.cargo\bin, and `tauri dev` then fails
+# with the opaque "failed to run cargo metadata ... program not found".
+$cargoExe = $null
+if (Get-Command cargo -ErrorAction SilentlyContinue) {
+    $cargoExe = (Get-Command cargo).Source
+} else {
+    $cargoCandidates = @()
+    if ($env:CARGO_HOME) { $cargoCandidates += (Join-Path $env:CARGO_HOME "bin") }
+    $cargoCandidates += (Join-Path $env:USERPROFILE ".cargo\bin")
+    foreach ($candidate in $cargoCandidates) {
+        $exe = Join-Path $candidate "cargo.exe"
+        if ($candidate -and (Test-Path $exe)) {
+            $env:PATH = "$candidate;$env:PATH"
+            $cargoExe = $exe
+            break
+        }
+    }
+    if (-not $cargoExe) {
+        Write-Error "cargo was not found on PATH and not in `$env:CARGO_HOME\bin or `$env:USERPROFILE\.cargo\bin. Install Rust from https://rustup.rs and retry."
+        exit 1
+    }
+}
+Write-Host "Cargo     : $cargoExe" -ForegroundColor DarkGray
+Write-Host ""
+
 # ── Port-occupancy safety belt ────────────────────────────────────────────────
 $occupied = $false
 try {

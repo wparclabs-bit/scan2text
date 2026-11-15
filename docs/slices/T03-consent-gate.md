@@ -70,6 +70,7 @@ T02 delivered the Profile, the provider seam with its fake, the credential store
 - `frontend/src/components/layout/ConsentGate.tsx` and `frontend/src/components/layout/ConsentGate.test.tsx` — mounts the gate for the queue: opens the modal once per session, or lets the escape toast fire.
 - `frontend/src/hooks/useCloudRequirement.ts` — reads the Profile and the queue and reports the newest Cloud-routed job.
 - `frontend/src/App.tsx` — mounts `ConsentGate`; the shell layout itself is untouched.
+- `dev.ps1` — one prerequisite safety belt: resolve `cargo` from `$env:CARGO_HOME` or `$env:USERPROFILE\.cargo\bin` before Tauri starts, so a fresh shell without cargo on `PATH` gets a named error instead of "failed to run cargo metadata ... program not found". The code did not previously check for cargo on `PATH` at all.
 - `frontend/src/lib/api.ts` — routing-threshold client call.
 - `frontend/src/lib/fileValidation.ts`, `frontend/src/components/dropzone/FileDropZone.tsx`, `frontend/src/locales/en.json`, `frontend/src/locales/id.json` — raised input cap and the new strings.
 - `frontend/src/components/layout/WelcomeModal.tsx` and its test — the honesty copy names 50 MB.
