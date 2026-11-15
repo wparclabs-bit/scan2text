@@ -4,8 +4,8 @@
 
 - **Date:** 2026-11-15
 - **Phase:** CLOUD-ENGINE-DESIGN (design closed, documentation written, first slice executed)
-- **Status:** Design complete. 55 decisions recorded. T00 (the slice-document checker) is implemented and green. T01 (the provider spike) is executed and recorded: the hosted provider was measured on 2026-11-15, two D-38 thresholds failed, and the plan changes are named in the record. T13 (the CI workflow) is pushed and **green on GitHub** (run 43699851420, commit `59f40ea`); it caught three machine-dependent tests on its first two runs, now repaired. The tag-only release job is written but not yet executed.
-- **Next action:** T02 starts on top of the T01 record and must reuse the measured model and recipe; T07 is independent. T13 is done (#9); to prove the release job, push a probe `v*` tag and confirm a draft release. The owner owes one amendment to D-15 and D-38 (see Open items).
+- **Status:** Design complete. 55 decisions recorded. T00 (the slice-document checker) is implemented and green. T01 (the provider spike) is executed and recorded: the hosted provider was measured on 2026-11-15, two D-38 thresholds failed, and the plan changes are named in the record. T13 (the CI workflow) is pushed and **fully green on GitHub**, including the tag-triggered release job; it caught four machine-dependent defects on its first two runs, all repaired.
+- **Next action:** T02 starts on top of the T01 record and must reuse the measured model and recipe; T07 is independent. T13 is done (#9) and the release job is proven (probe tag `v0.1.0-probe`, draft release and tag deleted after the check). The owner owes one amendment to D-15 and D-38 (see Open items).
 
 ## Baseline
 
@@ -37,7 +37,8 @@ T13 re-ran all five gates on 2026-11-15 at commit `fe2695d`. Frontend tests, typ
 T13 was pushed on 2026-11-15 and took three runs, which is exactly what continuous integration is for:
 - Run `43698698370` (`844c103`): documentation green; frontend and backend red on three tests that only pass on this machine — a UTC+7 assumption in `frontend/src/lib/naming.test.ts`, and two races in `tests/test_status_semantics.py` that read the task store before the fire-and-forget background job finished. Rust and release were skipped behind the failed gates.
 - Run `43699301634` (`b9b4866`): frontend green; backend and Rust red. The tests' patch generator was being collected by GC mid-test, so the real `QueueService` ran and reported `MODEL_NOT_FOUND`; and `tauri-build` validates the bundled `../../backend` resource, which a fresh checkout lacks.
-- Run `43699851420` (`59f40ea`): **success** — documentation, frontend, backend, and Rust all green. The release job is skipped on a branch push by design; it is the one job still unproven, and only a `v*` tag runs it.
+- Run `43699851420` (`59f40ea`): **success** — documentation, frontend, backend, and Rust all green on a branch push; the release job is skipped there by design.
+- Run `43700765222` (probe tag `v0.1.0-probe`): **success** — all four gate jobs plus the release job, which in 16 minutes built the frozen backend and the desktop shell, assembled the portable ZIP, and created a **draft** release named `Scan2Text v1.0.0` carrying `Scan2Text-v1.0.0-Portable.zip` (81 MB). The version came from `pyproject.toml`, so the release matches the manifest. Nothing was published. The draft release and the probe tag were deleted after the check.
 
 ## Artefacts
 
