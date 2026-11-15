@@ -34,6 +34,7 @@
     "fileTooComplex": "File too complex (max 50MB).",
     "fileTooComplexRejected": "File too large or complex. Please try a smaller file.",
     "fileTooComplexLocked": "File too large or complex. Limits: 50 MB per file · 50 pages per PDF. Split bigger PDFs and retry.",
+    "fileAboveCeiling": "This file is above the 50 MB Cloud ceiling and was not sent.",
     "modelNotFound": "AI engine files are missing. Downloading the model now…",
     "backendLost": "Backend connection lost",
     "outputWriteFailed": "Failed to save output file",
@@ -89,6 +90,10 @@
     "emptyFriendly": " Nothing here yet. Drop something tasty!",
     "longDocHint": "Still processing — please be patient.",
     "retry": "Retry",
+    "engine": {
+      "cloud": "Cloud engine",
+      "tooltip": "Cloud engine · {{model}}"
+    },
     "status": {
       "pending": "Pending",
       "uploading": "Uploading",

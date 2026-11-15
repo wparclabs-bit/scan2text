@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useScan2TextStore } from '@/stores/scan2text.store'
 import { usePreferenceStore } from '@/stores/preferencesStore'
 import MarkdownPreview from './MarkdownPreview'
+import { stripProvenanceFrontMatter } from '@/lib/markdownProvenance'
 
 import { toast } from 'sonner'
 import { getDepthStyle } from '@/lib/depthStyles'
@@ -10,6 +11,8 @@ import { invoke } from '@tauri-apps/api/core'
 
 function PreviewHeader({ job }: { job: any }) {
   const { t } = useTranslation()
+  // D-29: the human-facing surfaces show the body, never the provenance block.
+  const body = stripProvenanceFrontMatter(job?.resultMarkdown ?? '')
   return (
     <header
       data-testid="preview-header"
@@ -20,7 +23,7 @@ function PreviewHeader({ job }: { job: any }) {
         data-testid="preview-copy-btn"
         onClick={async () => {
           try {
-            await navigator.clipboard.writeText(job?.resultMarkdown ?? '')
+            await navigator.clipboard.writeText(body)
             toast.success(t('toast.copySuccess'))
           } catch (err) {
             console.error('Failed to copy markdown:', err)
@@ -101,7 +104,7 @@ export default function PreviewPanel() {
         <div className="flex-1 rounded-xl flex flex-col min-w-0 box-border overflow-hidden" style={depthStyle}>
           <div data-testid="preview-scroll-area" className="flex-1 min-h-0 overflow-y-auto scrollbar-warm">
             <div className="p-4">
-              <MarkdownPreview markdown={job.resultMarkdown ?? job.markdownOutput ?? ''} />
+              <MarkdownPreview markdown={stripProvenanceFrontMatter(job.resultMarkdown ?? job.markdownOutput ?? '')} />
             </div>
           </div>
         </div>

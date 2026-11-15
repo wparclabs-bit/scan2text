@@ -6,8 +6,8 @@
   "model_id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
   "region": "United States",
   "recipe": {
-    "version": "cloud-v1-2026-11-15",
-    "prompt": "Transcribe every visible character exactly, preserve the natural reading order, and emit tables as HTML table elements. Do not add commentary or code fences.",
+    "version": "cloud-v2-2026-11-15",
+    "prompt": "Transcribe every visible character exactly and preserve the natural reading order. Emit every table as an HTML table element. Use the page text only: no markup other than the HTML tables, no commentary, and no code fences.",
     "temperature": 0.6,
     "top_p": 0.95,
     "thinking_enabled": false

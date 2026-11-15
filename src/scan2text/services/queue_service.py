@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import List, Optional
 
 from scan2text.adapters.ocr_engine import OCREngine
+from scan2text.cloud.conversion import CloudConversionError, CloudConsentRequiredError
+from scan2text.cloud.route_decision import Engine, decide_route
 from scan2text.models.errors import ErrorCode
 from scan2text.models.job import JobStatus, OCRJob
 from scan2text.models.ocr_result import OCRPage, OCRResult
@@ -58,11 +60,13 @@ class QueueService:
         settings_service: Optional[SettingsService] = None,
         file_service: Optional[FileService] = None,
         quarantine_dir: Optional[Path] = None,
+        cloud_conversion_service=None,
     ) -> None:
         self._ocr_engine = ocr_engine
         self._paths = path_service or PathService()
         self._settings_svc = settings_service or SettingsService(path_service=self._paths)
         self._file_svc = file_service or FileService()
+        self._cloud_conversion_service = cloud_conversion_service
         self._quarantine_dir = (
             quarantine_dir
             if quarantine_dir is not None
@@ -199,8 +203,14 @@ class QueueService:
         vlm_adapter,
         path_to_stem: Optional[Dict[Path, str]] = None,
         enhance: bool = False,
+        consent_granted: bool = False,
     ) -> BatchSummary:
         """Process a list of image paths using a VlmOcrAdapter instance.
+
+        Each file is routed per file by :func:`decide_route`: a file above the
+        local threshold goes through the Cloud conversion service, a file at or
+        below it keeps the existing local path untouched. The batch stays
+        sequential, so the one-active-job FIFO order is preserved.
 
         On success the adapter returns a Markdown string which is saved via
         ``path_service.resolve_output_path``.  On error (a dict with an
@@ -213,6 +223,8 @@ class QueueService:
                 original stem instead of the UUID temp name.
             enhance: When True, images are PIL contrast + color enhanced (4.0x)
                 before OCR inference. Defaults to False.
+            consent_granted: The consent gate's decision for this batch. A
+                Cloud-routed file is never sent when this is False.
         """
         import shutil
 
@@ -224,6 +236,9 @@ class QueueService:
         for path in image_paths:
             try:
                 path = Path(path)
+                if decide_route(path).route is Engine.CLOUD:
+                    self._process_cloud_job(path, summary, consent_granted=consent_granted)
+                    continue
                 result = vlm_adapter.ocr(str(path), enhance=enhance)
 
                 if isinstance(result, dict) and "error" in result:
@@ -273,6 +288,69 @@ class QueueService:
                 })
 
         return summary
+
+    def _process_cloud_job(
+        self, path: Path, summary: BatchSummary, *, consent_granted: bool
+    ) -> None:
+        """Route one over-threshold file through the Cloud conversion service.
+
+        A missing consent grant is recorded, never sent: the whole batch keeps
+        its FIFO order and the file stays awaiting the gate.
+        """
+        service = self._cloud_conversion_service
+        if service is None or not consent_granted:
+            logger.info("Cloud conversion awaiting consent: %s", path.name)
+            summary.job_results.append({
+                "job_id": str(uuid.uuid4()),
+                "source_file": path.name,
+                "status": JobStatus.QUEUED.value,
+                "error_code": None,
+                "output_path": None,
+                "awaiting_consent": True,
+            })
+            return
+        try:
+            result = service.convert(path, consent_granted=consent_granted)
+        except CloudConsentRequiredError:
+            summary.job_results.append({
+                "job_id": str(uuid.uuid4()),
+                "source_file": path.name,
+                "status": JobStatus.QUEUED.value,
+                "error_code": None,
+                "output_path": None,
+                "awaiting_consent": True,
+            })
+            return
+        except CloudConversionError as exc:
+            logger.error("Cloud conversion failed for %s: %s", path.name, exc)
+            summary.failed += 1
+            summary.job_results.append({
+                "job_id": str(uuid.uuid4()),
+                "source_file": path.name,
+                "status": JobStatus.FAILED.value,
+                "error_code": "CLOUD_CONVERSION_FAILED",
+                "output_path": None,
+            })
+            return
+        summary.succeeded += 1
+        output_path = result.output_path
+        summary.job_results.append({
+            "job_id": str(uuid.uuid4()),
+            "source_file": path.name,
+            "status": JobStatus.DONE.value,
+            "error_code": None,
+            "output_path": str(output_path) if output_path is not None else None,
+            "markdown_content": result.markdown,
+            "engine": result.metadata.get("engine", "cloud"),
+            "cloud_model_id": result.metadata.get("model"),
+            "awaiting_geometry": list(result.awaiting_geometry),
+        })
+        logger.info(
+            "Cloud job done: %s (%d pages, %d awaiting geometry)",
+            path.name,
+            result.pages,
+            len(result.awaiting_geometry),
+        )
 
     def _resolve_unique_quarantine_name(self, original_name: str) -> str:
         """Return a unique filename for the quarantine directory.

@@ -3,6 +3,17 @@ import { vi } from 'vitest'
 import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 
+// jsdom ships no ResizeObserver; Radix ScrollArea constructs one in a layout effect.
+// The stub is inert because jsdom does no layout math (AGENTS.md 2.5).
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
+}
+
 // Mock Tauri webview API so FileDropZone (which uses getCurrentWindow) can render in jsdom tests
 vi.mock('@tauri-apps/api/webview', () => ({
   getCurrentWindow: vi.fn().mockReturnValue({

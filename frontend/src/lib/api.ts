@@ -10,6 +10,10 @@ export interface TaskStatusResponse {
   result_markdown?: string
   error?: string
   error_code?: string
+  /** The engine that produced the result: 'cloud' or 'local' (T04). */
+  engine?: 'local' | 'cloud'
+  /** The Cloud model that produced the result (T04). */
+  cloud_model_id?: string
 }
 
 export interface CompletedTaskStatusResponse {
@@ -17,6 +21,10 @@ export interface CompletedTaskStatusResponse {
   status: 'completed'
   result_markdown: string
   error?: string
+  /** The engine that produced the result: 'cloud' or 'local' (T04). */
+  engine?: 'local' | 'cloud'
+  /** The Cloud model that produced the result (T04). */
+  cloud_model_id?: string
 }
 
 export interface FailedTaskStatusResponse {
@@ -210,8 +218,19 @@ export async function getHealth(): Promise<{ status: string }> {
   return response.json() as Promise<{ status: string }>
 }
 
-export async function uploadFile(filePaths: string[], enhance = false): Promise<UploadResponse> {
-    const payload = enhance ? { file_paths: filePaths, enhance } : { file_paths: filePaths };
+/**
+ * Starts one batch. The Cloud consent flag is only sent when the T03 gate
+ * granted it for this batch; without that flag the backend refuses to send a
+ * Cloud-routed file.
+ */
+export async function uploadFile(
+  filePaths: string[],
+  enhance = false,
+  cloudConsent = false,
+): Promise<UploadResponse> {
+    const payload: Record<string, unknown> = { file_paths: filePaths };
+    if (enhance) payload.enhance = enhance;
+    if (cloudConsent) payload.consent_granted = true;
     const response = await fetch(buildApiUrl('/process'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

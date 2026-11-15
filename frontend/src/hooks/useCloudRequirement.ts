@@ -38,10 +38,7 @@ export function useCloudRequirement(): {
   return useMemo(() => {
     const latestId = jobOrder.length > 0 ? jobOrder[jobOrder.length - 1] : null
     const job = latestId ? jobs[latestId] : undefined
-    const sizeBytes: number =
-      (job as { metaSize?: number } | undefined)?.metaSize ??
-      (job as { fileSize?: number } | undefined)?.fileSize ??
-      0
+    const sizeBytes: number = job?.metaSize ?? job?.fileSize ?? 0
 
     if (!job || mirrorRoute(sizeBytes) !== 'cloud') {
       return { profile, cloudBatchId: null, batch: null }

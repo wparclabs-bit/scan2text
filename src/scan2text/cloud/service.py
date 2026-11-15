@@ -8,6 +8,12 @@ from pathlib import Path
 from typing import Callable, Protocol
 
 from scan2text.cloud.capability import CapabilityResult, CapabilityTester
+from scan2text.cloud.conversion import (
+    CloudConsentRequiredError,
+    CloudConversionError,
+    CloudConversionResult,
+    CloudConversionService,
+)
 from scan2text.cloud.models import CloudProfile
 from scan2text.cloud.provider import OpenAICompatibleProviderClient, ProviderClient
 from scan2text.services.credential_store import (
@@ -18,6 +24,22 @@ from scan2text.services.credential_store import (
 
 
 DEFAULT_PROFILE_PATH = Path(__file__).with_name("default_profile.json")
+
+# The conversion entry point lives in ``conversion.py`` (band rule, render,
+# write). It is re-exported here because the application-facing Cloud service
+# is what the queue and the routes import.
+__all__ = [
+    "DEFAULT_PROFILE_PATH",
+    "CloudConsentRequiredError",
+    "CloudConversionError",
+    "CloudConversionResult",
+    "CloudConversionService",
+    "CloudKeyRequiredError",
+    "CloudProfileError",
+    "CloudProfileService",
+    "CloudService",
+    "build_production_cloud_service",
+]
 
 
 class CredentialStoreApi(Protocol):

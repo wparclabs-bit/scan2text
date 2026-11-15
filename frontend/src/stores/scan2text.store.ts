@@ -11,6 +11,7 @@ import {
   getSettings,
 } from '../lib/api'
 import { startProgress, stopProgress } from '../lib/progressManager'
+import { useConsentStore } from './consent.store'
 import { i18n } from '../i18n'
 import { toast } from 'sonner'
 
@@ -50,6 +51,14 @@ export interface ScanJob {
   id: string
   fileName: string
   fileSize: number
+  /** Absolute path of the source file when the job came from metadata (T04). */
+  filePath?: string
+  /** File size read from Rust metadata when no real File object is available (T04). */
+  metaSize?: number
+  /** The engine that produced this job: 'cloud' or 'local' (T04). */
+  engine?: 'local' | 'cloud'
+  /** The Cloud model that produced this job's Markdown (T04). */
+  cloudModelId?: string
   fileType: string
   taskId: string | null
   status: JobStatus
@@ -84,6 +93,10 @@ export interface Scan2TextState {
     filePath?: string
     /** File size from Rust metadata when no real File is available. */
     metaSize?: number
+    /** The engine that will produce this job's Markdown (T04). */
+    engine?: 'local' | 'cloud'
+    /** The Cloud model that will produce this job's Markdown (T04). */
+    cloudModelId?: string
   }) => void
   updateJob: (id: string, patch: Partial<Omit<ScanJob, 'id'>>) => void
   setTaskId: (id: string, taskId: string) => void
@@ -126,6 +139,10 @@ function createDefaultJob(
     id,
     fileName,
     fileSize,
+    filePath: undefined,
+    metaSize: undefined,
+    engine: undefined,
+    cloudModelId: undefined,
     fileType,
     taskId: null,
     status: 'pending',
@@ -165,36 +182,26 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
   },
 
   addJob: (input) => {
+    // One state update carries every declared fact of the job.
     set((state) => ({
       jobs: {
         ...state.jobs,
-        [input.id]: createDefaultJob(
-          input.id,
-          input.fileName,
-          input.fileSize ?? input.metaSize ?? 0,
-          input.fileType ?? 'application/octet-stream',
-          input.createdAt ?? Date.now(),
-        ),
+        [input.id]: {
+          ...createDefaultJob(
+            input.id,
+            input.fileName,
+            input.fileSize ?? input.metaSize ?? 0,
+            input.fileType ?? 'application/octet-stream',
+            input.createdAt ?? Date.now(),
+          ),
+          filePath: input.filePath,
+          metaSize: input.metaSize,
+          engine: input.engine,
+          cloudModelId: input.cloudModelId,
+        },
       },
       jobOrder: [...state.jobOrder, input.id],
     }))
-    // Store metadata for jobs created without a real File object (e.g. from path+size only)
-    if (input.filePath || input.metaSize != null) {
-      set((state) => {
-        const job = state.jobs[input.id]
-        if (!job) return state
-        return {
-          jobs: {
-            ...state.jobs,
-            [input.id]: {
-              ...job,
-              filePath: input.filePath ?? (job as any).filePath,
-              metaSize: input.metaSize ?? (job as any).metaSize,
-            },
-          },
-        }
-      })
-    }
   },
 
   updateJob: (id, patch) => {
@@ -333,7 +340,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
           nextJob.fileName,
           { type: nextJob.fileType || 'application/octet-stream' },
         ) as any
-        ;(uploadFile as any).path = (nextJob as any).filePath
+        ;(uploadFile as any).path = nextJob.filePath
         get().startUpload({
           file: uploadFile,
           jobId: nextJobId,
@@ -377,7 +384,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
             nextJob.fileName,
             { type: nextJob.fileType || 'application/octet-stream' },
           ) as any
-          ;(uploadFile as any).path = (nextJob as any).filePath
+          ;(uploadFile as any).path = nextJob.filePath
           get().startUpload({ file: uploadFile, jobId: nextJobId })
         }
       }
@@ -445,7 +452,10 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
     try {
       // In Tauri, File objects have a .path property with the absolute path
       const filePath = (input.file as any).path as string
-      const response = await uploadFile([filePath], get().enhance)
+      // T03's gate is the only source of this flag: without it the backend
+      // refuses to send a Cloud-routed file.
+      const cloudConsent = useConsentStore.getState().canUseCloud(id)
+      const response = await uploadFile([filePath], get().enhance, cloudConsent)
       set((state) => {
         const job = state.jobs[id]
         if (!job) return state
@@ -525,6 +535,8 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
               resultMarkdown: md,
               markdownOutput: md,
               error: null,
+              engine: response.engine ?? j.engine,
+              cloudModelId: response.cloud_model_id ?? j.cloudModelId,
             },
           },
           selectedJobId: input.jobId,

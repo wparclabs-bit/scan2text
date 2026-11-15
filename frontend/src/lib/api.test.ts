@@ -121,6 +121,34 @@ describe('uploadFile', () => {
 
     expect(mockFetch.mock.calls[0][1].body).not.toContain('"enhance"')
   })
+
+  it('test_upload_file_sends_the_cloud_consent_flag_when_granted', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.resolve({ task_id: 't1' }),
+    })
+
+    const filePaths = ["C:/Users/Test/file.pdf"]
+    await uploadFile(filePaths, false, true)
+
+    expect(mockFetch.mock.calls[0][1].body).toBe(
+      JSON.stringify({ file_paths: filePaths, consent_granted: true })
+    )
+  })
+
+  it('test_upload_file_omits_the_cloud_consent_flag_when_not_granted', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 202,
+      json: () => Promise.resolve({ task_id: 't1' }),
+    })
+
+    const filePaths = ["C:/Users/Test/file.pdf"]
+    await uploadFile(filePaths, false, false)
+
+    expect(mockFetch.mock.calls[0][1].body).toBe(JSON.stringify({ file_paths: filePaths }))
+  })
 })
 
 describe('getTaskStatus', () => {

@@ -44,7 +44,7 @@ Fourteen vertical tracer bullets. Each cuts a complete path through the layers, 
 | T13 | CI runs the five gates on every change | T00 | #9 |
 | T02 | Save a cloud profile and prove the model works | T01 | #10 |
 | T03 | The first cloud job asks consent | T02 | #11 |
-| T04 | A file over 8 MB becomes Markdown through the cloud engine | T03 | #12 |
+| T04 | A file over 8 MB becomes Markdown through the cloud engine | T03 | #12 — **done, T04-cloud-conversion.md** |
 | T05 | A provider failure parks the job with a reason and a retry | T04 | #13 |
 | T06 | The user can cancel a long cloud job | T04 | #14 |
 | T08 | A 45-column table is rebuilt from geometry | T07 | #15 |

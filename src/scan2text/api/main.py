@@ -23,7 +23,9 @@ from scan2text.routes import settings as settings_routes
 from scan2text.routes import feedback as feedback_routes
 from scan2text.routes import download as download_routes
 from scan2text.cloud import routes as cloud_routes
+from scan2text.cloud.conversion import CloudConversionService
 from scan2text.cloud.route_decision import router as cloud_routing_routes
+from scan2text.cloud.routes_convert import build_convert_router
 from scan2text.cloud.service import build_production_cloud_service
 from scan2text.services.queue_service import QueueService
 from scan2text.services.path_service import PathService
@@ -39,12 +41,30 @@ _ws_manager = ConnectionManager()
 async def lifespan(app: FastAPI):
     """Initialize services on startup; clean up on shutdown."""
     adapter = VlmOcrAdapter()
-    queue_svc = QueueService(ocr_engine=adapter)
+    path_service = PathService()
+    cloud_service = build_production_cloud_service(path_service)
+    cloud_conversion_service = CloudConversionService(
+        profile_loader=cloud_service._profiles.load,
+        client_factory=lambda profile, secret: cloud_service._provider_factory(
+            profile, secret
+        ),
+        credential_reader=cloud_service._credentials.read,
+        path_service=path_service,
+    )
+    queue_svc = QueueService(
+        ocr_engine=adapter,
+        path_service=path_service,
+        cloud_conversion_service=cloud_conversion_service,
+    )
     queue_svc._vlm_adapter = adapter
     app.state.queue_service = queue_svc
     app.state.ws_manager = _ws_manager
     app.state.worker_busy = False
-    app.state.cloud_service = build_production_cloud_service(PathService())
+    app.state.cloud_service = cloud_service
+    app.state.path_service = path_service
+    app.state.cloud_profile_service = cloud_service._profiles
+    app.state.cloud_credential_store = cloud_service._credentials
+    app.state.cloud_conversion_service = cloud_conversion_service
     logger.info("Scan2Text API started")
     yield
     logger.info("Scan2Text API shut down")
@@ -69,6 +89,7 @@ app.include_router(feedback_routes.router)
 app.include_router(download_routes.router)
 app.include_router(cloud_routes.router)
 app.include_router(cloud_routing_routes)
+app.include_router(build_convert_router())
 
 # UPLOADS_DIR is retired — no longer used for incoming file data
 UPLOADS_DIR = Path(__file__).resolve().parents[3] / "uploads"
@@ -98,6 +119,7 @@ async def _run_processing(
     paths: List[Path],
     path_to_stem: Dict[Path, str],
     enhance: bool = False,
+    consent_granted: bool = False,
 ) -> None:
     """Background coroutine that processes files and broadcasts progress."""
     app.state.worker_busy = True
@@ -117,10 +139,19 @@ async def _run_processing(
             queue._vlm_adapter,
             path_to_stem,
             enhance=enhance,
+            consent_granted=consent_granted,
         )
         processed = summary.succeeded + summary.failed
         task["processed"] = processed
         task["total"] = summary.total_inputs
+        cloud_jobs = [
+            jr for jr in summary.job_results if jr.get("engine") == "cloud"
+        ]
+        if cloud_jobs:
+            task["engine"] = "cloud"
+            task["cloud_model_id"] = cloud_jobs[0].get("cloud_model_id")
+        elif summary.job_results:
+            task["engine"] = "local"
         if summary.succeeded == 0 and summary.failed > 0:
             task["status"] = "failed"
             if not task.get("error_code"):
@@ -173,6 +204,7 @@ async def process_files_json(
     """
     file_paths = payload.get("file_paths", [])
     enhance = payload.get("enhance", False)
+    consent_granted = bool(payload.get("consent_granted", False))
     if not file_paths:
         raise HTTPException(status_code=400, detail="No files provided")
     # Validate paths are absolute Windows paths
@@ -199,7 +231,14 @@ async def process_files_json(
         "file_paths": file_paths,
     }
     asyncio.create_task(
-        _run_processing(task_id, queue, paths, path_to_stem, enhance=enhance)
+        _run_processing(
+            task_id,
+            queue,
+            paths,
+            path_to_stem,
+            enhance=enhance,
+            consent_granted=consent_granted,
+        )
     )
     return JSONResponse(content={"task_id": task_id}, status_code=202)
 
@@ -245,6 +284,10 @@ async def get_status(task_id: str) -> Any:
     }
     if task.get("error_code"):
         result["error_code"] = task["error_code"]
+    if task["status"] == "completed" and task.get("engine"):
+        result["engine"] = task["engine"]
+        if task["engine"] == "cloud" and task.get("cloud_model_id"):
+            result["cloud_model_id"] = task["cloud_model_id"]
     if task["status"] == "completed" and task.get("result_markdown"):
         result["result_markdown"] = task["result_markdown"]
     return result

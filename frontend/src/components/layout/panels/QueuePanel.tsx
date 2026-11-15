@@ -3,12 +3,13 @@ import { useScan2TextStore } from '@/stores/scan2text.store'
 import { usePreferenceStore } from '@/stores/preferencesStore'
 import { formatBytes } from '@/lib/formatBytes'
 import { fileKind } from '@/lib/fileKind'
-import { useMemo, useState } from 'react'
+import { getCloudProfile } from '@/lib/api'
+import { useEffect, useMemo, useState } from 'react'
 import { Spinner } from '@/components/ui/spinner'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { getDepthStyle } from '@/lib/depthStyles'
-import { FileImage, FileText } from 'lucide-react'
+import { Cloud, FileImage, FileText } from 'lucide-react'
 
 export default function QueuePanel() {
   const { t } = useTranslation()
@@ -20,11 +21,37 @@ export default function QueuePanel() {
   const depthStyle = getDepthStyle({ theme, panel: 'center' })
 
   const [isRetrying, setIsRetrying] = useState<string | null>(null)
+  const [profileModelId, setProfileModelId] = useState<string | undefined>(undefined)
+  const [profileSettled, setProfileSettled] = useState(false)
 
   const jobList = useMemo(() => {
     const values = Object.values(jobsRef)
     return values.sort((a, b) => a.createdAt - b.createdAt)
   }, [jobsRef])
+
+  // The model id belongs to the job; the Profile is only the fallback.
+  const needsProfile = useMemo(
+    () => jobList.some((job) => job.engine === 'cloud' && !job.cloudModelId),
+    [jobList],
+  )
+
+  useEffect(() => {
+    if (!needsProfile || profileSettled) return
+    let active = true
+    void getCloudProfile()
+      .then((profile) => {
+        if (!active) return
+        setProfileModelId(profile.model_id)
+        setProfileSettled(true)
+      })
+      .catch(() => {
+        if (!active) return
+        setProfileSettled(true)
+      })
+    return () => {
+      active = false
+    }
+  }, [needsProfile, profileSettled])
 
   if (jobList.length === 0) {
     return (
@@ -47,6 +74,9 @@ export default function QueuePanel() {
           const isRetryingThis = isRetrying === job.id
           const isActive = job.status === 'uploading' || job.status === 'processing'
           const kind = fileKind(job.fileName)
+          const isCloud = job.engine === 'cloud'
+          const modelId = job.cloudModelId ?? profileModelId
+          const engineTooltipReady = Boolean(modelId) || profileSettled
           return (
             <div
               key={job.id}
@@ -92,6 +122,28 @@ export default function QueuePanel() {
                   {formatBytes(job.fileSize)}
                 </p>
               </div>
+              {isCloud && (
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        data-testid="queue-item-engine-icon"
+                        aria-label={t('queue.engine.cloud')}
+                        className="shrink-0 text-accent"
+                      >
+                        <Cloud className="w-4 h-4" aria-hidden="true" />
+                      </span>
+                    </TooltipTrigger>
+                    {engineTooltipReady && (
+                      <TooltipContent side="top" className="translate-y-[-2px]">
+                        <p data-testid="queue-item-engine-tooltip">
+                          {t('queue.engine.tooltip', { model: modelId ?? '' })}
+                        </p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               <div
                 data-testid="queue-item-status-slot"
                 className="w-[14px] shrink-0 flex items-center justify-center"
@@ -107,7 +159,7 @@ export default function QueuePanel() {
                         />
                       </TooltipTrigger>
                       <TooltipContent side="top" className="translate-y-[-2px]">
-                        <p>{t('queue.status.completed')}</p>
+                        <p data-testid="queue-item-status-tooltip">{t('queue.status.completed')}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -123,7 +175,7 @@ export default function QueuePanel() {
                         />
                       </TooltipTrigger>
                       <TooltipContent side="top" className="translate-y-[-2px]">
-                        <p>{t('errors.fileTooComplexLocked')}</p>
+                        <p data-testid="queue-item-status-tooltip">{t('errors.fileTooComplexLocked')}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -139,7 +191,7 @@ export default function QueuePanel() {
                         />
                       </TooltipTrigger>
                       <TooltipContent side="top" className="translate-y-[-2px]">
-                        <p>{t('queue.status.failed')}</p>
+                        <p data-testid="queue-item-status-tooltip">{t('queue.status.failed')}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -163,7 +215,7 @@ export default function QueuePanel() {
                         )}
                       </TooltipTrigger>
                       <TooltipContent side="top" className="translate-y-[-2px]">
-                        <p>{t(`queue.status.${job.status}`)}</p>
+                        <p data-testid="queue-item-status-tooltip">{t(`queue.status.${job.status}`)}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

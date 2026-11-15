@@ -244,7 +244,7 @@ describe('scan2text store', () => {
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
       Object.defineProperty(file, 'path', { value: 'C:/Users/Test/test.pdf', writable: false })
       await store.getState().startUpload({ file, jobId: 'my-job-id' })
-      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/test.pdf'], false)
+      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/test.pdf'], false, false)
     })
 
     it('should pass enhance=true to uploadFile when the enhance setting is true', async () => {
@@ -253,7 +253,7 @@ describe('scan2text store', () => {
       const file = new File(['content'], 'test.png', { type: 'image/png' })
       Object.defineProperty(file, 'path', { value: 'C:/Users/Test/test.png', writable: false })
       await store.getState().startUpload({ file, jobId: 'my-job-id' })
-      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/test.png'], true)
+      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/test.png'], true, false)
     })
 
     it('should pass enhance=false to uploadFile when the enhance setting is false', async () => {
@@ -262,7 +262,7 @@ describe('scan2text store', () => {
       const file = new File(['content'], 'test.png', { type: 'image/png' })
       Object.defineProperty(file, 'path', { value: 'C:/Users/Test/test.png', writable: false })
       await store.getState().startUpload({ file, jobId: 'my-job-id' })
-      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/test.png'], false)
+      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/test.png'], false, false)
     })
 
     it('should store the returned task_id on successful upload', async () => {
@@ -1026,7 +1026,7 @@ describe('scan2text store', () => {
       await vi.waitFor(() => {
         expect(mockUploadFile).toHaveBeenCalled()
       })
-      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/scan.png'], false)
+      expect(mockUploadFile).toHaveBeenCalledWith(['C:/Users/Test/scan.png'], false, false)
       // Task ID should be captured and status transitions to processing
       expect(store.getState().jobs['meta-job-1'].taskId).toBe('task-meta')
       expect(store.getState().jobs['meta-job-1'].status).toBe('processing')
