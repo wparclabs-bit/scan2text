@@ -56,7 +56,9 @@ a = Analysis(
     ["../src/scan2text/cli.py"],
     pathex=[],
     binaries=filtered_binaries,
-    datas=[],
+    datas=[
+        ("../src/scan2text/cloud/default_profile.json", "scan2text/cloud"),
+    ],
     hiddenimports=filtered_hiddenimports,
     hookspath=[],
     hooksconfig={},

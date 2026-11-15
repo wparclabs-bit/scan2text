@@ -1,0 +1,25 @@
+{
+  "name": "Cloud Profile",
+  "beta": true,
+  "enabled": false,
+  "base_url": "https://integrate.api.nvidia.com/v1",
+  "model_id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+  "recipe": {
+    "version": "cloud-v1-2026-11-15",
+    "prompt": "Transcribe every visible character exactly, preserve the natural reading order, and emit tables as HTML table elements. Do not add commentary or code fences.",
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "thinking_enabled": false
+  },
+  "cost_estimate": {
+    "prompt_tokens_per_page": 2167,
+    "completion_tokens_per_page": 381,
+    "pages_per_document": 30,
+    "input_usd_per_million_tokens": 0.2,
+    "output_usd_per_million_tokens": 0.5,
+    "estimated_cost_usd": 0.0187,
+    "measured_on": "2026-11-15",
+    "basis": "T01 five-page 150 DPI full-page band at the highest published serverless rate"
+  },
+  "credential": null
+}

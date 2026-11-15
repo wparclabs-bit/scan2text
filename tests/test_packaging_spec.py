@@ -55,6 +55,13 @@ def test_spec_not_onefile():
     )
 
 
+def test_spec_includes_default_cloud_profile_data():
+    """The frozen backend must carry the measured Cloud Profile asset."""
+    text = SPEC_PATH.read_text(encoding="utf-8")
+    assert "default_profile.json" in text
+    assert "scan2text/cloud" in text
+
+
 def test_spec_has_collect_block_for_folder_artifact():
     """Spec must declare a COLLECT block that names the scan2text-backend folder artifact.
 

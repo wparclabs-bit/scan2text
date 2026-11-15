@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import CloudSettingsSection from './CloudSettingsSection'
 import { getSettings, saveSettings } from '@/lib/api'
 import type { SettingsResponse } from '@/lib/api'
 
@@ -150,6 +151,8 @@ export default function SettingsDialog({ open, onOpenChange }: SettingsDialogPro
             />
           </div>
         </div>
+
+        <CloudSettingsSection />
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-2 pt-2">

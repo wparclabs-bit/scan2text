@@ -3,36 +3,24 @@
 ## Where the work stands
 
 - **Date:** 2026-11-15
-- **Phase:** CLOUD-ENGINE-DESIGN (design closed, documentation written, first slice executed)
-- **Status:** Design complete. 55 decisions recorded. T00 (the slice-document checker) is implemented and green. T01 (the provider spike) is executed and recorded: the hosted provider was measured on 2026-11-15, two D-38 thresholds failed, and the plan changes are named in the record. T13 (the CI workflow) is pushed and **fully green on GitHub**, including the tag-triggered release job; it caught four machine-dependent defects on its first two runs, all repaired.
-- **Next action:** T02 starts on top of the T01 record and must reuse the measured model and recipe; T07 is independent. T13 is done (#9) and the release job is proven (probe tag `v0.1.0-probe`, draft release and tag deleted after the check). The owner owes one amendment to D-15 and D-38 (see Open items).
+- **Phase:** CLOUD-ENGINE (design closed, first three slices executed)
+- **Status:** Design complete. 55 decisions recorded. T00 (the slice-document checker) is implemented and green. T01 (the provider spike) is executed and recorded: the hosted provider was measured on 2026-11-15, two D-38 thresholds failed, and the plan changes are named in the record. T02 (the Cloud Profile) is executed: Settings holds a Beta, off-by-default Cloud engine section; the key is stored by Windows Credential Manager with a DPAPI encrypted-file fallback and never reaches settings, the frontend, storage, logs, or toasts; the connection test sends one image plus text through a hermetic fake and reports the model, vision capability, latency, and the T01-measured cost estimate. T13 (the CI workflow) is pushed and **fully green on GitHub**, including the tag-triggered release job; it caught four machine-dependent defects on its first two runs, all repaired.
+- **Next action:** T03 (the first cloud job asks consent) starts on top of the T02 provider seam and Profile; T07 is independent. T13 is done (#9) and the release job is proven (probe tag `v0.1.0-probe`, draft release and tag deleted after the check). The owner owes one amendment to D-15 and D-38 (see Open items), and one manual live provider check with a real key.
 
 ## Baseline
 
-Measured on 2026-11-15 at commit `45bdf97`, on Windows.
+Measured on 2026-11-15 at commit `1343be1`, on Windows.
 
 | Gate | Result |
 |---|---|
-| Frontend tests | 710 passed, 42 files |
+| Frontend tests | 716 passed, 42 files (710 before T02, +6 Cloud Settings tests) |
 | Frontend typecheck | 0 errors |
-| Frontend build | success, 2176 modules |
-| Backend tests | 447 passed, 1 warning (432 before T00, +15 checker tests) |
+| Frontend build | success, 2177 modules (2176 before T02) |
+| Backend tests | 486 passed, 1 warning (463 before T02, +23 Cloud tests) |
 | Cargo check | clean |
+| Slice-document checker | exit 0, 4 documents |
 
-T00 added one backend test file and no product code, so the frontend, typecheck, build, and cargo baselines are unchanged; the backend count rose from 432 to 447.
-
-T01 re-ran all five gates on 2026-11-15; every count is unchanged because T01 added only documentation. The slice-document checker was also run and passed.
-
-T13 re-ran all five gates on 2026-11-15 at commit `fe2695d`. Frontend tests, typecheck, build, and cargo check are unchanged from the table above. The backend suite now collects **463 tests and all 463 pass, 1 warning**: T13 adds 16 workflow tests (`tests/test_ci_workflow.py`) and repairs a pre-existing failure. At `fe2695d` the suite collected 447 tests but reported 446 passed and 1 failed, because `tests/test_check_slice_docs.py` froze the collected set at `{T00-checker-script.md}` and had failed since T01 added a slice document. The assertion now checks that T00 is collected and that every collected document passes.
-
-| Gate (T13) | Result |
-|---|---|
-| Frontend tests | 710 passed, 42 files (unchanged) |
-| Frontend typecheck | 0 errors (unchanged) |
-| Frontend build | success (unchanged) |
-| Backend tests | 463 passed, 1 warning |
-| Cargo check | clean (unchanged) |
-| Slice-document checker | exit 0, 3 documents |
+T02 added one new frontend module (`CloudSettingsSection.tsx`), five backend modules under `src/scan2text/cloud/`, one credential-store module, four backend test files, one packaging-spec assertion, and the slice document. The Local engine, its Ovis recipe, the Command Center shell, and the TopBar are untouched.
 
 T13 was pushed on 2026-11-15 and took three runs, which is exactly what continuous integration is for:
 - Run `43698698370` (`844c103`): documentation green; frontend and backend red on three tests that only pass on this machine — a UTC+7 assumption in `frontend/src/lib/naming.test.ts`, and two races in `tests/test_status_semantics.py` that read the task store before the fire-and-forget background job finished. Rust and release were skipped behind the failed gates.
@@ -51,6 +39,7 @@ T13 was pushed on 2026-11-15 and took three runs, which is exactly what continuo
 | `docs/slices/README.md` | Index of the pipeline and the ticket list |
 | `docs/slices/T00-checker-script.md` | The first slice document, produced from the template |
 | `docs/slices/T01-provider-spike.md` | The measured provider record (T01): base64, tokens, latency, cost, threshold verdicts |
+| `docs/slices/T02-cloud-profile.md` | The Cloud Profile slice (T02): secret boundary, provider seam, capability test, cost provenance |
 | `docs/slices/T13-ci-workflow.md` | The CI slice (T13): jobs, gates, runner, cache keys, release job |
 | `.github/workflows/ci.yml` | Continuous integration: checker, frontend, backend, Rust, and a tag-triggered draft release |
 | `scripts/check_slice_docs.py` | Validates slice documents; standard library only (D-48) |
@@ -76,7 +65,7 @@ Three specs, then twelve vertical tickets, then one slice document per ticket.
 | T01 | Measure a real provider band | none | #7 |
 | T07 | A digital PDF converts from its text layer without OCR | none | #8 |
 | T13 | CI runs the five gates on every change | T00 | #9 |
-| T02 | Save a cloud profile and prove the model works | T01 | #10 |
+| T02 | Save a cloud profile and prove the model works | T01 | #10 — **done, T02-cloud-profile.md** |
 | T03 | The first cloud job asks consent | T02 | #11 |
 | T04 | A file over 8 MB becomes Markdown through the cloud engine | T03 | #12 |
 | T05 | A provider failure parks the job with a reason and a retry | T04 | #13 |
@@ -100,6 +89,7 @@ Three specs, then twelve vertical tickets, then one slice document per ticket.
 | — | GitHub issue **#1** "setup probe - delete me" (leftover from the setup probe) is closed. The token cannot delete it, so it stays as a closed, harmless issue. | resolved |
 | — | The NVIDIA API key for the spike must be supplied out of the repository | resolved at T01; supplied out of the repository, never committed |
 | — | D-15 and D-38 amendment: scope the 20-second band latency to full-page bands and the 98% cell-accuracy threshold to model crops of 12 columns or fewer, with wide tables on the D-27 geometry path | owner, after T01 |
+| — | Live provider check for the saved Cloud Profile (real key, base URL, model id, Test connection). CI has no key by design; the hermetic fake proves the path. | owner, after T02 |
 
 ## Known repository inconsistencies
 
