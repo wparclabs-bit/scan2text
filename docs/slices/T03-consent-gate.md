@@ -3,7 +3,7 @@
 ## State snapshot
 - Read `AGENTS.md` first, then `docs/slices/HANDOFF-GUIDE.md`, `docs/slices/DECISIONS.md` (D-05, D-06, D-07, D-08, D-09, D-11, D-12, D-13, D-14, D-31, D-36, and the amended D-15), and `docs/slices/STATE.md`.
 - Read `docs/slices/T02-cloud-profile.md` for the Profile, the provider seam, and the credential storage that already exist.
-- Last commit: 2232800.
+- Committed as `69ed2c6`.
 - Baseline at the start: frontend 716 tests in 42 files, typecheck 0 errors, build success (2176 modules), backend 486 passed with one warning, cargo check clean; measured 2026-11-15 on Windows.
 - Final result: implemented and green. Backend 486 to 496 tests; frontend 716 tests in 42 files to 739 tests in 45 files; build 2176 to 2178 modules; typecheck 0 errors; cargo clean; slice-document checker exit 0 with 5 documents.
 - Gate note: this sandbox cannot remove its own temporary tree, so the repository's 13 `tmp_path`-based backend tests cannot run here; the full suite reports 496 passed with that one documented environment error group. CI, which has a normal temp directory, runs them and reports the clean count. The frontend suite is unaffected once the sandbox permits Node to spawn its test workers.
