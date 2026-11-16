@@ -198,6 +198,75 @@ class QueueService:
 
     # --- VlmOcrAdapter integration ------------------------------------------
 
+    def _convert_pdf_text_layer(
+        self,
+        path: Path,
+        vlm_adapter,
+        enhance: bool = False,
+    ) -> Optional[str]:
+        """Convert a PDF from the text layer it already contains (D-26).
+
+        Returns None when the file is not a PDF or when no page carries a text
+        layer, so the caller keeps the OCR path. A page with a text layer is
+        rebuilt from its words, font sizes, and positions: no page is
+        rasterised and no model is called for it. A page without a text layer
+        is rasterised and sent to OCR, exactly as before.
+        """
+        from scan2text.services.text_layer import (
+            build_page_markdown,
+            extract_text_pages,
+        )
+
+        if detect_file_type(path) != "pdf":
+            return None
+        try:
+            pages = extract_text_pages(path)
+        except Exception as exc:
+            logger.warning(
+                "Text layer unavailable for %s: %s",
+                path.name,
+                type(exc).__name__,
+            )
+            return None
+        if not pages or not any(page.has_text for page in pages):
+            return None
+
+        blocks: List[str] = []
+        for page in pages:
+            if page.has_text:
+                blocks.append(build_page_markdown(page).strip())
+            else:
+                blocks.append(
+                    self._ocr_scanned_page(path, page.page_number, vlm_adapter, enhance)
+                )
+        return "\n\n---\n\n".join(block for block in blocks if block)
+
+    def _ocr_scanned_page(
+        self,
+        path: Path,
+        page_number: int,
+        vlm_adapter,
+        enhance: bool,
+    ) -> str:
+        """Rasterise one page without a text layer and send it to OCR."""
+        import tempfile
+
+        from scan2text.services.pdf_service import render_pdf_page_to_png
+
+        with tempfile.TemporaryDirectory() as folder:
+            image_path = render_pdf_page_to_png(path, page_number, Path(folder))
+            result = vlm_adapter.ocr(str(image_path), enhance=enhance)
+        if isinstance(result, dict) and "error" in result:
+            logger.warning(
+                "OCR failed for scanned page %s of %s: %s",
+                page_number,
+                path.name,
+                result["error"],
+            )
+            return ""
+        return result
+
+
     def process_image_paths(
         self,
         image_paths: List[str | Path],
@@ -240,7 +309,9 @@ class QueueService:
                 if decide_route(path).route is Engine.CLOUD:
                     self._process_cloud_job(path, summary, consent_granted=consent_granted)
                     continue
-                result = vlm_adapter.ocr(str(path), enhance=enhance)
+                result = self._convert_pdf_text_layer(path, vlm_adapter, enhance)
+                if result is None:
+                    result = vlm_adapter.ocr(str(path), enhance=enhance)
 
                 if isinstance(result, dict) and "error" in result:
                     dest_name = self._resolve_unique_quarantine_name(path.name)

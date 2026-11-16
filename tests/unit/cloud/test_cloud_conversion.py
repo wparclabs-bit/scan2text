@@ -233,13 +233,21 @@ def test_queue_routes_a_large_file_to_cloud_and_keeps_a_small_file_on_the_local_
     summary = queue.process_image_paths([large, small], adapter, consent_granted=True)
 
     assert cloud.calls == [large]
-    assert adapter.calls == [str(small)]
+    # The small file stays on the local path. It is a digital PDF, so it
+    # converts from its text layer and the model is not called (D-26).
+    assert adapter.calls == []
     assert summary.total_inputs == 2
     cloud_results = [
         result for result in summary.job_results if result.get("engine") == "cloud"
     ]
     assert len(cloud_results) == 1
     assert cloud_results[0]["source_file"] == large.name
+    local_results = [
+        result for result in summary.job_results if result.get("engine") != "cloud"
+    ]
+    assert len(local_results) == 1
+    assert local_results[0]["source_file"] == small.name
+    assert "small page" in local_results[0]["markdown_content"]
 
 
 def test_pages_are_sent_in_bands_of_five_150_dpi_page_images_with_the_extracted_text_layer(tmp_path) -> None:

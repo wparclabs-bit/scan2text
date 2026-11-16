@@ -70,6 +70,30 @@ def check_pdf_size(pdf_path: Path) -> tuple[bool, str]:
     return True, ""
 
 
+def render_pdf_page_to_png(
+    pdf_path: Path, page_number: int, output_dir: Path
+) -> Path:
+    """Render one page of a PDF to a PNG file.
+
+    Used only for a page without a text layer, which has to go to OCR (D-26).
+    ``page_number`` is 1-based.
+    """
+    ok, err = check_page_limit(pdf_path, MAX_PDF_PAGES_DEFAULT)
+    if not ok:
+        raise ValueError(err)
+    ok, err = check_pdf_size(pdf_path)
+    if not ok:
+        raise ValueError(err)
+
+    with pdfium.PdfDocument(str(pdf_path)) as doc:
+        if page_number < 1 or page_number > len(doc):
+            raise ValueError(f"PDF has no page {page_number}")
+        bitmap = doc[page_number - 1].render(scale=150 / 72)  # ~150 DPI
+        png_path = output_dir / f"{pdf_path.stem}_page_{page_number}.png"
+        bitmap.to_pil().save(png_path, format="PNG")
+    return png_path
+
+
 def render_pdf_to_images(
     pdf_path: Path, output_dir: Path, max_pages: int
 ) -> List[Path]:
