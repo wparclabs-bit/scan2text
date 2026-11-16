@@ -85,6 +85,32 @@ def test_waiting_status_route_returns_reason_and_error_code():
     assert body["error_code"] == "NETWORK_UNAVAILABLE"
 
 
+def test_fast_fail_status_exposes_specific_message_and_fix_key():
+    api_app, mock_qs = _make_app()
+    mock_qs.process_image_paths.return_value = _Summary(
+        job_results=[
+            {
+                "status": "failed",
+                "error_code": "PROVIDER_UNAUTHORIZED",
+                "error": "The provider rejected the API key.",
+                "fix_key": True,
+                "engine": "cloud",
+                "output_path": None,
+            }
+        ],
+        failed=1,
+    )
+    with TestClient(api_app) as client:
+        resp = client.post("/process", json={"file_paths": [_tmp_file()]})
+        task_id = resp.json()["task_id"]
+        assert _wait_for_visible(client, task_id) == "failed"
+        body = client.get(f"/status/{task_id}").json()
+
+    assert body["error_code"] == "PROVIDER_UNAUTHORIZED"
+    assert body["error"] == "The provider rejected the API key."
+    assert body["fix_key"] is True
+
+
 def test_backend_and_frontend_status_sets_are_equal():
     api_ts = (
         Path(__file__).resolve().parents[2]

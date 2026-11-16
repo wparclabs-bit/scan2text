@@ -39,14 +39,14 @@ Measured on 2026-11-16 at commit `4c72ed4` on Windows.
 
 | Gate | Before | After |
 |---|---|---|
-| Frontend tests | 751 passed, 50 files | 763 passed, 53 files |
+| Frontend tests | 751 passed, 50 files | 764 passed, 53 files |
 | Frontend typecheck | 0 errors | 0 errors |
 | Frontend build | success, 2176 modules | success, 2183 modules |
-| Backend tests | 514 passed, 1 warning | 529 passed, 1 warning |
+| Backend tests | 514 passed, 1 warning | 530 passed, 1 warning |
 | Cargo check | clean | clean |
 | Slice-document checker | exit 0, 6 documents | exit 0, 7 documents |
 
-GREEN evidence: 12 of 12 taxonomy tests, then 3 of 3 status tests, then 42 targeted frontend tests; the five gates above; the checker exited 0 with seven valid documents. RED evidence: `ModuleNotFoundError: No module named 'scan2text.cloud.failure'` and `ImportError: cannot import name 'TaskStatus'` on the first backend run, then the frontend status-set test failing until `TASK_STATUSES` was declared. The existing error-code lock test was updated for the eight new `ErrorCode` values.
+GREEN evidence: 16 of 16 backend taxonomy/status/fast-fail tests, then 43 targeted frontend tests; the five gates above; the checker exited 0 with seven valid documents. RED evidence: `ModuleNotFoundError: No module named 'scan2text.cloud.failure'` and `ImportError: cannot import name 'TaskStatus'` on the first backend run, then the frontend status-set test failing until `TASK_STATUSES` was declared. The existing error-code lock test was updated for the eight new `ErrorCode` values.
 
 T04 delivered the band rule, the conversion service, the provider seam consumer, the declared job facts, and the consent flag. Nothing in this slice changes those.
 

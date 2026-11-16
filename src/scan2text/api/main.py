@@ -171,15 +171,13 @@ async def _run_processing(
             task["error_code"] = first.get("error_code")
         elif summary.succeeded == 0 and summary.failed > 0:
             task["status"] = TaskStatus.FAILED.value
-            propagated = next(
-                (
-                    jr.get("error_code")
-                    for jr in summary.job_results
-                    if jr.get("error_code")
-                ),
-                None,
-            )
+            failed_jobs = [jr for jr in summary.job_results if jr.get("error_code")]
+            propagated = failed_jobs[0].get("error_code") if failed_jobs else None
             task["error_code"] = propagated or "OCR_FAILED"
+            # D-20: a fast-fail carries its specific message and fix-key flag so
+            # the UI can teach the remedy instead of showing a generic error.
+            task["error"] = failed_jobs[0].get("error") if failed_jobs else None
+            task["fix_key"] = bool(failed_jobs[0].get("fix_key")) if failed_jobs else False
         elif summary.succeeded > 0 and summary.failed > 0:
             task["status"] = TaskStatus.COMPLETED.value
             task["error_code"] = "PARTIAL_FAILURE"
@@ -320,6 +318,10 @@ async def get_status(task_id: str) -> Any:
     }
     if task.get("error_code"):
         result["error_code"] = task["error_code"]
+    if task.get("error"):
+        result["error"] = task["error"]
+    if task.get("fix_key"):
+        result["fix_key"] = True
     if task["status"] == TaskStatus.WAITING.value and task.get("reason"):
         result["reason"] = task["reason"]
     if task["status"] == TaskStatus.COMPLETED.value and task.get("engine"):

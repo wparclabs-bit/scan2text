@@ -50,6 +50,8 @@ export interface FailedTaskStatusResponse {
   status: 'failed'
   error?: string
   error_code?: string
+  /** A key/quota fast-fail teaches the remedy instead of showing a generic error (D-20). */
+  fix_key?: boolean
 }
 
 /** A parked job: waiting with a short reason key and a retryable error code (D-34). */

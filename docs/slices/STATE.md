@@ -13,10 +13,10 @@ Measured on 2026-11-16 at commit `4c72ed4`, on Windows.
 
 | Gate | Result |
 |---|---|
-| Frontend tests | 763 passed, 53 files (751 in 50 files before T05, +12 waiting tests) |
+| Frontend tests | 764 passed, 53 files (751 in 50 files before T05, +13 waiting tests) |
 | Frontend typecheck | 0 errors |
 | Frontend build | success, 2183 modules |
-| Backend tests | 529 passed, 1 warning (514 before T05, +15 taxonomy/status/ceiling tests) |
+| Backend tests | 530 passed, 1 warning (514 before T05, +16 taxonomy/status/ceiling/fast-fail tests) |
 | Cargo check | clean |
 | Slice-document checker | exit 0, 7 documents |
 

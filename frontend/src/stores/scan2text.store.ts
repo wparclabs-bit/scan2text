@@ -25,6 +25,21 @@ export function isDocumentCeilingReached(startedAt: number, now: number): boolea
   return now - startedAt >= DOCUMENT_CEILING_MS
 }
 
+const PROVIDER_FAILURE_TOASTS: Record<string, string> = {
+  PROVIDER_UNAUTHORIZED: 'errors.providerUnauthorized',
+  PROVIDER_FORBIDDEN: 'errors.providerForbidden',
+  PROVIDER_QUOTA_EXHAUSTED: 'errors.providerQuota',
+}
+
+/** A fast-fail shows a specific message and a way to fix the key (D-20). */
+function notifyProviderFailure(errorCode?: string, fixKey?: boolean): void {
+  const key = errorCode ? PROVIDER_FAILURE_TOASTS[errorCode] : undefined
+  if (key) {
+    toast.error(i18n.t(key))
+    if (fixKey) toast.info(i18n.t('errors.fixApiKey'))
+  }
+}
+
 /** Write markdown content to disk via the Rust output_writer command. */
 async function writeOutputFile(
   content: string,
@@ -610,6 +625,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
       }
       if (isTaskFailed(response)) {
         const errorCode = response.error_code
+        notifyProviderFailure(errorCode, response.fix_key)
         if (errorCode === 'PDF_TOO_COMPLEX') {
           toast.info(i18n.t('errors.pdfTooComplex'))
         } else if (errorCode === 'FILE_TOO_COMPLEX') {
@@ -748,6 +764,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
           }
           if (isTaskFailed(statusResponse)) {
             const errorCode = statusResponse.error_code
+            notifyProviderFailure(errorCode, statusResponse.fix_key)
             if (errorCode === 'PDF_TOO_COMPLEX') {
               toast.info(i18n.t('errors.pdfTooComplex'))
             } else if (errorCode === 'FILE_TOO_COMPLEX') {

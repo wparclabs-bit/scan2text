@@ -1,4 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { toast } from 'sonner'
+import { initI18n } from '@/i18n'
+import en from '@/locales/en.json'
+import id from '@/locales/id.json'
 import {
   DOCUMENT_CEILING_MS,
   isDocumentCeilingReached,
@@ -22,6 +26,7 @@ const { getTaskStatus, uploadFile } = await import('../lib/api')
 describe('T05 — waiting state in the job store', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    initI18n({ en: { translation: en }, id: { translation: id } })
     useScan2TextStore.getState().reset()
     ;(getTaskStatus as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
       task_id: 't1',
@@ -51,6 +56,25 @@ describe('T05 — waiting state in the job store', () => {
     expect(job.status).toBe('waiting')
     expect(job.reason).toBe('network')
     expect(job.errorCode).toBe('NETWORK_UNAVAILABLE')
+  })
+
+  it('test_a_fast_fail_shows_a_specific_message_and_a_fix_key_action', async () => {
+    ;(getTaskStatus as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      task_id: 't1',
+      status: 'failed',
+      error_code: 'PROVIDER_UNAUTHORIZED',
+      error: 'The provider rejected the API key.',
+      fix_key: true,
+    })
+    const store = useScan2TextStore.getState()
+    store.addJob({ id: 'j1', fileName: 'large.pdf', fileSize: 2048 })
+    store.setTaskId('j1', 't1')
+
+    await useScan2TextStore.getState().pollJob({ jobId: 'j1' })
+
+    expect(toast.error).toHaveBeenCalledWith('The provider rejected the API key.')
+    expect(toast.info).toHaveBeenCalledWith('Open Settings to fix the API key.')
+    expect(useScan2TextStore.getState().jobs['j1'].status).toBe('failed')
   })
 
   it('test_retry_of_a_parked_job_resumes_the_same_job', async () => {
