@@ -2,11 +2,11 @@
 
 ## State snapshot
 - Read AGENTS.md first, then docs/slices/HANDOFF-GUIDE.md, docs/slices/DECISIONS.md (D-26, D-43, D-44, D-45, D-46, D-47), and docs/slices/STATE.md.
-- Last commit: `4c72ed4`.
-- Baseline: frontend 751 tests in 50 files, backend 514 passed with one warning, typecheck 0 errors, build success (2176 modules), cargo check clean; measured 2026-11-16 on Windows.
+- Last commit: `9d155b2` (this slice's implementation commit; the branch also carries the T05 commits `ac76dec` and `4638a87`).
+- Baseline: frontend 764 tests in 53 files, backend 537 passed with one warning, typecheck 0 errors, build success (2183 modules), cargo check clean; measured 2026-11-17 on Windows.
 - Issue: #8.
 - Open blockers: none. The PDF library (pypdfium2) is already a project dependency, so the text layer is read without installing anything.
-- Concurrency note: the main checkout carried an unrelated in-flight slice (T05) while this document was written. This slice was developed on its own branch so the two do not collide; the branch base is `4c72ed4`.
+- Concurrency note: the main checkout carried an unrelated in-flight slice (T05) while this document was written. This slice was developed on its own branch and rebased onto the T05 commits, so the two did not collide.
 
 House rules:
 - Read AGENTS.md first; it is the source of truth.
@@ -36,16 +36,16 @@ A PDF that already carries text converts from that text layer. Headings, lists, 
 - D-47 — The slice carries a five-line house-rules block and points to AGENTS.md as the source of truth.
 
 ## Baseline
-Measured on 2026-11-16 at commit `4c72ed4` on Windows.
+Measured on 2026-11-17 at commit `9d155b2` on Windows (the branch carries the T05 commits).
 
 | Gate | Before | After |
 |---|---|---|
-| Frontend tests | 751 passed, 50 files | unchanged by this slice; recorded at GREEN |
+| Frontend tests | 764 passed, 53 files | 764 passed, 53 files (no frontend change) |
 | Frontend typecheck | 0 errors | 0 errors |
-| Frontend build | success, 2176 modules | success |
-| Backend tests | 514 passed, 1 warning | recorded at GREEN |
+| Frontend build | success, 2183 modules | success, 2183 modules |
+| Backend tests | 530 passed, 1 warning | 537 passed, 1 warning (+7 text-layer and routing tests) |
 | Cargo check | clean | clean |
-| Slice-document checker | exit 0, 6 documents | exit 0, 7 documents |
+| Slice-document checker | exit 0, 7 documents | exit 0, 8 documents |
 
 The text layer is read with pypdfium2, the PDF library the project already ships. Nothing is installed.
 
@@ -98,13 +98,18 @@ None. The slice is backend-only and adds no user-visible string.
 - `second-brain/00-Current-State.md` — the new baseline and one changelog entry.
 
 ## Definition of done
-- [ ] RED observed failing, for the right reason.
-- [ ] The targeted test green.
-- [ ] The five gates green, with the new counts recorded here and in docs/slices/STATE.md.
-- [ ] The slice-document checker passes.
-- [ ] The Obsidian summary and 00-Current-State.md are updated.
-- [ ] No dependency added, no fixture committed, no frontend change, no secret in the diff.
-- [ ] The work is committed with a GitHub noreply email.
+- [x] RED observed failing, for the right reason.
+- [x] The targeted test green.
+- [x] The five gates green, with the new counts recorded here and in docs/slices/STATE.md.
+- [x] The slice-document checker passes.
+- [x] The Obsidian summary and 00-Current-State.md are updated.
+- [x] No dependency added, no fixture committed, no frontend change, no secret in the diff.
+- [x] The work is committed with a GitHub noreply email.
 
 ## Handoff notes
-Draft — refreshed at the end of the slice.
+- What now works that did not before: a PDF that carries a text layer converts from that text layer. `src/scan2text/services/text_layer.py` reads the words, their font sizes, their positions, and the page's link annotations, and rebuilds Markdown: a heading level from the font size against the body size, a bullet or numbered item from the line's first characters, a fenced code block from a monospace font, a hyperlink from the link annotation that covers the words, paragraphs from the lines that sit on the same baseline band, and reading order from the columns.
+- What the next slice may assume: the routing lives in `QueueService._convert_pdf_text_layer`. A PDF with a text layer never reaches the model and is never rasterised; a page without a text layer is rasterised on its own and sent to OCR; a mixed document converts page by page and joins the pages with the FR-06 separator. The reader is pure: it never writes a file and never calls a model.
+- One existing test changed: `tests/unit/cloud/test_cloud_conversion.py` asserted that a small digital PDF reaches the OCR adapter on the local path. The local path for a digital PDF is now the text layer, so the test now asserts that the file stayed local and that its Markdown came from the text layer.
+- Still open: the heuristics are deliberately simple — a heading is a line whose font size is at least 1.15 times the body size, a column is a band of lines that do not overlap horizontally, and a paragraph is a run of same-sized lines less than 1.6 line heights apart. T08 (geometry tables) and T09 (column segments) build on this reader; T10 owns the committed fixtures and the sanitizer. The committed-fixture ignore exception still needs the owner's approval.
+- The PDF library is pypdfium2, already a project dependency. Nothing was installed.
+- This slice was developed on the branch `slice/T07-text-layer` and rebased onto the T05 commits because the main checkout carried T05 in flight. The branch is ready to merge; nothing in the main checkout was touched.
