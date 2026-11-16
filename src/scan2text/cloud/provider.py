@@ -27,6 +27,26 @@ class ProviderTimeout(ProviderError):
     """The provider did not answer before the configured timeout."""
 
 
+class ProviderForbidden(ProviderError):
+    """The provider refused the request (HTTP 403)."""
+
+
+class ProviderQuotaExceeded(ProviderError):
+    """The provider quota is exhausted (HTTP 402 or a quota error body)."""
+
+
+class ProviderRateLimited(ProviderError):
+    """The provider asked the caller to slow down (HTTP 429)."""
+
+
+class ProviderServerError(ProviderError):
+    """The provider returned a server-side error (HTTP 5xx)."""
+
+
+class ProviderNetworkError(ProviderError):
+    """The provider could not be reached at all — no HTTP response arrived."""
+
+
 @dataclass(frozen=True)
 class TextPart:
     text: str
@@ -123,11 +143,25 @@ class OpenAICompatibleProviderClient:
         except requests.Timeout as exc:
             raise ProviderTimeout("Provider request timed out") from exc
         except requests.RequestException as exc:
-            raise ProviderError("Provider request failed") from exc
+            # No HTTP response arrived: a dead network parks the job, it does
+            # not fail it and it never switches engines (D-20).
+            raise ProviderNetworkError("Provider is unreachable") from exc
 
         status_code = int(getattr(response, "status_code", 0))
-        if status_code in (401, 403):
+        body = getattr(response, "text", "")
+        if not isinstance(body, str):
+            body = ""
+        quota_in_body = "quota" in body.lower()
+        if status_code == 401:
             raise ProviderAuthenticationError("Provider rejected the credential")
+        if status_code == 402 or (status_code in (403, 429) and quota_in_body):
+            raise ProviderQuotaExceeded("Provider quota is exhausted")
+        if status_code == 403:
+            raise ProviderForbidden("Provider refused the request")
+        if status_code == 429:
+            raise ProviderRateLimited("Provider rate limited the request")
+        if status_code >= 500:
+            raise ProviderServerError(f"Provider returned HTTP {status_code}")
         if status_code >= 400:
             raise ProviderError(f"Provider returned HTTP {status_code}")
 

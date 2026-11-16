@@ -10,6 +10,7 @@ from typing import List, Optional
 
 from scan2text.adapters.ocr_engine import OCREngine
 from scan2text.cloud.conversion import CloudConversionError, CloudConsentRequiredError
+from scan2text.cloud.failure import ProviderFailure, ProviderParkedError
 from scan2text.cloud.route_decision import Engine, decide_route
 from scan2text.models.errors import ErrorCode
 from scan2text.models.job import JobStatus, OCRJob
@@ -319,6 +320,35 @@ class QueueService:
                 "error_code": None,
                 "output_path": None,
                 "awaiting_consent": True,
+            })
+            return
+        except ProviderParkedError as exc:
+            # D-20: the provider is unavailable or exhausted — park the job with
+            # a reason and a retry action. No engine switch, no second job.
+            logger.warning("Cloud job parked for %s: %s", path.name, exc.reason)
+            summary.job_results.append({
+                "job_id": str(uuid.uuid4()),
+                "source_file": path.name,
+                "status": JobStatus.WAITING.value,
+                "reason": exc.reason_key,
+                "error_code": exc.error_code,
+                "engine": "cloud",
+                "output_path": None,
+            })
+            return
+        except ProviderFailure as exc:
+            # D-20: a key/quota problem fails at once with a specific message.
+            logger.error("Cloud job fast-failed for %s: %s", path.name, exc.reason)
+            summary.failed += 1
+            summary.job_results.append({
+                "job_id": str(uuid.uuid4()),
+                "source_file": path.name,
+                "status": JobStatus.FAILED.value,
+                "error_code": exc.error_code,
+                "error": exc.reason,
+                "fix_key": exc.fix_key,
+                "engine": "cloud",
+                "output_path": None,
             })
             return
         except CloudConversionError as exc:

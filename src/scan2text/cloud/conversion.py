@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Protocol, Se
 import pypdfium2 as pdfium
 from PIL import Image
 
+from scan2text.cloud.failure import RetryingProviderClient
 from scan2text.cloud.models import CloudProfile, CloudRecipe
 from scan2text.cloud.provider import (
     ChatMessage,
@@ -440,6 +441,10 @@ class CloudConversionService:
         client = self._client_factory(profile, secret) if self._client_factory else None
         if client is None:
             raise CloudConversionError("No Cloud provider client is configured.")
+        # T05: the provider seam owns the failure taxonomy. The wrapper retries
+        # transient errors and raises a typed fast-fail or parked error; it never
+        # substitutes a different client or engine.
+        client = RetryingProviderClient(client)
         result = convert_pdf_to_markdown(
             source,
             profile=profile,

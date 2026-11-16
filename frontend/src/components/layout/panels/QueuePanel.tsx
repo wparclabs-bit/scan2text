@@ -11,6 +11,13 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { getDepthStyle } from '@/lib/depthStyles'
 import { Cloud, FileImage, FileText } from 'lucide-react'
 
+/** A reason is a short key rendered as a sentence; never a raw status code (D-33). */
+const WAITING_REASON_KEYS = ['network', 'rateLimited', 'serverError', 'timeout', 'ceiling', 'unknown']
+
+function waitingReasonKey(reason?: string | null): string {
+  return reason && WAITING_REASON_KEYS.includes(reason) ? reason : 'unknown'
+}
+
 export default function QueuePanel() {
   const { t } = useTranslation()
   const jobsRef = useScan2TextStore((s) => s.jobs)
@@ -196,6 +203,24 @@ export default function QueuePanel() {
                     </Tooltip>
                   </TooltipProvider>
                 )}
+                {job.status === 'waiting' && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          data-testid="queue-item-status-dot"
+                          className="w-2.5 h-2.5 rounded-full shrink-0 block"
+                          style={{ background: 'var(--status-waiting, #B45309)' }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="translate-y-[-2px]">
+                        <p data-testid="queue-item-status-tooltip">
+                          {t(`queue.waiting.reason.${waitingReasonKey(job.reason)}`)}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 {(job.status === 'pending' || job.status === 'uploading' || job.status === 'processing') && (
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
@@ -221,7 +246,7 @@ export default function QueuePanel() {
                   </TooltipProvider>
                 )}
               </div>
-              {job.status === 'failed' && job.errorCode !== 'FILE_TOO_COMPLEX' && (
+              {((job.status === 'failed' && job.errorCode !== 'FILE_TOO_COMPLEX') || job.status === 'waiting') && (
                 <button
                   data-testid="queue-item-retry"
                   onClick={(e) => {
@@ -231,9 +256,9 @@ export default function QueuePanel() {
                   }}
                   disabled={isRetryingThis}
                   className="text-xs text-primary hover:text-foreground shrink-0 disabled:opacity-50"
-                  title={t('queue.retry')}
+                  title={job.status === 'waiting' ? t('queue.waiting.retry') : t('queue.retry')}
                 >
-                  {t('queue.retry')}
+                  {job.status === 'waiting' ? t('queue.waiting.retry') : t('queue.retry')}
                 </button>
               )}
             </div>

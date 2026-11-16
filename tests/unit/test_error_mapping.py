@@ -26,6 +26,15 @@ class TestErrorMapping:
             "SETTINGS_INVALID",
             "PARTIAL_FAILURE",
             "UPDATE_CHECK_FAILED",
+            # T05 — provider failure taxonomy (D-20, D-34).
+            "PROVIDER_UNAUTHORIZED",
+            "PROVIDER_FORBIDDEN",
+            "PROVIDER_QUOTA_EXHAUSTED",
+            "RATE_LIMITED",
+            "PROVIDER_SERVER_ERROR",
+            "PROVIDER_TIMEOUT",
+            "NETWORK_UNAVAILABLE",
+            "DOCUMENT_TIMEOUT",
             "UNKNOWN_ERROR",
         }
         actual = {e.value for e in ErrorCode}

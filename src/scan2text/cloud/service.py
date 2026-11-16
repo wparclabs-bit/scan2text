@@ -131,6 +131,20 @@ class CloudService:
         self._credentials = credential_store
         self._provider_factory = provider_factory
 
+    # T05 cleanup — public accessors so callers never reach into private state
+    # to build their own dependencies (the conversion route used to do that).
+    @property
+    def profile_service(self) -> CloudProfileService:
+        return self._profiles
+
+    @property
+    def credential_store(self) -> CredentialStoreApi:
+        return self._credentials
+
+    @property
+    def provider_factory(self) -> Callable[[CloudProfile, str], ProviderClient]:
+        return self._provider_factory
+
     def get_profile(self) -> CloudProfile:
         return self._profiles.load()
 

@@ -77,6 +77,8 @@
   --border: #1F150C;
   --input: #D9CFC7;
   --ring: #92400E;
+  /* T05 / D-33: matte warm amber-brown waiting colour. */
+  --status-waiting: #B45309;
   --radius: 0.75rem;
   --font-display: 'Quantico', system-ui, sans-serif;
   --font-body: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;

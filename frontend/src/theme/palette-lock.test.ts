@@ -52,6 +52,11 @@ describe('palette lock — coffee-and-paper 2026-08-07', () => {
     expect(css).not.toContain('#c084fc')
   })
 
+  it('test_waiting_colour_is_registered_as_matte_amber_brown', () => {
+    // D-33: one new waiting colour, not a reuse of any existing status colour.
+    expect(css).toContain('--status-waiting: #B45309')
+  })
+
   describe('depth recipe', () => {
     it('has gradient declarations on surface classes', () => {
       expect(css).toContain('linear-gradient(to bottom, #EDE8D8 0%, #E1DCC9 100%)')

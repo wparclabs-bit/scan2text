@@ -16,6 +16,7 @@ from scan2text.cloud.conversion import (
     CloudConversionService,
     CloudFileTooLargeError,
 )
+from scan2text.cloud.failure import ProviderFailure, ProviderParkedError
 from scan2text.cloud.provider import OpenAICompatibleProviderClient
 
 
@@ -80,6 +81,16 @@ def build_convert_router() -> APIRouter:
             )
         except CloudConsentRequiredError as exc:
             raise HTTPException(status_code=409, detail="CLOUD_CONSENT_REQUIRED") from exc
+        except ProviderParkedError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail={"error_code": exc.error_code, "reason": exc.reason_key},
+            ) from exc
+        except ProviderFailure as exc:
+            raise HTTPException(
+                status_code=422,
+                detail={"error_code": exc.error_code, "fix_key": exc.fix_key},
+            ) from exc
         except CloudFileTooLargeError as exc:
             raise HTTPException(status_code=413, detail=str(exc)) from exc
         except FileNotFoundError as exc:

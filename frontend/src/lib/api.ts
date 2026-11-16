@@ -4,12 +4,30 @@ export interface UploadResponse {
   task_id: string
 }
 
+/**
+ * The canonical task status set shared with the backend ``TaskStatus`` enum
+ * (D-34). Both sides expose exactly these six values; ``skipped`` is no longer
+ * a backend-only value. A test asserts the two sets are equal.
+ */
+export const TASK_STATUSES = [
+  'queued',
+  'processing',
+  'completed',
+  'failed',
+  'waiting',
+  'skipped',
+] as const
+
+export type TaskStatus = (typeof TASK_STATUSES)[number]
+
 export interface TaskStatusResponse {
   task_id: string
   status: string
   result_markdown?: string
   error?: string
   error_code?: string
+  /** Short reason key for a parked (waiting) job, never a raw status code (D-33). */
+  reason?: string
   /** The engine that produced the result: 'cloud' or 'local' (T04). */
   engine?: 'local' | 'cloud'
   /** The Cloud model that produced the result (T04). */
@@ -34,6 +52,14 @@ export interface FailedTaskStatusResponse {
   error_code?: string
 }
 
+/** A parked job: waiting with a short reason key and a retryable error code (D-34). */
+export interface WaitingTaskStatusResponse {
+  task_id: string
+  status: 'waiting'
+  reason: string
+  error_code?: string
+}
+
 export function isTaskCompleted(
   response: TaskStatusResponse
 ): response is CompletedTaskStatusResponse {
@@ -47,6 +73,17 @@ export function isTaskFailed(
   response: TaskStatusResponse
 ): response is FailedTaskStatusResponse {
   return response.status === 'failed'
+}
+
+export function isTaskWaiting(
+  response: TaskStatusResponse
+): response is WaitingTaskStatusResponse {
+  return response.status === 'waiting'
+}
+
+/** A terminal state stops status-driven polling (D-21). */
+export function isTaskTerminal(response: TaskStatusResponse): boolean {
+  return isTaskCompleted(response) || isTaskFailed(response) || isTaskWaiting(response)
 }
 
 export async function getTaskStatus(taskId: string): Promise<TaskStatusResponse> {
@@ -76,7 +113,7 @@ export async function pollTaskStatus(
 ): Promise<TaskStatusResponse> {
   for (let attempt = 0; attempt < options.maxAttempts; attempt++) {
     const response = await deps.getStatus(taskId)
-    if (isTaskCompleted(response) || isTaskFailed(response)) {
+    if (isTaskTerminal(response)) {
       return response
     }
     if (attempt < options.maxAttempts - 1) {

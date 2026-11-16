@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -30,8 +31,13 @@ from scan2text.cloud.service import build_production_cloud_service
 from scan2text.services.queue_service import QueueService
 from scan2text.services.path_service import PathService
 from scan2text.adapters.vlm_ocr import VlmOcrAdapter
+from scan2text.models.job import JobStatus, TaskStatus
 
 logger = logging.getLogger(__name__)
+
+# D-21: one document has a thirty-minute ceiling; hitting it parks the job with
+# a retry button instead of polling forever.
+DOCUMENT_CEILING_SECONDS: int = 30 * 60
 
 # In-memory store: task_id -> {status, processed, total, result_markdown, file_paths}
 _task_store: Dict[str, Dict[str, Any]] = {}
@@ -43,12 +49,13 @@ async def lifespan(app: FastAPI):
     adapter = VlmOcrAdapter()
     path_service = PathService()
     cloud_service = build_production_cloud_service(path_service)
+    # T05 cleanup — consume the public accessors, never the private attributes.
     cloud_conversion_service = CloudConversionService(
-        profile_loader=cloud_service._profiles.load,
-        client_factory=lambda profile, secret: cloud_service._provider_factory(
+        profile_loader=cloud_service.profile_service.load,
+        client_factory=lambda profile, secret: cloud_service.provider_factory(
             profile, secret
         ),
-        credential_reader=cloud_service._credentials.read,
+        credential_reader=cloud_service.credential_store.read,
         path_service=path_service,
     )
     queue_svc = QueueService(
@@ -62,8 +69,8 @@ async def lifespan(app: FastAPI):
     app.state.worker_busy = False
     app.state.cloud_service = cloud_service
     app.state.path_service = path_service
-    app.state.cloud_profile_service = cloud_service._profiles
-    app.state.cloud_credential_store = cloud_service._credentials
+    app.state.cloud_profile_service = cloud_service.profile_service
+    app.state.cloud_credential_store = cloud_service.credential_store
     app.state.cloud_conversion_service = cloud_conversion_service
     logger.info("Scan2Text API started")
     yield
@@ -125,10 +132,10 @@ async def _run_processing(
     app.state.worker_busy = True
     task = _task_store[task_id]
     total = len(paths)
-    task["status"] = "processing"
+    task["status"] = TaskStatus.PROCESSING.value
     await _ws_manager.broadcast({
         "task_id": task_id,
-        "status": "processing",
+        "status": TaskStatus.PROCESSING.value,
         "processed": 0,
         "total": total,
     })
@@ -152,15 +159,32 @@ async def _run_processing(
             task["cloud_model_id"] = cloud_jobs[0].get("cloud_model_id")
         elif summary.job_results:
             task["engine"] = "local"
-        if summary.succeeded == 0 and summary.failed > 0:
-            task["status"] = "failed"
-            if not task.get("error_code"):
-                task["error_code"] = "OCR_FAILED"
+        waiting_jobs = [
+            jr for jr in summary.job_results
+            if jr.get("status") == JobStatus.WAITING.value
+        ]
+        if waiting_jobs:
+            # D-20/D-34: a parked job is a waiting task, never a completed one.
+            first = waiting_jobs[0]
+            task["status"] = TaskStatus.WAITING.value
+            task["reason"] = first.get("reason")
+            task["error_code"] = first.get("error_code")
+        elif summary.succeeded == 0 and summary.failed > 0:
+            task["status"] = TaskStatus.FAILED.value
+            propagated = next(
+                (
+                    jr.get("error_code")
+                    for jr in summary.job_results
+                    if jr.get("error_code")
+                ),
+                None,
+            )
+            task["error_code"] = propagated or "OCR_FAILED"
         elif summary.succeeded > 0 and summary.failed > 0:
-            task["status"] = "completed"
+            task["status"] = TaskStatus.COMPLETED.value
             task["error_code"] = "PARTIAL_FAILURE"
         else:
-            task["status"] = "completed"
+            task["status"] = TaskStatus.COMPLETED.value
         # Collect result markdown from successful jobs.
         # VLM OCR jobs populate markdown_content directly; legacy jobs use output_path on disk.
         result_parts: List[str] = []
@@ -175,18 +199,18 @@ async def _run_processing(
         task["result_markdown"] = "\n---\n".join(result_parts) or None
         await _ws_manager.broadcast({
             "task_id": task_id,
-            "status": "completed",
+            "status": task["status"],
             "processed": processed,
             "total": summary.total_inputs,
         })
         app.state.worker_busy = False
     except Exception as exc:
         logger.error("Batch processing failed: %s", exc)
-        task["status"] = "failed"
+        task["status"] = TaskStatus.FAILED.value
         task["error_code"] = "UNKNOWN_ERROR"
         await _ws_manager.broadcast({
             "task_id": task_id,
-            "status": "failed",
+            "status": TaskStatus.FAILED.value,
             "processed": task["processed"],
             "total": total,
         })
@@ -224,11 +248,12 @@ async def process_files_json(
         path_to_stem[path] = PathService.sanitize_filename(path.stem)
     task_id = str(uuid.uuid4())
     _task_store[task_id] = {
-        "status": "queued",
+        "status": TaskStatus.QUEUED.value,
         "processed": 0,
         "total": len(paths),
         "result_markdown": None,
         "file_paths": file_paths,
+        "started_at": time.monotonic(),
     }
     asyncio.create_task(
         _run_processing(
@@ -260,10 +285,11 @@ async def process_files_multipart(
         path_to_stem[path] = desired_stem
     task_id = str(uuid.uuid4())
     _task_store[task_id] = {
-        "status": "queued",
+        "status": TaskStatus.QUEUED.value,
         "processed": 0,
         "total": len(saved_paths),
         "result_markdown": None,
+        "started_at": time.monotonic(),
     }
     asyncio.create_task(
         _run_processing(task_id, queue, saved_paths, path_to_stem, enhance=enhance)
@@ -276,6 +302,16 @@ async def get_status(task_id: str) -> Any:
     if task_id not in _task_store:
         raise HTTPException(status_code=404, detail="Task not found")
     task = _task_store[task_id]
+    # D-21: a processing task older than the ceiling is parked, not polled for
+    # ever. The reason is a short key the frontend renders as a sentence.
+    if (
+        task["status"] == TaskStatus.PROCESSING.value
+        and time.monotonic() - task.get("started_at", time.monotonic())
+        > DOCUMENT_CEILING_SECONDS
+    ):
+        task["status"] = TaskStatus.WAITING.value
+        task["reason"] = "ceiling"
+        task["error_code"] = "DOCUMENT_TIMEOUT"
     result: Dict[str, Any] = {
         "task_id": task_id,
         "status": task["status"],
@@ -284,11 +320,13 @@ async def get_status(task_id: str) -> Any:
     }
     if task.get("error_code"):
         result["error_code"] = task["error_code"]
-    if task["status"] == "completed" and task.get("engine"):
+    if task["status"] == TaskStatus.WAITING.value and task.get("reason"):
+        result["reason"] = task["reason"]
+    if task["status"] == TaskStatus.COMPLETED.value and task.get("engine"):
         result["engine"] = task["engine"]
         if task["engine"] == "cloud" and task.get("cloud_model_id"):
             result["cloud_model_id"] = task["cloud_model_id"]
-    if task["status"] == "completed" and task.get("result_markdown"):
+    if task["status"] == TaskStatus.COMPLETED.value and task.get("result_markdown"):
         result["result_markdown"] = task["result_markdown"]
     return result
 

@@ -15,6 +15,23 @@ class JobStatus(str, Enum):
     DONE = "done"
     FAILED = "failed"
     SKIPPED = "skipped"
+    WAITING = "waiting"
+
+
+class TaskStatus(str, Enum):
+    """The status set exposed by the task store and ``GET /status``.
+
+    This is the canonical set shared with the frontend ``TASK_STATUSES``
+    constant (D-34). The previous ``skipped`` mismatch is gone: both sides
+    carry the same six values.
+    """
+
+    QUEUED = "queued"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    WAITING = "waiting"
+    SKIPPED = "skipped"
 
 
 class OCRJob(BaseModel):

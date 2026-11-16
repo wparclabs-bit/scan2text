@@ -35,6 +35,10 @@
     "fileTooComplexRejected": "File too large or complex. Please try a smaller file.",
     "fileTooComplexLocked": "File too large or complex. Limits: 50 MB per file · 50 pages per PDF. Split bigger PDFs and retry.",
     "fileAboveCeiling": "This file is above the 50 MB Cloud ceiling and was not sent.",
+    "providerUnauthorized": "The provider rejected the API key.",
+    "providerForbidden": "The provider refused this request. Check the API key and the account.",
+    "providerQuota": "The provider quota is exhausted. Check the account or add credit.",
+    "fixApiKey": "Open Settings to fix the API key.",
     "modelNotFound": "AI engine files are missing. Downloading the model now…",
     "backendLost": "Backend connection lost",
     "outputWriteFailed": "Failed to save output file",
@@ -99,7 +103,19 @@
       "uploading": "Uploading",
       "processing": "Processing",
       "completed": "Completed",
-      "failed": "Failed"
+      "failed": "Failed",
+      "waiting": "Waiting"
+    },
+    "waiting": {
+      "retry": "Retry",
+      "reason": {
+        "network": "The network is unavailable. Retry when you are back online.",
+        "rateLimited": "The provider is rate limiting requests. Retry in a moment.",
+        "serverError": "The provider had a server error. Retry soon.",
+        "timeout": "The provider did not answer in time. Retry to continue.",
+        "ceiling": "This document took too long. Retry to continue.",
+        "unknown": "This job is waiting. Retry to continue."
+      }
     }
   },
   "bottomBar": {

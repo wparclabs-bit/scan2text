@@ -6,6 +6,7 @@ import {
   getHealth,
   isTaskCompleted,
   isTaskFailed,
+  isTaskWaiting,
   defaultDelay,
   pollTaskStatus,
   getSettings,
@@ -16,6 +17,13 @@ import { i18n } from '../i18n'
 import { toast } from 'sonner'
 
 const DEFAULT_POLL_OPTIONS = { maxAttempts: 30, intervalMs: 1000 }
+
+/** D-21: one document has a thirty-minute ceiling, then it parks with retry. */
+export const DOCUMENT_CEILING_MS = 30 * 60 * 1000
+
+export function isDocumentCeilingReached(startedAt: number, now: number): boolean {
+  return now - startedAt >= DOCUMENT_CEILING_MS
+}
 
 /** Write markdown content to disk via the Rust output_writer command. */
 async function writeOutputFile(
@@ -46,6 +54,7 @@ export type JobStatus =
   | 'processing'
   | 'completed'
   | 'failed'
+  | 'waiting'
 
 export interface ScanJob {
   id: string
@@ -71,6 +80,8 @@ export interface ScanJob {
   file: File | null
   progress: number
   consecutiveHealthFailures: number
+  /** Short reason key for a parked job; rendered as a sentence by the queue (D-33). */
+  reason?: string | null
 }
 
 export interface Scan2TextState {
@@ -106,6 +117,8 @@ export interface Scan2TextState {
   setSelectedJobId: (id: string | null) => void
   removeJob: (id: string) => void
   retryJob: (id: string) => Promise<string>
+  /** Park a job in the waiting state with a short reason and a retry action (D-34). */
+  parkJob: (id: string, reason: string, errorCode: string) => void
   reset: () => void
   setShowDownloader: (value: boolean) => void
   startUpload: (input: {
@@ -155,16 +168,17 @@ function createDefaultJob(
     file: null,
     progress: 0,
     consecutiveHealthFailures: 0,
+    reason: null,
   }
 }
 
-const TERMINAL_STATUSES: JobStatus[] = ['completed', 'failed']
+// A parked job frees the single active slot, so the next FIFO job can run.
+const TERMINAL_STATUSES: JobStatus[] = ['completed', 'failed', 'waiting']
+// Waiting is not a hard terminal: a retry resumes the same job (D-20).
+const HARD_TERMINAL_STATUSES: JobStatus[] = ['completed', 'failed']
 
 function isValidTransition(current: JobStatus): boolean {
-  if (TERMINAL_STATUSES.includes(current)) {
-    return false
-  }
-  return true
+  return !HARD_TERMINAL_STATUSES.includes(current)
 }
 
 export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
@@ -393,7 +407,37 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
 
   retryJob: async (id) => {
     const job = get().jobs[id]
-    if (!job || !job.file) return id
+    if (!job) return id
+
+    if (job.status === 'waiting') {
+      // A parked job resumes in place: same id, no second job is created.
+      const file = job.file ?? new globalThis.File(
+        [],
+        job.fileName,
+        { type: job.fileType || 'application/octet-stream' },
+      ) as globalThis.File
+      ;(file as any).path = job.filePath
+      set((state) => {
+        const current = state.jobs[id]
+        if (!current) return state
+        return {
+          jobs: {
+            ...state.jobs,
+            [id]: {
+              ...current,
+              status: 'uploading',
+              reason: null,
+              errorCode: null,
+              error: null,
+              taskId: null,
+            },
+          },
+        }
+      })
+      return get().startUpload({ file, jobId: id })
+    }
+
+    if (!job.file) return id
     const newId =
       globalThis.crypto?.randomUUID?.() ??
       `job-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -402,6 +446,21 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
       file: job.file,
       jobId: newId,
     })
+  },
+
+  parkJob: (id, reason, errorCode) => {
+    set((state) => {
+      const job = state.jobs[id]
+      if (!job) return state
+      stopProgress(id)
+      return {
+        jobs: {
+          ...state.jobs,
+          [id]: { ...job, status: 'waiting', reason, errorCode },
+        },
+      }
+    })
+    get().promoteNextPending()
   },
 
   reset: () => {
@@ -573,6 +632,14 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
         get().promoteNextPending()
         return
       }
+      if (isTaskWaiting(response)) {
+        get().parkJob(
+          input.jobId,
+          response.reason || 'unknown',
+          response.error_code || 'UNKNOWN_ERROR',
+        )
+        return
+      }
       const newStatus =
         j.status === 'pending' || j.status === 'uploading'
           ? 'processing'
@@ -594,7 +661,14 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
     ;(async () => {
       while (true) {
         const currentJob = get().jobs[input.jobId]
-        if (!currentJob || !currentJob.taskId || currentJob.status === 'completed' || currentJob.status === 'failed') {
+        if (!currentJob || !currentJob.taskId || currentJob.status === 'completed' || currentJob.status === 'failed' || currentJob.status === 'waiting') {
+          return
+        }
+
+        // D-21: a document past the ceiling parks with a retry button instead
+        // of polling for ever.
+        if (isDocumentCeilingReached(startTime, Date.now())) {
+          get().parkJob(input.jobId, 'ceiling', 'DOCUMENT_TIMEOUT')
           return
         }
 
@@ -694,6 +768,14 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
               },
             })
             get().promoteNextPending()
+            return
+          }
+          if (isTaskWaiting(statusResponse)) {
+            get().parkJob(
+              input.jobId,
+              statusResponse.reason || 'unknown',
+              statusResponse.error_code || 'UNKNOWN_ERROR',
+            )
             return
           }
           // Still processing
