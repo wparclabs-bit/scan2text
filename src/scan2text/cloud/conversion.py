@@ -47,6 +47,7 @@ CLOUD_EXECUTION_BAND_SIZE: int = 5
 CLOUD_PAGE_DPI: int = 150
 
 #: D-27: a table with thirteen or more columns is never sent to the model.
+#: The geometry reader owns the same limit; a test keeps the two equal.
 WIDE_TABLE_COLUMN_LIMIT: int = 12
 
 #: The prompt asset is the first content part; this value is its deterministic slot.
@@ -86,6 +87,7 @@ class PageAsset:
     png_bytes: bytes
     text_layer: str
     table_columns: int = 0
+    geometry_markdown: str = ""
 
     @property
     def image_url(self) -> str:
@@ -123,20 +125,42 @@ def render_page_assets(
     dpi: int = CLOUD_PAGE_DPI,
 ) -> list[PageAsset]:
     """Render each page at 150 DPI and extract its text layer with pdfium words."""
+    from scan2text.services.text_layer import (
+        build_geometry_table_markdown,
+        extract_text_pages,
+        find_geometry_tables,
+    )
+
     source = Path(pdf_path)
     scale = dpi / _PDF_POINTS_PER_INCH
+    text_pages = {
+        page.page_number: page
+        for page in extract_text_pages(source, max_pages=max_pages)
+    }
     assets: list[PageAsset] = []
     with pdfium.PdfDocument(str(source)) as document:
         for index in range(min(len(document), max_pages)):
             page = document[index]
             image = page.render(scale=scale)
             text_layer = page.get_textpage().get_text_range()
+            text_page = text_pages.get(index + 1)
+            geometry_tables = find_geometry_tables(text_page) if text_page else ()
+            geometry_columns = max(
+                (table.column_count for table in geometry_tables), default=0
+            )
             assets.append(
                 PageAsset(
                     number=index + 1,
                     png_bytes=_bitmap_png_bytes(image, _target_size(page, dpi)),
                     text_layer=text_layer,
-                    table_columns=widest_table_columns(text_layer),
+                    table_columns=max(
+                        widest_table_columns(text_layer), geometry_columns
+                    ),
+                    geometry_markdown=(
+                        build_geometry_table_markdown(text_page)
+                        if geometry_tables and text_page
+                        else ""
+                    ),
                 )
             )
     return assets
@@ -286,17 +310,20 @@ def build_metadata(
     profile: CloudProfile,
     pages: int,
     wide_table_pages: Iterable[int] = (),
+    awaiting_geometry: Iterable[int] | None = None,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     """Build the provenance metadata, including the geometry backlog."""
+    wide = list(wide_table_pages)
+    pending = wide if awaiting_geometry is None else list(awaiting_geometry)
     return {
         "engine": "cloud",
         "model": profile.model_id,
         "prompt_version": profile.recipe.version,
         "pages": pages,
         "generated_at": _iso_local_now(generated_at),
-        "wide_table_pages": list(wide_table_pages),
-        "awaiting_geometry": list(wide_table_pages),
+        "wide_table_pages": wide,
+        "awaiting_geometry": pending,
     }
 
 
@@ -341,7 +368,8 @@ def convert_pdf_to_markdown(
     reject_over_ceiling(source)
     pages = render_page_assets(source, max_pages=MAX_CLOUD_PAGES_DEFAULT)
 
-    bodies: list[str] = []
+    # (anchor page, pages of the part, wide pages of the part, markdown)
+    parts: list[tuple[int, tuple[int, ...], tuple[int, ...], str]] = []
     wide_pages: list[int] = []
     band_images = 0
     messages_sent = 0
@@ -368,21 +396,52 @@ def convert_pdf_to_markdown(
         messages_sent += 1
         band_images += len(sendable)
         band_markdown, wide_tables = _band_markdown(reply)
+        attributed: tuple[int, ...] = ()
         if wide_tables:
-            wide_pages.extend(_attribute_wide_tables(sendable, wide_tables))
-        bodies.append(band_markdown)
+            attributed = tuple(_attribute_wide_tables(sendable, wide_tables))
+            wide_pages.extend(attributed)
+        parts.append(
+            (
+                sendable[0].number,
+                tuple(page.number for page in sendable),
+                attributed,
+                band_markdown,
+            )
+        )
 
     unique_wide = sorted(set(wide_pages))
+    geometry_pages = {
+        page.number: page.geometry_markdown
+        for page in pages
+        if page.number in unique_wide and page.geometry_markdown
+    }
+    for number, markdown in geometry_pages.items():
+        parts.append((number, (number,), (), markdown))
+    parts.sort(key=lambda part: part[0])
+
+    bodies: list[str] = []
+    for _anchor, _numbers, wide_numbers, markdown in parts:
+        if wide_numbers and all(number in geometry_pages for number in wide_numbers):
+            markdown = "\n".join(
+                line
+                for line in markdown.splitlines()
+                if line.strip() != _RENAMED_TABLE_CELL
+            )
+        if markdown.strip():
+            bodies.append(markdown)
+
+    unresolved = [number for number in unique_wide if number not in geometry_pages]
     metadata = build_metadata(
         profile=profile,
         pages=len(pages),
         wide_table_pages=unique_wide,
+        awaiting_geometry=unresolved,
     )
     return CloudConversionResult(
         markdown="\n\n".join(part for part in bodies if part),
         metadata=metadata,
         pages=len(pages),
-        awaiting_geometry=tuple(unique_wide),
+        awaiting_geometry=tuple(unresolved),
         output_path=_resolve_output_path(source, path_service),
         messages_sent=messages_sent,
         band_images_sent=band_images,

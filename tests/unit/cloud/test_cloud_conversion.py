@@ -43,6 +43,7 @@ from scan2text.cloud.route_decision import (
 from scan2text.cloud.service import DEFAULT_PROFILE_PATH, CloudProfileService
 from scan2text.services.path_service import PathService
 from scan2text.services.queue_service import QueueService
+from services.pdf_fixtures import build_pdf
 
 MEGABYTE = 1024 * 1024
 
@@ -324,6 +325,43 @@ def test_a_table_with_thirteen_or_more_columns_is_not_sent_to_the_model_and_is_r
     assert not any(wide_row == text.strip() for text in sent_texts)
     assert any(narrow_row == text.strip() for text in sent_texts)
     # The wide page's image is not in the request either.
+    assert len(_image_parts(provider.last_message)) == 2
+
+
+def test_a_wide_table_record_is_filled_by_the_geometry_path_instead_of_a_placeholder() -> None:
+    def cells(prefix: str, count: int, y: float):
+        return [
+            ("F1", 6, 20 + index * 44, y, f"{prefix}{index:02d}")
+            for index in range(count)
+        ]
+
+    source = _TEST_ROOT / "wide-geometry.pdf"
+    source.write_bytes(
+        build_pdf(
+            [
+                cells("H", 13, 700) + cells("V", 13, 688),
+                cells("N", 12, 700),
+                [("F1", 12, 100, 700, "plain page")],
+            ]
+        )
+    )
+    profile = _profile(_TEST_ROOT)
+    provider = RecordingProvider()
+
+    result = convert_pdf_to_markdown(
+        source,
+        profile=profile,
+        client=provider,
+        path_service=_path_service("wide-geometry"),
+    )
+
+    assert "| H01 | H02 |" in result.markdown
+    assert "| V01 | V02 |" in result.markdown
+    assert "[wide table awaiting geometry]" not in result.markdown
+    assert result.awaiting_geometry == ()
+    assert result.metadata["awaiting_geometry"] == []
+    assert result.metadata["wide_table_pages"] == [1]
+    # The wide page was never sent to the model.
     assert len(_image_parts(provider.last_message)) == 2
 
 

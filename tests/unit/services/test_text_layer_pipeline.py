@@ -92,6 +92,34 @@ class TestTextLayerRouting:
         assert adapter.calls == [str(path)]
         assert summary.job_results[0]["markdown_content"] == "OCR TEXT"
 
+    def test_local_pdf_rebuilds_a_wide_table_from_geometry_without_the_model(
+        self, tmp_path
+    ):
+        rows = []
+        for row_index, prefix in enumerate(("H", "V")):
+            rows.extend(
+                [
+                    (
+                        "F1",
+                        6,
+                        20 + index * 44,
+                        700 - row_index * 12,
+                        f"{prefix}{index + 1:02d}",
+                    )
+                    for index in range(13)
+                ]
+            )
+        path = _write(tmp_path, build_pdf([rows]), "wide.pdf")
+        adapter = RecordingAdapter()
+
+        summary = _queue(tmp_path).process_image_paths([path], adapter)
+
+        assert summary.succeeded == 1
+        markdown = summary.job_results[0]["markdown_content"]
+        assert "| H01 | H02 |" in markdown
+        assert "| V01 | V02 |" in markdown
+        assert adapter.calls == []
+
     def test_mixed_pdf_uses_text_layer_for_the_digital_page_and_ocr_for_the_scanned_page(
         self, tmp_path
     ):

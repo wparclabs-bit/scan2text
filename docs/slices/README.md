@@ -21,7 +21,7 @@ How the Cloud engine work is planned, specified, split, and executed. Read this 
 | `STATE.md` | Current state, baseline counts, planned work, open items. |
 | `specs/` | The four specs, local copies of issues #2 to #5. |
 | `tickets/` | The fifteen tickets, local copies of issues #6 to #20. |
-| `TNN-*.md` | Executed slice documents: `T00-checker-script.md`, `T01-provider-spike.md`, `T13-ci-workflow.md`, `T14-deterministic-timing.md`. Each is validated by `scripts/check_slice_docs.py`. |
+| `TNN-*.md` | Executed slice documents: `T00-checker-script.md`, `T01-provider-spike.md`, `T08-geometry-tables.md`, `T13-ci-workflow.md`, `T14-deterministic-timing.md`. Each is validated by `scripts/check_slice_docs.py`. |
 | `README.md` | This index. |
 
 ## Starting a slice
@@ -47,7 +47,7 @@ Fifteen vertical tracer bullets. Each cuts a complete path through the layers, a
 | T04 | A file over 8 MB becomes Markdown through the cloud engine | T03 | #12 — **done, T04-cloud-conversion.md** |
 | T05 | A provider failure parks the job with a reason and a retry | T04 | #13 |
 | T06 | The user can cancel a long cloud job | T04 | #14 |
-| T08 | A 45-column table is rebuilt from geometry | T07 | #15 |
+| T08 | A 45-column table is rebuilt from geometry | T07 | #15 - **done, T08-geometry-tables.md** |
 | T09 | A scanned wide table is stitched from column segments | T08 | #16 |
 | T10 | The fixture suite gates both paths | T04, T08 | #17 |
 | T11 | Spend is visible | T04 | #18 |

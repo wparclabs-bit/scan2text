@@ -156,8 +156,8 @@ class TestExtractAndSaveImageCrops:
         # Second data row: Span2x2 continues in col0+col1, then B
         assert lines[3] == "| Span2x2 | Span2x2 | B |"
 
-    def test_ragged_rows_pad_and_truncate(self):
-        """Header has 2 cols. Row with 1 col gets padded. Row with 3 cols gets truncated."""
+    def test_ragged_rows_are_padded_to_the_widest_row_without_truncation(self):
+        """Every row is padded to the widest row; no cell is ever dropped."""
         html = (
             '<table>'
             '<tr><th>Col1</th><th>Col2</th></tr>'
@@ -167,12 +167,33 @@ class TestExtractAndSaveImageCrops:
         )
         result = convert_html_tables_to_gfm(html)
         lines = result.split("\n")
-        # Header: 2 cols
-        assert lines[0] == "| Col1 | Col2 |"
-        # Padded row: 1 col -> 2 cols
-        assert lines[2] == "| OnlyOne |  |"
-        # Truncated row: 3 cols -> 2 cols
-        assert lines[3] == "| A | B |"
+        # The widest row has three columns, so every row has three columns.
+        assert lines[0] == "| Col1 | Col2 |  |"
+        assert lines[1] == "|---|---|---|"
+        assert lines[2] == "| OnlyOne |  |  |"
+        assert lines[3] == "| A | B | C |"
+
+    def test_pipe_inside_a_cell_is_escaped(self):
+        html = '<table><tr><th>A</th></tr><tr><td>left|right</td></tr></table>'
+
+        result = convert_html_tables_to_gfm(html)
+
+        assert "left\\|right" in result
+        assert result.splitlines()[2] == "| left\\|right |"
+
+    def test_repeated_header_row_is_removed_from_the_body(self):
+        html = (
+            '<table>'
+            '<tr><th>Name</th><th>Age</th></tr>'
+            '<tr><th>Name</th><th>Age</th></tr>'
+            '<tr><td>Alice</td><td>30</td></tr>'
+            '</table>'
+        )
+
+        result = convert_html_tables_to_gfm(html)
+
+        assert result.count("| Name | Age |") == 1
+        assert "| Alice | 30 |" in result
 
     def test_headerless_table_promotes_first_row(self):
         """Table with only td elements (no th) must use first row as header."""

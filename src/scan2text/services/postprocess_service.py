@@ -173,18 +173,23 @@ class _TableParser(HTMLParser):
         self._has_content_in_current_row = False
 
 
-def _normalize_rows(
-    rows: list[list[str]], header_col_count: int
-) -> list[list[str]]:
-    """Pad short rows with empty strings and truncate long rows."""
-    normalized = []
-    for row in rows:
-        if len(row) < header_col_count:
-            row = row + [""] * (header_col_count - len(row))
-        elif len(row) > header_col_count:
-            row = row[:header_col_count]
-        normalized.append(row)
-    return normalized
+def _normalize_rows(rows: list[list[str]]) -> list[list[str]]:
+    """Pad every row to the widest row; no cell is ever dropped (D-28)."""
+    widest = max((len(row) for row in rows), default=0)
+    return [row + [""] * (widest - len(row)) for row in rows]
+
+
+def _remove_repeated_header(rows: list[list[str]]) -> list[list[str]]:
+    """Drop a repeated header row from the body, keeping the first one."""
+    if not rows:
+        return rows
+    header = rows[0]
+    return [row for index, row in enumerate(rows) if index == 0 or row != header]
+
+
+def _escape_cell(cell: str) -> str:
+    """Escape a pipe so one cell cannot break the row (D-28)."""
+    return cell.replace("|", "\\|")
 
 
 def _rows_to_gfm_lines(rows: list[list[str]]) -> str:
@@ -193,9 +198,10 @@ def _rows_to_gfm_lines(rows: list[list[str]]) -> str:
         return ""
     lines: list[str] = []
     for i, cells in enumerate(rows):
-        lines.append("| " + " | ".join(cells) + " |")
+        escaped = [_escape_cell(cell) for cell in cells]
+        lines.append("| " + " | ".join(escaped) + " |")
         if i == 0:
-            lines.append("|" + "|".join("---" for _ in cells) + "|")
+            lines.append("|" + "|".join("---" for _ in escaped) + "|")
     return "\n".join(lines)
 
 
@@ -224,9 +230,11 @@ def convert_html_tables_to_gfm(markdown: str) -> str:
         if len(rows) == 1 and parser._first_row_has_th and not parser._has_any_td:
             return " ".join(rows[0])
 
-        # Normalize all rows to the same column count (first row is reference)
-        header_col_count = len(rows[0])
-        normalized_rows = _normalize_rows(rows, header_col_count)
+        # A repeated header belongs to the head, not to the body (D-28).
+        rows = _remove_repeated_header(rows)
+
+        # Every row is padded to the widest row; no cell is ever dropped.
+        normalized_rows = _normalize_rows(rows)
 
         return _rows_to_gfm_lines(normalized_rows)
 
