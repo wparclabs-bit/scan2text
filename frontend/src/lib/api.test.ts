@@ -248,11 +248,45 @@ describe('isTaskFailed', () => {
 })
 
 describe('defaultDelay', () => {
-  it('resolves after the given number of milliseconds', async () => {
-    const start = Date.now()
-    await defaultDelay(10)
-    const elapsed = Date.now() - start
-    expect(elapsed).toBeGreaterThanOrEqual(10)
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('does not resolve before the timer advances', async () => {
+    let resolved = false
+    const pending = defaultDelay(10).then(() => {
+      resolved = true
+    })
+
+    // The timer is scheduled but the clock has not moved.
+    await Promise.resolve()
+    expect(resolved).toBe(false)
+
+    // One millisecond short of the delay: the promise is still pending.
+    await vi.advanceTimersByTimeAsync(9)
+    expect(resolved).toBe(false)
+
+    // Nothing is left pending for the next test.
+    await vi.advanceTimersByTimeAsync(1)
+    await pending
+  })
+
+  it('resolves after the timer advances by the delay', async () => {
+    let resolved = false
+    const pending = defaultDelay(10).then(() => {
+      resolved = true
+    })
+
+    await Promise.resolve()
+    expect(resolved).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(10)
+    await pending
+    expect(resolved).toBe(true)
   })
 })
 

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, act } from '@testing-library/react'
 import BottomStatusBar from './BottomStatusBar'
 
 vi.mock('react-i18next', () => ({
@@ -30,6 +30,10 @@ describe('BottomStatusBar structure', () => {
         }
       },
     })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('footer has shrink-0 class for pinned layout', () => {
@@ -98,8 +102,11 @@ describe('BottomStatusBar structure', () => {
         }
       },
     })
+    vi.useFakeTimers()
     render(<BottomStatusBar />)
-    await new Promise((r) => setTimeout(r, 50))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
     const footer = screen.getByTestId('bottom-bar') as HTMLElement
     expect(footer.textContent).not.toContain('RAM: —')
   })
@@ -128,8 +135,11 @@ describe('BottomStatusBar structure', () => {
         }
       },
     })
+    vi.useFakeTimers()
     render(<BottomStatusBar />)
-    await new Promise((r) => setTimeout(r, 50))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
     const footer = screen.getByTestId('bottom-bar') as HTMLElement
     expect(footer.textContent).toContain('CPU: 27%')
   })
@@ -155,8 +165,11 @@ describe('BottomStatusBar structure', () => {
         }
       },
     })
+    vi.useFakeTimers()
     render(<BottomStatusBar />)
-    await new Promise((r) => setTimeout(r, 50))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
     const footer = screen.getByTestId('bottom-bar') as HTMLElement
     expect(footer.textContent).toContain('—')
     expect(footer.textContent).not.toContain('{{percent}}')
@@ -183,8 +196,11 @@ describe('BottomStatusBar structure', () => {
         }
       },
     })
+    vi.useFakeTimers()
     render(<BottomStatusBar />)
-    await new Promise((r) => setTimeout(r, 50))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
     const footer = screen.getByTestId('bottom-bar') as HTMLElement
     expect(footer.textContent).toContain('—')
     expect(footer.textContent).not.toContain('{{percent}}')
@@ -211,8 +227,11 @@ describe('BottomStatusBar structure', () => {
         }
       },
     })
+    vi.useFakeTimers()
     render(<BottomStatusBar />)
-    await new Promise((r) => setTimeout(r, 50))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
     const footer = screen.getByTestId('bottom-bar') as HTMLElement
     expect(footer.textContent).not.toContain('{{percent}}')
     expect(footer.textContent).toContain('—')

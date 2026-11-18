@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { renderHook, act } from '@testing-library/react'
 import { useBackendBootFailedListener } from './useBackendBootFailedListener'
 
 type UnlistenFn = () => void
@@ -35,6 +35,10 @@ describe('useBackendBootFailedListener', () => {
     vi.clearAllMocks()
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('registers a Tauri event listener for backend-boot-failed on mount', () => {
     renderHook(() => useBackendBootFailedListener())
     expect(mockListen).toHaveBeenCalledWith('backend-boot-failed', expect.any(Function))
@@ -48,9 +52,12 @@ describe('useBackendBootFailedListener', () => {
       return Promise.resolve(() => {})
     })
 
+    vi.useFakeTimers()
     renderHook(() => useBackendBootFailedListener())
 
-    await new Promise((r) => setTimeout(r, 0))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
 
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Backend failed to start'))
   })

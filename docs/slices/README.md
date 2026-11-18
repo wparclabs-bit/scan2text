@@ -8,7 +8,7 @@ How the Cloud engine work is planned, specified, split, and executed. Read this 
 |---|---|---|
 | 1 | `/setup-matt-pocock-skills` | Tracker and triage labels for this repository (done) |
 | 2 | `/to-spec` | Four specs, each citing decision IDs from `DECISIONS.md` (done: issues #2 to #5) |
-| 3 | `/to-tickets` | Fourteen vertical tickets in dependency order, published to the tracker (done: issues #6 to #19) |
+| 3 | `/to-tickets` | Fifteen vertical tickets in dependency order, published to the tracker (done: issues #6 to #20) |
 | 4 | slice documents | One `TNN-slug.md` per ticket, in the template below |
 | 5 | execute | Code, tests, documentation, commit |
 
@@ -20,8 +20,8 @@ How the Cloud engine work is planned, specified, split, and executed. Read this 
 | `HANDOFF-GUIDE.md` | How to execute a slice and hand it to another model. |
 | `STATE.md` | Current state, baseline counts, planned work, open items. |
 | `specs/` | The four specs, local copies of issues #2 to #5. |
-| `tickets/` | The fourteen tickets, local copies of issues #6 to #19. |
-| `TNN-*.md` | Executed slice documents: `T00-checker-script.md`, `T01-provider-spike.md`, `T13-ci-workflow.md`. Each is validated by `scripts/check_slice_docs.py`. |
+| `tickets/` | The fifteen tickets, local copies of issues #6 to #20. |
+| `TNN-*.md` | Executed slice documents: `T00-checker-script.md`, `T01-provider-spike.md`, `T13-ci-workflow.md`, `T14-deterministic-timing.md`. Each is validated by `scripts/check_slice_docs.py`. |
 | `README.md` | This index. |
 
 ## Starting a slice
@@ -34,7 +34,7 @@ How the Cloud engine work is planned, specified, split, and executed. Read this 
 
 ## Ticket list
 
-Fourteen vertical tracer bullets. Each cuts a complete path through the layers, and each is demoable on its own. T00, T01, and T07 have no blockers and can run in parallel. Executed so far: T00 (the checker), T01 (the provider spike), and T13 (the CI workflow, blocked by T00 and now green).
+Fifteen vertical tracer bullets. Each cuts a complete path through the layers, and each is demoable on its own. T00, T01, T07, and T14 have no blockers and can run in parallel. Executed so far: T00 (the checker), T01 (the provider spike), T13 (the CI workflow, blocked by T00 and now green), and T14 (the deterministic timing test).
 
 | Ticket | Title | Blocked by | Issue |
 |---|---|---|---|
@@ -52,6 +52,7 @@ Fourteen vertical tracer bullets. Each cuts a complete path through the layers, 
 | T10 | The fixture suite gates both paths | T04, T08 | #17 |
 | T11 | Spend is visible | T04 | #18 |
 | T12 | Handoff docs, ADRs, privacy, versioning | T04, T07, T10 | #19 |
+| T14 | A timing test stops depending on how fast the machine is | none | #20 - **done, T14-deterministic-timing.md** |
 
 ## Slice document naming
 

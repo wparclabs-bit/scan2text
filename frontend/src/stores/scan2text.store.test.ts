@@ -96,11 +96,14 @@ describe('scan2text store', () => {
     })
 
     it('should use Date.now() when createdAt is not provided', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
       const before = Date.now()
       store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf' })
       const after = Date.now()
       expect(store.getState().jobs['job-1'].createdAt).toBeGreaterThanOrEqual(before)
       expect(store.getState().jobs['job-1'].createdAt).toBeLessThanOrEqual(after)
+      vi.useRealTimers()
     })
   })
 
@@ -777,13 +780,18 @@ describe('scan2text store', () => {
       mockStopProgress.mockClear()
     })
 
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
     it('should call stopProgress on job removal (async)', async () => {
+      vi.useFakeTimers()
       store.getState().addJob({ id: 'job-1', fileName: 'scan.png' })
       store.getState().setStatus('job-1', 'processing')
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await vi.advanceTimersByTimeAsync(0)
       store.getState().removeJob('job-1')
-      // Give the async cleanup time to execute
-      await new Promise(resolve => setTimeout(resolve, 0))
+      // Let the async cleanup run to completion.
+      await vi.advanceTimersByTimeAsync(0)
       expect(mockStopProgress).toHaveBeenCalledWith('job-1')
     })
 

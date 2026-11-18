@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import App from './App'
 import { buildApiUrl } from './lib/apiBase'
 
@@ -77,6 +77,7 @@ describe('Command Center layout', () => {
 
   afterEach(() => {
     document.documentElement.className = ''
+    vi.useRealTimers()
   })
 
   describe('layout structure', () => {
@@ -240,8 +241,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       // Toast should be triggered - verify fetch was called for pending count
       expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/feedback/pending-count'))
     })
@@ -260,8 +264,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       expect(mockFetch).not.toHaveBeenCalledWith(buildApiUrl('/api/feedback/pending-count'))
     })
   })
@@ -277,8 +284,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/settings'))
       vi.unstubAllEnvs()
     })
@@ -293,8 +303,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('127.0.0.1:47351'))
       vi.unstubAllEnvs()
     })
@@ -309,8 +322,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/settings'))
       vi.unstubAllEnvs()
     })
@@ -328,8 +344,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       const startCall = mockFetch.mock.calls.find((call) => {
         const url = call[0] as string
         return url === buildApiUrl('/api/download/start') && call[1]?.method === 'POST'
@@ -354,8 +373,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/download/start'), expect.objectContaining({ method: 'POST' }))
       vi.unstubAllEnvs()
     })
@@ -376,8 +398,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       const modal = document.querySelector('[data-testid="model-downloader-modal"]')
       expect(modal).toBeInTheDocument()
       vi.unstubAllEnvs()
@@ -396,8 +421,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       const modal = document.querySelector('[data-testid="model-downloader-modal"]')
       expect(modal).not.toBeInTheDocument()
       vi.unstubAllEnvs()
@@ -413,8 +441,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       const healthCall = mockFetch.mock.calls.find((call) => {
         const url = call[0] as string
         return url.startsWith(buildApiUrl('/api/health')) && url.includes('?t=')
@@ -445,8 +476,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       expect(mockFetch).toHaveBeenCalledWith(buildApiUrl('/api/feedback/pending-count'))
       vi.unstubAllEnvs()
     })
@@ -466,8 +500,11 @@ describe('Command Center layout', () => {
         }
         return Promise.resolve({ ok: false })
       })
+      vi.useFakeTimers()
       render(<App />)
-      await new Promise((r) => setTimeout(r, 50))
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0)
+      })
       const modal = document.querySelector('[data-testid="model-downloader-modal"]')
       expect(modal).toBeInTheDocument()
       vi.unstubAllEnvs()
