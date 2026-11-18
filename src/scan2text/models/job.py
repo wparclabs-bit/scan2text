@@ -16,6 +16,7 @@ class JobStatus(str, Enum):
     FAILED = "failed"
     SKIPPED = "skipped"
     WAITING = "waiting"
+    CANCELLED = "cancelled"
 
 
 class TaskStatus(str, Enum):
@@ -23,7 +24,7 @@ class TaskStatus(str, Enum):
 
     This is the canonical set shared with the frontend ``TASK_STATUSES``
     constant (D-34). The previous ``skipped`` mismatch is gone: both sides
-    carry the same six values.
+    carry the same six values. T06 adds ``cancelled`` on both sides.
     """
 
     QUEUED = "queued"
@@ -32,6 +33,7 @@ class TaskStatus(str, Enum):
     FAILED = "failed"
     WAITING = "waiting"
     SKIPPED = "skipped"
+    CANCELLED = "cancelled"
 
 
 class OCRJob(BaseModel):

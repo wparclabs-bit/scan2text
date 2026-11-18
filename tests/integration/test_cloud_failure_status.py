@@ -126,6 +126,8 @@ def test_backend_and_frontend_status_sets_are_equal():
     assert frontend == backend
     assert "skipped" in frontend
     assert "waiting" in frontend
+    # T06: the cancelled value joins the shared set on both sides.
+    assert "cancelled" in frontend
 
 
 def test_document_ceiling_parks_the_task():

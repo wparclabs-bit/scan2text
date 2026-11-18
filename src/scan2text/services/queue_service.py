@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from scan2text.adapters.ocr_engine import OCREngine
+from scan2text.cloud.cancellation import JobCancelledError, cancellation_registry
 from scan2text.cloud.conversion import CloudConversionError, CloudConsentRequiredError
 from scan2text.cloud.failure import ProviderFailure, ProviderParkedError
 from scan2text.cloud.route_decision import Engine, decide_route
@@ -274,6 +275,7 @@ class QueueService:
         path_to_stem: Optional[Dict[Path, str]] = None,
         enhance: bool = False,
         consent_granted: bool = False,
+        task_id: Optional[str] = None,
     ) -> BatchSummary:
         """Process a list of image paths using a VlmOcrAdapter instance.
 
@@ -295,6 +297,8 @@ class QueueService:
                 before OCR inference. Defaults to False.
             consent_granted: The consent gate's decision for this batch. A
                 Cloud-routed file is never sent when this is False.
+            task_id: The task that owns this batch. Its cancellation stops the
+                Cloud work and discards the result (D-22).
         """
         import shutil
 
@@ -303,15 +307,31 @@ class QueueService:
 
         self._quarantine_dir.mkdir(parents=True, exist_ok=True)
 
+        cancellation = cancellation_registry.get(task_id) if task_id else None
+
         for path in image_paths:
+            if cancellation is not None and cancellation.cancelled:
+                # D-22: a cancelled job stops the batch; the file is recorded
+                # as cancelled and nothing more is sent.
+                self._record_cancelled(summary, Path(path))
+                break
             try:
                 path = Path(path)
                 if decide_route(path).route is Engine.CLOUD:
-                    self._process_cloud_job(path, summary, consent_granted=consent_granted)
+                    self._process_cloud_job(
+                        path,
+                        summary,
+                        consent_granted=consent_granted,
+                        cancellation=cancellation,
+                    )
                     continue
                 result = self._convert_pdf_text_layer(path, vlm_adapter, enhance)
                 if result is None:
                     result = vlm_adapter.ocr(str(path), enhance=enhance)
+                if cancellation is not None and cancellation.cancelled:
+                    # The work finished after the cancel: the result is discarded.
+                    self._record_cancelled(summary, path)
+                    break
 
                 if isinstance(result, dict) and "error" in result:
                     dest_name = self._resolve_unique_quarantine_name(path.name)
@@ -361,13 +381,36 @@ class QueueService:
 
         return summary
 
+    @staticmethod
+    def _record_cancelled(
+        summary: BatchSummary, path: Path, engine: str | None = None
+    ) -> None:
+        """Record a cancelled job: no result, no output file, no retry (D-22)."""
+        logger.info("Job cancelled: %s", path.name)
+        result = {
+            "job_id": str(uuid.uuid4()),
+            "source_file": path.name,
+            "status": JobStatus.CANCELLED.value,
+            "error_code": None,
+            "output_path": None,
+        }
+        if engine is not None:
+            result["engine"] = engine
+        summary.job_results.append(result)
+
     def _process_cloud_job(
-        self, path: Path, summary: BatchSummary, *, consent_granted: bool
+        self,
+        path: Path,
+        summary: BatchSummary,
+        *,
+        consent_granted: bool,
+        cancellation=None,
     ) -> None:
         """Route one over-threshold file through the Cloud conversion service.
 
         A missing consent grant is recorded, never sent: the whole batch keeps
-        its FIFO order and the file stays awaiting the gate.
+        its FIFO order and the file stays awaiting the gate. A cancelled job
+        records ``cancelled``, never ``waiting`` and never ``done`` (D-22).
         """
         service = self._cloud_conversion_service
         if service is None or not consent_granted:
@@ -382,7 +425,11 @@ class QueueService:
             })
             return
         try:
-            result = service.convert(path, consent_granted=consent_granted)
+            result = service.convert(
+                path,
+                consent_granted=consent_granted,
+                cancellation=cancellation,
+            )
         except CloudConsentRequiredError:
             summary.job_results.append({
                 "job_id": str(uuid.uuid4()),
@@ -393,7 +440,15 @@ class QueueService:
                 "awaiting_consent": True,
             })
             return
+        except JobCancelledError:
+            # D-22: the local wait stopped; the result is discarded.
+            self._record_cancelled(summary, path, engine="cloud")
+            return
         except ProviderParkedError as exc:
+            if cancellation is not None and cancellation.cancelled:
+                # D-22: a cancelled job never turns into a parked job.
+                self._record_cancelled(summary, path, engine="cloud")
+                return
             # D-20: the provider is unavailable or exhausted — park the job with
             # a reason and a retry action. No engine switch, no second job.
             logger.warning("Cloud job parked for %s: %s", path.name, exc.reason)
@@ -408,6 +463,9 @@ class QueueService:
             })
             return
         except ProviderFailure as exc:
+            if cancellation is not None and cancellation.cancelled:
+                self._record_cancelled(summary, path, engine="cloud")
+                return
             # D-20: a key/quota problem fails at once with a specific message.
             logger.error("Cloud job fast-failed for %s: %s", path.name, exc.reason)
             summary.failed += 1

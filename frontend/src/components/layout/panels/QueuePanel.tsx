@@ -4,12 +4,13 @@ import { usePreferenceStore } from '@/stores/preferencesStore'
 import { formatBytes } from '@/lib/formatBytes'
 import { fileKind } from '@/lib/fileKind'
 import { getCloudProfile } from '@/lib/api'
+import { canCancelJob } from '@/lib/jobCancellation'
 import { useEffect, useMemo, useState } from 'react'
 import { Spinner } from '@/components/ui/spinner'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { getDepthStyle } from '@/lib/depthStyles'
-import { Cloud, FileImage, FileText } from 'lucide-react'
+import { Cloud, FileImage, FileText, Square } from 'lucide-react'
 
 /** A reason is a short key rendered as a sentence; never a raw status code (D-33). */
 const WAITING_REASON_KEYS = ['network', 'rateLimited', 'serverError', 'timeout', 'ceiling', 'unknown']
@@ -23,6 +24,7 @@ export default function QueuePanel() {
   const jobsRef = useScan2TextStore((s) => s.jobs)
   const selectedJobId = useScan2TextStore((s) => s.selectedJobId)
   const retryJob = useScan2TextStore((s) => s.retryJob)
+  const cancelJob = useScan2TextStore((s) => s.cancelJob)
   const setSelectedJobId = useScan2TextStore((s) => s.setSelectedJobId)
   const theme = usePreferenceStore((s) => s.theme)
   const depthStyle = getDepthStyle({ theme, panel: 'center' })
@@ -80,6 +82,8 @@ export default function QueuePanel() {
           const isSelected = selectedJobId === job.id
           const isRetryingThis = isRetrying === job.id
           const isActive = job.status === 'uploading' || job.status === 'processing'
+          const isCancelled = job.status === 'cancelled'
+          const canCancel = canCancelJob(job)
           const kind = fileKind(job.fileName)
           const isCloud = job.engine === 'cloud'
           const modelId = job.cloudModelId ?? profileModelId
@@ -221,6 +225,23 @@ export default function QueuePanel() {
                     </Tooltip>
                   </TooltipProvider>
                 )}
+                {isCancelled && (
+                  // D-22: a cancelled job says the provider may still finish and charge.
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          data-testid="queue-item-status-dot"
+                          className="w-2.5 h-2.5 rounded-full shrink-0 block"
+                          style={{ background: '#3F3F46' }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="translate-y-[-2px]">
+                        <p data-testid="queue-item-status-tooltip">{t('queue.status.cancelled')}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 {(job.status === 'pending' || job.status === 'uploading' || job.status === 'processing') && (
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
@@ -246,6 +267,21 @@ export default function QueuePanel() {
                   </TooltipProvider>
                 )}
               </div>
+              {canCancel && (
+                // D-22: the cancel control appears only while the job can stop.
+                <button
+                  data-testid="queue-item-cancel"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void cancelJob(job.id)
+                  }}
+                  aria-label={t('queue.cancel.label')}
+                  title={t('queue.cancel.label')}
+                  className="shrink-0 text-muted-foreground hover:text-foreground hover:bg-accent/20 rounded p-0.5"
+                >
+                  <Square className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+              )}
               {((job.status === 'failed' && job.errorCode !== 'FILE_TOO_COMPLEX') || job.status === 'waiting') && (
                 <button
                   data-testid="queue-item-retry"

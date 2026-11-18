@@ -7,11 +7,14 @@ import {
   isTaskCompleted,
   isTaskFailed,
   isTaskWaiting,
+  isTaskCancelled,
   defaultDelay,
   pollTaskStatus,
   getSettings,
+  cancelTask,
 } from '../lib/api'
 import { startProgress, stopProgress } from '../lib/progressManager'
+import { canCancelJob } from '../lib/jobCancellation'
 import { useConsentStore } from './consent.store'
 import { i18n } from '../i18n'
 import { toast } from 'sonner'
@@ -70,6 +73,7 @@ export type JobStatus =
   | 'completed'
   | 'failed'
   | 'waiting'
+  | 'cancelled'
 
 export interface ScanJob {
   id: string
@@ -134,6 +138,13 @@ export interface Scan2TextState {
   retryJob: (id: string) => Promise<string>
   /** Park a job in the waiting state with a short reason and a retry action (D-34). */
   parkJob: (id: string, reason: string, errorCode: string) => void
+  /**
+   * Cancel a running cloud job (D-22): the local wait stops at once, the
+   * result is discarded, and the upstream request is abandoned best-effort.
+   */
+  cancelJob: (id: string) => Promise<string>
+  /** Record a cancellation the backend already confirmed (D-22). */
+  markCancelled: (id: string) => void
   reset: () => void
   setShowDownloader: (value: boolean) => void
   startUpload: (input: {
@@ -188,9 +199,12 @@ function createDefaultJob(
 }
 
 // A parked job frees the single active slot, so the next FIFO job can run.
-const TERMINAL_STATUSES: JobStatus[] = ['completed', 'failed', 'waiting']
+const TERMINAL_STATUSES: JobStatus[] = ['completed', 'failed', 'waiting', 'cancelled']
 // Waiting is not a hard terminal: a retry resumes the same job (D-20).
-const HARD_TERMINAL_STATUSES: JobStatus[] = ['completed', 'failed']
+// A cancelled job is final: nothing revives it (D-22).
+const HARD_TERMINAL_STATUSES: JobStatus[] = ['completed', 'failed', 'cancelled']
+// The polling loop stops on every terminal state, including a cancellation.
+const POLL_STOP_STATUSES: JobStatus[] = ['completed', 'failed', 'waiting', 'cancelled']
 
 function isValidTransition(current: JobStatus): boolean {
   return !HARD_TERMINAL_STATUSES.includes(current)
@@ -478,6 +492,48 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
     get().promoteNextPending()
   },
 
+  cancelJob: async (id) => {
+    const job = get().jobs[id]
+    if (!job || !canCancelJob(job)) return id
+    const taskId = job.taskId
+
+    get().markCancelled(id)
+
+    // The cost warning is honest: the provider may still finish and charge.
+    toast.warning(i18n.t('queue.cancel.toast'))
+
+    if (taskId) {
+      // Best effort: the backend stops the work and abandons the request.
+      void cancelTask(taskId).catch(() => undefined)
+    }
+    return id
+  },
+
+  markCancelled: (id) => {
+    set((state) => {
+      const current = state.jobs[id]
+      if (!current) return state
+      stopProgress(id)
+      return {
+        jobs: {
+          ...state.jobs,
+          // D-22: the local wait stops at once and the result is discarded.
+          [id]: {
+            ...current,
+            status: 'cancelled',
+            resultMarkdown: null,
+            markdownOutput: '',
+            reason: null,
+            error: null,
+            errorCode: null,
+          },
+        },
+        activeJobId: state.activeJobId === id ? null : state.activeJobId,
+      }
+    })
+    get().promoteNextPending()
+  },
+
   reset: () => {
     Object.keys(get().jobs).forEach((id) => stopProgress(id))
     set({ ...initialState })
@@ -553,6 +609,10 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
       set((state) => {
         const job = state.jobs[id]
         if (!job) return state
+        if (job.status === 'cancelled') {
+          // D-22: a cancelled job stays cancelled; the upload error is moot.
+          return state
+        }
         return {
           jobs: {
             ...state.jobs,
@@ -598,6 +658,15 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
       )
       const j = get().jobs[input.jobId]
       if (!j) return
+      if (j.status === 'cancelled') {
+        // D-22: a cancelled job is never revived by a late answer.
+        return
+      }
+      if (isTaskCancelled(response)) {
+        // The backend stopped this job; the local state follows.
+        get().markCancelled(input.jobId)
+        return
+      }
       if (isTaskCompleted(response)) {
         const md = response.result_markdown ?? ''
         set({
@@ -677,7 +746,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
     ;(async () => {
       while (true) {
         const currentJob = get().jobs[input.jobId]
-        if (!currentJob || !currentJob.taskId || currentJob.status === 'completed' || currentJob.status === 'failed' || currentJob.status === 'waiting') {
+        if (!currentJob || !currentJob.taskId || POLL_STOP_STATUSES.includes(currentJob.status)) {
           return
         }
 
@@ -793,6 +862,11 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
               statusResponse.reason || 'unknown',
               statusResponse.error_code || 'UNKNOWN_ERROR',
             )
+            return
+          }
+          if (isTaskCancelled(statusResponse)) {
+            // D-22: the backend stopped this job; the local state follows.
+            get().markCancelled(input.jobId)
             return
           }
           // Still processing

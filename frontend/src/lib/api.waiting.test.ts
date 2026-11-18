@@ -46,8 +46,9 @@ describe('T05 — waiting status in the API seam', () => {
     expect(result.status).toBe('waiting')
   })
 
-  it('the shared status set holds exactly the six canonical values', () => {
+  it('the shared status set holds exactly the seven canonical values', () => {
     expect([...TASK_STATUSES].sort()).toEqual([
+      'cancelled',
       'completed',
       'failed',
       'processing',

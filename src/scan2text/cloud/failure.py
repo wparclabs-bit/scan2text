@@ -21,6 +21,7 @@ from enum import Enum
 from typing import Any, Callable, Protocol
 
 from scan2text.cloud.provider import (
+    ProviderAborted,
     ProviderAuthenticationError,
     ProviderError,
     ProviderForbidden,
@@ -194,10 +195,25 @@ class RetryingProviderClient:
         self.max_retries = max_retries
         self._sleep = sleep or time.sleep
         self._random = random_fn or random.random
+        self._aborted = False
+
+    def abort(self) -> None:
+        """Abandon the in-flight request, as far as the connection allows (D-22).
+
+        The wrapper forwards the abort to the client it wraps; a client that
+        cannot be abandoned is not a failure.
+        """
+        self._aborted = True
+        abort = getattr(self._client, "abort", None)
+        if callable(abort):
+            abort()
 
     def complete(self, message: Any) -> ProviderResponse:
         attempt = 0
         while True:
+            if self._aborted:
+                # An abort is never a provider failure and is never retried.
+                raise ProviderAborted("The provider request was abandoned")
             try:
                 return self._client.complete(message)
             except ProviderError as exc:

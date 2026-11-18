@@ -22,11 +22,13 @@ from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Protocol, Se
 import pypdfium2 as pdfium
 from PIL import Image
 
+from scan2text.cloud.cancellation import JobCancelledError, JobCancellation
 from scan2text.cloud.failure import RetryingProviderClient
 from scan2text.cloud.models import CloudProfile, CloudRecipe
 from scan2text.cloud.provider import (
     ChatMessage,
     ImagePart,
+    ProviderAborted,
     ProviderClient,
     TextPart,
 )
@@ -332,6 +334,7 @@ def convert_pdf_to_markdown(
     profile: CloudProfile,
     client: ProviderClient,
     path_service: "PathService | None" = None,
+    cancellation: JobCancellation | None = None,
 ) -> CloudConversionResult:
     """Render the pages, walk them in bands of five, and concatenate the replies."""
     source = Path(source_path)
@@ -343,6 +346,9 @@ def convert_pdf_to_markdown(
     band_images = 0
     messages_sent = 0
     for start in range(0, len(pages), CLOUD_EXECUTION_BAND_SIZE):
+        # D-22: a cancelled job stops between the bands; nothing more is sent.
+        if cancellation is not None:
+            cancellation.raise_if_cancelled()
         band = list(pages[start : start + CLOUD_EXECUTION_BAND_SIZE])
         wide_in_band = [
             page
@@ -357,6 +363,8 @@ def convert_pdf_to_markdown(
         reply = _strip_untrusted_coordinates(
             client.complete(build_band_request(sendable, recipe=profile.recipe)).content
         )
+        if cancellation is not None:
+            cancellation.raise_if_cancelled()
         messages_sent += 1
         band_images += len(sendable)
         band_markdown, wide_tables = _band_markdown(reply)
@@ -425,7 +433,13 @@ class CloudConversionService:
         self._credential_reader = credential_reader or (lambda: None)
         self._path_service = path_service or PathService()
 
-    def convert(self, source_path: str | Path, *, consent_granted: bool) -> CloudConversionResult:
+    def convert(
+        self,
+        source_path: str | Path,
+        *,
+        consent_granted: bool,
+        cancellation: JobCancellation | None = None,
+    ) -> CloudConversionResult:
         """Convert one PDF and write its Markdown, only when consent was granted."""
         if not consent_granted:
             raise CloudConsentRequiredError(
@@ -445,13 +459,27 @@ class CloudConversionService:
         # transient errors and raises a typed fast-fail or parked error; it never
         # substitutes a different client or engine.
         client = RetryingProviderClient(client)
-        result = convert_pdf_to_markdown(
-            source,
-            profile=profile,
-            client=client,
-            path_service=self._path_service,
-        )
+        if cancellation is not None:
+            # D-22: a cancel can now abandon the request that is in flight.
+            cancellation.attach_provider(client)
+        try:
+            result = convert_pdf_to_markdown(
+                source,
+                profile=profile,
+                client=client,
+                path_service=self._path_service,
+                cancellation=cancellation,
+            )
+        except ProviderAborted as exc:
+            raise JobCancelledError("The Cloud job was cancelled.") from exc
+        if cancellation is not None:
+            # The result of a cancelled job is discarded; nothing is written.
+            cancellation.raise_if_cancelled()
         written = write_cloud_result(result, source, path_service=self._path_service)
+        if cancellation is not None and cancellation.cancelled:
+            # The cancel landed while the file was written: discard it.
+            written.unlink(missing_ok=True)
+            raise JobCancelledError("The Cloud job was cancelled.")
         return CloudConversionResult(
             markdown=result.markdown,
             metadata=result.metadata,

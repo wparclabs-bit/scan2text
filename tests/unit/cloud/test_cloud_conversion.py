@@ -202,7 +202,7 @@ def test_queue_routes_a_large_file_to_cloud_and_keeps_a_small_file_on_the_local_
         def __init__(self) -> None:
             self.calls: list[Path] = []
 
-        def convert(self, source_path, *, consent_granted: bool):
+        def convert(self, source_path, *, consent_granted: bool, cancellation=None):
             self.calls.append(Path(source_path))
             return CloudConversionResult(
                 markdown="# cloud page",

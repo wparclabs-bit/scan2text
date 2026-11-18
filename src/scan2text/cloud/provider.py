@@ -47,6 +47,14 @@ class ProviderNetworkError(ProviderError):
     """The provider could not be reached at all — no HTTP response arrived."""
 
 
+class ProviderAborted(Exception):
+    """The request was abandoned on purpose.
+
+    This is not a provider failure: the taxonomy never retries it and never
+    parks a job because of it (D-22).
+    """
+
+
 @dataclass(frozen=True)
 class TextPart:
     text: str
@@ -91,6 +99,9 @@ class ProviderClient(Protocol):
     def complete(self, message: ChatMessage) -> ProviderResponse:
         """Send one chat-completions message and return the answer text."""
 
+    def abort(self) -> None:
+        """Abandon the in-flight request, as far as the connection allows (D-22)."""
+
 
 class OpenAICompatibleProviderClient:
     """Client for an OpenAI-compatible ``/chat/completions`` endpoint."""
@@ -111,6 +122,21 @@ class OpenAICompatibleProviderClient:
         self.recipe = recipe
         self.timeout_seconds = timeout_seconds
         self._session = session or requests.Session()
+        self._aborted = False
+
+    def abort(self) -> None:
+        """Abandon the in-flight request, as far as the connection allows (D-22).
+
+        The connection is closed when it can be; the provider may still finish
+        the work and charge for it.
+        """
+        self._aborted = True
+        close = getattr(self._session, "close", None)
+        if callable(close):
+            try:
+                close()
+            except Exception:  # best effort by design
+                pass
 
     @property
     def endpoint(self) -> str:
@@ -130,6 +156,8 @@ class OpenAICompatibleProviderClient:
         }
 
     def complete(self, message: ChatMessage) -> ProviderResponse:
+        if self._aborted:
+            raise ProviderAborted("The provider request was abandoned")
         try:
             response = self._session.post(
                 self.endpoint,
@@ -146,6 +174,10 @@ class OpenAICompatibleProviderClient:
             # No HTTP response arrived: a dead network parks the job, it does
             # not fail it and it never switches engines (D-20).
             raise ProviderNetworkError("Provider is unreachable") from exc
+
+        if self._aborted:
+            # The answer arrived after the cancel: it is discarded (D-22).
+            raise ProviderAborted("The provider request was abandoned")
 
         status_code = int(getattr(response, "status_code", 0))
         body = getattr(response, "text", "")

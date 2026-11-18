@@ -6,8 +6,9 @@ export interface UploadResponse {
 
 /**
  * The canonical task status set shared with the backend ``TaskStatus`` enum
- * (D-34). Both sides expose exactly these six values; ``skipped`` is no longer
- * a backend-only value. A test asserts the two sets are equal.
+ * (D-34). Both sides expose exactly these seven values; ``skipped`` is no
+ * longer a backend-only value and T06 adds ``cancelled``. A test asserts the
+ * two sets are equal.
  */
 export const TASK_STATUSES = [
   'queued',
@@ -16,6 +17,7 @@ export const TASK_STATUSES = [
   'failed',
   'waiting',
   'skipped',
+  'cancelled',
 ] as const
 
 export type TaskStatus = (typeof TASK_STATUSES)[number]
@@ -62,6 +64,12 @@ export interface WaitingTaskStatusResponse {
   error_code?: string
 }
 
+/** A cancelled job: the local wait stopped and the result was discarded (D-22). */
+export interface CancelledTaskStatusResponse {
+  task_id: string
+  status: 'cancelled'
+}
+
 export function isTaskCompleted(
   response: TaskStatusResponse
 ): response is CompletedTaskStatusResponse {
@@ -83,9 +91,21 @@ export function isTaskWaiting(
   return response.status === 'waiting'
 }
 
+/** A cancelled task is final: the local wait stopped (D-22). */
+export function isTaskCancelled(
+  response: TaskStatusResponse
+): response is CancelledTaskStatusResponse {
+  return response.status === 'cancelled'
+}
+
 /** A terminal state stops status-driven polling (D-21). */
 export function isTaskTerminal(response: TaskStatusResponse): boolean {
-  return isTaskCompleted(response) || isTaskFailed(response) || isTaskWaiting(response)
+  return (
+    isTaskCompleted(response) ||
+    isTaskFailed(response) ||
+    isTaskWaiting(response) ||
+    isTaskCancelled(response)
+  )
 }
 
 export async function getTaskStatus(taskId: string): Promise<TaskStatusResponse> {
@@ -96,6 +116,32 @@ export async function getTaskStatus(taskId: string): Promise<TaskStatusResponse>
   }
 
   return response.json() as Promise<TaskStatusResponse>
+}
+
+export interface CancelTaskResponse {
+  task_id: string
+  status: string
+  /** False when the task had already finished and nothing changed. */
+  cancelled: boolean
+}
+
+/**
+ * Ask the backend to cancel a running task (D-22).
+ *
+ * The backend stops the local wait, discards the result, and abandons the
+ * upstream request best-effort. The provider may still finish the work and
+ * charge for it.
+ */
+export async function cancelTask(taskId: string): Promise<CancelTaskResponse> {
+  const response = await fetch(buildApiUrl(`/cancel/${encodeURIComponent(taskId)}`), {
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    throw new Error(`Cancel failed: ${response.status} ${response.statusText}`)
+  }
+
+  return response.json() as Promise<CancelTaskResponse>
 }
 
 export interface PollOptions {

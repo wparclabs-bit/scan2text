@@ -104,7 +104,12 @@
       "processing": "Processing",
       "completed": "Completed",
       "failed": "Failed",
-      "waiting": "Waiting"
+      "waiting": "Waiting",
+      "cancelled": "Cancelled. The provider may still finish the work and charge for it."
+    },
+    "cancel": {
+      "label": "Cancel job",
+      "toast": "Job cancelled. The provider may still finish the work and charge for it."
     },
     "waiting": {
       "retry": "Retry",

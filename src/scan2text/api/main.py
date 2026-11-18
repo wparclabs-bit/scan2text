@@ -24,6 +24,7 @@ from scan2text.routes import settings as settings_routes
 from scan2text.routes import feedback as feedback_routes
 from scan2text.routes import download as download_routes
 from scan2text.cloud import routes as cloud_routes
+from scan2text.cloud.cancellation import cancellation_registry
 from scan2text.cloud.conversion import CloudConversionService
 from scan2text.cloud.route_decision import router as cloud_routing_routes
 from scan2text.cloud.routes_convert import build_convert_router
@@ -132,6 +133,11 @@ async def _run_processing(
     app.state.worker_busy = True
     task = _task_store[task_id]
     total = len(paths)
+    if task["status"] == TaskStatus.CANCELLED.value:
+        # D-22: the job was cancelled before it started; nothing is sent.
+        cancellation_registry.discard(task_id)
+        app.state.worker_busy = False
+        return
     task["status"] = TaskStatus.PROCESSING.value
     await _ws_manager.broadcast({
         "task_id": task_id,
@@ -147,7 +153,19 @@ async def _run_processing(
             path_to_stem,
             enhance=enhance,
             consent_granted=consent_granted,
+            task_id=task_id,
         )
+        if task["status"] == TaskStatus.CANCELLED.value:
+            # D-22: the cancel stands; the late result is discarded.
+            task["result_markdown"] = None
+            await _ws_manager.broadcast({
+                "task_id": task_id,
+                "status": TaskStatus.CANCELLED.value,
+                "processed": task["processed"],
+                "total": task["total"],
+            })
+            app.state.worker_busy = False
+            return
         processed = summary.succeeded + summary.failed
         task["processed"] = processed
         task["total"] = summary.total_inputs
@@ -213,6 +231,9 @@ async def _run_processing(
             "total": total,
         })
         app.state.worker_busy = False
+    finally:
+        # D-22: a cancellation entry lives only as long as its task.
+        cancellation_registry.discard(task_id)
 
 # NEW ENDPOINT: JSON file path mediation (replaces multipart upload)
 @app.post("/process", status_code=202)
@@ -253,6 +274,8 @@ async def process_files_json(
         "file_paths": file_paths,
         "started_at": time.monotonic(),
     }
+    # D-22: the task owns a cancellation; the route can stop it at any time.
+    cancellation_registry.create(task_id)
     asyncio.create_task(
         _run_processing(
             task_id,
@@ -264,6 +287,38 @@ async def process_files_json(
         )
     )
     return JSONResponse(content={"task_id": task_id}, status_code=202)
+
+
+@app.post("/cancel/{task_id}")
+async def cancel_task(task_id: str) -> Any:
+    """Cancel a running task (D-22).
+
+    The local wait stops at once, the result is discarded, and the upstream
+    request is abandoned best-effort. A task that already finished changes
+    nothing. The provider may still finish the work and charge for it.
+    """
+    if task_id not in _task_store:
+        raise HTTPException(status_code=404, detail="Task not found")
+    task = _task_store[task_id]
+    if task["status"] in (
+        TaskStatus.COMPLETED.value,
+        TaskStatus.FAILED.value,
+        TaskStatus.WAITING.value,
+        TaskStatus.CANCELLED.value,
+    ):
+        # A finished task keeps its result; nothing changes.
+        return {"task_id": task_id, "status": task["status"], "cancelled": False}
+    task["status"] = TaskStatus.CANCELLED.value
+    task["result_markdown"] = None
+    # Best effort: the upstream request is abandoned when the connection allows.
+    cancellation_registry.cancel(task_id)
+    await _ws_manager.broadcast({
+        "task_id": task_id,
+        "status": TaskStatus.CANCELLED.value,
+        "processed": task.get("processed", 0),
+        "total": task.get("total", 0),
+    })
+    return {"task_id": task_id, "status": TaskStatus.CANCELLED.value, "cancelled": True}
 
 # LEGACY ENDPOINT (kept for backward compatibility, will be removed in next release)
 @app.post("/process_multipart", status_code=202)
@@ -289,6 +344,7 @@ async def process_files_multipart(
         "result_markdown": None,
         "started_at": time.monotonic(),
     }
+    cancellation_registry.create(task_id)
     asyncio.create_task(
         _run_processing(task_id, queue, saved_paths, path_to_stem, enhance=enhance)
     )

@@ -104,7 +104,12 @@
       "processing": "Memproses",
       "completed": "Selesai",
       "failed": "Gagal",
-      "waiting": "Menunggu aksi"
+      "waiting": "Menunggu aksi",
+      "cancelled": "Dibatalkan. Penyedia mungkin masih menyelesaikan pekerjaan dan membebankan biaya."
+    },
+    "cancel": {
+      "label": "Batalkan pekerjaan",
+      "toast": "Pekerjaan dibatalkan. Penyedia mungkin masih menyelesaikan pekerjaan dan membebankan biaya."
     },
     "waiting": {
       "retry": "Coba Lagi",
