@@ -12,6 +12,7 @@ import {
   testCloudConnection,
 } from '@/lib/api'
 import type { CloudCapabilityResponse, CloudProfileResponse } from '@/lib/api'
+import { useCloudSpendStore } from '@/stores/cloudSpend.store'
 
 export default function CloudSettingsSection() {
   const { t } = useTranslation()
@@ -22,6 +23,7 @@ export default function CloudSettingsSection() {
   const [profile, setProfile] = useState<CloudProfileResponse | null>(null)
   const [result, setResult] = useState<CloudCapabilityResponse | null>(null)
   const [testing, setTesting] = useState(false)
+  const sessionSpendUsd = useCloudSpendStore((s) => s.sessionSpendUsd)
 
   useEffect(() => {
     let active = true
@@ -114,6 +116,19 @@ export default function CloudSettingsSection() {
         >
           {t('settings.cloud.beta')}
         </span>
+      </div>
+
+      <div className="grid gap-1 rounded-md border p-3 text-sm">
+        <span className="text-muted-foreground">{t('settings.cloud.sessionTotal')}</span>
+        <span data-testid="settings-cloud-session-total" className="font-medium">
+          ${sessionSpendUsd.toFixed(4)}
+        </span>
+        <p data-testid="settings-cloud-session-total-notice" className="text-xs text-muted-foreground">
+          {t('settings.cloud.sessionTotalNotice')}
+        </p>
+        <p data-testid="settings-cloud-cost-disclaimer" className="text-xs text-muted-foreground">
+          {t('cloudCost.estimateNotice')}
+        </p>
       </div>
 
       <div className="grid gap-2">

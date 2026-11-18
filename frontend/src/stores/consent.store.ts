@@ -17,6 +17,8 @@ export interface ConsentBatchSummary {
   region: string
   fileCount: number
   totalSizeBytes: number
+  /** Estimated cost for the Cloud-routed documents in this batch (D-24). */
+  estimatedCostUsd?: number
 }
 
 export interface EnsureConsentOptions {

@@ -149,9 +149,20 @@ export default function CloudConsentModal({
             <dt className="text-muted-foreground">{t('consent.region')}</dt>
             <dd data-testid="cloud-consent-region">{batch.region}</dd>
           </div>
+          {batch.estimatedCostUsd !== undefined && (
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">{t('consent.estimatedCost')}</dt>
+              <dd data-testid="cloud-consent-estimated-cost">
+                ${batch.estimatedCostUsd.toFixed(4)}
+              </dd>
+            </div>
+          )}
         </dl>
         <p data-testid="cloud-consent-traffic-notice" className="text-xs text-muted-foreground">
           {t('consent.trafficNotice')}
+        </p>
+        <p data-testid="cloud-consent-cost-disclaimer" className="text-xs text-muted-foreground">
+          {t('cloudCost.estimateNotice')}
         </p>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input

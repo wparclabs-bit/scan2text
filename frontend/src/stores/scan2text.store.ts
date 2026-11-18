@@ -16,6 +16,7 @@ import {
 import { startProgress, stopProgress } from '../lib/progressManager'
 import { canCancelJob } from '../lib/jobCancellation'
 import { useConsentStore } from './consent.store'
+import { useCloudSpendStore } from './cloudSpend.store'
 import { i18n } from '../i18n'
 import { toast } from 'sonner'
 
@@ -210,6 +211,11 @@ function isValidTransition(current: JobStatus): boolean {
   return !HARD_TERMINAL_STATUSES.includes(current)
 }
 
+/** Record visibility only. Cost never changes a job's outcome (D-24). */
+function recordCompletedJobCost(jobId: string): void {
+  useCloudSpendStore.getState().recordCompletedJob(jobId)
+}
+
 export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
   ...initialState,
 
@@ -321,6 +327,10 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
         },
       }
     })
+
+    if (status === 'completed') {
+      recordCompletedJobCost(id)
+    }
 
     if (TERMINAL_STATUSES.includes(status)) {
       get().startNextPendingJob()
@@ -669,6 +679,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
       }
       if (isTaskCompleted(response)) {
         const md = response.result_markdown ?? ''
+        recordCompletedJobCost(input.jobId)
         set({
           jobs: {
             ...get().jobs,
@@ -810,6 +821,7 @@ export const useScan2TextStore = create<Scan2TextState>((set, get) => ({
           if (!j) return
           if (isTaskCompleted(statusResponse)) {
             const md = statusResponse.result_markdown ?? ''
+            recordCompletedJobCost(input.jobId)
             set({
               jobs: {
                 ...get().jobs,

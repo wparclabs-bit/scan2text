@@ -59,6 +59,7 @@
     "fileCount": "Files",
     "totalSize": "Total size",
     "region": "Region",
+    "estimatedCost": "Estimated cost",
     "trafficNotice": "The provider records the input and output of every request under its own terms. Your API key stays on this machine.",
     "send": "Send",
     "cancel": "Cancel",
@@ -70,6 +71,9 @@
       "cloudDisabled": "The Cloud engine is switched off. Turn it on in Settings, or process on the CPU anyway.",
       "processOnCpu": "Process on CPU anyway"
     }
+  },
+  "cloudCost": {
+    "estimateNotice": "Estimate based on the provider's published list price, not an invoice. Actual charges may differ."
   },
   "preview": {
     "emptyState": "Select a completed job to preview the magic.",
@@ -175,6 +179,8 @@
       "visionNo": "No",
       "latency": "Latency",
       "estimatedCost": "Estimated cost per 30-page document",
+      "sessionTotal": "Session total",
+      "sessionTotalNotice": "Memory only. This total resets when the application starts.",
       "keyRequired": "Enter an API key first."
     }
   },

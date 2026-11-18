@@ -59,6 +59,7 @@
     "fileCount": "File",
     "totalSize": "Ukuran total",
     "region": "Wilayah",
+    "estimatedCost": "Perkiraan biaya",
     "trafficNotice": "Penyedia merekam masukan dan keluaran setiap permintaan sesuai ketentuannya sendiri. Kunci API Anda tetap di mesin ini.",
     "send": "Kirim",
     "cancel": "Batal",
@@ -70,6 +71,9 @@
       "cloudDisabled": "Mesin Cloud sedang dimatikan. Nyalakan di Pengaturan, atau tetap proses di CPU.",
       "processOnCpu": "Tetap proses di CPU"
     }
+  },
+  "cloudCost": {
+    "estimateNotice": "Perkiraan berdasarkan harga daftar yang dipublikasikan penyedia, bukan faktur. Biaya sebenarnya dapat berbeda."
   },
   "preview": {
     "emptyState": "Pilih pekerjaan yang sudah selesai untuk melihat keajaibannya.",
@@ -175,6 +179,8 @@
       "visionNo": "Tidak",
       "latency": "Latensi",
       "estimatedCost": "Perkiraan biaya per dokumen 30 halaman",
+      "sessionTotal": "Total sesi",
+      "sessionTotalNotice": "Hanya di memori. Total ini direset saat aplikasi dimulai.",
       "keyRequired": "Masukkan kunci API terlebih dahulu."
     }
   },

@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { getCloudProfile } from '@/lib/api'
 import type { CloudProfileResponse } from '@/lib/api'
 import { mirrorRoute } from '@/lib/cloudRouting'
+import { estimateCloudCostUsd } from '@/lib/cloudCost'
 import { useScan2TextStore } from '@/stores/scan2text.store'
+import { useCloudSpendStore } from '@/stores/cloudSpend.store'
 import type { ConsentBatchSummary } from '@/stores/consent.store'
 
 /**
@@ -19,6 +21,11 @@ export function useCloudRequirement(): {
   const [profile, setProfile] = useState<CloudProfileResponse | null>(null)
   const jobOrder = useScan2TextStore((s) => s.jobOrder)
   const jobs = useScan2TextStore((s) => s.jobs)
+  const setJobEstimate = useCloudSpendStore((s) => s.setJobEstimate)
+  const perDocumentEstimate = useMemo(
+    () => (profile ? estimateCloudCostUsd(profile.cost_estimate) : null),
+    [profile],
+  )
 
   useEffect(() => {
     let active = true
@@ -35,6 +42,18 @@ export function useCloudRequirement(): {
     }
   }, [])
 
+  useEffect(() => {
+    if (perDocumentEstimate === null) return
+    for (const id of jobOrder) {
+      const item = jobs[id]
+      if (!item) continue
+      const sizeBytes = item.metaSize ?? item.fileSize ?? 0
+      if (mirrorRoute(sizeBytes) === 'cloud') {
+        setJobEstimate(id, perDocumentEstimate)
+      }
+    }
+  }, [jobOrder, jobs, perDocumentEstimate, setJobEstimate])
+
   return useMemo(() => {
     const latestId = jobOrder.length > 0 ? jobOrder[jobOrder.length - 1] : null
     const job = latestId ? jobs[latestId] : undefined
@@ -45,6 +64,10 @@ export function useCloudRequirement(): {
     }
 
     const decided = Object.keys(jobs)
+    const cloudJobIds = decided.filter((id) => {
+      const item = jobs[id] as { metaSize?: number; fileSize?: number }
+      return mirrorRoute(item.metaSize ?? item.fileSize ?? 0) === 'cloud'
+    })
     return {
       profile,
       cloudBatchId: latestId,
@@ -58,7 +81,11 @@ export function useCloudRequirement(): {
           const item = jobs[id] as { metaSize?: number; fileSize?: number }
           return total + (item.metaSize ?? item.fileSize ?? 0)
         }, 0),
+        estimatedCostUsd:
+          perDocumentEstimate === null
+            ? undefined
+            : perDocumentEstimate * cloudJobIds.length,
       },
     }
-  }, [jobOrder, jobs, profile])
+  }, [jobOrder, jobs, perDocumentEstimate, profile])
 }

@@ -5,6 +5,7 @@ import { useConsentStore } from '@/stores/consent.store'
 import { useScan2TextStore } from '@/stores/scan2text.store'
 import { initI18n } from '@/i18n'
 import en from '@/locales/en.json'
+import id from '@/locales/id.json'
 
 const MEGABYTE = 1024 * 1024
 
@@ -86,6 +87,32 @@ describe('ConsentGate', () => {
 
     expect(await screen.findByTestId('cloud-consent-modal')).toBeInTheDocument()
     expect(screen.getByTestId('cloud-consent-region')).toHaveTextContent('United States')
+  })
+
+  it('estimated_cost_appears_before_send_with_the_existing_consent_facts', async () => {
+    render(<ConsentGate />)
+    await waitFor(() => expect(useConsentStore.getState().cloudHasKey).toBe(true))
+
+    addCloudFile('job-large')
+
+    expect(await screen.findByTestId('cloud-consent-modal')).toBeInTheDocument()
+    expect(screen.getByTestId('cloud-consent-estimated-cost')).toHaveTextContent('$0.0187')
+    expect(screen.getByTestId('cloud-consent-cost-disclaimer')).toHaveTextContent(
+      'published list price, not an invoice',
+    )
+    expect(screen.getByTestId('cloud-consent-provider')).toHaveTextContent('Cloud Profile')
+    expect(screen.getByTestId('cloud-consent-model')).toHaveTextContent('vision-model')
+    expect(screen.getByTestId('cloud-consent-file-count')).toHaveTextContent('1')
+    expect(screen.getByTestId('cloud-consent-total-size')).toHaveTextContent('12.0 MB')
+    expect(screen.getByTestId('cloud-consent-region')).toHaveTextContent('United States')
+    expect(screen.getByTestId('cloud-consent-traffic-notice')).toBeInTheDocument()
+  })
+
+  it('cost_wording_exists_in_english_and_indonesian', () => {
+    expect(en).toHaveProperty('consent.estimatedCost')
+    expect(en).toHaveProperty('cloudCost.estimateNotice')
+    expect(id).toHaveProperty('consent.estimatedCost')
+    expect(id).toHaveProperty('cloudCost.estimateNotice')
   })
 
   it('does not open the modal for a batch that stays on the local engine', async () => {

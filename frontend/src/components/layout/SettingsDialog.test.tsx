@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SettingsDialog from './SettingsDialog';
+import { useCloudSpendStore } from '@/stores/cloudSpend.store';
 import { initI18n } from '../../i18n';
 import en from '../../locales/en.json';
 import id from '../../locales/id.json';
@@ -8,6 +9,7 @@ import id from '../../locales/id.json';
 describe('SettingsDialog', () => {
   beforeEach(() => {
     initI18n({ en: { translation: en } });
+    useCloudSpendStore.getState().reset();
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (url: any) => {
       if (url.toString().includes('/api/cloud/profile')) {
         return new Response(JSON.stringify({
@@ -262,6 +264,27 @@ describe('SettingsDialog', () => {
     expect(await screen.findByTestId('settings-cloud-section')).toBeInTheDocument();
     expect(screen.getByTestId('settings-cloud-beta')).toHaveTextContent('Beta');
     expect(screen.getByTestId('settings-cloud-toggle')).not.toBeChecked();
+  });
+
+  it('test_session_total_is_visible_in_the_cloud_section', async () => {
+    useCloudSpendStore.getState().setJobEstimate('job-1', 0.0187);
+    useCloudSpendStore.getState().recordCompletedJob('job-1');
+
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+
+    expect(await screen.findByTestId('settings-cloud-session-total')).toHaveTextContent('$0.0187');
+    expect(screen.getByTestId('settings-cloud-session-total-notice')).toHaveTextContent(
+      'Memory only',
+    );
+    expect(screen.getByTestId('settings-cloud-cost-disclaimer')).toHaveTextContent(
+      'published list price, not an invoice',
+    );
+  });
+
+  it('test_session_total_starts_at_zero', async () => {
+    render(<SettingsDialog open={true} onOpenChange={() => {}} />);
+
+    expect(await screen.findByTestId('settings-cloud-session-total')).toHaveTextContent('$0.0000');
   });
 
   it('test_cloud_profile_loads_without_exposing_key', async () => {

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { getTestStore } from './scan2text.store'
+import { useCloudSpendStore } from './cloudSpend.store'
 import { toast } from 'sonner'
 import { i18n } from '../i18n'
 
@@ -65,6 +66,7 @@ describe('scan2text store', () => {
 
   beforeEach(() => {
     store = createStore()
+    useCloudSpendStore.getState().reset()
     mockGetHealth.mockResolvedValue({ status: 'ok' })
     mockGetTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'processing' })
   })
@@ -361,6 +363,40 @@ describe('scan2text store', () => {
       mockPollTaskStatus.mockResolvedValue({ task_id: 'task-abc', status: 'completed', result_markdown: '# Hello world' })
       await store.getState().pollJob({ jobId: 'job-1' })
       expect(store.getState().jobs['job-1'].resultMarkdown).toBe('# Hello world')
+    })
+
+    it('completed_cloud_job_adds_its_estimate_to_the_session_total', async () => {
+      useCloudSpendStore.getState().setJobEstimate('job-1', 0.0187)
+      store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf', engine: 'cloud' })
+      store.getState().setTaskId('job-1', 'task-abc')
+      mockPollTaskStatus.mockResolvedValue({
+        task_id: 'task-abc',
+        status: 'completed',
+        result_markdown: '# Done',
+        engine: 'cloud',
+      })
+
+      await store.getState().pollJob({ jobId: 'job-1' })
+
+      expect(useCloudSpendStore.getState().sessionSpendUsd).toBeCloseTo(0.0187, 6)
+    })
+
+    it('cost_never_stops_delays_or_fails_a_cloud_job', async () => {
+      useCloudSpendStore.getState().setJobEstimate('job-1', 999_999)
+      store.getState().addJob({ id: 'job-1', fileName: 'scan.pdf', engine: 'cloud' })
+      store.getState().setTaskId('job-1', 'task-abc')
+      mockPollTaskStatus.mockResolvedValue({
+        task_id: 'task-abc',
+        status: 'completed',
+        result_markdown: '# Done',
+        engine: 'cloud',
+      })
+
+      await store.getState().pollJob({ jobId: 'job-1' })
+
+      expect(store.getState().jobs['job-1'].status).toBe('completed')
+      expect(store.getState().jobs['job-1'].error).toBeNull()
+      expect(useCloudSpendStore.getState().sessionSpendUsd).toBe(999_999)
     })
 
     it('on failed response should set status to "failed"', async () => {
