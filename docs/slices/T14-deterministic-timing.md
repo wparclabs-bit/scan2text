@@ -123,3 +123,7 @@ What is still open or risky:
 - The probe evidence is a local observation of the mechanism; the definitive proof is the green GitHub run on the pushed commit.
 - The sweep covered every test file under `frontend/src` that Vitest collects (`src/**/*.test.ts`, `src/**/*.test.tsx`). A future test that waits on a real timer must be written with fake timers or a condition wait from the start.
 - The backend suite and the Rust shell are untouched by this slice; their gates still run on every change.
+
+Verification record:
+- Commits: `ecbd6be` (the slice: tests, slice document, ticket, index) and `c8e9a83` (the state refresh).
+- GitHub Actions run `44235293955` on `main` at `c8e9a83` is **green**: Documentation check, Frontend checks, Backend checks, and Rust check all succeeded; the Draft release job was skipped because the push carried no tag.
