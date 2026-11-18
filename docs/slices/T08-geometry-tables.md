@@ -4,6 +4,7 @@
 - Read AGENTS.md first, then docs/slices/HANDOFF-GUIDE.md, docs/slices/DECISIONS.md (D-16, D-17, D-26, D-27, D-28, D-38 as amended), and docs/slices/STATE.md.
 - Read docs/slices/tickets/T08-geometry-tables.md for the ticket body, docs/slices/T07-text-layer.md for the reader this slice builds on, and docs/slices/T04-cloud-conversion.md for the wide-table record this slice consumes.
 - Last commit before this slice: `6151555`.
+- Implementation commit: `d9ef014` (the slice: reader, converter, Cloud record, tests, and this document).
 - Baseline at the start: frontend 787 tests in 58 files, backend 545 passed with one warning, typecheck 0 errors, build success (2186 modules), cargo check clean; measured 2026-11-18 on Windows.
 - Final result: implemented and green; the final counts are recorded in the Baseline table and in `docs/slices/STATE.md`.
 - Issue: #15.
@@ -129,3 +130,4 @@ None. The slice is backend-only and adds no user-visible string.
 - Still open: T09 column segments for scanned pages, T10 committed fixtures and the sanitizer, T12 handoff documentation and ADRs.
 - Risks and notes: the geometry reader works per page, so a table whose header sits on one page and whose body sits on the next is not detected and stays in `awaiting_geometry`. The column count comes from the widest aligned row on the page, and the tolerance follows the observed column pitch, so the 13-column and 45-column layouts both resolve. The repeated-header removal now lives in the converter; T10's sanitizer must not escape pipes a second time.
 - No dependency was installed, no fixture was committed, no frontend file changed, and no decision changed.
+- The implementation commit is `d9ef014` (GitHub noreply), pushed to `origin/main` so the continuous-integration workflow runs.
