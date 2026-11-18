@@ -20,6 +20,8 @@ Measured on 2026-11-18 at commit `faad470` (before T06) and re-measured on 2026-
 | Cargo check | clean |
 | Slice-document checker | exit 0, 10 documents |
 
+The CI run for commit `f5a9b1b` is green on GitHub (run 44248470465): Documentation check, Backend checks, Frontend checks, and Rust check all pass.
+
 Local environment note, measured 2026-11-15: the DSH sandbox cannot delete its own temporary tree, so the 13 backend tests that use the `tmp_path` fixture cannot run here and the frontend suite cannot run until Node is allowed to spawn its test workers. With the wider mode, the frontend reports 741 passed in 46 files and the backend reports 496 passed plus that one `tmp_path` environment error group. CI has a normal temporary directory and runs all 509 backend tests.
 
 T03 added one backend module (`route_decision.py`) with its route preview endpoints, the `region` Profile value, two backend test files, one frontend store, one frontend dialog, one frontend routing mirror, and the raised input cap in `fileValidation.ts`, `FileDropZone.tsx`, and `pdf_service.py`. The Local engine, its Ovis recipe, the Command Center shell, and the TopBar are untouched.

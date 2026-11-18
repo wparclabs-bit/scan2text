@@ -148,3 +148,5 @@ Write `second-brain/01-Agent-Memory/Phase-S66/slice-T06-CANCEL-JOB.md` with the 
 - Deferred: the local engine cannot interrupt an inference in progress; the cancel control is offered for a cloud job only.
 - Operational risk: the owner must still perform the live provider check with a real key; CI has no key and must stay green.
 - Decision note: none changed. D-09, D-20, D-22, D-23, D-33, and D-34 are followed as written; the shared status set gains exactly one value, `cancelled`, on both sides.
+- Commit: `f5a9b1b` — "T06: let the user cancel a long cloud job (#14)", authored as `wparclabs-bit <wparclabs-bit@users.noreply.github.com>`, pushed to `origin/main`.
+- CI: run 44248470465 is green — Documentation check, Backend checks, Frontend checks, and Rust check all pass; the draft release job stays skipped because the trigger was a plain push.
